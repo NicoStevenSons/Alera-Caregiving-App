@@ -6,12 +6,18 @@ import 'elderly_reminder_card.dart';
 class ElderlyRemindersList extends StatelessWidget {
   final bool isLoading;
   final List<ElderlyReminder> reminders;
+  final Future<void> Function(ElderlyReminder reminder)?
+    onComplete;
+  final Future<void> Function(ElderlyReminder reminder)?
+    onSnooze;
 
   const ElderlyRemindersList({
-    super.key,
-    required this.isLoading,
-    required this.reminders,
-  });
+  super.key,
+  required this.isLoading,
+  required this.reminders,
+  this.onComplete,
+  this.onSnooze,
+});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +42,13 @@ class ElderlyRemindersList extends StatelessWidget {
               ),
               child: ElderlyReminderCard(
                 reminder: reminder,
-              ),
+                onComplete: () {
+                onComplete?.call(reminder);
+                  },
+              onSnooze: () {
+              onSnooze?.call(reminder);
+                  },
+                  ),
             ),
           )
           .toList(),

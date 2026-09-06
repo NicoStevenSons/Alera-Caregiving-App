@@ -78,4 +78,13 @@ class ReminderNotificationService {
    payload: reminder.occurrenceId,
     );
   }
+
+ Future<void> cancelReminder(
+  ElderlyReminder reminder,
+) async {
+  await _notifications.cancel(
+    id: reminder.occurrenceId.hashCode,
+  );
+}
+
 }

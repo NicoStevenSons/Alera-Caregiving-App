@@ -23,6 +23,10 @@ import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/data/api/elderly_reminder_supabase_service.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
+import '../features/elderly/data/local/reminder_local_service.dart';
+import '../features/elderly/data/sync/reminder_action_sync_service.dart';
+
+
 
 
 class ElderlyInterface extends StatefulWidget {
@@ -44,8 +48,11 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   final UploadQueueService uploadQueueService = UploadQueueService();
 
-  final ElderlyReminderSupabaseService reminderService =
-    ElderlyReminderSupabaseService();
+  final ReminderLocalService reminderLocalService = ReminderLocalService();
+
+  final ElderlyReminderSupabaseService reminderService = ElderlyReminderSupabaseService();
+
+  
 
   List<ElderlyReminder> reminders = [];
 
@@ -54,6 +61,8 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   late final FifoUploadService fifoUploadService;
 
   late final WatchListenerController watchListenerController;
+
+  late final ReminderActionSyncService reminderActionSyncService;
 
   HeartRateData heartRateData = const HeartRateData(
     bpm: null,
@@ -78,6 +87,11 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     fifoUploadService = FifoUploadService(
       uploadQueueService: uploadQueueService,
       healthEventApiService: healthEventApiService,
+    );
+
+    reminderActionSyncService =
+      ReminderActionSyncService(
+      localService: reminderLocalService,
     );
 
     watchListenerController = WatchListenerController(
@@ -151,11 +165,12 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     _loadReminders();
 
+    _syncPendingReminderActions();
+
     watchListenerController.start();
 
     _processPendingQueue();
   }
-
 
   Future<void> _processPendingQueue() async {
     if (!AppConfig.enableBackend) {
@@ -173,14 +188,50 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       debugPrint('App resumed. Processing pending queue.');
 
       _processPendingQueue();
+
+      _syncPendingReminderActions();
     }
   }
 
+  Future<void> _scheduleReminderIfNeeded(
+  ElderlyReminder reminder,
+) async {
+  final bool canSchedule =
+      reminder.status == 'UPCOMING' ||
+      reminder.status == 'SNOOZED';
+
+  final bool isFuture =
+      reminder.dueAt.isAfter(DateTime.now());
+
+  if (!canSchedule || !isFuture) {
+    debugPrint(
+      'Skipping alarm for ${reminder.title}: '
+      'status=${reminder.status}, '
+      'dueAt=${reminder.dueAt}',
+    );
+    return;
+  }
+
+  await ReminderNotificationService.instance
+      .scheduleReminder(reminder);
+}
+
   Future<void> _loadReminders() async {
   try {
+    debugPrint('Loading reminders from Supabase...');
+
     final result =
         await reminderService.getRemindersForPatient(
       AppConfig.testPatientId,
+    );
+
+    debugPrint(
+      'Loaded ${result.length} reminders from Supabase',
+    );
+
+    //save em latest online data locally.
+    await reminderLocalService.saveReminders(
+      result,
     );
 
     if (!mounted) {
@@ -192,25 +243,141 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       remindersLoading = false;
     });
 
-    for (final reminder in reminders) {
-      if (reminder.status == 'UPCOMING' ||
-          reminder.status == 'SNOOZED') {
-        await ReminderNotificationService.instance
-            .scheduleReminder(reminder);
-      }
-    }
+   for (final reminder in result) {
+  await _scheduleReminderIfNeeded(reminder);
+}
+
+
   } catch (error) {
     debugPrint(
-      'Failed to load reminders: $error',
+      'Supabase reminder load failed: $error',
     );
 
-    if (!mounted) {
-      return;
-    }
+    debugPrint(
+      'Trying local reminder cache...',
+    );
 
-    setState(() {
-      remindersLoading = false;
-    });
+    try {
+      final localReminders =
+          await reminderLocalService.getReminders(
+        AppConfig.testPatientId,
+      );
+
+      debugPrint(
+        'Loaded ${localReminders.length} reminders from SQLite',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        reminders = localReminders;
+        remindersLoading = false;
+      });
+
+      for (final reminder in localReminders) {
+  await _scheduleReminderIfNeeded(reminder);
+      } 
+    } catch (localError) {
+      debugPrint(
+        'Local reminder load failed: $localError',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        reminders = [];
+        remindersLoading = false;
+      });
+    }
+  }
+}
+
+  Future<void> _completeReminder(
+  ElderlyReminder reminder,
+) async {
+  await reminderLocalService.completeReminder(
+    reminder,
+  );
+
+  await ReminderNotificationService.instance
+      .cancelReminder(reminder);
+
+  final updated =
+      await reminderLocalService.getReminders(
+    AppConfig.testPatientId,
+  );
+
+  if (!mounted) {
+    return;
+  }
+
+  setState(() {
+    reminders = updated;
+  });
+
+  debugPrint(
+    'Reminder completed locally: ${reminder.title}',
+  );
+}
+
+  Future<void> _snoozeReminder(
+  ElderlyReminder reminder,
+) async {
+  final DateTime newDueAt =
+      await reminderLocalService.snoozeReminder(
+    reminder,
+  );
+
+  await ReminderNotificationService.instance
+      .cancelReminder(reminder);
+
+  final updated =
+      await reminderLocalService.getReminders(
+    AppConfig.testPatientId,
+  );
+
+  if (!mounted) {
+    return;
+  }
+
+  setState(() {
+    reminders = updated;
+  });
+
+  final ElderlyReminder? updatedReminder =
+      await reminderLocalService.getReminder(
+    reminder.occurrenceId,
+  );
+
+  if (updatedReminder != null) {
+    await ReminderNotificationService.instance
+        .scheduleReminder(updatedReminder);
+  }
+
+  debugPrint(
+    'Reminder snoozed until $newDueAt',
+  );
+}
+
+Future<void> _syncPendingReminderActions() async {
+  try {
+    final String userId =
+        await reminderService.getPatientUserId(
+      AppConfig.testPatientId,
+    );
+
+    await reminderActionSyncService
+        .syncPendingActions(
+      performedByUserId: userId,
+    );
+  } catch (error) {
+    debugPrint(
+      'Reminder action sync skipped/failed: $error',
+    );
   }
 }
 
@@ -315,9 +482,11 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
               child: Column(
                 children: [
                   ElderlyRemindersList(
-                    isLoading: remindersLoading,
-                    reminders: reminders,
-                  ),
+                        isLoading: remindersLoading,
+                        reminders: reminders,
+                        onComplete: _completeReminder,
+                        onSnooze: _snoozeReminder,
+),
                 ],
               ),
             )

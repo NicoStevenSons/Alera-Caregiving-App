@@ -25,6 +25,7 @@ class ElderlyReminderSupabaseService {
                 category,
                 priority,
                 snooze_allowed,
+                missed_after_minutes,
                 default_snooze_minutes
               )
             ''')
@@ -45,4 +46,20 @@ class ElderlyReminderSupabaseService {
         )
         .toList();
   }
+
+  Future<String> getPatientUserId(
+    String patientId,
+)   async {
+  final response = await _supabase
+      .from('elderly_patients')
+      .select('user_id')
+      .eq(
+        'patient_id',
+        patientId,
+      )
+      .single();
+
+  return response['user_id'] as String;
+}
+
 }
