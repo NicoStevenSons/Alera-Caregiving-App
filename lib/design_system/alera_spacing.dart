@@ -5,5 +5,5 @@ abstract final class AleraSpacing {
   static const double large = 24;
   static const double xLarge = 32;
 
-  static const double cardRadius = 20;
+  static const double cardRadius = 12;
 }

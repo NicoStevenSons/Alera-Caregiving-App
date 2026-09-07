@@ -35,16 +35,14 @@ class CaregiverAlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool critical = alert.severity == CaregiverAlertSeverity.critical;
     final Color stripe = critical ? AleraColors.critical : AleraColors.warning;
-    final String iconPath = critical
-        ? 'alera-figma-assets/assets/icons/status/critical.svg'
-        : switch (alert.metric) {
-            CaregiverAlertMetric.heartRate =>
-              'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
-            CaregiverAlertMetric.spo2 =>
-              'alera-figma-assets/assets/icons/mini_status/spo2.svg',
-            CaregiverAlertMetric.watchBattery =>
-              'alera-figma-assets/assets/icons/mini_status/info.svg',
-          };
+    final String iconPath = switch (alert.metric) {
+      CaregiverAlertMetric.heartRate =>
+        'alera-figma-assets/assets/icons/vitals/heart_rate.svg',
+      CaregiverAlertMetric.spo2 =>
+        'alera-figma-assets/assets/icons/vitals/spo2.svg',
+      CaregiverAlertMetric.watchBattery =>
+        'alera-figma-assets/assets/icons/status/info.svg',
+    };
     final String name = patientName ?? 'Unknown patient';
     final _AlertCardDisplayData displayData = _buildDisplayData(
       alert,
@@ -54,90 +52,90 @@ class CaregiverAlertCard extends StatelessWidget {
 
     return AleraCard(
       padding: EdgeInsets.zero,
-      child: Container(
-        decoration: BoxDecoration(
-          color: unread ? const Color(0xFFFCFAFF) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 6,
-                decoration: BoxDecoration(
-                  color: stripe,
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(12),
+      child: Material(
+        color: unread ? const Color(0xFFFCFAFF) : Colors.white,
+        borderRadius: BorderRadius.circular(2),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onToggleExpanded,
+          borderRadius: BorderRadius.circular(2),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 6,
+                  decoration: BoxDecoration(
+                    color: stripe,
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(2),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              // Reduced top, right, and bottom padding while maintaining left margin from the bar
-              padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
+              Padding(
+                // Reduced top, right, and bottom padding while maintaining left margin from the bar
+                padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                      SizedBox(
                         width: 56,
                         height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEE4E6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: AleraSvgIcon(
-                          assetPath: iconPath,
-                          width: 28,
-                          height: 28,
-                          semanticLabel: alert.title,
+                        child: Center(
+                          child: AleraSvgIcon(
+                            assetPath: iconPath,
+                            width: 56,
+                            height: 56,
+                            semanticLabel: alert.title,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (showPatientName && name.isNotEmpty)
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (showPatientName && name.isNotEmpty)
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    color: AleraColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               Text(
-                                name,
-                                style: const TextStyle(
-                                  color: AleraColors.textSecondary,
-                                  fontSize: 10,
+                                alert.title,
+                                style: AleraTypography.label.copyWith(
+                                  color: AleraColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: unread
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
                                 ),
                               ),
-                            Text(
-                              alert.title,
-                              style: AleraTypography.label.copyWith(
-                                color: AleraColors.textPrimary,
-                                fontSize: 14,
-                                fontWeight: unread
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Text(
+                                  expanded
+                                      ? displayData.detectedAt
+                                      : '${displayData.reading} • ${displayData.relativeTime}',
+                                  key: ValueKey(expanded),
+                                  style: AleraTypography.body.copyWith(
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ),
-                            ),
-                            Text(
-                              expanded
-                                  ? displayData.detectedAt
-                                  : '${displayData.reading} • ${displayData.relativeTime}',
-                              style: AleraTypography.body.copyWith(
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: onToggleExpanded,
-                        child: Padding(
+                        const SizedBox(width: 4),
+                        Padding(
                           padding: const EdgeInsets.all(4),
                           child: Icon(
                             expanded
@@ -147,21 +145,25 @@ class CaregiverAlertCard extends StatelessWidget {
                             size: 22,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  if (expanded) ...[
-                    const SizedBox(height: 8),
-                    _ExpandedDetails(
-                      data: displayData,
-                      onViewMore: onViewMore,
-                      onMarkAsSeen: onMarkAsSeen,
+                      ],
                     ),
+                    // Mount the expanded actions at their full, tappable size on
+                    // the expansion frame, as in the original card interaction.
+                    if (expanded)
+                      Padding(
+                        key: const ValueKey('expanded-details'),
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _ExpandedDetails(
+                          data: displayData,
+                          onViewMore: onViewMore,
+                          onMarkAsSeen: onMarkAsSeen,
+                        ),
+                      ),
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -235,6 +237,7 @@ _AlertCardDisplayData _buildDisplayData(
             : 'Elevated',
       CaregiverAlertStatus.acknowledged => 'Acknowledged',
       CaregiverAlertStatus.resolved => 'Resolved',
+      CaregiverAlertStatus.falseAlarm => 'False alarm',
     },
     reason: alert.description.isEmpty ? 'Not specified' : alert.description,
     relativeTime: CaregiverAlertCard._relativeTime(alert.detectedAt),

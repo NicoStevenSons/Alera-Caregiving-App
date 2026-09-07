@@ -33,6 +33,10 @@ class _PatientAlertHistoryState extends State<PatientAlertHistory> {
 
   @override
   Widget build(BuildContext context) {
+    final List<CaregiverAlert> recentAlerts = [...widget.alerts]
+      ..sort((a, b) => b.detectedAt.compareTo(a.detectedAt));
+    final List<CaregiverAlert> visibleAlerts = recentAlerts.take(3).toList();
+
     return AleraSectionCard(
       title: 'Alert History',
       actionLabel: 'View All Alerts',
@@ -40,13 +44,13 @@ class _PatientAlertHistoryState extends State<PatientAlertHistory> {
       contentSpacing: 7,
       child: Column(
         children: [
-          if (widget.alerts.isEmpty)
+          if (visibleAlerts.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No alert history for this patient.'),
+              padding: EdgeInsets.symmetric(vertical: 22),
+              child: Center(child: Text('No alerts for this patient yet.')),
             )
           else
-            for (final CaregiverAlert alert in widget.alerts.take(2)) ...[
+            for (final CaregiverAlert alert in visibleAlerts) ...[
               CaregiverAlertCard(
                 alert: alert,
                 expanded: _expandedAlertIds.contains(alert.id),
@@ -56,8 +60,7 @@ class _PatientAlertHistoryState extends State<PatientAlertHistory> {
                     ? null
                     : () => widget.onMarkAsSeen!(alert),
               ),
-              if (alert != widget.alerts.take(2).last)
-                const SizedBox(height: 7),
+              if (alert != visibleAlerts.last) const SizedBox(height: 7),
             ],
         ],
       ),

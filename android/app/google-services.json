@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "823775178582",
+    "project_id": "alera-caregiving",
+    "storage_bucket": "alera-caregiving.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823775178582:android:ee7d88bbff779c97bff0f7",
+        "android_client_info": {
+          "package_name": "com.alera.payloadextraction"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL-D4HXB44rfcELm-eokNyBvILF9ob7_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

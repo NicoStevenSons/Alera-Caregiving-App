@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_alert_api_data_source.dart';
+import 'package:alera/features/caregiver/data/alerts/caregiver_alert_controller.dart';
 import 'package:alera/features/caregiver/domain/models/caregiver_alert.dart';
 import 'package:alera/features/caregiver/presentation/alerts/caregiver_alerts_page.dart';
 import 'package:flutter/material.dart';
@@ -166,6 +167,38 @@ void main() {
     await tester.pump();
     expect(find.text('Live Low SpO₂'), findsOneWidget);
   });
+
+  testWidgets('acknowledge immediately moves an active alert to history', (
+    tester,
+  ) async {
+    final active = _liveAlert();
+    final controller = CaregiverAlertController(
+      loader: _SuccessfulSource([active]),
+      actions: _ActionSource(
+        _withStatus(active, CaregiverAlertStatus.acknowledged),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CaregiverAlertsPage(
+            alerts: [active],
+            careRecipients: repository.getCareRecipients(),
+            controller: controller,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down).first);
+    await tester.pump();
+    await tester.tap(find.text('Mark as Seen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No active alerts right now'), findsOneWidget);
+    expect(controller.alerts.single.status, CaregiverAlertStatus.acknowledged);
+    controller.dispose();
+  });
 }
 
 class _SuccessfulSource implements CaregiverAlertDataSource {
@@ -188,6 +221,50 @@ class _PendingSource implements CaregiverAlertDataSource {
   @override
   Future<List<CaregiverAlert>> fetchAlerts() => _completer.future;
 }
+
+class _ActionSource implements CaregiverAlertActionDataSource {
+  final CaregiverAlert result;
+  const _ActionSource(this.result);
+
+  @override
+  Future<CaregiverAlert> acknowledge(String alertId, {String? note}) async =>
+      result;
+  @override
+  Future<CaregiverAlert> addNote(String alertId, String note) async => result;
+  @override
+  Future<CaregiverAlert> logIntervention(
+    String alertId,
+    CaregiverInterventionType interventionType,
+    String note,
+  ) async => result;
+  @override
+  Future<CaregiverAlert> markFalseAlarm(String alertId, String reason) async =>
+      result;
+  @override
+  Future<CaregiverAlert> resolve(String alertId, {String? note}) async =>
+      result;
+}
+
+CaregiverAlert _withStatus(CaregiverAlert alert, CaregiverAlertStatus status) =>
+    CaregiverAlert(
+      id: alert.id,
+      careRecipientId: alert.careRecipientId,
+      patientDisplayName: alert.patientDisplayName,
+      title: alert.title,
+      description: alert.description,
+      severity: alert.severity,
+      metric: alert.metric,
+      status: status,
+      reading: alert.reading,
+      threshold: alert.threshold,
+      unit: alert.unit,
+      triggerDuration: alert.triggerDuration,
+      detectedAt: alert.detectedAt,
+      confirmedAt: alert.confirmedAt,
+      resolvedAt: alert.resolvedAt,
+      timeline: alert.timeline,
+      note: alert.note,
+    );
 
 CaregiverAlert _liveAlert() {
   return CaregiverAlert(

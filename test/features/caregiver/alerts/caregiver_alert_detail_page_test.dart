@@ -1,8 +1,11 @@
 import 'package:alera/features/caregiver/caregiver_shell.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
+import 'package:alera/features/caregiver/data/alerts/caregiver_alert_controller.dart';
+import 'package:alera/features/caregiver/data/api/caregiver_alert_api_data_source.dart';
 import 'package:alera/features/caregiver/domain/models/care_recipient.dart';
 import 'package:alera/features/caregiver/domain/models/caregiver_alert.dart';
 import 'package:alera/features/caregiver/presentation/alerts/caregiver_alert_detail_page.dart';
+import 'package:alera/design_system/widgets/alera_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -130,6 +133,62 @@ void main() {
     );
     expect(find.text('Reading'), findsOneWidget);
   });
+
+  testWidgets('blank required action text is blocked before request', (
+    tester,
+  ) async {
+    final actions = _CountingActions(_alert());
+    final controller = CaregiverAlertController(
+      loader: _DetailLoader([_alert()]),
+      actions: actions,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverAlertDetailPage(
+          alert: _alert(),
+          careRecipient: null,
+          alertController: controller,
+        ),
+      ),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(AleraButton, 'Add Note'), findsNothing);
+    await tester.tap(find.byTooltip('Save note'));
+    await tester.pump();
+
+    expect(find.text('Note is required.'), findsOneWidget);
+    expect(actions.calls, 0);
+    controller.dispose();
+  });
+
+  testWidgets('notes input submits through the alert action API', (
+    tester,
+  ) async {
+    final actions = _CountingActions(_alert());
+    final controller = CaregiverAlertController(
+      loader: _DetailLoader([_alert()]),
+      actions: actions,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverAlertDetailPage(
+          alert: _alert(),
+          careRecipient: null,
+          alertController: controller,
+        ),
+      ),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '  Followed up  ');
+    await tester.tap(find.byTooltip('Save note'));
+    await tester.pumpAndSettle();
+
+    expect(actions.lastNote, 'Followed up');
+    expect(find.widgetWithText(AleraButton, 'Add Note'), findsNothing);
+    controller.dispose();
+  });
 }
 
 Widget _detailPage({required CaregiverAlert alert, CareRecipient? recipient}) {
@@ -159,4 +218,42 @@ CaregiverAlert _alert({
     detectedAt: detectedAt ?? DateTime.now().subtract(const Duration(hours: 2)),
     timeline: const [],
   );
+}
+
+class _DetailLoader implements CaregiverAlertDataSource {
+  final List<CaregiverAlert> alerts;
+  const _DetailLoader(this.alerts);
+  @override
+  Future<List<CaregiverAlert>> fetchAlerts() async => alerts;
+}
+
+class _CountingActions implements CaregiverAlertActionDataSource {
+  final CaregiverAlert result;
+  int calls = 0;
+  String? lastNote;
+  _CountingActions(this.result);
+  Future<CaregiverAlert> _run() async {
+    calls++;
+    return result;
+  }
+
+  @override
+  Future<CaregiverAlert> acknowledge(String alertId, {String? note}) => _run();
+  @override
+  Future<CaregiverAlert> addNote(String alertId, String note) {
+    lastNote = note;
+    return _run();
+  }
+
+  @override
+  Future<CaregiverAlert> logIntervention(
+    String alertId,
+    CaregiverInterventionType interventionType,
+    String note,
+  ) => _run();
+  @override
+  Future<CaregiverAlert> markFalseAlarm(String alertId, String reason) =>
+      _run();
+  @override
+  Future<CaregiverAlert> resolve(String alertId, {String? note}) => _run();
 }

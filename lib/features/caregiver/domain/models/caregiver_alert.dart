@@ -2,7 +2,7 @@ enum CaregiverAlertSeverity { warning, critical }
 
 enum CaregiverAlertMetric { heartRate, spo2, watchBattery }
 
-enum CaregiverAlertStatus { active, acknowledged, resolved }
+enum CaregiverAlertStatus { active, acknowledged, resolved, falseAlarm }
 
 class AlertTimelineEntry {
   final DateTime occurredAt;
@@ -30,6 +30,8 @@ class CaregiverAlert {
   final String unit;
   final Duration? triggerDuration;
   final DateTime detectedAt;
+  final DateTime? confirmedAt;
+  final DateTime? resolvedAt;
   final List<AlertTimelineEntry> timeline;
   final String? note;
 
@@ -47,6 +49,8 @@ class CaregiverAlert {
     required this.unit,
     required this.triggerDuration,
     required this.detectedAt,
+    this.confirmedAt,
+    this.resolvedAt,
     required this.timeline,
     this.note,
   });

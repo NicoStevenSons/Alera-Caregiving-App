@@ -26,7 +26,7 @@ class HomePatientHeader extends StatelessWidget {
           colors: [
             Color(0xFFC3A7F5), // Top: Medium Soft Lavender
             Color(0xFFE8E0FF), // Bottom: Light Pale Lavender
-          ],        
+          ],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
       ),
@@ -61,8 +61,9 @@ class HomePatientHeader extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Last Check-in: '
-                            '${_time(careRecipient.healthSnapshot.lastCheckIn)}',
+                            careRecipient.healthSnapshot.hasLastCheckIn
+                                ? 'Last Check-in: ${_time(careRecipient.healthSnapshot.lastCheckIn)}'
+                                : 'Last Check-in: No data',
                             style: const TextStyle(
                               color: AleraColors.textSecondary,
                               fontSize: 11,

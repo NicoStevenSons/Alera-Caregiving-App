@@ -15,6 +15,46 @@ class CaregiverAuthApi {
     this.timeout = const Duration(seconds: 15),
   }) : _client = client ?? http.Client();
 
+  Future<HouseholdValidationResult> validateHousehold({
+    required String householdCode,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.backendBaseUrl}/api/v1/auth/household/validate',
+    );
+    try {
+      final response = await _client
+          .post(
+            uri,
+            headers: const {'content-type': 'application/json'},
+            body: jsonEncode({'household_code': householdCode}),
+          )
+          .timeout(timeout);
+      if (response.statusCode == 404) {
+        throw const HouseholdNotFoundFailure();
+      }
+      if (response.statusCode != 200) {
+        throw const HouseholdValidationFailure();
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic> || decoded['valid'] != true) {
+        throw const HouseholdNotFoundFailure();
+      }
+      final householdName = decoded['household_name'];
+      if (householdName is! String || householdName.trim().isEmpty) {
+        throw const HouseholdValidationFailure();
+      }
+      return HouseholdValidationResult(householdName.trim());
+    } on TimeoutException {
+      throw const HouseholdValidationFailure();
+    } on HouseholdValidationException {
+      rethrow;
+    } on http.ClientException {
+      throw const HouseholdValidationFailure();
+    } on FormatException {
+      throw const HouseholdValidationFailure();
+    }
+  }
+
   Future<String> login({
     required String householdCode,
     required String email,
@@ -102,4 +142,28 @@ class CaregiverLoginFailure implements Exception {
   final String message;
 
   const CaregiverLoginFailure(this.message);
+}
+
+class HouseholdValidationResult {
+  final String householdName;
+  const HouseholdValidationResult(this.householdName);
+}
+
+sealed class HouseholdValidationException implements Exception {
+  final String message;
+  const HouseholdValidationException(this.message);
+}
+
+class HouseholdNotFoundFailure extends HouseholdValidationException {
+  const HouseholdNotFoundFailure()
+    : super(
+        'We couldn’t find that household code. Check the code and try again.',
+      );
+}
+
+class HouseholdValidationFailure extends HouseholdValidationException {
+  const HouseholdValidationFailure()
+    : super(
+        'We couldn’t verify the household right now. Check your connection and try again.',
+      );
 }

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:workmanager/workmanager.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/app_config.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+
+import 'services/fcm_notification_service.dart';
 
 import 'Services/background_sync_service.dart';
 
@@ -12,6 +17,9 @@ import 'features/elderly/services/reminder_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+  await FcmNotificationService.instance.initialize();
 
   await Workmanager().initialize(callbackDispatcher);
 

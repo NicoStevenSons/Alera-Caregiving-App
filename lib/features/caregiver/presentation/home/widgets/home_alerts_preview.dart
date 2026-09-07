@@ -43,8 +43,27 @@ class _HomeAlertsPreviewState extends State<HomeAlertsPreview> {
         children: [
           if (visibleAlerts.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No active alerts'),
+              padding: EdgeInsets.symmetric(vertical: 26),
+              child: Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'No active alerts right now',
+                      style: TextStyle(
+                        color: Color(0xFFA69BD2),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'We’ll let you know if anything needs attention.',
+                      style: TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
             )
           else
             for (int index = 0; index < visibleAlerts.length; index++) ...[

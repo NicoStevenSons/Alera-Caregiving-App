@@ -14,6 +14,7 @@ class CaregiverAlertDto {
   final String? readingUnit;
   final DateTime detectedAt;
   final DateTime? confirmedAt;
+  final DateTime? resolvedAt;
 
   const CaregiverAlertDto({
     required this.alertId,
@@ -29,6 +30,7 @@ class CaregiverAlertDto {
     required this.readingUnit,
     required this.detectedAt,
     required this.confirmedAt,
+    required this.resolvedAt,
   });
 
   factory CaregiverAlertDto.fromJson(Map<String, dynamic> json) {
@@ -48,6 +50,7 @@ class CaregiverAlertDto {
       readingUnit: _optionalString(json['reading_unit']),
       detectedAt: _requiredDateTime(json, 'detected_at'),
       confirmedAt: _optionalDateTime(json, 'confirmed_at'),
+      resolvedAt: _optionalDateTime(json, 'resolved_at'),
     );
   }
 
@@ -72,8 +75,8 @@ class CaregiverAlertDto {
         'ACTIVE' => CaregiverAlertStatus.active,
         'ACKNOWLEDGED' => CaregiverAlertStatus.acknowledged,
         'RESOLVED' => CaregiverAlertStatus.resolved,
-        // Expand the domain enum when lifecycle UI supports these statuses.
-        'FALSE_ALARM' || 'ARCHIVED' => CaregiverAlertStatus.resolved,
+        'FALSE_ALARM' => CaregiverAlertStatus.falseAlarm,
+        'ARCHIVED' => CaregiverAlertStatus.resolved,
         _ => throw FormatException('Unsupported alert status: $status'),
       },
       reading: readingValue ?? 0,
@@ -81,6 +84,8 @@ class CaregiverAlertDto {
       unit: readingUnit ?? '',
       triggerDuration: confirmedAt?.difference(detectedAt),
       detectedAt: detectedAt,
+      confirmedAt: confirmedAt,
+      resolvedAt: resolvedAt,
       timeline: const [],
     );
   }

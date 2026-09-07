@@ -8,8 +8,13 @@ import '../../../domain/models/health_snapshot.dart';
 
 class HomeInsightsCard extends StatelessWidget {
   final HealthSnapshot snapshot;
+  final bool backendBacked;
 
-  const HomeInsightsCard({super.key, required this.snapshot});
+  const HomeInsightsCard({
+    super.key,
+    required this.snapshot,
+    this.backendBacked = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +28,15 @@ class HomeInsightsCard extends StatelessWidget {
           _Insight(
             assetPath: 'alera-figma-assets/assets/icons/mini_status/spo2.svg',
             color: const Color(0xFF8A78F0),
-            title: snapshot.spo2Percent == null
+            title: backendBacked
+                ? 'Overnight SpO2 insight unavailable'
+                : snapshot.spo2Percent == null
                 ? 'No overnight SpO2 reading'
                 : 'SpO2 stayed stable overnight',
-            subtitle: snapshot.spo2Percent == null
-                ? 'Waiting for mock data'
+            subtitle: backendBacked
+                ? 'Overnight insight remains mock-only'
+                : snapshot.spo2Percent == null
+                ? 'No backend reading available'
                 : '${(snapshot.spo2Percent! - 1).toStringAsFixed(0)} - ${snapshot.spo2Percent!.toStringAsFixed(0)}% while sleeping',
           ),
           const SizedBox(height: 10),
@@ -35,19 +44,27 @@ class HomeInsightsCard extends StatelessWidget {
             assetPath:
                 'alera-figma-assets/assets/icons/mini_status/activity.svg',
             color: const Color(0xFF79CF2E),
-            title: snapshot.steps == null
+            title: backendBacked
+                ? 'Activity insight unavailable'
+                : snapshot.steps == null
                 ? 'No activity data today'
                 : 'Low activity today',
-            subtitle: snapshot.steps == null
-                ? 'Waiting for mock data'
+            subtitle: backendBacked
+                ? 'Activity remains mock-only'
+                : snapshot.steps == null
+                ? 'Activity remains mock-only'
                 : '${snapshot.steps} steps recorded',
           ),
           const SizedBox(height: 10),
           _Insight(
             assetPath: 'alera-figma-assets/assets/icons/mini_status/sleep.svg',
             color: const Color(0xFF9A72F0),
-            title: 'Slept $sleep',
-            subtitle: 'Mock sleep summary',
+            title: backendBacked
+                ? 'Sleep insight unavailable'
+                : snapshot.sleepDuration == Duration.zero
+                ? 'Sleep data unavailable'
+                : 'Slept $sleep',
+            subtitle: 'Sleep remains mock-only',
           ),
         ],
       ),

@@ -26,7 +26,9 @@ import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
 
 
 class ElderlyInterface extends StatefulWidget {
-  const ElderlyInterface({super.key});
+  final VoidCallback? onSignOut;
+
+  const ElderlyInterface({super.key, this.onSignOut});
 
   @override
   State<ElderlyInterface> createState() => _ElderlyInterfaceState();
@@ -243,6 +245,14 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           ),
 
           actions: [
+            if (widget.onSignOut != null)
+              TextButton(
+                onPressed: widget.onSignOut,
+                child: const Text(
+                  'Sign out',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             IconButton(
               icon: Icon(
                 deviceStatusData.connectedToPhone == true
