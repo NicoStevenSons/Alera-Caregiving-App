@@ -90,6 +90,7 @@ flutter:
     - alera-figma-assets/assets/icons/status/
     - alera-figma-assets/assets/icons/mini_status/
     - alera-figma-assets/assets/icons/vitals/
+    - alera-figma-assets/assets/icons/device_status/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
