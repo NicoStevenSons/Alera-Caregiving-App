@@ -47,6 +47,28 @@ class CreatePatientRequest {
   };
 }
 
+class UpdateMonitoringSettingsRequest {
+  final int normalHrMin;
+  final int normalHrMax;
+  final int usualSpo2Min;
+  final int? usualSpo2Max;
+
+  const UpdateMonitoringSettingsRequest({
+    required this.normalHrMin,
+    required this.normalHrMax,
+    required this.usualSpo2Min,
+    required this.usualSpo2Max,
+  });
+
+  Map<String, Object?> toJson() => {
+    'normal_hr_min': normalHrMin,
+    'normal_hr_max': normalHrMax,
+    'usual_spo2_min': usualSpo2Min,
+    // An explicit null clears the maximum and is part of the API contract.
+    'usual_spo2_max': usualSpo2Max,
+  };
+}
+
 String? _trimmedOrNull(String? value) {
   final trimmed = value?.trim();
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
@@ -118,6 +140,8 @@ class PatientCreatedResponse {
 }
 
 enum PatientMonitoringStatus { critical, warning, stable, noData, unknown }
+
+enum PatientThresholdMode { defaultMode, custom, unknown }
 
 enum PatientDeviceConnectionStatus {
   notConnected,
@@ -325,6 +349,7 @@ class PaginatedPatientListDto {
 }
 
 class PatientDetailDto extends PatientListItemDto {
+  final PatientAccessStatus patientAccessStatus;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? knownConditions;
@@ -334,6 +359,12 @@ class PatientDetailDto extends PatientListItemDto {
   final String? monitoringNotes;
   final DateTime? archivedAt;
   final PatientAssignmentDto? assignment;
+  final int normalHrMin;
+  final int normalHrMax;
+  final int usualSpo2Min;
+  final int? usualSpo2Max;
+  final PatientThresholdMode thresholdMode;
+  final String thresholdModeValue;
 
   const PatientDetailDto({
     required super.patientId,
@@ -347,6 +378,7 @@ class PatientDetailDto extends PatientListItemDto {
     required super.accountStatus,
     required super.createdAt,
     required super.currentSummary,
+    required this.patientAccessStatus,
     required this.emergencyContactName,
     required this.emergencyContactPhone,
     required this.knownConditions,
@@ -356,11 +388,24 @@ class PatientDetailDto extends PatientListItemDto {
     required this.monitoringNotes,
     required this.archivedAt,
     required this.assignment,
+    required this.normalHrMin,
+    required this.normalHrMax,
+    required this.usualSpo2Min,
+    required this.usualSpo2Max,
+    required this.thresholdMode,
+    required this.thresholdModeValue,
   });
 
   factory PatientDetailDto.fromJson(Map<String, dynamic> json) {
     final base = PatientListItemDto.fromJson(json);
     final assignment = json['assignment'];
+    final thresholdMode = _requiredString(
+      json['threshold_mode'],
+      'threshold_mode',
+    );
+    final patientAccess = PatientAccessStatus.fromJson(
+      _requiredMap(json['patient_access'], 'patient_access'),
+    );
     return PatientDetailDto(
       patientId: base.patientId,
       userId: base.userId,
@@ -373,6 +418,7 @@ class PatientDetailDto extends PatientListItemDto {
       accountStatus: base.accountStatus,
       createdAt: base.createdAt,
       currentSummary: base.currentSummary,
+      patientAccessStatus: patientAccess,
       emergencyContactName: json['emergency_contact_name'] as String?,
       emergencyContactPhone: json['emergency_contact_phone'] as String?,
       knownConditions: json['known_conditions'] as String?,
@@ -386,9 +432,98 @@ class PatientDetailDto extends PatientListItemDto {
           : PatientAssignmentDto.fromJson(
               _requiredMap(assignment, 'assignment'),
             ),
+      normalHrMin: _requiredInt(json['normal_hr_min'], 'normal_hr_min'),
+      normalHrMax: _requiredInt(json['normal_hr_max'], 'normal_hr_max'),
+      usualSpo2Min: _requiredInt(json['usual_spo2_min'], 'usual_spo2_min'),
+      usualSpo2Max: _nullableInt(json['usual_spo2_max'], 'usual_spo2_max'),
+      thresholdMode: _patientThresholdMode(thresholdMode),
+      thresholdModeValue: thresholdMode,
     );
   }
 }
+
+/// Patient-app access is distinct from smartwatch/device connectivity.
+enum PatientAccessState { notConnected, invitePending, connected, unknown }
+
+class PatientAccessStatus {
+  final PatientAccessState status;
+  final String statusValue;
+  final String? pendingAccessCodeId;
+  final DateTime? pendingExpiresAt;
+  final DateTime? connectedAt;
+
+  const PatientAccessStatus({
+    required this.status,
+    required this.statusValue,
+    required this.pendingAccessCodeId,
+    required this.pendingExpiresAt,
+    required this.connectedAt,
+  });
+
+  factory PatientAccessStatus.fromJson(Map<String, dynamic> json) {
+    final value = _requiredString(json['status'], 'patient_access.status');
+    return PatientAccessStatus(
+      status: switch (value) {
+        'NOT_CONNECTED' => PatientAccessState.notConnected,
+        'INVITE_PENDING' => PatientAccessState.invitePending,
+        'CONNECTED' => PatientAccessState.connected,
+        _ => PatientAccessState.unknown,
+      },
+      statusValue: value,
+      pendingAccessCodeId: _nullableString(
+        json['pending_access_code_id'],
+        'patient_access.pending_access_code_id',
+      ),
+      pendingExpiresAt: _utcOrNull(json['pending_expires_at']),
+      connectedAt: _utcOrNull(json['connected_at']),
+    );
+  }
+}
+
+class MonitoringSettingsResponse {
+  final String patientId;
+  final PatientThresholdMode thresholdMode;
+  final String thresholdModeValue;
+  final int normalHrMin;
+  final int normalHrMax;
+  final int usualSpo2Min;
+  final int? usualSpo2Max;
+  final DateTime updatedAt;
+
+  const MonitoringSettingsResponse({
+    required this.patientId,
+    required this.thresholdMode,
+    required this.thresholdModeValue,
+    required this.normalHrMin,
+    required this.normalHrMax,
+    required this.usualSpo2Min,
+    required this.usualSpo2Max,
+    required this.updatedAt,
+  });
+
+  factory MonitoringSettingsResponse.fromJson(Map<String, dynamic> json) {
+    final thresholdMode = _requiredString(
+      json['threshold_mode'],
+      'threshold_mode',
+    );
+    return MonitoringSettingsResponse(
+      patientId: _requiredString(json['patient_id'], 'patient_id'),
+      thresholdMode: _patientThresholdMode(thresholdMode),
+      thresholdModeValue: thresholdMode,
+      normalHrMin: _requiredInt(json['normal_hr_min'], 'normal_hr_min'),
+      normalHrMax: _requiredInt(json['normal_hr_max'], 'normal_hr_max'),
+      usualSpo2Min: _requiredInt(json['usual_spo2_min'], 'usual_spo2_min'),
+      usualSpo2Max: _nullableInt(json['usual_spo2_max'], 'usual_spo2_max'),
+      updatedAt: _requiredUtc(json['updated_at'], 'updated_at'),
+    );
+  }
+}
+
+PatientThresholdMode _patientThresholdMode(String value) => switch (value) {
+  'DEFAULT' => PatientThresholdMode.defaultMode,
+  'CUSTOM' => PatientThresholdMode.custom,
+  _ => PatientThresholdMode.unknown,
+};
 
 double? _decimalOrNull(Object? value) => switch (value) {
   num number => number.toDouble(),
@@ -413,9 +548,19 @@ String _requiredString(Object? value, String field) {
   throw FormatException('$field must be a string');
 }
 
+String? _nullableString(Object? value, String field) {
+  if (value == null) return null;
+  return _requiredString(value, field);
+}
+
 int _requiredInt(Object? value, String field) {
   if (value is int) return value;
   throw FormatException('$field must be an integer');
+}
+
+int? _nullableInt(Object? value, String field) {
+  if (value == null) return null;
+  return _requiredInt(value, field);
 }
 
 double _requiredDecimal(Object? value, String field) {

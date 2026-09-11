@@ -62,8 +62,7 @@ class CareRecipientCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 _StatusRow(
-                  assetPath:
-                      'alera-figma-assets/assets/icons/status/alert.svg',
+                  assetPath: 'alera-figma-assets/assets/icons/status/alert.svg',
                   label: careRecipient.alertCount == 0
                       ? 'No Alerts'
                       : '${careRecipient.alertCount} Alerts',
@@ -152,10 +151,7 @@ class _StatusRow extends StatelessWidget {
   final String assetPath;
   final String label;
 
-  const _StatusRow({
-    required this.assetPath,
-    required this.label,
-  });
+  const _StatusRow({required this.assetPath, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -166,10 +162,7 @@ class _StatusRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: AleraTypography.body.copyWith(
-              fontSize: 13,
-              height: 1,
-            ),
+            style: AleraTypography.body.copyWith(fontSize: 13, height: 1),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -189,18 +182,11 @@ class _DeviceAvailability extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AleraSvgIcon(
-          assetPath: assetPath,
-          width: 17,
-          height: 17,
-        ),
+        AleraSvgIcon(assetPath: assetPath, width: 17, height: 17),
         const SizedBox(width: AleraSpacing.xSmall),
         Text(
           'Unavailable',
-          style: AleraTypography.body.copyWith(
-            fontSize: 14,
-            height: 1,
-          ),
+          style: AleraTypography.body.copyWith(fontSize: 14, height: 1),
         ),
       ],
     );

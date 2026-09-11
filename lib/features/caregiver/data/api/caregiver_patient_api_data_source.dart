@@ -10,6 +10,10 @@ import 'dto/patient_dto.dart';
 abstract interface class CaregiverPatientDataSource {
   Future<PatientCreatedResponse> createPatient(CreatePatientRequest request);
   Future<PatientAccessCodeResponse> createAccessCode(String patientId);
+  Future<MonitoringSettingsResponse> updateMonitoringSettings(
+    String patientId,
+    UpdateMonitoringSettingsRequest request,
+  );
 }
 
 abstract interface class CaregiverPatientReadDataSource {
@@ -69,24 +73,83 @@ class CaregiverPatientApiDataSource
     return PatientAccessCodeResponse.fromJson(_jsonObject(response));
   }
 
-  Future<http.Response> _post(String path, Map<String, Object?> body) async {
+  @override
+  Future<MonitoringSettingsResponse> updateMonitoringSettings(
+    String patientId,
+    UpdateMonitoringSettingsRequest request,
+  ) async {
+    final response = await _patch(
+      '/api/v1/patients/${Uri.encodeComponent(patientId)}/monitoring-settings',
+      request.toJson(),
+    );
+    return _parse(
+      () => MonitoringSettingsResponse.fromJson(_jsonObject(response)),
+    );
+  }
+
+  Future<http.Response> _post(String path, Map<String, Object?> body) =>
+      _writeJson(
+        path,
+        body,
+        method: _PatientWriteMethod.post,
+        expectedStatusCode: 201,
+      );
+
+  Future<http.Response> _patch(String path, Map<String, Object?> body) =>
+      _writeJson(
+        path,
+        body,
+        method: _PatientWriteMethod.patch,
+        expectedStatusCode: 200,
+        patientScoped: true,
+      );
+
+  Future<http.Response> _writeJson(
+    String path,
+    Map<String, Object?> body, {
+    required _PatientWriteMethod method,
+    required int expectedStatusCode,
+    bool patientScoped = false,
+  }) async {
     final token = _session.accessToken;
     if (token == null || token.isEmpty) {
       throw const CaregiverPatientApiFailure('Please sign in again.');
     }
     try {
-      final response = await _client
-          .post(
-            Uri.parse('${AppConfig.backendBaseUrl}$path'),
-            headers: {
-              'authorization': 'Bearer $token',
-              'content-type': 'application/json',
-            },
-            body: jsonEncode(body),
-          )
-          .timeout(timeout);
+      final uri = Uri.parse('${AppConfig.backendBaseUrl}$path');
+      final headers = {
+        'authorization': 'Bearer $token',
+        'content-type': 'application/json',
+      };
+      final encodedBody = jsonEncode(body);
+      final response = await (switch (method) {
+        _PatientWriteMethod.post => _client.post(
+          uri,
+          headers: headers,
+          body: encodedBody,
+        ),
+        _PatientWriteMethod.patch => _client.patch(
+          uri,
+          headers: headers,
+          body: encodedBody,
+        ),
+      }).timeout(timeout);
       await _throwForAuth(response);
-      if (response.statusCode != 201) {
+      if (patientScoped && response.statusCode == 404) {
+        throw const CaregiverPatientApiFailure(
+          'Patient not found.',
+          kind: CaregiverPatientFailureKind.notFound,
+          statusCode: 404,
+        );
+      }
+      if (patientScoped && response.statusCode >= 500) {
+        throw CaregiverPatientApiFailure(
+          'The server is temporarily unavailable.',
+          kind: CaregiverPatientFailureKind.server,
+          statusCode: response.statusCode,
+        );
+      }
+      if (response.statusCode != expectedStatusCode) {
         throw CaregiverPatientApiFailure(_safeMessage(response));
       }
       return response;
@@ -224,6 +287,8 @@ class CaregiverPatientApiDataSource
     return 'Unable to complete the request. Please try again.';
   }
 }
+
+enum _PatientWriteMethod { post, patch }
 
 enum CaregiverPatientFailureKind {
   other,

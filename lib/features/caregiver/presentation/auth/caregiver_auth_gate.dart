@@ -119,6 +119,7 @@ class _HouseholdCodeInputState extends State<HouseholdCodeInput> {
                 width: 1,
                 height: 1,
                 child: TextField(
+                  key: const Key('household-code-field'),
                   controller: _fieldController,
                   focusNode: _focusNode,
                   enabled: widget.enabled,
@@ -319,7 +320,9 @@ class HouseholdAuthFlow extends StatefulWidget {
 }
 
 class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
-  final _formKey = GlobalKey<FormState>();
+  final _householdFormKey = GlobalKey<FormState>();
+  final _caregiverFormKey = GlobalKey<FormState>();
+  final _patientCodeFormKey = GlobalKey<FormState>();
   final _household = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -386,7 +389,10 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
       value == null || value.trim().isEmpty ? 'Required' : null;
 
   Future<void> _continueHousehold() async {
-    if (_submitting || !(_formKey.currentState?.validate() ?? false)) return;
+    if (_submitting ||
+        !(_householdFormKey.currentState?.validate() ?? false)) {
+      return;
+    }
     _household.text = _household.text.trim().toUpperCase();
 
     setState(() {
@@ -419,7 +425,10 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
   }
 
   Future<void> _submit() async {
-    if (_submitting || !(_formKey.currentState?.validate() ?? false)) return;
+    final formKey = _step == _AuthStep.patientManual
+        ? _patientCodeFormKey
+        : _caregiverFormKey;
+    if (_submitting || !(formKey.currentState?.validate() ?? false)) return;
 
     setState(() {
       _submitting = true;
@@ -696,7 +705,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 10, 24, 24),
             child: Form(
-              key: _formKey,
+              key: _patientCodeFormKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -934,7 +943,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(32, 10, 32, 24),
             child: Form(
-              key: _formKey,
+              key: _caregiverFormKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1173,7 +1182,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                                 ),
                                 const SizedBox(height: 28),
                                 Form(
-                                  key: _formKey,
+                                  key: _householdFormKey,
                                   child: HouseholdCodeInput(
                                     controller: _household,
                                     enabled: !_submitting,
@@ -1237,7 +1246,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                       child: AleraCard(
                         padding: const EdgeInsets.all(24),
                         child: Form(
-                          key: _formKey,
+                              key: _caregiverFormKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [

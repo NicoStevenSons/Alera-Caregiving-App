@@ -158,13 +158,27 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('I’m a Caregiver'));
     await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'I’m a Caregiver' &&
+            widget.properties.selected == true,
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('household-code-field')),
       'AAAA-BBBB',
     );
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Signing in to Alera Test Household'), findsOneWidget);
+    expect(
+      find.text('Sign in to Alera Test Household household'),
+      findsOneWidget,
+    );
     await tester.enterText(
       find.byKey(const Key('caregiver-email-field')),
       'caregiver@example.test',
@@ -208,6 +222,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('I’m a Caregiver'));
     await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'I’m a Caregiver' &&
+            widget.properties.selected == true,
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('household-code-field')),
       '4v8f-29hc',
@@ -227,17 +252,17 @@ void main() {
     );
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Signing in to Retry Household'), findsOneWidget);
-    expect(find.text('4V8F-29HC'), findsNothing);
-    await tester.tap(find.text('Edit household'));
+    expect(find.text('Sign in to Retry Household household'), findsOneWidget);
+    expect(find.byKey(const Key('selected-household')), findsOneWidget);
+    await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('household-code-field')), findsOneWidget);
     expect(
       tester
-          .widget<TextFormField>(find.byKey(const Key('household-code-field')))
+          .widget<TextField>(find.byKey(const Key('household-code-field')))
           .controller
           ?.text,
-      '4V8F-29HC',
+      '4V8F29HC',
     );
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
@@ -257,6 +282,17 @@ void main() {
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('I’m a Caregiver'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'I’m a Caregiver' &&
+            widget.properties.selected == true,
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('household-code-field')),
