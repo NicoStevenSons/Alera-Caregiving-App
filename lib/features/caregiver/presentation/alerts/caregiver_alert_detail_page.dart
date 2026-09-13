@@ -525,7 +525,7 @@ class _SummaryCard extends StatelessWidget {
                             onTap: onStatusTap,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: AleraColors.critical.withOpacity(0.14),
+                                color: AleraColors.critical.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Padding(

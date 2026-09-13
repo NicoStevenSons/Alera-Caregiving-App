@@ -153,11 +153,23 @@ class _CaregiverPatientDetailLoaderPageState
       _failure = null;
     });
     try {
-      final detail = await widget.controller.loadDetail(widget.patientId);
-      if (mounted) {
-        setState(() => _patient = patientDetailToCareRecipient(detail));
-      }
-    } on CaregiverPatientApiFailure catch (failure) {
+  final detailFuture = widget.controller.loadDetail(widget.patientId);
+  final devicesFuture = widget.controller.loadMonitoringDevices(
+    widget.patientId,
+  );
+
+  final detail = await detailFuture;
+  final devices = await devicesFuture;
+
+  if (mounted) {
+    setState(
+      () => _patient = patientDetailToCareRecipient(
+        detail,
+        monitoringDevices: devices,
+       ),
+     );
+    }
+  } on CaregiverPatientApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
     }
   }

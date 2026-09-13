@@ -3,6 +3,7 @@ import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
 import 'package:alera/features/caregiver/data/patients/caregiver_patient_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:alera/features/caregiver/data/api/dto/monitoring_device_dto.dart';
 
 void main() {
   test(
@@ -90,6 +91,12 @@ class _ReadSource implements CaregiverPatientReadDataSource {
   @override
   Future<PatientDetailDto> fetchPatient(String patientId) =>
       throw UnimplementedError();
+
+  @override
+  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
+    String patientId,
+  ) async =>
+    const [];
 }
 
 PatientListItemDto _item(String id) => PatientListItemDto(

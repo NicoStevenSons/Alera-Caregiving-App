@@ -1,13 +1,32 @@
+enum MonitoringDeviceConnectionStatus { connected, disconnected, unknown }
+
 class MonitoringDevice {
   final String name;
-  final int batteryPercent;
-  final bool isConnected;
+  final int? batteryPercent;
+  final MonitoringDeviceConnectionStatus connectionStatus;
 
   const MonitoringDevice({
     required this.name,
     required this.batteryPercent,
-    required this.isConnected,
+    required this.connectionStatus,
   });
+
+  bool get isConnected =>
+      connectionStatus == MonitoringDeviceConnectionStatus.connected;
+} extension MonitoringDeviceListLookup on List<MonitoringDevice> {
+  MonitoringDevice? get watch => _findByName('watch');
+
+  MonitoringDevice? get phone => _findByName('phone');
+
+  MonitoringDevice? _findByName(String expectedName) {
+    for (final device in this) {
+      if (device.name.toLowerCase() == expectedName) {
+        return device;
+      }
+    }
+
+    return null;
+  }
 }
 
 class HealthSnapshot {

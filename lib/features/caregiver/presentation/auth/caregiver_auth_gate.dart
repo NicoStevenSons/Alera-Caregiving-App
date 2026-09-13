@@ -1063,7 +1063,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
               fit: StackFit.expand,
               children: [
                 ...previousChildren,
-                if (currentChild != null) currentChild,
+                ?currentChild,
               ],
             ),
             transitionBuilder: (child, animation) {

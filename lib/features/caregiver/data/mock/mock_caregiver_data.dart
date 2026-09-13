@@ -32,12 +32,12 @@ abstract final class MockCaregiverData {
           MonitoringDevice(
             name: 'Phone',
             batteryPercent: 78,
-            isConnected: true,
+            connectionStatus: MonitoringDeviceConnectionStatus.connected,
           ),
           MonitoringDevice(
             name: 'Watch',
             batteryPercent: 67,
-            isConnected: true,
+            connectionStatus: MonitoringDeviceConnectionStatus.connected,
           ),
         ],
       ),
@@ -63,12 +63,12 @@ abstract final class MockCaregiverData {
           MonitoringDevice(
             name: 'Phone',
             batteryPercent: 78,
-            isConnected: true,
+             connectionStatus: MonitoringDeviceConnectionStatus.connected,
           ),
           MonitoringDevice(
             name: 'Watch',
             batteryPercent: 67,
-            isConnected: true,
+             connectionStatus: MonitoringDeviceConnectionStatus.connected,
           ),
         ],
       ),

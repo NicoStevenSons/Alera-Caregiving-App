@@ -4,6 +4,7 @@ import '../../domain/models/care_recipient.dart';
 import '../../domain/models/health_snapshot.dart';
 import '../api/caregiver_patient_api_data_source.dart';
 import '../api/dto/patient_dto.dart';
+import '../api/dto/monitoring_device_dto.dart';
 
 enum CaregiverPatientListState {
   initialLoading,
@@ -76,13 +77,20 @@ class CaregiverPatientController extends ChangeNotifier {
   Future<PatientDetailDto> loadDetail(String patientId) =>
       dataSource.fetchPatient(patientId);
 
+  Future<List<MonitoringDeviceDto>> loadMonitoringDevices(
+  String patientId,
+    ) =>
+    dataSource.fetchMonitoringDevices(patientId);
+
   List<CareRecipient> get visiblePatients =>
       state == CaregiverPatientListState.demoFallback
       ? demoPatients
       : patients.map(patientListItemToCareRecipient).toList(growable: false);
 }
 
-CareRecipient patientListItemToCareRecipient(PatientListItemDto patient) {
+CareRecipient patientListItemToCareRecipient( PatientListItemDto patient, {
+  List<MonitoringDevice> devices = const [],
+  }) {
   final summary = patient.currentSummary;
   final status = switch (summary.monitoringStatus) {
     PatientMonitoringStatus.critical => CareStatus.critical,
@@ -135,10 +143,45 @@ CareRecipient patientListItemToCareRecipient(PatientListItemDto patient) {
       deviceConnectionLabel: connectionLabel,
       lastDeviceSyncAt: summary.lastDeviceSyncAt,
       highestActiveAlertSeverity: summary.highestActiveAlertSeverity,
-      devices: const [],
+      devices: devices,
     ),
   );
 }
 
-CareRecipient patientDetailToCareRecipient(PatientDetailDto patient) =>
-    patientListItemToCareRecipient(patient);
+CareRecipient patientDetailToCareRecipient(
+  PatientDetailDto patient, {
+  List<MonitoringDeviceDto> monitoringDevices = const [],
+}) {
+  return patientListItemToCareRecipient(
+    patient,
+    devices: monitoringDevices
+        .map(monitoringDeviceDtoToDomain)
+        .toList(growable: false),
+  );
+}
+
+MonitoringDevice monitoringDeviceDtoToDomain(
+  MonitoringDeviceDto device,
+) {
+  final name = switch (device.deviceType) {
+    MonitoringDeviceTypeDto.watch => 'Watch',
+    MonitoringDeviceTypeDto.phone => 'Phone',
+    MonitoringDeviceTypeDto.unknown =>
+      device.deviceName ?? device.deviceTypeValue,
+  };
+
+  final connectionStatus = switch (device.connectionStatus) {
+    DeviceConnectionStatusDto.connected =>
+      MonitoringDeviceConnectionStatus.connected,
+    DeviceConnectionStatusDto.disconnected =>
+      MonitoringDeviceConnectionStatus.disconnected,
+    DeviceConnectionStatusDto.unknown =>
+      MonitoringDeviceConnectionStatus.unknown,
+  };
+
+  return MonitoringDevice(
+    name: name,
+    batteryPercent: device.batteryPercent,
+    connectionStatus: connectionStatus,
+  );
+}

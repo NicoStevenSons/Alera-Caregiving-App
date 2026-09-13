@@ -24,7 +24,7 @@ class PatientMonitoringDevicesCard extends StatelessWidget {
             name: 'Watch',
             assetPath:
                 'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
-            device: _findDevice('watch'),
+            device: devices.watch,
           ),
           Divider(
             height: 8,
@@ -35,18 +35,11 @@ class PatientMonitoringDevicesCard extends StatelessWidget {
             name: 'Phone',
             assetPath:
                 'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
-            device: _findDevice('phone'),
+            device:  devices.phone,
           ),
         ],
       ),
     );
-  }
-
-  MonitoringDevice? _findDevice(String expectedName) {
-    for (final MonitoringDevice device in devices) {
-      if (device.name.toLowerCase() == expectedName) return device;
-    }
-    return null;
   }
 }
 
@@ -61,9 +54,40 @@ class _DeviceRow extends StatelessWidget {
     required this.device,
   });
 
+  String get _statusLabel {
+    if (device == null) return 'Unavailable';
+
+    return switch (device!.connectionStatus) {
+      MonitoringDeviceConnectionStatus.connected => 'Connected',
+      MonitoringDeviceConnectionStatus.disconnected => 'Disconnected',
+      MonitoringDeviceConnectionStatus.unknown => 'Unknown',
+    };
+  }
+
+  Color get _statusColor {
+    if (device == null) return AleraColors.textSecondary;
+
+    return switch (device!.connectionStatus) {
+      MonitoringDeviceConnectionStatus.connected => AleraColors.success,
+      MonitoringDeviceConnectionStatus.disconnected =>
+        AleraColors.textSecondary,
+      MonitoringDeviceConnectionStatus.unknown => AleraColors.textSecondary,
+    };
+  }
+
+  String get _batteryLabel {
+    final battery = device?.batteryPercent;
+
+    if (device == null) return 'Unavailable';
+    if (battery == null) return '--';
+
+    return '$battery%';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool available = device != null;
+    final available = device != null;
+
     return Row(
       children: [
         AleraSvgIcon(
@@ -77,7 +101,10 @@ class _DeviceRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: AleraTypography.body.copyWith(fontSize: 13)),
+              Text(
+                name,
+                style: AleraTypography.body.copyWith(fontSize: 13),
+              ),
               Row(
                 children: [
                   if (available) ...[
@@ -85,20 +112,14 @@ class _DeviceRow extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: device!.isConnected
-                            ? AleraColors.success
-                            : AleraColors.textSecondary,
+                        color: _statusColor,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 4),
                   ],
                   Text(
-                    available
-                        ? device!.isConnected
-                              ? 'Connected'
-                              : 'Disconnected'
-                        : 'Unavailable',
+                    _statusLabel,
                     style: AleraTypography.body.copyWith(fontSize: 12),
                   ),
                 ],
@@ -107,13 +128,15 @@ class _DeviceRow extends StatelessWidget {
           ),
         ),
         Text(
-          available ? '${device!.batteryPercent}%' : 'Unavailable',
+          _batteryLabel,
           style: AleraTypography.label,
         ),
         const SizedBox(width: 7),
         Icon(
           Icons.battery_5_bar,
-          color: available ? AleraColors.primary : AleraColors.textSecondary,
+          color: device?.batteryPercent != null
+              ? AleraColors.primary
+              : AleraColors.textSecondary,
           size: 20,
         ),
       ],

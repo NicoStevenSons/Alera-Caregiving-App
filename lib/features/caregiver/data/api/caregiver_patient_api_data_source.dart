@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../../config/app_config.dart';
 import '../auth/caregiver_session_controller.dart';
 import 'dto/patient_dto.dart';
+import 'dto/monitoring_device_dto.dart';
 
 abstract interface class CaregiverPatientDataSource {
   Future<PatientCreatedResponse> createPatient(CreatePatientRequest request);
@@ -18,6 +19,7 @@ abstract interface class CaregiverPatientReadDataSource {
     int offset = 0,
   });
   Future<PatientDetailDto> fetchPatient(String patientId);
+  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(String patientId,);
 }
 
 class CaregiverPatientApiDataSource
@@ -43,6 +45,33 @@ class CaregiverPatientApiDataSource
       () => PaginatedPatientListDto.fromJson(_jsonObject(response)),
     );
   }
+
+  @override
+Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
+  String patientId,
+) async {
+  final response = await _get(
+    '/api/v1/patients/${Uri.encodeComponent(patientId)}/monitoring-devices',
+  );
+
+  return _parse(() {
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! List) {
+      throw const FormatException(
+        'monitoring devices response must be a list',
+      );
+    }
+
+    return decoded
+        .map(
+          (item) => MonitoringDeviceDto.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList(growable: false);
+  });
+}
 
   @override
   Future<PatientDetailDto> fetchPatient(String patientId) async {
