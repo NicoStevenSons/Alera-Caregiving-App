@@ -75,7 +75,7 @@ void main() {
     expect(navigationBar.selectedIndex, 2);
   });
 
-  testWidgets('quick actions provide mock-only feedback', (
+  testWidgets('contact actions explain when no phone number is saved', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -92,6 +92,9 @@ void main() {
     await tester.tap(find.text('Call').first);
     await tester.pump();
 
-    expect(find.text('Call is mock-only for now.'), findsOneWidget);
+    expect(
+      find.text('No phone number is saved for Maria Santos.'),
+      findsOneWidget,
+    );
   });
 }

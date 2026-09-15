@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
@@ -36,10 +37,58 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     this.onMarkAsSeen,
   });
 
-  void _showMockFeedback(BuildContext context, String action) {
+  void _showFeedback(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openContactApp(
+    BuildContext context, {
+    required String scheme,
+    required String appLabel,
+  }) async {
+    final phoneNumber = careRecipient.phoneNumber?.trim();
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      _showFeedback(
+        context,
+        'No phone number is saved for ${careRecipient.name}.',
+      );
+      return;
+    }
+
+    final uri = Uri(scheme: scheme, path: phoneNumber);
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        _showFeedback(context, 'Unable to open the $appLabel app.');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showFeedback(context, 'Unable to open the $appLabel app.');
+      }
+    }
+  }
+
+  Future<void> _handleAction(BuildContext context, String action) async {
+    switch (action) {
+      case 'Call':
+        await _openContactApp(
+          context,
+          scheme: 'tel',
+          appLabel: 'calling',
+        );
+        return;
+      case 'Message':
+        await _openContactApp(
+          context,
+          scheme: 'sms',
+          appLabel: 'messaging',
+        );
+        return;
+      default:
+        _showFeedback(context, '$action is mock-only for now.');
+    }
   }
 
   @override
@@ -73,7 +122,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
           children: [
             PatientDetailSummaryCard(
               careRecipient: careRecipient,
-              onAction: (action) => _showMockFeedback(context, action),
+              onAction: (action) => _handleAction(context, action),
             ),
             const SizedBox(height: 12),
             _DashboardCounters(careRecipient: careRecipient),
@@ -94,13 +143,17 @@ class CaregiverPatientDetailPage extends StatelessWidget {
             PatientVitalSummarySection(
               snapshot: careRecipient.healthSnapshot,
               onVitalTap: (label) =>
-                  _showMockFeedback(context, '$label history'),
+                  _showFeedback(
+                    context,
+                    '$label history is mock-only for now.',
+                  ),
             ),
             const SizedBox(height: 12),
             PatientRemindersSection(
               reminders: reminders,
               onViewAll: onViewAllReminders,
-              onAction: (action) => _showMockFeedback(context, action),
+              onAction: (action) =>
+                  _showFeedback(context, '$action is mock-only for now.'),
             ),
           ],
         ),
