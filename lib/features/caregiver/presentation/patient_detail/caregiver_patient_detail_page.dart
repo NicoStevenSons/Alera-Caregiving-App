@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
@@ -140,18 +141,34 @@ class _CaregiverPatientDetailLoaderPageState
     extends State<CaregiverPatientDetailLoaderPage> {
   CareRecipient? _patient;
   CaregiverPatientApiFailure? _failure;
+  Timer? _refreshTimer;
+
 
   @override
   void initState() {
     super.initState();
     _load();
+
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _load(showLoading: false),
+    );
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _patient = null;
-      _failure = null;
-    });
+   @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _patient = null;
+        _failure = null;
+      });
+    }
+
     try {
   final detailFuture = widget.controller.loadDetail(widget.patientId);
   final devicesFuture = widget.controller.loadMonitoringDevices(
