@@ -151,6 +151,10 @@ class _CaregiverShellState extends State<CaregiverShell> {
           builder: (context) => CaregiverPatientDetailLoaderPage(
             patientId: careRecipient.id,
             controller: _patientController!,
+            patientDataSource:
+                widget.patientDataSource is CaregiverPatientDataSource
+                ? widget.patientDataSource as CaregiverPatientDataSource
+                : null,
             alerts: _alertController.alerts
                 .where((alert) => alert.careRecipientId == careRecipient.id)
                 .toList(),
@@ -207,6 +211,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
         builder: (_) => AddPatientPage(
           dataSource:
               widget.patientDataSource ?? CaregiverPatientApiDataSource(),
+          loadPatientDetail: _patientController?.loadDetail,
           householdCode: widget.householdCode,
           onPatientCreated: _addCreatedPatient,
         ),

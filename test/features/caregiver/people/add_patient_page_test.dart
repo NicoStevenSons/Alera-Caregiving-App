@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:convert';
-
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/presentation/people/add_patient_page.dart';
@@ -8,214 +6,216 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('QR payload is valid JSON with the specified fields', () {
-    expect(jsonDecode(buildPatientAccessQrPayload(accessCode: 'ONE-TIME')), {
+  test(
+    'QR payload remains version 2',
+    () => expect(jsonDecode(buildPatientAccessQrPayload(accessCode: 'ABC')), {
       'type': 'alera_patient_access',
       'version': 2,
-      'access_code': 'ONE-TIME',
-    });
-  });
-
-  testWidgets('validates required and numeric fields', (tester) async {
-    final source = _FakePatientSource();
-    await _pump(tester, source);
-    await _scrollToSubmit(tester);
-    await tester.enterText(find.byKey(const Key('heart-rate-field')), '0');
-    await tester.enterText(find.byKey(const Key('spo2-field')), '101');
-    await tester.tap(find.text('Create Patient'));
-    await tester.pump();
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('patient-name-field')),
-      -500,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Enter the patient’s full name.'), findsOneWidget);
-    await _scrollToSubmit(tester);
-    expect(find.textContaining('greater than 0'), findsOneWidget);
-    expect(find.textContaining('from 0 to 100'), findsOneWidget);
-    expect(source.createCalls, 0);
-  });
-
-  testWidgets('loading disables duplicate patient submission', (tester) async {
-    final completer = Completer<PatientCreatedResponse>();
-    final source = _FakePatientSource(createCompleter: completer);
-    await _pump(tester, source);
-    await tester.enterText(find.byKey(const Key('patient-name-field')), 'Ada');
-    await _scrollToSubmit(tester);
-    await tester.tap(find.text('Create Patient'));
-    await tester.pump();
-    await tester.tap(find.text('Creating…'));
-    expect(source.createCalls, 1);
-    completer.complete(_created());
-    await tester.pumpAndSettle();
-    expect(find.text('Patient created'), findsOneWidget);
-  });
-
-  testWidgets('creation success remains successful when issuance fails', (
-    tester,
-  ) async {
-    final source = _FakePatientSource(issueFailure: true);
-    await _create(tester, source);
-    await tester.tap(find.text('Generate Access Code'));
-    await tester.pumpAndSettle();
-    expect(find.text('Patient created'), findsOneWidget);
-    expect(find.text('Unable to issue this code.'), findsOneWidget);
-    expect(find.text('Generate Access Code'), findsOneWidget);
-  });
-
-  testWidgets('successful issuance displays code and QR only after request', (
-    tester,
-  ) async {
-    final source = _FakePatientSource();
-    await _create(tester, source);
-    expect(find.byKey(const Key('issued-access-code')), findsNothing);
-    await tester.tap(find.text('Generate Access Code'));
-    await tester.pumpAndSettle();
-    expect(find.text('ONE-TIME-CODE'), findsOneWidget);
-    expect(find.text('HOME-123'), findsOneWidget);
-    expect(find.byKey(const Key('access-code-qr')), findsOneWidget);
-    expect(find.textContaining('usable only once'), findsOneWidget);
-    expect(source.issueCalls, 1);
-  });
-
-  testWidgets('Done leaves the flow and plaintext code is not persisted', (
-    tester,
-  ) async {
-    final source = _FakePatientSource();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => AddPatientPage(
-                  dataSource: source,
-                  householdCode: 'HOME-123',
-                  onPatientCreated: (_) {},
-                ),
-              ),
-            ),
-            child: const Text('Open'),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('patient-name-field')), 'Ada');
-    await _scrollToSubmit(tester);
-    await tester.tap(find.text('Create Patient'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Generate Access Code'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Done'),
-      400,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Done'));
-    await tester.pumpAndSettle();
-    expect(find.text('Open'), findsOneWidget);
-    expect(find.text('ONE-TIME-CODE'), findsNothing);
-  });
-
-  testWidgets('Back leaves the patient form without creating a patient', (
-    tester,
-  ) async {
-    final source = _FakePatientSource();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => AddPatientPage(
-                  dataSource: source,
-                  householdCode: 'HOME-123',
-                  onPatientCreated: (_) {},
-                ),
-              ),
-            ),
-            child: const Text('Open'),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Open'), findsOneWidget);
-    expect(source.createCalls, 0);
-  });
+      'access_code': 'ABC',
+    }),
+  );
+  testWidgets(
+    'starts setup, validates personal information, and preserves draft on Back',
+    (t) async {
+      final s = _Source();
+      await pump(t, s);
+      await startSetup(t);
+      await t.tap(find.text('Continue'));
+      await t.pump();
+      expect(find.text('Enter the patient’s full name.'), findsOneWidget);
+      await t.enterText(find.byKey(const Key('patient-name-field')), 'Ada');
+      await t.tap(find.text('Continue'));
+      await t.pumpAndSettle();
+      expect(find.text('Care Information'), findsOneWidget);
+      await t.tap(find.byTooltip('Back'));
+      await t.pumpAndSettle();
+      expect(
+        t
+            .widget<TextFormField>(find.byKey(const Key('patient-name-field')))
+            .controller!
+            .text,
+        'Ada',
+      );
+    },
+  );
+  testWidgets(
+    'skip care, default monitoring, review and confirmation post once',
+    (t) async {
+      final s = _Source();
+      var callbacks = 0;
+      await pump(
+        t,
+        s,
+        onCreated: (_) async {
+          callbacks++;
+        },
+      );
+      await reachReview(t);
+      expect(find.text('Alera defaults'), findsOneWidget);
+      await t.tap(find.text('Create patient').first);
+      await t.pumpAndSettle();
+      expect(s.createCalls, 0);
+      await t.tap(find.text('Create patient').last);
+      await t.pumpAndSettle();
+      expect(s.createCalls, 1);
+      expect(s.patchCalls, 0);
+      expect(callbacks, 1);
+      expect(find.text('Ada has been added'), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'custom monitoring posts then patches and retry never posts again',
+    (t) async {
+      final s = _Source(patchFails: true);
+      await pump(t, s);
+      await reachMonitoring(t);
+      await t.tap(find.byKey(const Key('custom-monitoring-option')));
+      await t.pump();
+      await t.enterText(find.byKey(const Key('hr-min-field')), '55');
+      await t.enterText(find.byKey(const Key('hr-max-field')), '105');
+      await t.tap(find.text('Continue'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Create patient').first);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Create patient').last);
+      await t.pumpAndSettle();
+      expect(s.createCalls, 1);
+      expect(s.patchCalls, 1);
+      await t.tap(find.text('Retry settings'));
+      await t.pumpAndSettle();
+      expect(s.createCalls, 1);
+      expect(s.patchCalls, 2);
+    },
+  );
+  testWidgets(
+    'finish and pairing generate code only when explicitly requested',
+    (t) async {
+      final s = _Source();
+      await pump(t, s);
+      await create(t);
+      expect(s.issueCalls, 0);
+      await t.tap(find.text('Finish for now'));
+      await t.pumpAndSettle();
+      expect(find.text('Finish setup for now?'), findsOneWidget);
+      await t.tap(find.text('Continue setup'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Connect patient access'));
+      await t.pumpAndSettle();
+      expect(s.issueCalls, 0);
+      await t.tap(find.text('Generate access code'));
+      await t.pumpAndSettle();
+      expect(s.issueCalls, 1);
+      expect(find.byKey(const Key('issued-access-code')), findsOneWidget);
+      expect(find.byKey(const Key('access-code-qr')), findsOneWidget);
+      expect(find.text('HOME-123'), findsNothing);
+    },
+  );
 }
 
-Future<void> _pump(WidgetTester tester, _FakePatientSource source) =>
-    tester.pumpWidget(
-      MaterialApp(
-        home: AddPatientPage(
-          dataSource: source,
-          householdCode: 'HOME-123',
-          onPatientCreated: (_) {},
-        ),
-      ),
-    );
-
-Future<void> _create(WidgetTester tester, _FakePatientSource source) async {
-  await _pump(tester, source);
-  await tester.enterText(find.byKey(const Key('patient-name-field')), 'Ada');
-  await _scrollToSubmit(tester);
-  await tester.tap(find.text('Create Patient'));
-  await tester.pumpAndSettle();
+Future<void> pump(
+  WidgetTester t,
+  _Source s, {
+  Future<void> Function(PatientCreatedResponse)? onCreated,
+}) => t.pumpWidget(
+  MaterialApp(
+    home: AddPatientPage(
+      dataSource: s,
+      householdCode: 'HOME-123',
+      onPatientCreated: onCreated ?? (_) {},
+    ),
+  ),
+);
+Future<void> startSetup(WidgetTester t) async {
+  await t.tap(find.text('Start setup'));
+  await t.pumpAndSettle();
+  expect(find.text('Personal Information'), findsOneWidget);
 }
 
-Future<void> _scrollToSubmit(WidgetTester tester) async {
-  await tester.scrollUntilVisible(
-    find.text('Create Patient'),
-    500,
+Future<void> completePersonalInformation(WidgetTester t) async {
+  await t.enterText(find.byKey(const Key('patient-name-field')), 'Ada');
+  await t.tap(find.text('Continue'));
+  await t.pumpAndSettle();
+}
+
+Future<void> reachCareInformation(WidgetTester t) async {
+  await startSetup(t);
+  await completePersonalInformation(t);
+}
+
+Future<void> reachMonitoring(WidgetTester t) async {
+  await reachCareInformation(t);
+  await t.scrollUntilVisible(
+    find.text('Skip for now'),
+    400,
     scrollable: find.byType(Scrollable).first,
   );
-  await tester.pumpAndSettle();
+  await t.tap(find.text('Skip for now'));
+  await t.pumpAndSettle();
 }
 
-class _FakePatientSource implements CaregiverPatientDataSource {
-  final Completer<PatientCreatedResponse>? createCompleter;
-  final bool issueFailure;
-  int createCalls = 0;
-  int issueCalls = 0;
-  _FakePatientSource({this.createCompleter, this.issueFailure = false});
+Future<void> reachReview(WidgetTester t) async {
+  await reachMonitoring(t);
+  await t.tap(find.text('Continue'));
+  await t.pumpAndSettle();
+}
+
+Future<void> create(WidgetTester t) async {
+  await reachReview(t);
+  await t.tap(find.text('Create patient').first);
+  await t.pumpAndSettle();
+  await t.tap(find.text('Create patient').last);
+  await t.pumpAndSettle();
+}
+
+class _Source implements CaregiverPatientDataSource {
+  _Source({this.patchFails = false});
+  final bool patchFails;
+  int createCalls = 0, patchCalls = 0, issueCalls = 0;
   @override
-  Future<PatientCreatedResponse> createPatient(CreatePatientRequest request) {
+  Future<PatientCreatedResponse> createPatient(CreatePatientRequest r) async {
     createCalls++;
-    return createCompleter?.future ?? Future.value(_created());
+    return _created();
   }
 
   @override
-  Future<PatientAccessCodeResponse> createAccessCode(String patientId) async {
+  Future<MonitoringSettingsResponse> updateMonitoringSettings(
+    String id,
+    UpdateMonitoringSettingsRequest r,
+  ) async {
+    patchCalls++;
+    if (patchFails && patchCalls == 1)
+      throw const CaregiverPatientApiFailure('Settings rejected');
+    return MonitoringSettingsResponse(
+      patientId: id,
+      thresholdMode: PatientThresholdMode.custom,
+      thresholdModeValue: 'CUSTOM',
+      normalHrMin: r.normalHrMin,
+      normalHrMax: r.normalHrMax,
+      usualSpo2Min: r.usualSpo2Min,
+      usualSpo2Max: r.usualSpo2Max,
+      updatedAt: DateTime.utc(2026),
+    );
+  }
+
+  @override
+  Future<PatientAccessCodeResponse> createAccessCode(String id) async {
     issueCalls++;
-    if (issueFailure) {
-      throw const CaregiverPatientApiFailure('Unable to issue this code.');
-    }
     return PatientAccessCodeResponse(
-      accessCodeId: 'code-1',
-      patientId: patientId,
+      accessCodeId: 'c',
+      patientId: id,
       accessCode: 'ONE-TIME-CODE',
-      createdByUserId: 'caregiver-1',
-      createdAt: DateTime.utc(2026, 9, 6),
-      expiresAt: DateTime.utc(2026, 9, 7),
+      createdByUserId: 'u',
+      createdAt: DateTime.utc(2026),
+      expiresAt: DateTime.utc(2027, 1, 2),
       status: 'ACTIVE',
     );
   }
 }
 
 PatientCreatedResponse _created() => PatientCreatedResponse(
-  patientId: 'patient-1',
-  userId: 'user-1',
-  householdId: 'home-1',
+  patientId: 'p',
+  userId: 'u',
+  householdId: 'h',
   accountStatus: 'ACTIVE',
   assignment: null,
   fullName: 'Ada',
@@ -227,8 +227,8 @@ PatientCreatedResponse _created() => PatientCreatedResponse(
   emergencyContactPhone: null,
   knownConditions: null,
   medications: null,
-  baselineHeartRate: 72,
-  baselineSpo2: 98,
+  baselineHeartRate: null,
+  baselineSpo2: null,
   monitoringNotes: null,
-  createdAt: DateTime.utc(2026, 9, 6),
+  createdAt: DateTime.utc(2026),
 );
