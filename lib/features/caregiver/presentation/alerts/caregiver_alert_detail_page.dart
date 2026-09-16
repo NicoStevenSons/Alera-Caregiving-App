@@ -5,6 +5,7 @@ import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../services/patient_contact_actions.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../data/alerts/caregiver_alert_controller.dart';
@@ -358,7 +359,14 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                         child: AleraButton(
                           icon: Icons.phone,
                           label: 'Call',
-                          onPressed: () => _mock('Call'),
+                          onPressed: widget.careRecipient == null
+                              ? null
+                              : () => openPatientContactApp(
+                                  context,
+                                  careRecipient: widget.careRecipient!,
+                                  scheme: 'tel',
+                                  appLabel: 'calling',
+                                ),
                           height: 48,
                         ),
                       ),
@@ -367,7 +375,14 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                         child: AleraButton(
                           icon: Icons.message,
                           label: 'Message',
-                          onPressed: () => _mock('Message'),
+                          onPressed: widget.careRecipient == null
+                              ? null
+                              : () => openPatientContactApp(
+                                  context,
+                                  careRecipient: widget.careRecipient!,
+                                  scheme: 'sms',
+                                  appLabel: 'messaging',
+                                ),
                           height: 48,
                         ),
                       ),
@@ -525,7 +540,9 @@ class _SummaryCard extends StatelessWidget {
                             onTap: onStatusTap,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: AleraColors.critical.withValues(alpha: 0.14),
+                                color: AleraColors.critical.withValues(
+                                  alpha: 0.14,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Padding(

@@ -5,6 +5,7 @@ import '../../../../design_system/widgets/alera_pill.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
+import '../../../../services/patient_contact_actions.dart';
 import 'widgets/home_alerts_preview.dart';
 import 'widgets/home_health_summary.dart';
 import 'widgets/home_insights_card.dart';
@@ -69,8 +70,18 @@ class CaregiverHomePage extends StatelessWidget {
           ),
         HomePatientHeader(
           careRecipient: careRecipient,
-          onCall: () => _mock(context, 'Call'),
-          onMessage: () => _mock(context, 'Message'),
+          onCall: () => openPatientContactApp(
+            context,
+            careRecipient: careRecipient,
+            scheme: 'tel',
+            appLabel: 'calling',
+          ),
+          onMessage: () => openPatientContactApp(
+            context,
+            careRecipient: careRecipient,
+            scheme: 'sms',
+            appLabel: 'messaging',
+          ),
         ),
         SizedBox(
           height: 60,
