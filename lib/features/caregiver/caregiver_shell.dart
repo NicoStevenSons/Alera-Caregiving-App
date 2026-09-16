@@ -422,7 +422,18 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   Widget _buildHome(BuildContext context) {
     final controller = _patientController;
-    if (controller == null) return _homeDashboard(context, _homeCareRecipient);
+    if (controller == null) {
+      final selected = _careRecipients.where(
+        (patient) => patient.id == _selectedPatientId,
+      );
+      return _homeDashboard(
+        context,
+        selected.isEmpty ? _homeCareRecipient : selected.first,
+        onSelectPatient: _careRecipients.length < 2
+            ? null
+            : () => _showPatientSelector(context, _careRecipients),
+      );
+    }
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
@@ -462,10 +473,16 @@ class _CaregiverShellState extends State<CaregiverShell> {
         final selected = patients.where(
           (patient) => patient.id == _selectedPatientId,
         );
+        final selectedPatient = selected.isEmpty
+            ? patients.first
+            : selected.first;
         return _homeDashboard(
           context,
-          selected.isEmpty ? patients.first : selected.first,
+          selectedPatient,
           showDemo: controller.state == CaregiverPatientListState.demoFallback,
+          onSelectPatient: patients.length < 2
+              ? null
+              : () => _showPatientSelector(context, patients),
         );
       },
     );
@@ -475,6 +492,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
     BuildContext context,
     CareRecipient patient, {
     bool showDemo = false,
+    VoidCallback? onSelectPatient,
   }) => CaregiverHomePage(
     careRecipient: patient,
     showDemoBanner: showDemo,
@@ -493,7 +511,66 @@ class _CaregiverShellState extends State<CaregiverShell> {
     onViewAllReminders: () => setState(() => _selectedIndex = 3),
     onAlertTap: (alert) => _openAlertDetail(context, alert),
     onMarkAsSeen: _markAsSeen,
+    onSelectPatient: onSelectPatient,
   );
+
+  void _showPatientSelector(
+    BuildContext context,
+    List<CareRecipient> patients,
+  ) {
+    if (patients.length < 2) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Switch patient',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              for (final patient in patients)
+                ListTile(
+                  key: ValueKey<String>('patient-switch-${patient.id}'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    child: Text(_patientInitials(patient.name)),
+                  ),
+                  title: Text(patient.name),
+                  subtitle: Text(patient.relationshipLabel),
+                  trailing:
+                      patient.id == _selectedPatientId ||
+                          (_selectedPatientId == null &&
+                              patient == patients.first)
+                      ? const Icon(Icons.check, semanticLabel: 'Selected')
+                      : null,
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    if (mounted) {
+                      setState(() => _selectedPatientId = patient.id);
+                    }
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _patientInitials(String name) => name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .take(2)
+      .map((part) => part.characters.first.toUpperCase())
+      .join();
 }
 
 class _HomePatientState extends StatelessWidget {

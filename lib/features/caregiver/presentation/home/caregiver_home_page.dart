@@ -29,6 +29,7 @@ class CaregiverHomePage extends StatelessWidget {
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final bool showDemoBanner;
+  final VoidCallback? onSelectPatient;
 
   const CaregiverHomePage({
     super.key,
@@ -40,6 +41,7 @@ class CaregiverHomePage extends StatelessWidget {
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.showDemoBanner = false,
+    this.onSelectPatient,
   });
 
   void _mock(BuildContext context, String action) {
@@ -82,6 +84,7 @@ class CaregiverHomePage extends StatelessWidget {
             scheme: 'sms',
             appLabel: 'messaging',
           ),
+          onSelectPatient: onSelectPatient,
         ),
         SizedBox(
           height: 60,
