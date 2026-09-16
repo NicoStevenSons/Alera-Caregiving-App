@@ -35,8 +35,10 @@ class CaregiverAlertsPage extends StatefulWidget {
 }
 
 class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
+  static const String _allPatientsFilter = '__all_patients__';
   final Set<AlertFilter> _filters = <AlertFilter>{};
   final Set<String> _expandedAlertIds = <String>{};
+  String? _patientFilterId;
   late final CaregiverAlertDataSource _alertDataSource;
   late final CaregiverAlertController _controller;
   late final bool _ownsController;
@@ -71,6 +73,18 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant CaregiverAlertsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final patientFilterId = _patientFilterId;
+    if (patientFilterId != null &&
+        !widget.careRecipients.any(
+          (patient) => patient.id == patientFilterId,
+        )) {
+      _patientFilterId = null;
+    }
+  }
+
   void _syncController() {
     if (!mounted) return;
     setState(() {
@@ -102,6 +116,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   }
 
   bool _matches(CaregiverAlert alert) {
+    if (_patientFilterId != null && alert.careRecipientId != _patientFilterId) {
+      return false;
+    }
     if (_filters.contains(AlertFilter.warning) &&
         alert.severity != CaregiverAlertSeverity.warning) {
       return false;
@@ -131,6 +148,78 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     }
     return null;
   }
+
+  String get _patientFilterLabel {
+    final patientFilterId = _patientFilterId;
+    if (patientFilterId == null) {
+      return 'All Patients';
+    }
+    return _recipientFor(patientFilterId)?.name ?? 'All Patients';
+  }
+
+  Future<void> _showPatientFilter(BuildContext context) async {
+    final patients = [...widget.careRecipients]
+      ..sort((a, b) => a.name.compareTo(b.name));
+    final selection = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter by patient',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                key: const Key('alerts-patient-filter-all'),
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(child: Icon(Icons.people_outline)),
+                title: const Text('All Patients'),
+                trailing: _patientFilterId == null
+                    ? const Icon(Icons.check, semanticLabel: 'Selected')
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(_allPatientsFilter),
+              ),
+              for (final patient in patients)
+                ListTile(
+                  key: ValueKey<String>('alerts-patient-filter-${patient.id}'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    child: Text(_patientInitials(patient.name)),
+                  ),
+                  title: Text(patient.name),
+                  subtitle: Text(patient.relationshipLabel),
+                  trailing: patient.id == _patientFilterId
+                      ? const Icon(Icons.check, semanticLabel: 'Selected')
+                      : null,
+                  onTap: () => Navigator.of(sheetContext).pop(patient.id),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || selection == null) {
+      return;
+    }
+    setState(() {
+      _patientFilterId = selection == _allPatientsFilter ? null : selection;
+    });
+  }
+
+  String _patientInitials(String name) => name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .take(2)
+      .map((part) => part.characters.first.toUpperCase())
+      .join();
 
   void _showDetailMessage(BuildContext context) {
     ScaffoldMessenger.of(context)
@@ -187,13 +276,39 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         actions: [
           caregiverPageAction(
             tooltip: 'Filter alerts',
-            onPressed: () => _showDetailMessage(context),
+            onPressed: () => _showPatientFilter(context),
             icon: Icons.filter_list,
           ),
         ],
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                key: const Key('alerts-patient-filter'),
+                onPressed: () => _showPatientFilter(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AleraColors.textPrimary,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_search_outlined, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_patientFilterLabel)),
+                    const Icon(Icons.keyboard_arrow_down_rounded),
+                  ],
+                ),
+              ),
+            ),
+          ),
           // Change height from 58 to 66 (or higher depending on added padding)
           SizedBox(
             height: 66,

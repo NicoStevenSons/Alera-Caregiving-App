@@ -129,6 +129,38 @@ void main() {
     expect(find.text('Alert detail coming next'), findsOneWidget);
   });
 
+  testWidgets('patient filter defaults to all and narrows the alert list', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildPage());
+    await tester.pumpAndSettle();
+
+    expect(find.text('All Patients'), findsOneWidget);
+    expect(find.text('High Heart Rate'), findsOneWidget);
+    expect(find.text('Low Watch Battery'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('alerts-patient-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>('alerts-patient-filter-geraldine-laggui'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Geraldine Laggui'), findsWidgets);
+    expect(find.text('High Heart Rate'), findsNothing);
+    expect(find.text('Low Watch Battery'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('alerts-patient-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('alerts-patient-filter-all')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('All Patients'), findsOneWidget);
+    expect(find.text('High Heart Rate'), findsOneWidget);
+  });
+
   testWidgets('API failure preserves mock fallback alerts and offers retry', (
     WidgetTester tester,
   ) async {

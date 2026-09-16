@@ -320,12 +320,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
                           _openCareRecipient(context, careRecipient),
                       onAddPatient: () => _openAddPatient(context),
                     ),
-                    CaregiverAlertsPage(
-                      alerts: widget.repository.getAlerts(),
-                      careRecipients: _careRecipients,
-                      controller: _alertController,
-                      onAlertTap: (alert) => _openAlertDetail(context, alert),
-                    ),
+                    _buildAlerts(context),
                     const _PlaceholderPage(
                       title: 'Reminders',
                       isTemporary: true,
@@ -418,6 +413,25 @@ class _CaregiverShellState extends State<CaregiverShell> {
         );
       }
     }
+  }
+
+  Widget _buildAlerts(BuildContext context) {
+    Widget buildPage(List<CareRecipient> patients) => CaregiverAlertsPage(
+      alerts: widget.repository.getAlerts(),
+      careRecipients: patients,
+      controller: _alertController,
+      onAlertTap: (alert) => _openAlertDetail(context, alert),
+    );
+
+    final controller = _patientController;
+    if (controller == null) {
+      return buildPage(_careRecipients);
+    }
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => buildPage(controller.visiblePatients),
+    );
   }
 
   Widget _buildHome(BuildContext context) {
