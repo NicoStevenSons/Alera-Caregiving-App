@@ -15,12 +15,14 @@ class ReminderController extends ChangeNotifier {
   String? _patientId;
   int _revision = 0;
   final Set<String> _busyOccurrenceIds = {};
+  final Set<String> _busyTemplateIds = {};
 
   List<ReminderOccurrence> get occurrences => List.unmodifiable(_occurrences);
   List<ReminderTemplate> get templates => List.unmodifiable(_templates);
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
   bool isBusy(String occurrenceId) => _busyOccurrenceIds.contains(occurrenceId);
+  bool isTemplateBusy(String templateId) => _busyTemplateIds.contains(templateId);
 
   Future<void> loadForPatient(String patientId) async {
     final revision = ++_revision;
@@ -68,6 +70,54 @@ class ReminderController extends ChangeNotifier {
         ),
       );
 
+  Future<void> completeOnBehalf(String occurrenceId, String note) =>
+      _runAction(
+        occurrenceId,
+        () => _dataSource.completeOnBehalf(occurrenceId, note),
+      );
+
+  Future<void> cancel(String occurrenceId, String note) => _runAction(
+    occurrenceId,
+    () => _dataSource.cancel(occurrenceId, note),
+  );
+
+  Future<void> createTemplate(ReminderTemplateDraft draft) async {
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final created = await _dataSource.createTemplate(draft);
+      _templates = [created, ..._templates];
+      await refresh();
+    } on ReminderApiFailure catch (error) {
+      _errorMessage = error.message;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> archiveTemplate(String templateId) async {
+    if (_busyTemplateIds.contains(templateId)) return;
+    _busyTemplateIds.add(templateId);
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final archived = await _dataSource.archiveTemplate(templateId);
+      final index = _templates.indexWhere((item) => item.id == templateId);
+      if (index >= 0) {
+        final updated = [..._templates];
+        updated[index] = archived;
+        _templates = updated;
+      }
+      await refresh();
+    } on ReminderApiFailure catch (error) {
+      _errorMessage = error.message;
+      rethrow;
+    } finally {
+      _busyTemplateIds.remove(templateId);
+      notifyListeners();
+    }
+  }
+
   Future<void> _runAction(
     String occurrenceId,
     Future<ReminderActionResult> Function() operation,
@@ -101,6 +151,7 @@ class ReminderController extends ChangeNotifier {
     _loading = false;
     _errorMessage = null;
     _busyOccurrenceIds.clear();
+    _busyTemplateIds.clear();
     notifyListeners();
   }
 }

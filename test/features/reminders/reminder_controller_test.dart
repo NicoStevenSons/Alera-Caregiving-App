@@ -27,10 +27,33 @@ void main() {
     expect(controller.occurrences.single.status, ReminderOccurrenceStatus.completed);
     expect(controller.isBusy('occurrence-id'), isFalse);
   });
+
+  test('caregiver complete-on-behalf updates the occurrence', () async {
+    final source = _Source();
+    final controller = ReminderController(dataSource: source);
+    await controller.loadForPatient('patient-a');
+
+    await controller.completeOnBehalf('occurrence-id', 'Medication was given.');
+
+    expect(controller.occurrences.single.status, ReminderOccurrenceStatus.completed);
+  });
+
+  test('create refreshes templates and occurrences', () async {
+    final source = _Source();
+    final controller = ReminderController(dataSource: source);
+    await controller.loadForPatient('patient-a');
+    final callsBeforeCreate = source.patientIds.length;
+
+    await controller.createTemplate(_draft());
+
+    expect(source.createdDraft?.title, 'Medication');
+    expect(source.patientIds.length, callsBeforeCreate + 2);
+  });
 }
 
 class _Source implements ReminderDataSource {
   final List<String> patientIds = [];
+  ReminderTemplateDraft? createdDraft;
 
   @override
   Future<ReminderPage<ReminderOccurrence>> fetchOccurrences({
@@ -61,9 +84,17 @@ class _Source implements ReminderDataSource {
   @override
   Future<ReminderActionResult> snooze(String occurrenceId, {int? snoozeMinutes, String? note}) async =>
       ReminderActionResult(reminder: _occurrence(status: ReminderOccurrenceStatus.snoozed), idempotent: false);
+  @override Future<ReminderActionResult> completeOnBehalf(String occurrenceId, String note) async =>
+      ReminderActionResult(reminder: _occurrence(status: ReminderOccurrenceStatus.completed), idempotent: false);
+  @override Future<ReminderActionResult> cancel(String occurrenceId, String note) async =>
+      ReminderActionResult(reminder: _occurrence(status: ReminderOccurrenceStatus.canceled), idempotent: false);
 
   @override Future<ReminderTemplate> archiveTemplate(String templateId) async => _template();
-  @override Future<ReminderTemplate> createTemplate(ReminderTemplateDraft draft) async => _template();
+  @override
+  Future<ReminderTemplate> createTemplate(ReminderTemplateDraft draft) async {
+    createdDraft = draft;
+    return _template();
+  }
   @override Future<ReminderTemplate> updateTemplate(String templateId, Map<String, Object?> changes) async => _template();
 }
 
@@ -87,4 +118,12 @@ ReminderTemplate _template() => ReminderTemplate(
   notificationChannel: ReminderNotificationChannel.push,
   status: ReminderTemplateStatus.active,
   createdAt: DateTime.utc(2026, 9, 17), updatedAt: DateTime.utc(2026, 9, 17),
+);
+
+ReminderTemplateDraft _draft() => const ReminderTemplateDraft(
+  patientId: 'patient-a',
+  title: 'Medication',
+  category: ReminderCategory.medication,
+  startDate: '2026-09-18',
+  startTime: '08:00:00',
 );

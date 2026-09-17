@@ -34,6 +34,8 @@ abstract interface class ReminderDataSource {
   Future<ReminderTemplate> archiveTemplate(String templateId);
   Future<ReminderActionResult> complete(String occurrenceId, {String? note});
   Future<ReminderActionResult> snooze(String occurrenceId, {int? snoozeMinutes, String? note});
+  Future<ReminderActionResult> completeOnBehalf(String occurrenceId, String note);
+  Future<ReminderActionResult> cancel(String occurrenceId, String note);
 }
 
 class ReminderApiDataSource implements ReminderDataSource {
@@ -119,9 +121,11 @@ class ReminderApiDataSource implements ReminderDataSource {
     'snooze_minutes': snoozeMinutes, 'note': note?.trim(),
   });
 
+  @override
   Future<ReminderActionResult> completeOnBehalf(String occurrenceId, String note) =>
       _action(occurrenceId, 'complete-on-behalf', {'note': note.trim()});
 
+  @override
   Future<ReminderActionResult> cancel(String occurrenceId, String note) =>
       _action(occurrenceId, 'cancel', {'note': note.trim()});
 

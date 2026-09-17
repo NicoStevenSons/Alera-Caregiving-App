@@ -24,6 +24,9 @@ import 'presentation/people/caregiver_people_page.dart';
 import 'presentation/people/add_patient_page.dart';
 import 'presentation/widgets/caregiver_page_app_bar.dart';
 import '../../services/alert_notification.dart';
+import '../reminders/data/reminder_api_data_source.dart';
+import '../reminders/data/reminder_controller.dart';
+import '../reminders/presentation/caregiver_reminders_page.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -35,6 +38,7 @@ class CaregiverShell extends StatefulWidget {
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
+  final ReminderDataSource? reminderDataSource;
 
   const CaregiverShell({
     super.key,
@@ -47,6 +51,7 @@ class CaregiverShell extends StatefulWidget {
     this.loadNotificationAlert,
     this.notificationTapBus,
     this.nudgeDataSource,
+    this.reminderDataSource,
   });
 
   @override
@@ -64,6 +69,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   CaregiverPatientController? _patientController;
   bool _ownsPatientController = false;
   bool _sendingNudge = false;
+  late final ReminderController _reminderController;
 
   @override
   void initState() {
@@ -82,6 +88,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
           : null,
       fallback: widget.repository.getAlerts(),
     )..addListener(_alertsChanged);
+    _reminderController = ReminderController(
+      dataSource: widget.reminderDataSource ?? ReminderApiDataSource(),
+    );
     _alertController.load();
     _patientController = widget.patientController;
     final source = widget.patientDataSource;
@@ -110,6 +119,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
       ..removeListener(_alertsChanged)
       ..dispose();
     if (_ownsPatientController) _patientController?.dispose();
+    _reminderController.dispose();
     super.dispose();
   }
 
@@ -329,10 +339,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
                       onAddPatient: () => _openAddPatient(context),
                     ),
                     _buildAlerts(context),
-                    const _PlaceholderPage(
-                      title: 'Reminders',
-                      isTemporary: true,
-                    ),
+                    _buildReminders(),
                     _PlaceholderPage(
                       title: 'More',
                       isTemporary: true,
@@ -436,6 +443,27 @@ class _CaregiverShellState extends State<CaregiverShell> {
       return buildPage(_careRecipients);
     }
 
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => buildPage(controller.visiblePatients),
+    );
+  }
+
+  Widget _buildReminders() {
+    Widget buildPage(List<CareRecipient> patients) =>
+        CaregiverRemindersPage(
+          controller: _reminderController,
+          patients: patients.where((patient) => patient.backendBacked).toList(),
+          initialPatientId: _selectedPatientId,
+          onPatientSelected: (patientId) {
+            if (_selectedPatientId != patientId) {
+              setState(() => _selectedPatientId = patientId);
+            }
+          },
+        );
+
+    final controller = _patientController;
+    if (controller == null) return buildPage(_careRecipients);
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) => buildPage(controller.visiblePatients),
