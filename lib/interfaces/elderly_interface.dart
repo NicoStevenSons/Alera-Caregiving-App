@@ -23,6 +23,7 @@ import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/data/api/elderly_reminder_supabase_service.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
+import '../services/patient_nudge_notification.dart';
 
 
 class ElderlyInterface extends StatefulWidget {
@@ -52,6 +53,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   List<ElderlyReminder> reminders = [];
 
   bool remindersLoading = true;
+  void Function()? _unsubscribeNudges;
 
   late final FifoUploadService fifoUploadService;
 
@@ -76,6 +78,11 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     super.initState();
 
     WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _unsubscribeNudges = PatientNudgeTapBus.instance.subscribe(_openNudge);
+    });
 
     fifoUploadService = FifoUploadService(
       uploadQueueService: uploadQueueService,
@@ -218,11 +225,21 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   @override
   void dispose() {
+    _unsubscribeNudges?.call();
     WidgetsBinding.instance.removeObserver(this);
 
     watchPayloadService.dispose();
 
     super.dispose();
+  }
+
+  void _openNudge(PatientNudgeNotification event) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text('${event.type.label} reminder received.')),
+      );
   }
 
   @override
