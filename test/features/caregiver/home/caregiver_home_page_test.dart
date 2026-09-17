@@ -41,7 +41,7 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
-  testWidgets('Home actions are mock-only and links switch shell tabs', (
+  testWidgets('Home contact feedback and links switch shell tabs', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -52,7 +52,10 @@ void main() {
 
     await tester.tap(find.text('Call').first);
     await tester.pump();
-    expect(find.text('Call is mock-only for now.'), findsOneWidget);
+    expect(
+      find.text('No phone number is saved for Maria Santos.'),
+      findsOneWidget,
+    );
 
     await tester.scrollUntilVisible(
       find.text('View All Alerts'),
