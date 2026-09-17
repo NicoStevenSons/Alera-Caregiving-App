@@ -26,7 +26,6 @@ import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
 import '../services/patient_nudge_notification.dart';
 import '../services/reminder_due_notification.dart';
 
-
 class ElderlyInterface extends StatefulWidget {
   final VoidCallback? onSignOut;
 
@@ -38,7 +37,6 @@ class ElderlyInterface extends StatefulWidget {
 
 class _ElderlyInterfaceState extends State<ElderlyInterface>
     with WidgetsBindingObserver {
-
   final WatchPayloadService watchPayloadService = WatchPayloadService();
 
   final HealthEventApiService healthEventApiService = HealthEventApiService(
@@ -49,7 +47,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   final UploadQueueService uploadQueueService = UploadQueueService();
 
   final ElderlyReminderSupabaseService reminderService =
-    ElderlyReminderSupabaseService();
+      ElderlyReminderSupabaseService();
 
   List<ElderlyReminder> reminders = [];
 
@@ -170,7 +168,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     _processPendingQueue();
   }
 
-
   Future<void> _processPendingQueue() async {
     if (!AppConfig.enableBackend) {
       return;
@@ -191,42 +188,37 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   }
 
   Future<void> _loadReminders() async {
-  try {
-    final result =
-        await reminderService.getRemindersForPatient(
-      AppConfig.testPatientId,
-    );
+    try {
+      final result = await reminderService.getRemindersForPatient(
+        AppConfig.testPatientId,
+      );
 
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      reminders = result;
-      remindersLoading = false;
-    });
-
-    for (final reminder in reminders) {
-      if (reminder.status == 'UPCOMING' ||
-          reminder.status == 'SNOOZED') {
-        await ReminderNotificationService.instance
-            .scheduleReminder(reminder);
+      if (!mounted) {
+        return;
       }
-    }
-  } catch (error) {
-    debugPrint(
-      'Failed to load reminders: $error',
-    );
 
-    if (!mounted) {
-      return;
-    }
+      setState(() {
+        reminders = result;
+        remindersLoading = false;
+      });
 
-    setState(() {
-      remindersLoading = false;
-    });
+      for (final reminder in reminders) {
+        if (reminder.status == 'UPCOMING' || reminder.status == 'SNOOZED') {
+          await ReminderNotificationService.instance.scheduleReminder(reminder);
+        }
+      }
+    } catch (error) {
+      debugPrint('Failed to load reminders: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        remindersLoading = false;
+      });
+    }
   }
-}
 
   @override
   void dispose() {
@@ -316,24 +308,19 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
                 children: [
                   Row(
                     children: [
-
                       Expanded(
-                        child:
-                            HeartRateDisplay(
-                              heartRateData: heartRateData,
-                              uploadQueueService:
-                              uploadQueueService,
+                        child: HeartRateDisplay(
+                          heartRateData: heartRateData,
+                          uploadQueueService: uploadQueueService,
                         ),
                       ),
 
                       const SizedBox(width: 8),
 
                       Expanded(
-                        child:
-                        SpO2Display(
+                        child: SpO2Display(
                           spo2Data: spo2Data,
-                          uploadQueueService:
-                          uploadQueueService,
+                          uploadQueueService: uploadQueueService,
                         ),
                       ),
                     ],
@@ -348,7 +335,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
                   SleepDisplay(sleepData: sleepData),
 
                   const SizedBox(height: 16),
-
                 ],
               ),
             ),
@@ -364,8 +350,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
                   ),
                 ],
               ),
-            )
-    
+            ),
           ],
         ),
       ),

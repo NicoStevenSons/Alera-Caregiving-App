@@ -31,13 +31,11 @@ class FcmNotificationService {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     await _local.initialize(
       settings: const InitializationSettings(
-      android: AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
-    ),
-    onDidReceiveNotificationResponse: (r) => _handleLocalPayload(r.payload),
-  );
-  
+      onDidReceiveNotificationResponse: (r) => _handleLocalPayload(r.payload),
+    );
+
     await _local
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -92,7 +90,9 @@ class FcmNotificationService {
     if (token == null) return;
     try {
       await http.delete(
-        Uri.parse('${AppConfig.backendBaseUrl}${_tokenPath(session.sessionType)}'),
+        Uri.parse(
+          '${AppConfig.backendBaseUrl}${_tokenPath(session.sessionType)}',
+        ),
         headers: {
           'authorization': 'Bearer ${session.accessToken}',
           'content-type': 'application/json',
@@ -172,10 +172,7 @@ class FcmNotificationService {
       ),
     );
     ReminderDueTapBus.instance.handle(
-      ReminderDueNotification.parse(
-        message.data,
-        messageId: message.messageId,
-      ),
+      ReminderDueNotification.parse(message.data, messageId: message.messageId),
     );
   }
 

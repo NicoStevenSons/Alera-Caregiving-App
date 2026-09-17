@@ -19,10 +19,7 @@ class ReminderDueNotification {
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
   );
 
-  static ReminderDueNotification? parse(
-    Object? payload, {
-    String? messageId,
-  }) {
+  static ReminderDueNotification? parse(Object? payload, {String? messageId}) {
     if (payload is! Map || payload['type'] != 'REMINDER_DUE') return null;
     final occurrenceId = payload['occurrence_id'];
     final templateId = payload['template_id'];
@@ -69,9 +66,7 @@ class ReminderDueTapBus {
   final _pending = <ReminderDueNotification>[];
   void Function(ReminderDueNotification)? _listener;
 
-  void Function() subscribe(
-    void Function(ReminderDueNotification) listener,
-  ) {
+  void Function() subscribe(void Function(ReminderDueNotification) listener) {
     _listener = listener;
     final pending = List<ReminderDueNotification>.of(_pending);
     _pending.clear();

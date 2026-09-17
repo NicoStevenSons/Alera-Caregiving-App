@@ -22,7 +22,8 @@ class ReminderController extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
   bool isBusy(String occurrenceId) => _busyOccurrenceIds.contains(occurrenceId);
-  bool isTemplateBusy(String templateId) => _busyTemplateIds.contains(templateId);
+  bool isTemplateBusy(String templateId) =>
+      _busyTemplateIds.contains(templateId);
 
   Future<void> loadForPatient(String patientId) async {
     final revision = ++_revision;
@@ -57,8 +58,10 @@ class ReminderController extends ChangeNotifier {
     if (patientId != null) await loadForPatient(patientId);
   }
 
-  Future<void> complete(String occurrenceId, {String? note}) =>
-      _runAction(occurrenceId, () => _dataSource.complete(occurrenceId, note: note));
+  Future<void> complete(String occurrenceId, {String? note}) => _runAction(
+    occurrenceId,
+    () => _dataSource.complete(occurrenceId, note: note),
+  );
 
   Future<void> snooze(String occurrenceId, {int? minutes, String? note}) =>
       _runAction(
@@ -70,16 +73,13 @@ class ReminderController extends ChangeNotifier {
         ),
       );
 
-  Future<void> completeOnBehalf(String occurrenceId, String note) =>
-      _runAction(
-        occurrenceId,
-        () => _dataSource.completeOnBehalf(occurrenceId, note),
-      );
-
-  Future<void> cancel(String occurrenceId, String note) => _runAction(
+  Future<void> completeOnBehalf(String occurrenceId, String note) => _runAction(
     occurrenceId,
-    () => _dataSource.cancel(occurrenceId, note),
+    () => _dataSource.completeOnBehalf(occurrenceId, note),
   );
+
+  Future<void> cancel(String occurrenceId, String note) =>
+      _runAction(occurrenceId, () => _dataSource.cancel(occurrenceId, note));
 
   Future<void> snoozeOnBehalf(
     String occurrenceId,
@@ -87,11 +87,8 @@ class ReminderController extends ChangeNotifier {
     int? minutes,
   }) => _runAction(
     occurrenceId,
-    () => _dataSource.snoozeOnBehalf(
-      occurrenceId,
-      note,
-      snoozeMinutes: minutes,
-    ),
+    () =>
+        _dataSource.snoozeOnBehalf(occurrenceId, note, snoozeMinutes: minutes),
   );
 
   Future<void> createTemplate(ReminderTemplateDraft draft) async {
