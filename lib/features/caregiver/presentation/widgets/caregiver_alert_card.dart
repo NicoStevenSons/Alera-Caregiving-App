@@ -84,18 +84,18 @@ class CaregiverAlertCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                      SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: Center(
-                          child: AleraSvgIcon(
-                            assetPath: iconPath,
-                            width: 56,
-                            height: 56,
-                            semanticLabel: alert.title,
+                        SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: Center(
+                            child: AleraSvgIcon(
+                              assetPath: iconPath,
+                              width: 56,
+                              height: 56,
+                              semanticLabel: alert.title,
+                            ),
                           ),
                         ),
-                      ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -214,11 +214,12 @@ _AlertCardDisplayData _buildDisplayData(
       ? '--'
       : '${alert.threshold! % 1 == 0 ? alert.threshold!.toStringAsFixed(0) : alert.threshold!.toStringAsFixed(1)} ${alert.unit}';
   final Duration? duration = alert.triggerDuration;
-  final int hour = alert.detectedAt.hour % 12 == 0
+  final DateTime localDetectedAt = alert.detectedAt.toLocal();
+  final int hour = localDetectedAt.hour % 12 == 0
       ? 12
-      : alert.detectedAt.hour % 12;
+      : localDetectedAt.hour % 12;
   final String detected =
-      '$hour:${alert.detectedAt.minute.toString().padLeft(2, '0')} ${alert.detectedAt.hour >= 12 ? 'PM' : 'AM'}';
+      '$hour:${localDetectedAt.minute.toString().padLeft(2, '0')} ${localDetectedAt.hour >= 12 ? 'PM' : 'AM'}';
   return _AlertCardDisplayData(
     metricLabel: switch (alert.metric) {
       CaregiverAlertMetric.heartRate => 'Heart Rate',

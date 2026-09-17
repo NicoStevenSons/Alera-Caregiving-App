@@ -6,20 +6,41 @@ import 'package:alera/features/caregiver/domain/models/caregiver_alert.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('successful action replaces matching shared alert', () async {
-    final active = _alert(CaregiverAlertStatus.active);
-    final resolved = _alert(CaregiverAlertStatus.resolved);
-    final controller = CaregiverAlertController(
-      loader: _Loader([active]),
-      actions: _Actions(result: resolved),
-    );
-    await controller.load();
+  test(
+    'successful action keeps display data while updating lifecycle',
+    () async {
+      final active = _alert(CaregiverAlertStatus.active);
+      final resolved = CaregiverAlert(
+        id: active.id,
+        careRecipientId: active.careRecipientId,
+        title: 'Health alert',
+        description: '',
+        severity: CaregiverAlertSeverity.warning,
+        metric: CaregiverAlertMetric.heartRate,
+        status: CaregiverAlertStatus.resolved,
+        reading: 0,
+        threshold: null,
+        unit: '',
+        triggerDuration: null,
+        detectedAt: active.detectedAt,
+        timeline: const [],
+      );
+      final controller = CaregiverAlertController(
+        loader: _Loader([active]),
+        actions: _Actions(result: resolved),
+      );
+      await controller.load();
 
-    final result = await controller.resolve(active.id);
+      final result = await controller.resolve(active.id);
 
-    expect(result.status, CaregiverAlertStatus.resolved);
-    expect(controller.alerts.single, same(resolved));
-  });
+      expect(result.status, CaregiverAlertStatus.resolved);
+      expect(result.title, 'High Heart Rate');
+      expect(result.reading, 120);
+      expect(result.threshold, 100);
+      expect(result.description, 'Threshold exceeded');
+      expect(controller.alerts.single.title, 'High Heart Rate');
+    },
+  );
 
   test('failed action does not mutate shared alert state', () async {
     final active = _alert(CaregiverAlertStatus.active);
