@@ -1097,8 +1097,8 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
     entries.add(
       AlertTimelineEntry(
         occurredAt: confirmedAt,
-        title: alert.severity == CaregiverAlertSeverity.critical &&
-                !hasEscalation
+        title:
+            alert.severity == CaregiverAlertSeverity.critical && !hasEscalation
             ? 'Critical alert confirmed'
             : 'Warning alert confirmed',
         description: confirmedAt == alert.detectedAt

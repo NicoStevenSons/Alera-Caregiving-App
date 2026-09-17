@@ -46,7 +46,7 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
-  testWidgets('detail actions provide mock feedback', (
+  testWidgets('call action uses the patient contact launcher', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -68,7 +68,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Call'));
     await tester.pump();
-    expect(find.text('Call is mock-only for now.'), findsOneWidget);
+    expect(find.text('Unable to open the calling app.'), findsOneWidget);
   });
 
   testWidgets('prefers live patient name and falls back safely', (
