@@ -22,8 +22,7 @@ class CaregiverRemindersPage extends StatefulWidget {
   final ValueChanged<String>? onPatientSelected;
 
   @override
-  State<CaregiverRemindersPage> createState() =>
-      _CaregiverRemindersPageState();
+  State<CaregiverRemindersPage> createState() => _CaregiverRemindersPageState();
 }
 
 class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
@@ -51,7 +50,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   void _selectInitialPatient() {
     if (widget.patients.isEmpty) return;
     final requested = widget.initialPatientId;
-    final selected = requested != null &&
+    final selected =
+        requested != null &&
             widget.patients.any((patient) => patient.id == requested)
         ? requested
         : widget.patients.first.id;
@@ -166,8 +166,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
                         _TemplateCard(
                           template: template,
                           busy: widget.controller.isTemplateBusy(template.id),
-                          onArchive: template.status ==
-                                  ReminderTemplateStatus.archived
+                          onArchive:
+                              template.status == ReminderTemplateStatus.archived
                               ? null
                               : () => _archive(template),
                         ),
@@ -196,7 +196,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         occurrence.id,
         minutes: occurrence.defaultSnoozeMinutes,
       ),
-      success: 'Reminder snoozed for ${occurrence.defaultSnoozeMinutes} minutes.',
+      success:
+          'Reminder snoozed for ${occurrence.defaultSnoozeMinutes} minutes.',
     );
   }
 
@@ -654,10 +655,8 @@ class _StatusChip extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Chip(
-    label: Text(label),
-    visualDensity: VisualDensity.compact,
-  );
+  Widget build(BuildContext context) =>
+      Chip(label: Text(label), visualDensity: VisualDensity.compact);
 }
 
 class _ErrorBanner extends StatelessWidget {
@@ -714,13 +713,13 @@ class _MessageState extends StatelessWidget {
 String _label(String value) => value
     .toLowerCase()
     .split('_')
-    .map((part) => part.isEmpty
-        ? part
-        : '${part[0].toUpperCase()}${part.substring(1)}')
+    .map(
+      (part) =>
+          part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}',
+    )
     .join(' ');
 
-String _formatDate(DateTime date) =>
-    '${date.month}/${date.day}/${date.year}';
+String _formatDate(DateTime date) => '${date.month}/${date.day}/${date.year}';
 
 String _apiDate(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-'
@@ -732,8 +731,8 @@ String _formatDateTime(DateTime value) {
   final hour = local.hour == 0
       ? 12
       : local.hour > 12
-          ? local.hour - 12
-          : local.hour;
+      ? local.hour - 12
+      : local.hour;
   final minute = local.minute.toString().padLeft(2, '0');
   final period = local.hour >= 12 ? 'PM' : 'AM';
   return '${_formatDate(local)} • $hour:$minute $period';

@@ -1,7 +1,13 @@
 enum ReminderCategory {
-  medication('MEDICATION'), healthCheck('HEALTH_CHECK'), hydration('HYDRATION'),
-  meal('MEAL'), mobility('MOBILITY'), appointment('APPOINTMENT'),
-  checkIn('CHECK_IN'), deviceTask('DEVICE_TASK'), other('OTHER');
+  medication('MEDICATION'),
+  healthCheck('HEALTH_CHECK'),
+  hydration('HYDRATION'),
+  meal('MEAL'),
+  mobility('MOBILITY'),
+  appointment('APPOINTMENT'),
+  checkIn('CHECK_IN'),
+  deviceTask('DEVICE_TASK'),
+  other('OTHER');
 
   const ReminderCategory(this.apiValue);
   final String apiValue;
@@ -12,7 +18,10 @@ enum ReminderCategory {
 }
 
 enum ReminderPriority {
-  low('LOW'), normal('NORMAL'), high('HIGH');
+  low('LOW'),
+  normal('NORMAL'),
+  high('HIGH');
+
   const ReminderPriority(this.apiValue);
   final String apiValue;
   static ReminderPriority parse(Object? value) => values.firstWhere(
@@ -22,9 +31,14 @@ enum ReminderPriority {
 }
 
 enum ReminderOccurrenceStatus {
-  upcoming('UPCOMING'), due('DUE'), snoozed('SNOOZED'),
-  completed('COMPLETED'), missed('MISSED'), canceled('CANCELED'),
+  upcoming('UPCOMING'),
+  due('DUE'),
+  snoozed('SNOOZED'),
+  completed('COMPLETED'),
+  missed('MISSED'),
+  canceled('CANCELED'),
   completedLate('COMPLETED_LATE');
+
   const ReminderOccurrenceStatus(this.apiValue);
   final String apiValue;
   static ReminderOccurrenceStatus parse(Object? value) => values.firstWhere(
@@ -34,7 +48,10 @@ enum ReminderOccurrenceStatus {
 }
 
 enum ReminderTemplateStatus {
-  active('ACTIVE'), disabled('DISABLED'), archived('ARCHIVED');
+  active('ACTIVE'),
+  disabled('DISABLED'),
+  archived('ARCHIVED');
+
   const ReminderTemplateStatus(this.apiValue);
   final String apiValue;
   static ReminderTemplateStatus parse(Object? value) => values.firstWhere(
@@ -44,7 +61,10 @@ enum ReminderTemplateStatus {
 }
 
 enum ReminderNotificationChannel {
-  inApp('IN_APP'), push('PUSH'), sms('SMS');
+  inApp('IN_APP'),
+  push('PUSH'),
+  sms('SMS');
+
   const ReminderNotificationChannel(this.apiValue);
   final String apiValue;
   static ReminderNotificationChannel parse(Object? value) => values.firstWhere(
@@ -55,11 +75,19 @@ enum ReminderNotificationChannel {
 
 class ReminderOccurrence {
   const ReminderOccurrence({
-    required this.id, required this.templateId, required this.patientId,
-    required this.title, required this.category, required this.priority,
-    required this.scheduledAt, required this.dueAt, required this.status,
-    required this.snoozeAllowed, required this.defaultSnoozeMinutes,
-    required this.missedAfterMinutes, this.instructions,
+    required this.id,
+    required this.templateId,
+    required this.patientId,
+    required this.title,
+    required this.category,
+    required this.priority,
+    required this.scheduledAt,
+    required this.dueAt,
+    required this.status,
+    required this.snoozeAllowed,
+    required this.defaultSnoozeMinutes,
+    required this.missedAfterMinutes,
+    this.instructions,
   });
   final String id;
   final String templateId;
@@ -78,14 +106,26 @@ class ReminderOccurrence {
 
 class ReminderTemplate {
   const ReminderTemplate({
-    required this.id, required this.patientId, required this.createdByUserId,
-    required this.title, required this.category, required this.priority,
-    required this.startDate, required this.startTime, required this.timezone,
-    required this.dueAfterMinutes, required this.snoozeAllowed,
-    required this.defaultSnoozeMinutes, required this.missedAfterMinutes,
-    required this.notificationChannel, required this.status,
-    required this.createdAt, required this.updatedAt,
-    this.instructions, this.scheduleRule, this.archivedAt,
+    required this.id,
+    required this.patientId,
+    required this.createdByUserId,
+    required this.title,
+    required this.category,
+    required this.priority,
+    required this.startDate,
+    required this.startTime,
+    required this.timezone,
+    required this.dueAfterMinutes,
+    required this.snoozeAllowed,
+    required this.defaultSnoozeMinutes,
+    required this.missedAfterMinutes,
+    required this.notificationChannel,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+    this.instructions,
+    this.scheduleRule,
+    this.archivedAt,
   });
   final String id;
   final String patientId;
@@ -110,7 +150,12 @@ class ReminderTemplate {
 }
 
 class ReminderPage<T> {
-  const ReminderPage({required this.items, required this.total, required this.limit, required this.offset});
+  const ReminderPage({
+    required this.items,
+    required this.total,
+    required this.limit,
+    required this.offset,
+  });
   final List<T> items;
   final int total;
   final int limit;
@@ -118,19 +163,29 @@ class ReminderPage<T> {
 }
 
 class ReminderActionResult {
-  const ReminderActionResult({required this.reminder, required this.idempotent});
+  const ReminderActionResult({
+    required this.reminder,
+    required this.idempotent,
+  });
   final ReminderOccurrence reminder;
   final bool idempotent;
 }
 
 class ReminderTemplateDraft {
   const ReminderTemplateDraft({
-    required this.patientId, required this.title, required this.category,
-    required this.startDate, required this.startTime,
-    this.timezone = 'Asia/Manila', this.instructions,
-    this.priority = ReminderPriority.normal, this.scheduleRule,
-    this.dueAfterMinutes = 15, this.snoozeAllowed = true,
-    this.defaultSnoozeMinutes = 10, this.missedAfterMinutes = 30,
+    required this.patientId,
+    required this.title,
+    required this.category,
+    required this.startDate,
+    required this.startTime,
+    this.timezone = 'Asia/Manila',
+    this.instructions,
+    this.priority = ReminderPriority.normal,
+    this.scheduleRule,
+    this.dueAfterMinutes = 15,
+    this.snoozeAllowed = true,
+    this.defaultSnoozeMinutes = 10,
+    this.missedAfterMinutes = 30,
     this.notificationChannel = ReminderNotificationChannel.push,
   });
   final String patientId;
@@ -149,11 +204,16 @@ class ReminderTemplateDraft {
   final ReminderNotificationChannel notificationChannel;
 
   Map<String, Object?> toJson() => {
-    'patient_id': patientId, 'title': title.trim(),
-    'category': category.apiValue, 'instructions': instructions?.trim(),
-    'priority': priority.apiValue, 'start_date': startDate,
-    'start_time': startTime, 'timezone': timezone,
-    'schedule_rule': scheduleRule, 'due_after_minutes': dueAfterMinutes,
+    'patient_id': patientId,
+    'title': title.trim(),
+    'category': category.apiValue,
+    'instructions': instructions?.trim(),
+    'priority': priority.apiValue,
+    'start_date': startDate,
+    'start_time': startTime,
+    'timezone': timezone,
+    'schedule_rule': scheduleRule,
+    'due_after_minutes': dueAfterMinutes,
     'snooze_allowed': snoozeAllowed,
     'default_snooze_minutes': defaultSnoozeMinutes,
     'missed_after_minutes': missedAfterMinutes,

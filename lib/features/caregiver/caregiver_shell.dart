@@ -450,17 +450,16 @@ class _CaregiverShellState extends State<CaregiverShell> {
   }
 
   Widget _buildReminders() {
-    Widget buildPage(List<CareRecipient> patients) =>
-        CaregiverRemindersPage(
-          controller: _reminderController,
-          patients: patients.where((patient) => patient.backendBacked).toList(),
-          initialPatientId: _selectedPatientId,
-          onPatientSelected: (patientId) {
-            if (_selectedPatientId != patientId) {
-              setState(() => _selectedPatientId = patientId);
-            }
-          },
-        );
+    Widget buildPage(List<CareRecipient> patients) => CaregiverRemindersPage(
+      controller: _reminderController,
+      patients: patients.where((patient) => patient.backendBacked).toList(),
+      initialPatientId: _selectedPatientId,
+      onPatientSelected: (patientId) {
+        if (_selectedPatientId != patientId) {
+          setState(() => _selectedPatientId = patientId);
+        }
+      },
+    );
 
     final controller = _patientController;
     if (controller == null) return buildPage(_careRecipients);

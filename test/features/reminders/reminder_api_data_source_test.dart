@@ -15,15 +15,24 @@ void main() {
       session: _Session('token'),
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode({
-          'items': [_occurrenceJson()], 'total': 1, 'limit': 100, 'offset': 0,
-        }), 200);
+        return http.Response(
+          jsonEncode({
+            'items': [_occurrenceJson()],
+            'total': 1,
+            'limit': 100,
+            'offset': 0,
+          }),
+          200,
+        );
       }),
     );
 
     final page = await source.fetchOccurrences(
       patientId: 'patient-id',
-      statuses: const [ReminderOccurrenceStatus.due, ReminderOccurrenceStatus.snoozed],
+      statuses: const [
+        ReminderOccurrenceStatus.due,
+        ReminderOccurrenceStatus.snoozed,
+      ],
     );
 
     expect(captured.headers['authorization'], 'Bearer token');
@@ -33,29 +42,41 @@ void main() {
     expect(page.items.single.scheduledAt.isUtc, isTrue);
   });
 
-  test('complete sends UUID idempotency key and parses updated reminder', () async {
-    late http.Request captured;
-    final source = ReminderApiDataSource(
-      session: _Session('token'),
-      random: Random(42),
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response(jsonEncode({
-          'reminder': _occurrenceJson(status: 'COMPLETED'),
-          'action': {}, 'idempotent': false,
-        }), 200);
-      }),
-    );
+  test(
+    'complete sends UUID idempotency key and parses updated reminder',
+    () async {
+      late http.Request captured;
+      final source = ReminderApiDataSource(
+        session: _Session('token'),
+        random: Random(42),
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(
+            jsonEncode({
+              'reminder': _occurrenceJson(status: 'COMPLETED'),
+              'action': {},
+              'idempotent': false,
+            }),
+            200,
+          );
+        }),
+      );
 
-    final result = await source.complete('occurrence-id', note: ' Taken ');
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(captured.url.path, '/api/v1/reminders/occurrence-id/complete');
-    expect(body['note'], 'Taken');
-    expect(body['client_action_id'], matches(RegExp(
-      r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    )));
-    expect(result.reminder.status, ReminderOccurrenceStatus.completed);
-  });
+      final result = await source.complete('occurrence-id', note: ' Taken ');
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(captured.url.path, '/api/v1/reminders/occurrence-id/complete');
+      expect(body['note'], 'Taken');
+      expect(
+        body['client_action_id'],
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+          ),
+        ),
+      );
+      expect(result.reminder.status, ReminderOccurrenceStatus.completed);
+    },
+  );
 
   test('401 clears only the captured invalid session', () async {
     final session = _Session('expired');
@@ -63,21 +84,34 @@ void main() {
       session: session,
       client: MockClient((_) async => http.Response('{}', 401)),
     );
-    await expectLater(source.fetchOccurrences(), throwsA(
-      isA<ReminderApiFailure>().having((e) => e.statusCode, 'status', 401),
-    ));
+    await expectLater(
+      source.fetchOccurrences(),
+      throwsA(
+        isA<ReminderApiFailure>().having((e) => e.statusCode, 'status', 401),
+      ),
+    );
     expect(session.cleared, isTrue);
   });
 
   test('rejects unknown enums instead of silently guessing', () async {
     final source = ReminderApiDataSource(
       session: _Session('token'),
-      client: MockClient((_) async => http.Response(jsonEncode({
-        'items': [_occurrenceJson(status: 'SURPRISE')],
-        'total': 1, 'limit': 100, 'offset': 0,
-      }), 200)),
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'items': [_occurrenceJson(status: 'SURPRISE')],
+            'total': 1,
+            'limit': 100,
+            'offset': 0,
+          }),
+          200,
+        ),
+      ),
     );
-    await expectLater(source.fetchOccurrences(), throwsA(isA<FormatException>()));
+    await expectLater(
+      source.fetchOccurrences(),
+      throwsA(isA<FormatException>()),
+    );
   });
 }
 
@@ -99,8 +133,14 @@ Map<String, dynamic> _occurrenceJson({String status = 'DUE'}) => {
 
 class _Session implements CaregiverSession {
   _Session(this.accessToken);
-  @override String? accessToken;
+  @override
+  String? accessToken;
   bool cleared = false;
-  @override String? get householdCode => null;
-  @override Future<void> clearInvalidSession() async { cleared = true; accessToken = null; }
+  @override
+  String? get householdCode => null;
+  @override
+  Future<void> clearInvalidSession() async {
+    cleared = true;
+    accessToken = null;
+  }
 }

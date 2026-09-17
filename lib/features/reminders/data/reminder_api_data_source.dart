@@ -13,7 +13,8 @@ class ReminderApiFailure implements Exception {
   const ReminderApiFailure(this.message, {this.statusCode});
   final String message;
   final int? statusCode;
-  @override String toString() => message;
+  @override
+  String toString() => message;
 }
 
 abstract interface class ReminderDataSource {
@@ -30,11 +31,21 @@ abstract interface class ReminderDataSource {
     int offset = 0,
   });
   Future<ReminderTemplate> createTemplate(ReminderTemplateDraft draft);
-  Future<ReminderTemplate> updateTemplate(String templateId, Map<String, Object?> changes);
+  Future<ReminderTemplate> updateTemplate(
+    String templateId,
+    Map<String, Object?> changes,
+  );
   Future<ReminderTemplate> archiveTemplate(String templateId);
   Future<ReminderActionResult> complete(String occurrenceId, {String? note});
-  Future<ReminderActionResult> snooze(String occurrenceId, {int? snoozeMinutes, String? note});
-  Future<ReminderActionResult> completeOnBehalf(String occurrenceId, String note);
+  Future<ReminderActionResult> snooze(
+    String occurrenceId, {
+    int? snoozeMinutes,
+    String? note,
+  });
+  Future<ReminderActionResult> completeOnBehalf(
+    String occurrenceId,
+    String note,
+  );
   Future<ReminderActionResult> cancel(String occurrenceId, String note);
 }
 
@@ -62,7 +73,8 @@ class ReminderApiDataSource implements ReminderDataSource {
   }) async {
     final query = <String, dynamic>{'limit': '$limit', 'offset': '$offset'};
     if (patientId != null) query['patient_id'] = patientId;
-    if (statuses.isNotEmpty) query['status'] = statuses.map((e) => e.apiValue).toList();
+    if (statuses.isNotEmpty)
+      query['status'] = statuses.map((e) => e.apiValue).toList();
     final decoded = await _request('GET', '/api/v1/reminders', query: query);
     return parseReminderPage(
       decoded,
@@ -78,10 +90,17 @@ class ReminderApiDataSource implements ReminderDataSource {
     int offset = 0,
   }) async {
     final query = <String, dynamic>{
-      'patient_id': patientId, 'limit': '$limit', 'offset': '$offset',
+      'patient_id': patientId,
+      'limit': '$limit',
+      'offset': '$offset',
     };
-    if (statuses.isNotEmpty) query['status'] = statuses.map((e) => e.apiValue).toList();
-    final decoded = await _request('GET', '/api/v1/reminder-templates', query: query);
+    if (statuses.isNotEmpty)
+      query['status'] = statuses.map((e) => e.apiValue).toList();
+    final decoded = await _request(
+      'GET',
+      '/api/v1/reminder-templates',
+      query: query,
+    );
     return parseReminderPage(
       decoded,
       (json) => ReminderTemplateDto.fromJson(json).value,
@@ -90,14 +109,23 @@ class ReminderApiDataSource implements ReminderDataSource {
 
   @override
   Future<ReminderTemplate> createTemplate(ReminderTemplateDraft draft) async {
-    final decoded = await _request('POST', '/api/v1/reminder-templates', body: draft.toJson());
+    final decoded = await _request(
+      'POST',
+      '/api/v1/reminder-templates',
+      body: draft.toJson(),
+    );
     return ReminderTemplateDto.fromJson(_object(decoded)).value;
   }
 
   @override
-  Future<ReminderTemplate> updateTemplate(String templateId, Map<String, Object?> changes) async {
+  Future<ReminderTemplate> updateTemplate(
+    String templateId,
+    Map<String, Object?> changes,
+  ) async {
     final decoded = await _request(
-      'PATCH', '/api/v1/reminder-templates/${Uri.encodeComponent(templateId)}', body: changes,
+      'PATCH',
+      '/api/v1/reminder-templates/${Uri.encodeComponent(templateId)}',
+      body: changes,
     );
     return ReminderTemplateDto.fromJson(_object(decoded)).value;
   }
@@ -105,7 +133,8 @@ class ReminderApiDataSource implements ReminderDataSource {
   @override
   Future<ReminderTemplate> archiveTemplate(String templateId) async {
     final decoded = await _request(
-      'POST', '/api/v1/reminder-templates/${Uri.encodeComponent(templateId)}/archive',
+      'POST',
+      '/api/v1/reminder-templates/${Uri.encodeComponent(templateId)}/archive',
     );
     return ReminderTemplateDto.fromJson(_object(decoded)).value;
   }
@@ -116,14 +145,19 @@ class ReminderApiDataSource implements ReminderDataSource {
 
   @override
   Future<ReminderActionResult> snooze(
-    String occurrenceId, {int? snoozeMinutes, String? note}
-  ) => _action(occurrenceId, 'snooze', {
-    'snooze_minutes': snoozeMinutes, 'note': note?.trim(),
+    String occurrenceId, {
+    int? snoozeMinutes,
+    String? note,
+  }) => _action(occurrenceId, 'snooze', {
+    'snooze_minutes': snoozeMinutes,
+    'note': note?.trim(),
   });
 
   @override
-  Future<ReminderActionResult> completeOnBehalf(String occurrenceId, String note) =>
-      _action(occurrenceId, 'complete-on-behalf', {'note': note.trim()});
+  Future<ReminderActionResult> completeOnBehalf(
+    String occurrenceId,
+    String note,
+  ) => _action(occurrenceId, 'complete-on-behalf', {'note': note.trim()});
 
   @override
   Future<ReminderActionResult> cancel(String occurrenceId, String note) =>
@@ -135,11 +169,15 @@ class ReminderApiDataSource implements ReminderDataSource {
   Future<ReminderActionResult> followUp(String occurrenceId, String note) =>
       _action(occurrenceId, 'follow-ups', {'note': note.trim()});
 
-  Future<ReminderActionResult> markMissedHandled(String occurrenceId, {String? note}) =>
-      _action(occurrenceId, 'missed/handle', {'note': note?.trim()});
+  Future<ReminderActionResult> markMissedHandled(
+    String occurrenceId, {
+    String? note,
+  }) => _action(occurrenceId, 'missed/handle', {'note': note?.trim()});
 
   Future<ReminderActionResult> _action(
-    String occurrenceId, String action, Map<String, Object?> values,
+    String occurrenceId,
+    String action,
+    Map<String, Object?> values,
   ) async {
     final body = <String, Object?>{
       'client_action_id': _uuidV4(),
@@ -147,7 +185,9 @@ class ReminderApiDataSource implements ReminderDataSource {
         if (entry.value != null) entry.key: entry.value,
     };
     final decoded = await _request(
-      'POST', '/api/v1/reminders/${Uri.encodeComponent(occurrenceId)}/$action', body: body,
+      'POST',
+      '/api/v1/reminders/${Uri.encodeComponent(occurrenceId)}/$action',
+      body: body,
     );
     final object = _object(decoded);
     final reminder = object['reminder'];
@@ -171,7 +211,9 @@ class ReminderApiDataSource implements ReminderDataSource {
     if (token == null || token.isEmpty) {
       throw const ReminderApiFailure('Please sign in again.', statusCode: 401);
     }
-    final uri = Uri.parse('${AppConfig.backendBaseUrl}$path').replace(queryParameters: query);
+    final uri = Uri.parse(
+      '${AppConfig.backendBaseUrl}$path',
+    ).replace(queryParameters: query);
     try {
       late http.Response response;
       final headers = <String, String>{'authorization': 'Bearer $token'};
@@ -179,29 +221,38 @@ class ReminderApiDataSource implements ReminderDataSource {
       if (method == 'GET') {
         response = await _client.get(uri, headers: headers).timeout(timeout);
       } else if (method == 'POST') {
-        response = await _client.post(
-          uri,
-          headers: headers,
-          body: body == null ? null : jsonEncode(body),
-        ).timeout(timeout);
+        response = await _client
+            .post(
+              uri,
+              headers: headers,
+              body: body == null ? null : jsonEncode(body),
+            )
+            .timeout(timeout);
       } else if (method == 'PATCH') {
-        response = await _client.patch(
-          uri,
-          headers: headers,
-          body: jsonEncode(body),
-        ).timeout(timeout);
+        response = await _client
+            .patch(uri, headers: headers, body: jsonEncode(body))
+            .timeout(timeout);
       } else {
         throw StateError('Unsupported reminder request method.');
       }
       if (_session.accessToken != token) {
-        throw const ReminderApiFailure('Please sign in again.', statusCode: 401);
+        throw const ReminderApiFailure(
+          'Please sign in again.',
+          statusCode: 401,
+        );
       }
       if (response.statusCode == 401) {
         await _session.clearInvalidSession();
-        throw const ReminderApiFailure('Please sign in again.', statusCode: 401);
+        throw const ReminderApiFailure(
+          'Please sign in again.',
+          statusCode: 401,
+        );
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ReminderApiFailure(_message(response.statusCode), statusCode: response.statusCode);
+        throw ReminderApiFailure(
+          _message(response.statusCode),
+          statusCode: response.statusCode,
+        );
       }
       try {
         return jsonDecode(utf8.decode(response.bodyBytes));
@@ -211,12 +262,15 @@ class ReminderApiDataSource implements ReminderDataSource {
     } on TimeoutException {
       throw const ReminderApiFailure('The reminder request timed out.');
     } on http.ClientException {
-      throw const ReminderApiFailure('Unable to reach Alera. Please try again.');
+      throw const ReminderApiFailure(
+        'Unable to reach Alera. Please try again.',
+      );
     }
   }
 
   Map<String, dynamic> _object(Object? value) {
-    if (value is! Map<String, dynamic>) throw const ReminderApiFailure('The reminder response was invalid.');
+    if (value is! Map<String, dynamic>)
+      throw const ReminderApiFailure('The reminder response was invalid.');
     return value;
   }
 
@@ -232,7 +286,9 @@ class ReminderApiDataSource implements ReminderDataSource {
     final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    final hex = bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+    final hex = bytes
+        .map((value) => value.toRadixString(16).padLeft(2, '0'))
+        .join();
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
   }
 }
