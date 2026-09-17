@@ -11,9 +11,11 @@ import 'domain/models/caregiver_alert.dart';
 import 'data/api/caregiver_alert_api_data_source.dart';
 import 'data/alerts/caregiver_alert_controller.dart';
 import 'data/api/caregiver_patient_api_data_source.dart';
+import 'data/api/caregiver_nudge_api_data_source.dart';
 import 'data/api/dto/patient_dto.dart';
 import 'data/patients/caregiver_patient_controller.dart';
 import 'domain/models/health_snapshot.dart';
+import 'domain/models/caregiver_nudge.dart';
 import 'presentation/home/caregiver_home_page.dart';
 import 'presentation/alerts/caregiver_alerts_page.dart';
 import 'presentation/alerts/caregiver_alert_detail_page.dart';
@@ -32,6 +34,7 @@ class CaregiverShell extends StatefulWidget {
   final VoidCallback? onSignOut;
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
+  final CaregiverNudgeDataSource? nudgeDataSource;
 
   const CaregiverShell({
     super.key,
@@ -43,6 +46,7 @@ class CaregiverShell extends StatefulWidget {
     this.onSignOut,
     this.loadNotificationAlert,
     this.notificationTapBus,
+    this.nudgeDataSource,
   });
 
   @override
@@ -59,6 +63,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   late final CaregiverAlertController _alertController;
   CaregiverPatientController? _patientController;
   bool _ownsPatientController = false;
+  bool _sendingNudge = false;
 
   @override
   void initState() {
@@ -529,7 +534,45 @@ class _CaregiverShellState extends State<CaregiverShell> {
     onAlertTap: (alert) => _openAlertDetail(context, alert),
     onMarkAsSeen: _markAsSeen,
     onSelectPatient: onSelectPatient,
+    sendingNudge: _sendingNudge,
+    onSendNudge: patient.backendBacked
+        ? (type) => _sendNudge(patient, type)
+        : null,
   );
+
+  Future<void> _sendNudge(
+    CareRecipient patient,
+    CaregiverNudgeType type,
+  ) async {
+    final source = widget.nudgeDataSource;
+    if (source == null || _sendingNudge) return;
+    setState(() => _sendingNudge = true);
+    try {
+      await source.sendNudge(patient.id, type);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('${type.label} sent to ${patient.name}.')),
+        );
+    } on CaregiverNudgeFailure catch (failure) {
+      if (!mounted || failure.statusCode == 401) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(failure.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Unable to send the reminder. Please try again.'),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _sendingNudge = false);
+    }
+  }
 
   void _showPatientSelector(
     BuildContext context,

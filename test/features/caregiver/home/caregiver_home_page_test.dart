@@ -4,6 +4,8 @@ import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_sou
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/data/patients/caregiver_patient_controller.dart';
 import 'package:alera/features/caregiver/data/api/dto/monitoring_device_dto.dart';
+import 'package:alera/features/caregiver/data/api/caregiver_nudge_api_data_source.dart';
+import 'package:alera/features/caregiver/domain/models/caregiver_nudge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,9 +88,45 @@ void main() {
     expect(find.textContaining('97%'), findsOneWidget);
     expect(find.textContaining('Highest severity:'), findsNothing);
     expect(find.textContaining('Device:'), findsNothing);
-    expect(find.text('Love you ❤️'), findsOneWidget);
+    expect(find.text('Drink water 💧'), findsOneWidget);
     expect(find.text('Stress — mock-only'), findsOneWidget);
     expect(source.listCalls, 1);
+  });
+
+  testWidgets('quick reminder targets the selected backend patient', (
+    tester,
+  ) async {
+    final source = _HomePatientSource([
+      _patient('First Patient'),
+      _patient('Second Patient'),
+    ]);
+    final controller = CaregiverPatientController(dataSource: source);
+    final nudges = _RecordingNudges();
+    await controller.load();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverShell(
+          repository: const MockCaregiverRepository(),
+          patientController: controller,
+          nudgeDataSource: nudges,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('First Patient'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Second Patient').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take medication 💊'));
+    await tester.pumpAndSettle();
+
+    expect(nudges.calls, [
+      ('Second Patient', CaregiverNudgeType.takeMedication),
+    ]);
+    expect(
+      find.text('Take medication 💊 sent to Second Patient.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('empty assigned patient state is explicit', (tester) async {
@@ -213,6 +251,15 @@ class _HomePatientSource implements CaregiverPatientReadDataSource {
     String patientId,
   ) async =>
       const [];
+}
+
+class _RecordingNudges implements CaregiverNudgeDataSource {
+  final calls = <(String, CaregiverNudgeType)>[];
+
+  @override
+  Future<void> sendNudge(String patientId, CaregiverNudgeType type) async {
+    calls.add((patientId, type));
+  }
 }
 
 PatientListItemDto _patient(String name) => PatientListItemDto(
