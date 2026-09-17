@@ -223,12 +223,13 @@ class _CaregiverPatientDetailLoaderPageState
       final devices = await devicesFuture;
 
       if (mounted) {
-        setState(
-          () => _patient = patientDetailToCareRecipient(
+        setState(() {
+          _patient = patientDetailToCareRecipient(
             detail,
             monitoringDevices: devices,
-          ),
-        );
+          );
+          _patientAccessStatus = detail.patientAccessStatus;
+        });
       }
     } on CaregiverPatientApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
@@ -362,6 +363,9 @@ class _PatientAccessStatusCard extends StatelessWidget {
           if (onAction != null &&
               status.status == PatientAccessState.invitePending)
             AleraButton(label: 'Open invitation', onPressed: onAction!),
+          if (onAction != null &&
+              status.status == PatientAccessState.connected)
+            AleraButton(label: 'Generate login code', onPressed: onAction!),
         ],
       ),
     );
