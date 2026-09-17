@@ -190,6 +190,6 @@ class FcmNotificationService {
 
   String _tokenPath(SessionType? sessionType) =>
       sessionType == SessionType.elderlyPatient
-      ? '/api/v1/devices/patient-fcm-token'
+      ? '/api/v1/devices/fcm-token'
       : '/api/v1/devices/fcm-token';
 }
