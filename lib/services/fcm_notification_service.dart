@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'alert_notification.dart';
+import 'patient_nudge_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -7,7 +8,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../features/caregiver/data/auth/caregiver_session_controller.dart';
-import '../features/caregiver/data/auth/caregiver_token_store.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -33,12 +33,7 @@ class FcmNotificationService {
         '@mipmap/ic_launcher',
       ),
     ),
-    onDidReceiveNotificationResponse: (r) =>
-        NotificationTapBus.instance.handle(
-      AlertNotification.fromLocalPayload(
-        r.payload,
-      ),
-    ),
+    onDidReceiveNotificationResponse: (r) => _handleLocalPayload(r.payload),
   );
   
     await _local
@@ -53,22 +48,30 @@ class FcmNotificationService {
             importance: Importance.high,
           ),
         );
+    await _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'alera_nudges',
+            'Alera reminders',
+            description: 'Caregiver reminders for patients',
+            importance: Importance.high,
+          ),
+        );
     FirebaseMessaging.onMessage.listen(_foreground);
     FirebaseMessaging.onMessageOpenedApp.listen(_handle);
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) _handle(initialMessage);
     final localLaunch = await _local.getNotificationAppLaunchDetails();
     if (localLaunch?.didNotificationLaunchApp ?? false) {
-      NotificationTapBus.instance.handle(
-        AlertNotification.fromLocalPayload(
-          localLaunch?.notificationResponse?.payload,
-        ),
-      );
+      _handleLocalPayload(localLaunch?.notificationResponse?.payload);
     }
   }
 
   Future<void> register(CaregiverSessionController session) async {
-    if (session.sessionType != SessionType.caregiver) return;
+    if (session.sessionType == null) return;
     try {
       await _messaging.requestPermission();
       final token = await _messaging.getToken();
@@ -125,30 +128,47 @@ class FcmNotificationService {
 
   Future<void> _foreground(RemoteMessage m) async {
     final d = {...m.data, '_notification_event_id': m.messageId};
+    final isNudge = m.data['type'] == 'NUDGE';
     await _local.show(
-  id: m.hashCode,
-  title:
-      m.notification?.title ??
-      'Alera health alert',
-  body:
-      m.notification?.body ??
-      'A new alert needs your attention.',
-  notificationDetails:
-      const NotificationDetails(
-    android: AndroidNotificationDetails(
-      'alera_alerts',
-      'Alera alerts',
-      importance: Importance.high,
-      priority: Priority.high,
-    ),
-  ),
-  payload: jsonEncode(d),
-);
+      id: m.hashCode,
+      title:
+          m.notification?.title ??
+          (isNudge ? 'Alera reminder' : 'Alera health alert'),
+      body:
+          m.notification?.body ??
+          (isNudge
+              ? 'Your caregiver sent you a reminder.'
+              : 'A new alert needs your attention.'),
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          isNudge ? 'alera_nudges' : 'alera_alerts',
+          isNudge ? 'Alera reminders' : 'Alera alerts',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      payload: jsonEncode(d),
+    );
   }
 
   void _handle(RemoteMessage message) {
     NotificationTapBus.instance.handle(
       AlertNotification.parse(message.data, messageId: message.messageId),
+    );
+    PatientNudgeTapBus.instance.handle(
+      PatientNudgeNotification.parse(
+        message.data,
+        messageId: message.messageId,
+      ),
+    );
+  }
+
+  void _handleLocalPayload(String? payload) {
+    NotificationTapBus.instance.handle(
+      AlertNotification.fromLocalPayload(payload),
+    );
+    PatientNudgeTapBus.instance.handle(
+      PatientNudgeNotification.fromLocalPayload(payload),
     );
   }
 }

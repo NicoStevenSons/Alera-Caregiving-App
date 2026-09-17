@@ -46,7 +46,7 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
-  testWidgets('detail actions provide mock feedback', (
+  testWidgets('call action uses the patient contact launcher', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -68,7 +68,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Call'));
     await tester.pump();
-    expect(find.text('Call is mock-only for now.'), findsOneWidget);
+    expect(
+      find.text('No phone number is saved for Maria Santos.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('prefers live patient name and falls back safely', (
@@ -189,6 +192,47 @@ void main() {
     expect(find.widgetWithText(AleraButton, 'Add Note'), findsNothing);
     controller.dispose();
   });
+
+  testWidgets('loads persisted lifecycle events into the timeline', (
+    tester,
+  ) async {
+    final alert = _alert();
+    final timelineSource = _TimelineSource([
+      AlertTimelineEntry(
+        occurredAt: alert.detectedAt.add(const Duration(minutes: 3)),
+        title: 'Alert became critical',
+        description: 'The reading reached 160 BPM after the warning was sent.',
+      ),
+      AlertTimelineEntry(
+        occurredAt: alert.detectedAt.add(const Duration(minutes: 4)),
+        title: 'Seen by caregiver',
+        description: 'The caregiver marked this alert as seen.',
+      ),
+    ]);
+    final controller = CaregiverAlertController(
+      loader: _DetailLoader([alert]),
+      timelineSource: timelineSource,
+      fallback: [alert],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverAlertDetailPage(
+          alert: alert,
+          careRecipient: null,
+          alertController: controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(find.text('High heart rate noticed'), findsOneWidget);
+    expect(find.text('Alert became critical'), findsOneWidget);
+    expect(find.text('Seen by caregiver'), findsOneWidget);
+    controller.dispose();
+  });
 }
 
 Widget _detailPage({required CaregiverAlert alert, CareRecipient? recipient}) {
@@ -256,4 +300,13 @@ class _CountingActions implements CaregiverAlertActionDataSource {
       _run();
   @override
   Future<CaregiverAlert> resolve(String alertId, {String? note}) => _run();
+}
+
+class _TimelineSource implements CaregiverAlertTimelineDataSource {
+  final List<AlertTimelineEntry> result;
+  const _TimelineSource(this.result);
+
+  @override
+  Future<List<AlertTimelineEntry>> fetchTimeline(String alertId) async =>
+      result;
 }

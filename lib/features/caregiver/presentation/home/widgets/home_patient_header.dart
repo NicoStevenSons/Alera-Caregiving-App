@@ -8,12 +8,14 @@ class HomePatientHeader extends StatelessWidget {
   final CareRecipient careRecipient;
   final VoidCallback onCall;
   final VoidCallback onMessage;
+  final VoidCallback? onSelectPatient;
 
   const HomePatientHeader({
     super.key,
     required this.careRecipient,
     required this.onCall,
     required this.onMessage,
+    this.onSelectPatient,
   });
 
   @override
@@ -34,47 +36,64 @@ class HomePatientHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
         child: Column(
           children: [
-            Row(
-              children: [
-                _InitialAvatar(name: careRecipient.name),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Semantics(
+              button: onSelectPatient != null,
+              label: onSelectPatient == null ? null : 'Switch patient',
+              child: InkWell(
+                key: const Key('home-patient-selector'),
+                onTap: onSelectPatient,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
                     children: [
-                      Text(
-                        careRecipient.name,
-                        style: const TextStyle(
-                          color: AleraColors.textPrimary,
-                          fontSize: 20,
-                          height: 1.05,
-                          fontWeight: FontWeight.w700,
+                      _InitialAvatar(name: careRecipient.name),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              careRecipient.name,
+                              style: const TextStyle(
+                                color: AleraColors.textPrimary,
+                                fontSize: 20,
+                                height: 1.05,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 15,
+                                  color: AleraColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  careRecipient.healthSnapshot.hasLastCheckIn
+                                      ? 'Last Check-in: ${_time(careRecipient.healthSnapshot.lastCheckIn)}'
+                                      : 'Last Check-in: No data',
+                                  style: const TextStyle(
+                                    color: AleraColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 15,
-                            color: AleraColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            careRecipient.healthSnapshot.hasLastCheckIn
-                                ? 'Last Check-in: ${_time(careRecipient.healthSnapshot.lastCheckIn)}'
-                                : 'Last Check-in: No data',
-                            style: const TextStyle(
-                              color: AleraColors.textSecondary,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
+                      if (onSelectPatient != null)
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AleraColors.textSecondary,
+                        ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 12),
             Row(

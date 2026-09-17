@@ -6,6 +6,7 @@ import '../api/caregiver_alert_api_data_source.dart';
 class CaregiverAlertController extends ChangeNotifier {
   final CaregiverAlertDataSource loader;
   final CaregiverAlertActionDataSource? actions;
+  final CaregiverAlertTimelineDataSource? timelineSource;
   final List<CaregiverAlert> _fallback;
   List<CaregiverAlert> _alerts = const [];
   final Set<String> _busyAlertIds = {};
@@ -16,6 +17,7 @@ class CaregiverAlertController extends ChangeNotifier {
   CaregiverAlertController({
     required this.loader,
     this.actions,
+    this.timelineSource,
     List<CaregiverAlert> fallback = const [],
   }) : _fallback = List.unmodifiable(fallback),
        _alerts = List.unmodifiable(fallback);
@@ -26,6 +28,15 @@ class CaregiverAlertController extends ChangeNotifier {
   bool get showingFallback => _showingFallback;
   bool isBusy(String alertId) => _busyAlertIds.contains(alertId);
   bool get supportsActions => actions != null;
+
+  Future<List<AlertTimelineEntry>> loadTimeline(String alertId) async {
+    final source = timelineSource;
+    if (source == null) return const [];
+    final timeline = await source.fetchTimeline(alertId);
+    final index = _alerts.indexWhere((item) => item.id == alertId);
+    if (index >= 0) upsert(_alerts[index].copyWith(timeline: timeline));
+    return timeline;
+  }
 
   Future<void> load() async {
     if (_loading) return;
@@ -99,8 +110,27 @@ class CaregiverAlertController extends ChangeNotifier {
     notifyListeners();
     try {
       final updated = await operation(actionSource);
-      upsert(updated);
-      return updated;
+      final existingIndex = _alerts.indexWhere((item) => item.id == alertId);
+      final existing = existingIndex < 0 ? null : _alerts[existingIndex];
+      var hydrated = existing == null
+          ? updated
+          : existing.copyWith(
+              severity: updated.severity,
+              status: updated.status,
+              resolvedAt: updated.resolvedAt,
+              timeline: updated.timeline.isEmpty
+                  ? existing.timeline
+                  : updated.timeline,
+              note: updated.note ?? existing.note,
+            );
+      final source = timelineSource;
+      if (source != null) {
+        hydrated = hydrated.copyWith(
+          timeline: await source.fetchTimeline(alertId),
+        );
+      }
+      upsert(hydrated);
+      return hydrated;
     } finally {
       _busyAlertIds.remove(alertId);
       notifyListeners();

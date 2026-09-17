@@ -31,6 +31,7 @@ class CaregiverAlert {
   final Duration? triggerDuration;
   final DateTime detectedAt;
   final DateTime? confirmedAt;
+  final DateTime? createdAt;
   final DateTime? resolvedAt;
   final List<AlertTimelineEntry> timeline;
   final String? note;
@@ -50,8 +51,38 @@ class CaregiverAlert {
     required this.triggerDuration,
     required this.detectedAt,
     this.confirmedAt,
+    this.createdAt,
     this.resolvedAt,
     required this.timeline,
     this.note,
   });
+
+  CaregiverAlert copyWith({
+    CaregiverAlertSeverity? severity,
+    CaregiverAlertStatus? status,
+    DateTime? resolvedAt,
+    List<AlertTimelineEntry>? timeline,
+    String? note,
+  }) {
+    return CaregiverAlert(
+      id: id,
+      careRecipientId: careRecipientId,
+      patientDisplayName: patientDisplayName,
+      title: title,
+      description: description,
+      severity: severity ?? this.severity,
+      metric: metric,
+      status: status ?? this.status,
+      reading: reading,
+      threshold: threshold,
+      unit: unit,
+      triggerDuration: triggerDuration,
+      detectedAt: detectedAt,
+      confirmedAt: confirmedAt,
+      createdAt: createdAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      timeline: timeline ?? this.timeline,
+      note: note ?? this.note,
+    );
+  }
 }

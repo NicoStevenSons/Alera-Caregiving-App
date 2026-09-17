@@ -5,6 +5,7 @@ import '../../../../design_system/widgets/alera_pill.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
+import '../../domain/models/caregiver_nudge.dart';
 import '../../../../services/patient_contact_actions.dart';
 import 'widgets/home_alerts_preview.dart';
 import 'widgets/home_health_summary.dart';
@@ -13,14 +14,6 @@ import 'widgets/home_patient_header.dart';
 import 'widgets/home_reminders_preview.dart';
 
 class CaregiverHomePage extends StatelessWidget {
-  static const List<String> _fallbackQuickMessages = [
-    'Love you ❤️',
-    'How are you? 😊',
-    'Did you take meds? 💊',
-    'Checking in 👋',
-    'Call me 📞',
-  ];
-
   final CareRecipient careRecipient;
   final List<CaregiverAlert> alerts;
   final List<CaregiverReminder> reminders;
@@ -29,6 +22,9 @@ class CaregiverHomePage extends StatelessWidget {
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final bool showDemoBanner;
+  final VoidCallback? onSelectPatient;
+  final ValueChanged<CaregiverNudgeType>? onSendNudge;
+  final bool sendingNudge;
 
   const CaregiverHomePage({
     super.key,
@@ -40,6 +36,9 @@ class CaregiverHomePage extends StatelessWidget {
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.showDemoBanner = false,
+    this.onSelectPatient,
+    this.onSendNudge,
+    this.sendingNudge = false,
   });
 
   void _mock(BuildContext context, String action) {
@@ -50,10 +49,6 @@ class CaregiverHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> quickMessages = careRecipient.quickMessages.isEmpty
-        ? _fallbackQuickMessages
-        : careRecipient.quickMessages;
-
     return ListView(
       key: const PageStorageKey<String>('caregiver-home-dashboard'),
       padding: EdgeInsets.zero,
@@ -82,6 +77,7 @@ class CaregiverHomePage extends StatelessWidget {
             scheme: 'sms',
             appLabel: 'messaging',
           ),
+          onSelectPatient: onSelectPatient,
         ),
         SizedBox(
           height: 60,
@@ -91,14 +87,16 @@ class CaregiverHomePage extends StatelessWidget {
               vertical: 14,
             ),
             scrollDirection: Axis.horizontal,
-            itemCount: quickMessages.length,
+            itemCount: CaregiverNudgeType.values.length,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
-              final String message = quickMessages[index];
+              final type = CaregiverNudgeType.values[index];
               return AleraPill(
-                label: message,
+                label: type.label,
                 variant: AleraPillVariant.action,
-                onTap: () => _mock(context, 'Quick message'),
+                onTap: sendingNudge || onSendNudge == null
+                    ? null
+                    : () => onSendNudge!(type),
               );
             },
           ),

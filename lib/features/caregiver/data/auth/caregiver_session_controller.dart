@@ -83,7 +83,7 @@ class CaregiverSessionController extends ChangeNotifier
           ? CaregiverSessionStatus.unauthenticated
           : CaregiverSessionStatus.authenticated;
       notifyListeners();
-      if (stored?.type == SessionType.caregiver) {
+      if (stored != null) {
         FcmNotificationService.instance.register(this);
       }
     });
@@ -133,9 +133,7 @@ class CaregiverSessionController extends ChangeNotifier
         _session = session;
         _status = CaregiverSessionStatus.authenticated;
         notifyListeners();
-        if (session.type == SessionType.caregiver) {
-          FcmNotificationService.instance.register(this);
-        }
+        FcmNotificationService.instance.register(this);
       });
 
   Future<void> logout() async {

@@ -14,6 +14,7 @@ import '../../../patient/presentation/patient_qr_scanner_page.dart';
 import '../../caregiver_shell.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
+import '../../data/api/caregiver_nudge_api_data_source.dart';
 import '../../data/auth/caregiver_auth_api.dart';
 import '../../data/auth/caregiver_session_controller.dart';
 import '../../data/auth/caregiver_token_store.dart';
@@ -279,6 +280,9 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
                   session: _session,
                 ).fetchAlert,
                 patientDataSource: CaregiverPatientApiDataSource(
+                  session: _session,
+                ),
+                nudgeDataSource: CaregiverNudgeApiDataSource(
                   session: _session,
                 ),
                 householdCode: _session.householdCode,
