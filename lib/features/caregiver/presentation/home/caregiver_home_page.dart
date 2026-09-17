@@ -25,6 +25,7 @@ class CaregiverHomePage extends StatelessWidget {
   final VoidCallback? onSelectPatient;
   final ValueChanged<CaregiverNudgeType>? onSendNudge;
   final bool sendingNudge;
+  final ValueChanged<String>? onMetricTap;
 
   const CaregiverHomePage({
     super.key,
@@ -39,6 +40,7 @@ class CaregiverHomePage extends StatelessWidget {
     this.onSelectPatient,
     this.onSendNudge,
     this.sendingNudge = false,
+    this.onMetricTap,
   });
 
   void _mock(BuildContext context, String action) {
@@ -107,7 +109,14 @@ class CaregiverHomePage extends StatelessWidget {
             children: [
               HomeHealthSummary(
                 careRecipient: careRecipient,
-                onMetricTap: (metric) => _mock(context, '$metric history'),
+                onMetricTap: (metric) {
+                  if (onMetricTap != null) {
+                    onMetricTap!(metric);
+                    return;
+                  }
+
+                  _mock(context, '$metric history');
+                },
               ),
               const SizedBox(height: 12),
               HomeAlertsPreview(

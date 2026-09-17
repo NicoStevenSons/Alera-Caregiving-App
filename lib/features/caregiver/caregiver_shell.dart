@@ -14,6 +14,9 @@ import 'data/api/caregiver_patient_api_data_source.dart';
 import 'data/api/caregiver_nudge_api_data_source.dart';
 import 'data/api/dto/patient_dto.dart';
 import 'data/patients/caregiver_patient_controller.dart';
+import 'data/api/caregiver_vital_trend_api_data_source.dart';
+import 'data/api/dto/vital_trend_dto.dart';
+import 'presentation/vitals/caregiver_vital_trend_page.dart';
 import 'domain/models/health_snapshot.dart';
 import 'domain/models/caregiver_nudge.dart';
 import 'presentation/home/caregiver_home_page.dart';
@@ -190,6 +193,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
             },
             onAlertTap: (alert) => _openAlertDetail(context, alert),
             onMarkAsSeen: _markAsSeen,
+            onVitalTap: (metric) =>
+                _openVitalTrend(context, careRecipient, metric),
           ),
         ),
       );
@@ -217,6 +222,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
           },
           onAlertTap: (alert) => _openAlertDetail(context, alert),
           onMarkAsSeen: _markAsSeen,
+          onVitalTap: (metric) =>
+              _openVitalTrend(context, careRecipient, metric),
         ),
       ),
     );
@@ -565,6 +572,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
     onSendNudge: patient.backendBacked
         ? (type) => _sendNudge(patient, type)
         : null,
+    onMetricTap: (metric) => _openVitalTrend(context, patient, metric),
   );
 
   Future<void> _sendNudge(
@@ -658,6 +666,52 @@ class _CaregiverShellState extends State<CaregiverShell> {
       .take(2)
       .map((part) => part.characters.first.toUpperCase())
       .join();
+
+  void _openVitalTrend(
+    BuildContext context,
+    CareRecipient patient,
+    String metric,
+  ) {
+    final trendMetric = switch (metric) {
+      'Heart Rate' => VitalTrendMetric.heartRate,
+      'SpO2' => VitalTrendMetric.spo2,
+      _ => null,
+    };
+
+    if (trendMetric == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('$metric history is not available yet.')),
+        );
+      return;
+    }
+
+    if (!patient.backendBacked) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Trend history is only available for connected patients.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => CaregiverVitalTrendPage(
+          patientId: patient.id,
+          patientName: patient.name,
+          metric: trendMetric,
+          dataSource: CaregiverVitalTrendApiDataSource(),
+        ),
+      ),
+    );
+  }
 }
 
 class _HomePatientState extends StatelessWidget {
