@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
+import '../Services/device_status_api_service.dart';
 import '../Services/watch_payload_service.dart';
 import '../Services/health_event_api_service.dart';
 import '../Services/upload_queue_service.dart';
 import '../Services/fifo_upload_service.dart';
 import '../Services/watch_listener_controller.dart';
+import '../services/patient_nudge_notification.dart';
+import '../Services/phone_heartbeat_service.dart';
 
 import '../config/app_config.dart';
 
@@ -23,8 +27,6 @@ import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/data/api/elderly_reminder_supabase_service.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
-import '../services/patient_nudge_notification.dart';
-
 
 class ElderlyInterface extends StatefulWidget {
   final VoidCallback? onSignOut;
@@ -59,6 +61,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   late final WatchListenerController watchListenerController;
 
+  late final PhoneHeartbeatService phoneHeartbeatService;
+
+  late final DeviceStatusApiService deviceStatusApiService;
+
   HeartRateData heartRateData = const HeartRateData(
     bpm: null,
     status: null,
@@ -83,6 +89,15 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       if (!mounted) return;
       _unsubscribeNudges = PatientNudgeTapBus.instance.subscribe(_openNudge);
     });
+
+    deviceStatusApiService = DeviceStatusApiService(
+    baseUrl: AppConfig.backendBaseUrl,
+    patientId: AppConfig.testPatientId,
+    );
+
+    phoneHeartbeatService = PhoneHeartbeatService(
+    deviceStatusApiService: deviceStatusApiService,
+    );
 
     fifoUploadService = FifoUploadService(
       uploadQueueService: uploadQueueService,
@@ -147,6 +162,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             measuredAt: data.measuredAt,
           );
         });
+
+        unawaited(
+        deviceStatusApiService.sendWatchStatus(data),
+        );
       },
 
       onSleepUpdated: (SleepData data) {
@@ -163,6 +182,8 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     watchListenerController.start();
 
     _processPendingQueue();
+
+    phoneHeartbeatService.start();
   }
 
 
