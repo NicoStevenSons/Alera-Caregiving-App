@@ -247,37 +247,14 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     required String title,
     required String hint,
     required String actionLabel,
-  }) async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          key: const Key('reminder-action-note'),
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(labelText: hint),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Back'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final note = controller.text.trim();
-              if (note.isNotEmpty) Navigator.pop(context, note);
-            },
-            child: Text(actionLabel),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    return value;
-  }
+  }) => showDialog<String>(
+    context: context,
+    builder: (context) => _ReminderNoteDialog(
+      title: title,
+      hint: hint,
+      actionLabel: actionLabel,
+    ),
+  );
 
   Future<void> _run(
     Future<void> Function() operation, {
@@ -312,6 +289,62 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       () => widget.controller.createTemplate(draft),
       success: 'Reminder created.',
     );
+  }
+}
+
+class _ReminderNoteDialog extends StatefulWidget {
+  const _ReminderNoteDialog({
+    required this.title,
+    required this.hint,
+    required this.actionLabel,
+  });
+
+  final String title;
+  final String hint;
+  final String actionLabel;
+
+  @override
+  State<_ReminderNoteDialog> createState() => _ReminderNoteDialogState();
+}
+
+class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      key: const Key('reminder-action-note'),
+      controller: _controller,
+      autofocus: true,
+      maxLines: 3,
+      decoration: InputDecoration(labelText: widget.hint),
+      onSubmitted: (_) => _submit(),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Back'),
+      ),
+      FilledButton(onPressed: _submit, child: Text(widget.actionLabel)),
+    ],
+  );
+
+  void _submit() {
+    final note = _controller.text.trim();
+    if (note.isNotEmpty) Navigator.pop(context, note);
   }
 }
 
