@@ -1,7 +1,8 @@
 import time
-import requests
-
 from datetime import datetime, timezone
+from uuid import uuid4
+
+import requests
 
 
 BACKEND_URL = "https://alera-backend-i1ui.onrender.com"
@@ -16,7 +17,7 @@ SPO2_CRITICAL = 85
 # one SpO2 reading every 3 minutes.
 SPO2_READING_INTERVAL_SECONDS = 180
 
-CRITICAL_HOLD_SECONDS = 10
+CRITICAL_CONFIRMATION_SECONDS = 15
 
 
 def check_backend():
@@ -42,7 +43,7 @@ def send_spo2(value):
     payload = {
         "patient_id": PATIENT_ID,
         "external_event_id": (
-            f"lifecycle-spo2-{now.strftime('%Y%m%dT%H%M%S%fZ')}"
+            f"lifecycle-spo2-slow-{now.strftime('%Y%m%dT%H%M%S%fZ')}-{uuid4()}"
         ),
         "metric_type": "SPO2",
         "numeric_value": value,
@@ -127,18 +128,24 @@ def run_lifecycle():
     print("\n[3/4] CRITICAL")
     print(
         "Leaving the warning unresolved and sending "
-        "a critical SpO2 reading."
+        "two Critical confirmation readings."
     )
 
     send_spo2(SPO2_CRITICAL)
-
-    time.sleep(CRITICAL_HOLD_SECONDS)
+    print(
+        f"Waiting {CRITICAL_CONFIRMATION_SECONDS} seconds for the explicit "
+        "Critical confirmation sample..."
+    )
+    time.sleep(CRITICAL_CONFIRMATION_SECONDS)
+    send_spo2(84)
 
     # 4. NORMAL / RECOVERY
     print("\n[4/4] NORMAL / RECOVERY")
+    time.sleep(3)
     send_spo2(SPO2_NORMAL)
 
     print("\n=== LIFECYCLE COMPLETE ===")
+    print("Expected pushes: SpO2 Warning, then Critical escalation.")
 
 
 def main():

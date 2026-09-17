@@ -151,6 +151,10 @@ class _CaregiverShellState extends State<CaregiverShell> {
           builder: (context) => CaregiverPatientDetailLoaderPage(
             patientId: careRecipient.id,
             controller: _patientController!,
+            patientDataSource:
+                widget.patientDataSource is CaregiverPatientDataSource
+                ? widget.patientDataSource as CaregiverPatientDataSource
+                : null,
             alerts: _alertController.alerts
                 .where((alert) => alert.careRecipientId == careRecipient.id)
                 .toList(),
@@ -207,6 +211,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
         builder: (_) => AddPatientPage(
           dataSource:
               widget.patientDataSource ?? CaregiverPatientApiDataSource(),
+          loadPatientDetail: _patientController?.loadDetail,
           householdCode: widget.householdCode,
           onPatientCreated: _addCreatedPatient,
         ),
@@ -248,12 +253,25 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   void _openAlertDetail(BuildContext context, CaregiverAlert alert) {
     CareRecipient? recipient;
-    for (final CareRecipient candidate in _careRecipients) {
+
+    final backendPatients = _patientController?.visiblePatients ?? const [];
+
+    for (final candidate in backendPatients) {
       if (candidate.id == alert.careRecipientId) {
         recipient = candidate;
         break;
       }
     }
+
+    if (recipient == null) {
+      for (final candidate in _careRecipients) {
+        if (candidate.id == alert.careRecipientId) {
+          recipient = candidate;
+          break;
+        }
+      }
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute<void>(

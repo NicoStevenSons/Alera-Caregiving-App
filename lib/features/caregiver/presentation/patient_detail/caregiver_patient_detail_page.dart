@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
+import '../../data/api/dto/patient_dto.dart';
+import '../people/patient_access_setup_page.dart';
 import 'widgets/care_status_card.dart';
 import 'widgets/patient_alert_history.dart';
 import 'widgets/patient_reminders_section.dart';
@@ -25,6 +29,8 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   final VoidCallback onViewAllReminders;
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
+  final PatientAccessStatus? patientAccessStatus;
+  final VoidCallback? onPatientAccessAction;
 
   const CaregiverPatientDetailPage({
     super.key,
@@ -35,12 +41,54 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     required this.onViewAllReminders,
     required this.onAlertTap,
     this.onMarkAsSeen,
+    this.patientAccessStatus,
+    this.onPatientAccessAction,
   });
 
-  void _showMockFeedback(BuildContext context, String action) {
+  void _showFeedback(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openContactApp(
+    BuildContext context, {
+    required String scheme,
+    required String appLabel,
+  }) async {
+    final phoneNumber = careRecipient.phoneNumber?.trim();
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      _showFeedback(
+        context,
+        'No phone number is saved for ${careRecipient.name}.',
+      );
+      return;
+    }
+
+    final uri = Uri(scheme: scheme, path: phoneNumber);
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        _showFeedback(context, 'Unable to open the $appLabel app.');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showFeedback(context, 'Unable to open the $appLabel app.');
+      }
+    }
+  }
+
+  Future<void> _handleAction(BuildContext context, String action) async {
+    switch (action) {
+      case 'Call':
+        await _openContactApp(context, scheme: 'tel', appLabel: 'calling');
+        return;
+      case 'Message':
+        await _openContactApp(context, scheme: 'sms', appLabel: 'messaging');
+        return;
+      default:
+        _showFeedback(context, '$action is mock-only for now.');
+    }
   }
 
   @override
@@ -74,13 +122,20 @@ class CaregiverPatientDetailPage extends StatelessWidget {
           children: [
             PatientDetailSummaryCard(
               careRecipient: careRecipient,
-              onAction: (action) => _showMockFeedback(context, action),
+              onAction: (action) => _handleAction(context, action),
             ),
             const SizedBox(height: 12),
             _DashboardCounters(careRecipient: careRecipient),
             const SizedBox(height: 12),
             PatientCareStatusCard(careRecipient: careRecipient),
             const SizedBox(height: 12),
+            if (patientAccessStatus != null) ...[
+              _PatientAccessStatusCard(
+                status: patientAccessStatus!,
+                onAction: onPatientAccessAction,
+              ),
+              const SizedBox(height: 12),
+            ],
             PatientMonitoringDevicesCard(
               devices: careRecipient.healthSnapshot.devices,
             ),
@@ -94,14 +149,17 @@ class CaregiverPatientDetailPage extends StatelessWidget {
             const SizedBox(height: 12),
             PatientVitalSummarySection(
               snapshot: careRecipient.healthSnapshot,
-              onVitalTap: (label) =>
-                  _showMockFeedback(context, '$label history'),
+              onVitalTap: (label) => _showFeedback(
+                context,
+                '$label history is mock-only for now.',
+              ),
             ),
             const SizedBox(height: 12),
             PatientRemindersSection(
               reminders: reminders,
               onViewAll: onViewAllReminders,
-              onAction: (action) => _showMockFeedback(context, action),
+              onAction: (action) =>
+                  _showFeedback(context, '$action is mock-only for now.'),
             ),
           ],
         ),
@@ -119,6 +177,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final VoidCallback onViewAllReminders;
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
+  final CaregiverPatientDataSource? patientDataSource;
 
   const CaregiverPatientDetailLoaderPage({
     super.key,
@@ -130,6 +189,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     required this.onViewAllReminders,
     required this.onAlertTap,
     this.onMarkAsSeen,
+    this.patientDataSource,
   });
 
   @override
@@ -140,6 +200,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
 class _CaregiverPatientDetailLoaderPageState
     extends State<CaregiverPatientDetailLoaderPage> {
   CareRecipient? _patient;
+  PatientAccessStatus? _patientAccessStatus;
   CaregiverPatientApiFailure? _failure;
   Timer? _refreshTimer;
 
@@ -170,23 +231,23 @@ class _CaregiverPatientDetailLoaderPageState
     }
 
     try {
-  final detailFuture = widget.controller.loadDetail(widget.patientId);
-  final devicesFuture = widget.controller.loadMonitoringDevices(
-    widget.patientId,
-  );
+      final detailFuture = widget.controller.loadDetail(widget.patientId);
+      final devicesFuture = widget.controller.loadMonitoringDevices(
+        widget.patientId,
+      );
 
-  final detail = await detailFuture;
-  final devices = await devicesFuture;
+      final detail = await detailFuture;
+      final devices = await devicesFuture;
 
-  if (mounted) {
-    setState(
-      () => _patient = patientDetailToCareRecipient(
-        detail,
-        monitoringDevices: devices,
-       ),
-     );
-    }
-  } on CaregiverPatientApiFailure catch (failure) {
+      if (mounted) {
+        setState(
+          () => _patient = patientDetailToCareRecipient(
+            detail,
+            monitoringDevices: devices,
+          ),
+        );
+      }
+    } on CaregiverPatientApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
     }
   }
@@ -202,6 +263,8 @@ class _CaregiverPatientDetailLoaderPageState
         onViewAllReminders: widget.onViewAllReminders,
         onAlertTap: widget.onAlertTap,
         onMarkAsSeen: widget.onMarkAsSeen,
+        patientAccessStatus: _patientAccessStatus,
+        onPatientAccessAction: _openPatientAccess,
       );
     }
     final failure = _failure;
@@ -259,6 +322,73 @@ class _CaregiverPatientDetailLoaderPageState
       ),
     );
   }
+
+  Future<void> _openPatientAccess() async {
+    final status = _patientAccessStatus;
+    final patient = _patient;
+    final source = widget.patientDataSource;
+    if (status == null || patient == null || source == null) return;
+    final result = await Navigator.push<PatientAccessSetupResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PatientAccessSetupPage(
+          patientId: patient.id,
+          patientName: patient.name,
+          patientAccess: status,
+          dataSource: source,
+          loadPatientDetail: widget.controller.loadDetail,
+        ),
+      ),
+    );
+    if (result == PatientAccessSetupResult.changed && mounted) _load();
+  }
+}
+
+class _PatientAccessStatusCard extends StatelessWidget {
+  final PatientAccessStatus status;
+  final VoidCallback? onAction;
+
+  const _PatientAccessStatusCard({required this.status, this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (status.status) {
+      PatientAccessState.notConnected => 'Patient access not connected',
+      PatientAccessState.invitePending => 'Invitation pending',
+      PatientAccessState.connected => 'Patient access connected',
+      PatientAccessState.unknown => 'Patient access status unavailable',
+    };
+    final detail = switch (status.status) {
+      PatientAccessState.invitePending when status.pendingExpiresAt != null =>
+        'Invitation expires ${_dateTime(status.pendingExpiresAt!)}',
+      PatientAccessState.connected when status.connectedAt != null =>
+        'Connected ${_dateTime(status.connectedAt!)}',
+      _ => null,
+    };
+    return AleraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Patient access'),
+          const SizedBox(height: 4),
+          Text(label),
+          if (detail != null) ...[const SizedBox(height: 4), Text(detail)],
+          if (onAction != null &&
+              status.status == PatientAccessState.notConnected)
+            AleraButton(label: 'Connect patient access', onPressed: onAction!),
+          if (onAction != null &&
+              status.status == PatientAccessState.invitePending)
+            AleraButton(label: 'Open invitation', onPressed: onAction!),
+        ],
+      ),
+    );
+  }
+}
+
+String _dateTime(DateTime value) {
+  final local = value.toLocal();
+  return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
+      '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }
 
 class _DashboardCounters extends StatelessWidget {

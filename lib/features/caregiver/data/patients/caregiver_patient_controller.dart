@@ -113,6 +113,7 @@ CareRecipient patientListItemToCareRecipient( PatientListItemDto patient, {
     name: patient.fullName,
     relationshipLabel: 'Under your care',
     addressOrRoom: patient.addressOrRoom,
+    phoneNumber: patient.phoneNumber,
     monitoringStatusLabel: switch (summary.monitoringStatus) {
       PatientMonitoringStatus.noData => 'No data',
       PatientMonitoringStatus.unknown => summary.monitoringStatusValue,

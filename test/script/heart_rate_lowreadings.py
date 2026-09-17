@@ -1,29 +1,40 @@
 import time
-import requests
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
-from datetime import datetime, timezone
+import requests
 
 
 BACKEND_URL = "https://alera-backend-i1ui.onrender.com"
 PATIENT_ID = "a076ecdb-ae38-4f84-b490-e714977027ee"
 
 
-NORMAL_VALUES = [72, 75, 78]
-LOW_WARNING_VALUES = [52, 49, 47]
-LOW_CRITICAL_VALUES = [38, 35, 33]
+NORMAL_VALUES = [72, 75, 78, 74, 76, 73, 75]
+LOW_WARNING_VALUES = [52, 49, 47, 51, 48, 53, 50, 46, 49]
+LOW_CRITICAL_VALUES = [38, 35]
 
-STATE_INTERVAL_SECONDS = 90
 READING_INTERVAL_SECONDS = 15
+
 
 def send_state_readings(label, values):
     print(f"\n{label}")
+    started_at = datetime.now(timezone.utc)
+    started_monotonic = time.monotonic()
 
     for i, value in enumerate(values, start=1):
-        print(f"Reading {i}/{len(values)}: {value} bpm")
-        send_heart_rate(value)
+        target_elapsed = (i - 1) * READING_INTERVAL_SECONDS
+        remaining = target_elapsed - (time.monotonic() - started_monotonic)
+        if remaining > 0:
+            print(f"Waiting {remaining:.1f} seconds for scheduled reading...")
+            time.sleep(remaining)
 
-        if i < len(values):
-            time.sleep(READING_INTERVAL_SECONDS)
+        print(f"Reading {i}/{len(values)}: {value} bpm")
+        if not send_heart_rate(
+            value,
+            started_at + timedelta(seconds=target_elapsed),
+        ):
+            raise RuntimeError(f"{label} reading {i} failed")
+
 
 def check_backend():
     try:
@@ -42,13 +53,13 @@ def check_backend():
         return False
 
 
-def send_heart_rate(value):
-    now = datetime.now(timezone.utc)
+def send_heart_rate(value, recorded_at=None):
+    now = recorded_at or datetime.now(timezone.utc)
 
     payload = {
         "patient_id": PATIENT_ID,
         "external_event_id": (
-            f"lifecycle-slow-hr-{now.strftime('%Y%m%dT%H%M%S%fZ')}"
+            f"lifecycle-low-hr-{now.strftime('%Y%m%dT%H%M%S%fZ')}-{uuid4()}"
         ),
         "metric_type": "HEART_RATE",
         "numeric_value": value,
@@ -59,7 +70,7 @@ def send_heart_rate(value):
         "validation_status": "VALID_REALTIME",
         "validation_reason": None,
         "raw_payload": {
-            "source": "slow_hr_lifecycle_simulator",
+            "source": "low_hr_lifecycle_simulator",
             "device": "Simulator",
             "test": True,
         },
@@ -89,16 +100,8 @@ def send_heart_rate(value):
         return False
 
 
-def wait_for_next_state():
-    print(
-        f"\nWaiting {STATE_INTERVAL_SECONDS} seconds "
-        "before next state..."
-    )
-    time.sleep(STATE_INTERVAL_SECONDS)
-
-
 def run_lifecycle():
-    print("\n=== SLOW HEART RATE LIFECYCLE ===")
+    print("\n=== LOW HEART RATE LIFECYCLE ===")
     print("NORMAL → LOW WARNING → LOW CRITICAL → NORMAL\n")
 
     # 1. NORMAL
@@ -108,7 +111,7 @@ def run_lifecycle():
         NORMAL_VALUES,
     )
 
-    wait_for_next_state()
+    time.sleep(3)
 
     # 2. LOW / WARNING
     print("\n[2/4]")
@@ -117,7 +120,8 @@ def run_lifecycle():
         LOW_WARNING_VALUES,
     )
 
-    wait_for_next_state()
+    print("\nTwo-minute low-HR Warning qualification completed.")
+    time.sleep(3)
 
     # 3. CRITICAL LOW
     print("\n[3/4]")
@@ -128,20 +132,21 @@ def run_lifecycle():
         LOW_CRITICAL_VALUES,
     )
 
-    wait_for_next_state()
+    time.sleep(3)
 
     # 4. RECOVERY
     print("\n[4/4]")
     send_state_readings(
         "NORMAL / RECOVERY",
-        [70, 73, 76],
+        NORMAL_VALUES,
     )
 
     print("\n=== LIFECYCLE COMPLETE ===")
+    print("Expected pushes: low-HR Warning, then Critical escalation.")
 
 
 def main():
-    print("=== ALERA SLOW HR LIFECYCLE SIMULATOR ===")
+    print("=== ALERA LOW HR LIFECYCLE SIMULATOR ===")
 
     print("\nChecking backend...")
 
@@ -150,7 +155,7 @@ def main():
         return
 
     print("\nBackend ready.")
-    input("\nPress Enter to start slow HR lifecycle...")
+    input("\nPress Enter to start low-HR lifecycle...")
 
     run_lifecycle()
 

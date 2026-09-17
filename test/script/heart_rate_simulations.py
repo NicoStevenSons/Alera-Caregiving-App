@@ -1,7 +1,8 @@
 import time
-import requests
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
-from datetime import datetime, timezone
+import requests
 
 
 BACKEND_URL = "https://alera-backend-i1ui.onrender.com"
@@ -9,7 +10,7 @@ PATIENT_ID = "a076ecdb-ae38-4f84-b490-e714977027ee"
 
 
 # Multiple readings per state
-HR_NORMAL_READINGS = [72, 75, 78]
+HR_NORMAL_READINGS = [72, 75, 78, 74, 76, 73, 75]
 
 HR_WARNING_READINGS = [
     138,
@@ -18,26 +19,27 @@ HR_WARNING_READINGS = [
     139,
     141,
     140,
+    138,
+    142,
+    140,
 ]
 
-HR_CRITICAL_READINGS = [
-    160,
-    164,
-    158,
-]
+HR_CRITICAL_READINGS = [160, 164]
 
 HR_RECOVERY_READINGS = [
     76,
     74,
     73,
+    75,
+    77,
+    72,
+    74,
 ]
 
 
 # Timing
 NORMAL_INTERVAL_SECONDS = 15
 
-# Keep warning readings <= 90 seconds apart
-# so persistence continuity is maintained.
 WARNING_INTERVAL_SECONDS = 15
 
 CRITICAL_INTERVAL_SECONDS = 15
@@ -61,13 +63,13 @@ def check_backend():
         return False
 
 
-def send_heart_rate(value):
-    now = datetime.now(timezone.utc)
+def send_heart_rate(value, recorded_at=None):
+    now = recorded_at or datetime.now(timezone.utc)
 
     payload = {
         "patient_id": PATIENT_ID,
         "external_event_id": (
-            f"lifecycle-hr-{now.strftime('%Y%m%dT%H%M%S%fZ')}"
+            f"lifecycle-hr-{now.strftime('%Y%m%dT%H%M%S%fZ')}-{uuid4()}"
         ),
         "metric_type": "HEART_RATE",
         "numeric_value": value,
@@ -110,28 +112,32 @@ def send_heart_rate(value):
 
 def send_readings(label, readings, interval):
     print(f"\n{label} Starting...")
+    started_at = datetime.now(timezone.utc)
+    started_monotonic = time.monotonic()
 
     for i, value in enumerate(readings):
+        target_elapsed = i * interval
+        remaining = target_elapsed - (time.monotonic() - started_monotonic)
+        if remaining > 0:
+            print(f"Waiting {remaining:.1f} seconds for scheduled reading...")
+            time.sleep(remaining)
+
         print(
             f"\n{label} reading "
             f"{i + 1}/{len(readings)}"
         )
 
-        send_heart_rate(value)
-
-        if i < len(readings) - 1:
-            print(
-                f"Waiting {interval} seconds "
-                "for next reading..."
-            )
-
-            time.sleep(interval)
+        if not send_heart_rate(
+            value,
+            started_at + timedelta(seconds=target_elapsed),
+        ):
+            raise RuntimeError(f"{label} reading {i + 1} failed")
 
 
 def run_lifecycle():
     print("\nHeart Rate Simulations....")
 
-    print("\n[1/4]")
+    print("\n[1/6]")
 
     send_readings(
         "Normal",
@@ -140,8 +146,8 @@ def run_lifecycle():
     )
 
     time.sleep(3)
-    
-    print("\n[2/4]")
+
+    print("\n[2/6]")
 
     print(
         "\nWarning readings will be sent every "
@@ -154,11 +160,11 @@ def run_lifecycle():
         WARNING_INTERVAL_SECONDS,
     )
 
-    print("\nWarning persistence completed.")
+    print("\nTwo-minute Warning qualification completed.")
 
     time.sleep(3)
 
-    print("\n[3/4]")
+    print("\n[3/6]")
 
     print(
         "\nLeaving the existing warning unresolved "
@@ -173,7 +179,7 @@ def run_lifecycle():
 
     time.sleep(3)
 
-    print("\n[4/4]")
+    print("\n[4/6]")
 
     send_readings(
         "Recovery",
@@ -181,7 +187,30 @@ def run_lifecycle():
         RECOVERY_INTERVAL_SECONDS,
     )
 
-    print("\nLIFECYCLE COMPLETE....")
+    time.sleep(3)
+
+    print("\n[5/6]")
+    print(
+        "\nSending a new Critical occurrence while the earlier caregiver "
+        "case may still be unresolved. This must create a new alert."
+    )
+    send_readings(
+        "Recurrent Critical",
+        [158, 162],
+        CRITICAL_INTERVAL_SECONDS,
+    )
+
+    time.sleep(3)
+
+    print("\n[6/6]")
+    send_readings(
+        "Final Recovery",
+        HR_RECOVERY_READINGS,
+        RECOVERY_INTERVAL_SECONDS,
+    )
+
+    print("\nLIFECYCLE COMPLETE")
+    print("Expected pushes: Warning, Critical escalation, recurrent Critical.")
 
 
 def main():

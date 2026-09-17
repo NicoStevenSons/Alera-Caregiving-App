@@ -23,18 +23,30 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add Patient'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Start setup'));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('patient-name-field')),
       'New Patient',
     );
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Create Patient'),
-      500,
+      find.text('Skip for now'),
+      400,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Create Patient'));
+    await tester.tap(find.text('Skip for now'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create patient').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create patient').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish for now'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish for now').last);
     await tester.pumpAndSettle();
 
     expect(find.text('New Patient'), findsOneWidget);
@@ -69,4 +81,10 @@ class _CreateOnlySource implements CaregiverPatientDataSource {
   @override
   Future<PatientAccessCodeResponse> createAccessCode(String patientId) =>
       throw UnimplementedError();
+
+  @override
+  Future<MonitoringSettingsResponse> updateMonitoringSettings(
+    String patientId,
+    UpdateMonitoringSettingsRequest request,
+  ) => throw UnimplementedError();
 }
