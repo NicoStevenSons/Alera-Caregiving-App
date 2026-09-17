@@ -189,6 +189,47 @@ void main() {
     expect(find.widgetWithText(AleraButton, 'Add Note'), findsNothing);
     controller.dispose();
   });
+
+  testWidgets('loads persisted lifecycle events into the timeline', (
+    tester,
+  ) async {
+    final alert = _alert();
+    final timelineSource = _TimelineSource([
+      AlertTimelineEntry(
+        occurredAt: alert.detectedAt.add(const Duration(minutes: 3)),
+        title: 'Escalated to critical',
+        description: 'Escalated 1 minute after the warning alert.',
+      ),
+      AlertTimelineEntry(
+        occurredAt: alert.detectedAt.add(const Duration(minutes: 4)),
+        title: 'Alert acknowledged',
+        description: 'Calling patient now.',
+      ),
+    ]);
+    final controller = CaregiverAlertController(
+      loader: _DetailLoader([alert]),
+      timelineSource: timelineSource,
+      fallback: [alert],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverAlertDetailPage(
+          alert: alert,
+          careRecipient: null,
+          alertController: controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Abnormality detected'), findsOneWidget);
+    expect(find.text('Escalated to critical'), findsOneWidget);
+    expect(find.text('Alert acknowledged'), findsOneWidget);
+    controller.dispose();
+  });
 }
 
 Widget _detailPage({required CaregiverAlert alert, CareRecipient? recipient}) {
@@ -256,4 +297,13 @@ class _CountingActions implements CaregiverAlertActionDataSource {
       _run();
   @override
   Future<CaregiverAlert> resolve(String alertId, {String? note}) => _run();
+}
+
+class _TimelineSource implements CaregiverAlertTimelineDataSource {
+  final List<AlertTimelineEntry> result;
+  const _TimelineSource(this.result);
+
+  @override
+  Future<List<AlertTimelineEntry>> fetchTimeline(String alertId) async =>
+      result;
 }

@@ -40,6 +40,18 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     _alert = widget.alert;
     _noteController.text = widget.alert.note ?? '';
     widget.alertController?.addListener(_syncAlert);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadTimeline());
+  }
+
+  Future<void> _loadTimeline() async {
+    try {
+      final timeline = await widget.alertController?.loadTimeline(_alert.id);
+      if (mounted && timeline != null) {
+        setState(() => _alert = _alert.copyWith(timeline: timeline));
+      }
+    } catch (_) {
+      // The core alert remains usable when history is temporarily unavailable.
+    }
   }
 
   @override
@@ -1041,13 +1053,14 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
   final bool hasInitialTrigger = entries.any(
     (entry) =>
         entry.occurredAt == alert.detectedAt &&
-        entry.title.toLowerCase() == 'alert triggered',
+        (entry.title.toLowerCase() == 'alert triggered' ||
+            entry.title.toLowerCase() == 'abnormality detected'),
   );
   if (!hasInitialTrigger) {
     entries.add(
       AlertTimelineEntry(
         occurredAt: alert.detectedAt,
-        title: 'Alert triggered',
+        title: 'Abnormality detected',
         description:
             '${alert.title} detected at ${_number(alert.reading)} ${alert.unit}',
       ),
@@ -1056,18 +1069,69 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
 
   final DateTime? resolvedAt = alert.resolvedAt;
   if (resolvedAt != null &&
-      !entries.any((entry) => entry.title.toLowerCase() == 'alert resolved')) {
+      !entries.any((entry) {
+        final title = entry.title.toLowerCase();
+        return title == 'alert resolved' || title.contains('false alarm');
+      })) {
     entries.add(
       AlertTimelineEntry(
         occurredAt: resolvedAt,
-        title: 'Alert resolved',
-        description: 'The alert was marked as resolved.',
+        title: alert.status == CaregiverAlertStatus.falseAlarm
+            ? 'Marked as false alarm'
+            : 'Alert resolved',
+        description: alert.status == CaregiverAlertStatus.falseAlarm
+            ? 'The alert was closed as a false alarm.'
+            : 'The alert was marked as resolved.',
+      ),
+    );
+  }
+
+  final DateTime? confirmedAt = alert.confirmedAt;
+  final hasEscalation = entries.any(
+    (entry) => entry.title.toLowerCase().contains('escalated'),
+  );
+  if (confirmedAt != null &&
+      !entries.any(
+        (entry) => entry.title.toLowerCase().contains('confirmed'),
+      )) {
+    entries.add(
+      AlertTimelineEntry(
+        occurredAt: confirmedAt,
+        title: alert.severity == CaregiverAlertSeverity.critical &&
+                !hasEscalation
+            ? 'Critical alert confirmed'
+            : 'Warning alert confirmed',
+        description: confirmedAt == alert.detectedAt
+            ? 'The reading met the configured confirmation rules.'
+            : 'The condition persisted for ${_durationBetween(alert.detectedAt, confirmedAt)} and became a caregiver alert.',
+      ),
+    );
+  }
+
+  final createdAt = alert.createdAt;
+  if (createdAt != null &&
+      !entries.any(
+        (entry) => entry.title.toLowerCase().contains('notification'),
+      )) {
+    entries.add(
+      AlertTimelineEntry(
+        occurredAt: createdAt,
+        title: 'Caregiver notification requested',
+        description: 'The backend queued this alert for caregiver delivery.',
       ),
     );
   }
 
   entries.sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
   return entries;
+}
+
+String _durationBetween(DateTime start, DateTime end) {
+  final seconds = end.difference(start).inSeconds;
+  if (seconds < 60) return '$seconds seconds';
+  final minutes = seconds ~/ 60;
+  final remainder = seconds % 60;
+  return remainder == 0 ? '$minutes minutes' : '$minutes min $remainder sec';
 }
 
 String _statusLabel(CaregiverAlertStatus status) {

@@ -12,6 +12,10 @@ abstract interface class CaregiverAlertDataSource {
   Future<List<CaregiverAlert>> fetchAlerts();
 }
 
+abstract interface class CaregiverAlertTimelineDataSource {
+  Future<List<AlertTimelineEntry>> fetchTimeline(String alertId);
+}
+
 enum CaregiverInterventionType {
   patientCheck('PATIENT_CHECK', 'Patient check'),
   restAndMonitor('REST_AND_MONITOR', 'Rest and monitor'),
@@ -43,7 +47,10 @@ abstract interface class CaregiverAlertActionDataSource {
 }
 
 class CaregiverAlertApiDataSource
-    implements CaregiverAlertDataSource, CaregiverAlertActionDataSource {
+    implements
+        CaregiverAlertDataSource,
+        CaregiverAlertActionDataSource,
+        CaregiverAlertTimelineDataSource {
   final http.Client _client;
   final CaregiverSession _session;
   final Duration timeout;
@@ -97,6 +104,59 @@ class CaregiverAlertApiDataSource
       throw CaregiverAlertsParseFailure(error.message);
     } on TimeoutException {
       throw const CaregiverAlertsTimeoutFailure();
+    } on http.ClientException catch (error) {
+      throw CaregiverAlertsRequestFailure(error.message);
+    }
+  }
+
+  @override
+  Future<List<AlertTimelineEntry>> fetchTimeline(String alertId) async {
+    final uri = Uri.parse(
+      '${AppConfig.backendBaseUrl}/api/v1/alerts/${Uri.encodeComponent(alertId)}/actions',
+    );
+    final token = _session.accessToken;
+    if (token == null || token.isEmpty) {
+      throw const CaregiverAlertsAuthFailure(401);
+    }
+    try {
+      final response = await _client
+          .get(uri, headers: {'authorization': 'Bearer $token'})
+          .timeout(timeout);
+      if (_session.accessToken != token) {
+        throw const CaregiverAlertsAuthFailure(401);
+      }
+      if (response.statusCode == 401) {
+        await _session.clearInvalidSession();
+        throw const CaregiverAlertsAuthFailure(401);
+      }
+      if (response.statusCode == 403) {
+        throw const CaregiverAlertsAuthFailure(403);
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw CaregiverAlertsHttpFailure(response.statusCode);
+      }
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic> || decoded['items'] is! List) {
+        throw const FormatException(
+          'Alert action history must contain an items list.',
+        );
+      }
+      return (decoded['items'] as List)
+          .map((item) {
+            if (item is! Map<String, dynamic>) {
+              throw const FormatException(
+                'Each alert action must be a JSON object.',
+              );
+            }
+            return AlertActionDto.fromJson(item).toDomain();
+          })
+          .toList(growable: false);
+    } on FormatException catch (error) {
+      throw CaregiverAlertsParseFailure(error.message);
+    } on TimeoutException {
+      throw const CaregiverAlertsTimeoutFailure();
+    } on CaregiverAlertsFailure {
+      rethrow;
     } on http.ClientException catch (error) {
       throw CaregiverAlertsRequestFailure(error.message);
     }

@@ -72,6 +72,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
       actions: alertLoader is CaregiverAlertActionDataSource
           ? alertLoader as CaregiverAlertActionDataSource
           : null,
+      timelineSource: alertLoader is CaregiverAlertTimelineDataSource
+          ? alertLoader as CaregiverAlertTimelineDataSource
+          : null,
       fallback: widget.repository.getAlerts(),
     )..addListener(_alertsChanged);
     _alertController.load();

@@ -14,6 +14,7 @@ class CaregiverAlertDto {
   final String? readingUnit;
   final DateTime detectedAt;
   final DateTime? confirmedAt;
+  final DateTime? createdAt;
   final DateTime? resolvedAt;
 
   const CaregiverAlertDto({
@@ -30,6 +31,7 @@ class CaregiverAlertDto {
     required this.readingUnit,
     required this.detectedAt,
     required this.confirmedAt,
+    required this.createdAt,
     required this.resolvedAt,
   });
 
@@ -50,6 +52,7 @@ class CaregiverAlertDto {
       readingUnit: _optionalString(json['reading_unit']),
       detectedAt: _requiredDateTime(json, 'detected_at'),
       confirmedAt: _optionalDateTime(json, 'confirmed_at'),
+      createdAt: _optionalDateTime(json, 'created_at'),
       resolvedAt: _optionalDateTime(json, 'resolved_at'),
     );
   }
@@ -85,6 +88,7 @@ class CaregiverAlertDto {
       triggerDuration: confirmedAt?.difference(detectedAt),
       detectedAt: detectedAt,
       confirmedAt: confirmedAt,
+      createdAt: createdAt,
       resolvedAt: resolvedAt,
       timeline: const [],
     );
@@ -123,6 +127,81 @@ class CaregiverAlertsResponseDto {
       offset: _requiredInt(json, 'offset'),
     );
   }
+}
+
+class AlertActionDto {
+  final String actionType;
+  final String? note;
+  final Map<String, dynamic> metadata;
+  final DateTime performedAt;
+
+  const AlertActionDto({
+    required this.actionType,
+    required this.note,
+    required this.metadata,
+    required this.performedAt,
+  });
+
+  factory AlertActionDto.fromJson(Map<String, dynamic> json) {
+    final rawMetadata = json['action_metadata'];
+    return AlertActionDto(
+      actionType: _requiredString(json, 'action_type'),
+      note: _optionalString(json['action_note']),
+      metadata: rawMetadata is Map<String, dynamic> ? rawMetadata : const {},
+      performedAt: _requiredDateTime(json, 'performed_at'),
+    );
+  }
+
+  AlertTimelineEntry toDomain() {
+    final description = switch (actionType) {
+      'ACKNOWLEDGE' => note ?? 'A caregiver acknowledged the alert.',
+      'RESOLVE' => note ?? 'A caregiver marked the alert as resolved.',
+      'MARK_FALSE_ALARM' => note ?? 'A caregiver marked this as a false alarm.',
+      'ADD_NOTE' => note ?? 'A caregiver added a note.',
+      'LOG_INTERVENTION' => note ?? 'A caregiver logged an intervention.',
+      'ESCALATE' => _escalationDescription(),
+      _ => note ?? 'The alert was updated.',
+    };
+    return AlertTimelineEntry(
+      occurredAt: performedAt,
+      title: switch (actionType) {
+        'ACKNOWLEDGE' => 'Alert acknowledged',
+        'RESOLVE' => 'Alert resolved',
+        'MARK_FALSE_ALARM' => 'Marked as false alarm',
+        'ADD_NOTE' => 'Note added',
+        'LOG_INTERVENTION' => 'Intervention logged',
+        'ESCALATE' => 'Escalated to critical',
+        _ => 'Alert updated',
+      },
+      description: description,
+    );
+  }
+
+  String _escalationDescription() {
+    final value = _optionalString(metadata['reading_value']);
+    final unit = _optionalString(metadata['reading_unit']);
+    final seconds = _optionalInt(metadata['seconds_since_confirmed']);
+    final elapsed = seconds == null ? null : _durationLabel(seconds);
+    final reading = value == null
+        ? ''
+        : ' at $value${unit == null ? '' : ' $unit'}';
+    final timing = elapsed == null ? '' : ', $elapsed after the warning alert';
+    return 'The alert escalated from warning to critical$reading$timing.';
+  }
+}
+
+int? _optionalInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
+String _durationLabel(int totalSeconds) {
+  if (totalSeconds < 60) return '$totalSeconds seconds';
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return seconds == 0 ? '$minutes minutes' : '$minutes min $seconds sec';
 }
 
 String _requiredString(Map<String, dynamic> json, String key) {

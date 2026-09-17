@@ -80,6 +80,49 @@ void main() {
     );
   });
 
+  test('loads and maps the complete alert action timeline', () async {
+    final source = CaregiverAlertApiDataSource(
+      session: _FakeSession('caregiver-token'),
+      client: MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.path, '/api/v1/alerts/alert-1/actions');
+        expect(request.headers['authorization'], 'Bearer caregiver-token');
+        return http.Response(
+          jsonEncode({
+            'items': [
+              {
+                'action_type': 'ESCALATE',
+                'action_note': 'Alert severity escalated automatically.',
+                'action_metadata': {
+                  'reading_value': '160.00',
+                  'reading_unit': 'bpm',
+                  'seconds_since_confirmed': 45,
+                },
+                'performed_at': '2026-09-04T10:05:45Z',
+              },
+              {
+                'action_type': 'ACKNOWLEDGE',
+                'action_note': 'Calling Nana now.',
+                'action_metadata': <String, Object>{},
+                'performed_at': '2026-09-04T10:06:00Z',
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final timeline = await source.fetchTimeline('alert-1');
+
+    expect(timeline, hasLength(2));
+    expect(timeline.first.title, 'Escalated to critical');
+    expect(timeline.first.description, contains('160.00 bpm'));
+    expect(timeline.first.description, contains('45 seconds'));
+    expect(timeline.last.title, 'Alert acknowledged');
+    expect(timeline.last.description, 'Calling Nana now.');
+  });
+
   test('detail cannot substitute a different alert response', () async {
     final source = CaregiverAlertApiDataSource(
       session: _FakeSession('token'),
