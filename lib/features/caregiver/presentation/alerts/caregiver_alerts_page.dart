@@ -12,7 +12,17 @@ import '../../data/alerts/caregiver_alert_controller.dart';
 import '../widgets/caregiver_alert_card.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 
-enum AlertFilter { warning, critical, heartRate, spo2, unacknowledged }
+enum AlertFilter {
+  warning,
+  critical,
+  heartRate,
+  spo2,
+  watchBattery,
+  unacknowledged,
+  acknowledged,
+  resolved,
+  falseAlarm,
+}
 
 class CaregiverAlertsPage extends StatefulWidget {
   final List<CaregiverAlert> alerts;
@@ -35,7 +45,7 @@ class CaregiverAlertsPage extends StatefulWidget {
 }
 
 class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
-  static const String _allPatientsFilter = '__all_patients__';
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final Set<AlertFilter> _filters = <AlertFilter>{};
   final Set<String> _expandedAlertIds = <String>{};
   String? _patientFilterId;
@@ -119,24 +129,46 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     if (_patientFilterId != null && alert.careRecipientId != _patientFilterId) {
       return false;
     }
-    if (_filters.contains(AlertFilter.warning) &&
-        alert.severity != CaregiverAlertSeverity.warning) {
+
+    final severityMatches =
+        (!_filters.contains(AlertFilter.warning) &&
+            !_filters.contains(AlertFilter.critical)) ||
+        (_filters.contains(AlertFilter.warning) &&
+            alert.severity == CaregiverAlertSeverity.warning) ||
+        (_filters.contains(AlertFilter.critical) &&
+            alert.severity == CaregiverAlertSeverity.critical);
+    if (!severityMatches) {
       return false;
     }
-    if (_filters.contains(AlertFilter.critical) &&
-        alert.severity != CaregiverAlertSeverity.critical) {
+
+    final metricMatches =
+        (!_filters.contains(AlertFilter.heartRate) &&
+            !_filters.contains(AlertFilter.spo2) &&
+            !_filters.contains(AlertFilter.watchBattery)) ||
+        (_filters.contains(AlertFilter.heartRate) &&
+            alert.metric == CaregiverAlertMetric.heartRate) ||
+        (_filters.contains(AlertFilter.spo2) &&
+            alert.metric == CaregiverAlertMetric.spo2) ||
+        (_filters.contains(AlertFilter.watchBattery) &&
+            alert.metric == CaregiverAlertMetric.watchBattery);
+    if (!metricMatches) {
       return false;
     }
-    if (_filters.contains(AlertFilter.heartRate) &&
-        alert.metric != CaregiverAlertMetric.heartRate) {
-      return false;
-    }
-    if (_filters.contains(AlertFilter.spo2) &&
-        alert.metric != CaregiverAlertMetric.spo2) {
-      return false;
-    }
-    if (_filters.contains(AlertFilter.unacknowledged) &&
-        alert.status != CaregiverAlertStatus.active) {
+
+    final statusMatches =
+        (!_filters.contains(AlertFilter.unacknowledged) &&
+            !_filters.contains(AlertFilter.acknowledged) &&
+            !_filters.contains(AlertFilter.resolved) &&
+            !_filters.contains(AlertFilter.falseAlarm)) ||
+        (_filters.contains(AlertFilter.unacknowledged) &&
+            alert.status == CaregiverAlertStatus.active) ||
+        (_filters.contains(AlertFilter.acknowledged) &&
+            alert.status == CaregiverAlertStatus.acknowledged) ||
+        (_filters.contains(AlertFilter.resolved) &&
+            alert.status == CaregiverAlertStatus.resolved) ||
+        (_filters.contains(AlertFilter.falseAlarm) &&
+            alert.status == CaregiverAlertStatus.falseAlarm);
+    if (!statusMatches) {
       return false;
     }
     return true;
@@ -157,69 +189,20 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     return _recipientFor(patientFilterId)?.name ?? 'All Patients';
   }
 
-  Future<void> _showPatientFilter(BuildContext context) async {
-    final patients = [...widget.careRecipients]
-      ..sort((a, b) => a.name.compareTo(b.name));
-    final selection = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Filter by patient',
-                style: Theme.of(sheetContext).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                key: const Key('alerts-patient-filter-all'),
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(child: Icon(Icons.people_outline)),
-                title: const Text('All Patients'),
-                trailing: _patientFilterId == null
-                    ? const Icon(Icons.check, semanticLabel: 'Selected')
-                    : null,
-                onTap: () => Navigator.of(sheetContext).pop(_allPatientsFilter),
-              ),
-              for (final patient in patients)
-                ListTile(
-                  key: ValueKey<String>('alerts-patient-filter-${patient.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    child: Text(_patientInitials(patient.name)),
-                  ),
-                  title: Text(patient.name),
-                  subtitle: Text(patient.relationshipLabel),
-                  trailing: patient.id == _patientFilterId
-                      ? const Icon(Icons.check, semanticLabel: 'Selected')
-                      : null,
-                  onTap: () => Navigator.of(sheetContext).pop(patient.id),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (!mounted || selection == null) {
-      return;
-    }
+  void _selectPatient(String? patientId) {
     setState(() {
-      _patientFilterId = selection == _allPatientsFilter ? null : selection;
+      _patientFilterId = patientId;
     });
   }
 
-  String _patientInitials(String name) => name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .take(2)
-      .map((part) => part.characters.first.toUpperCase())
-      .join();
+  void _clearFilters() {
+    setState(() {
+      _patientFilterId = null;
+      _filters.clear();
+    });
+  }
+
+  void _openFilterDrawer() => _scaffoldKey.currentState?.openEndDrawer();
 
   void _showDetailMessage(BuildContext context) {
     ScaffoldMessenger.of(context)
@@ -271,44 +254,27 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         .toList();
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: CaregiverPageAppBar(
         title: 'Alerts',
         actions: [
           caregiverPageAction(
             tooltip: 'Filter alerts',
-            onPressed: () => _showPatientFilter(context),
+            onPressed: _openFilterDrawer,
             icon: Icons.filter_list,
           ),
         ],
       ),
+      endDrawer: _AlertFilterDrawer(
+        careRecipients: widget.careRecipients,
+        selectedPatientId: _patientFilterId,
+        filters: _filters,
+        onPatientSelected: _selectPatient,
+        onFilterToggled: _toggleFilter,
+        onClear: _clearFilters,
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                key: const Key('alerts-patient-filter'),
-                onPressed: () => _showPatientFilter(context),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AleraColors.textPrimary,
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.person_search_outlined, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(_patientFilterLabel)),
-                    const Icon(Icons.keyboard_arrow_down_rounded),
-                  ],
-                ),
-              ),
-            ),
-          ),
           // Change height from 58 to 66 (or higher depending on added padding)
           SizedBox(
             height: 66,
@@ -317,6 +283,11 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
               // Add top padding here (e.g., top: 16)
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               children: [
+                _PatientFilterChip(
+                  label: _patientFilterLabel,
+                  selected: _patientFilterId != null,
+                  onTap: _openFilterDrawer,
+                ),
                 _FilterChip(
                   label: 'Warning',
                   filter: AlertFilter.warning,
@@ -462,6 +433,228 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PatientFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PatientFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: AleraPill(
+        label: label,
+        leading: const Icon(Icons.people_outline, size: 20),
+        selected: selected,
+        variant: AleraPillVariant.filter,
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _AlertFilterDrawer extends StatelessWidget {
+  final List<CareRecipient> careRecipients;
+  final String? selectedPatientId;
+  final Set<AlertFilter> filters;
+  final ValueChanged<String?> onPatientSelected;
+  final ValueChanged<AlertFilter> onFilterToggled;
+  final VoidCallback onClear;
+
+  const _AlertFilterDrawer({
+    required this.careRecipients,
+    required this.selectedPatientId,
+    required this.filters,
+    required this.onPatientSelected,
+    required this.onFilterToggled,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final patients = [...careRecipients]
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    return Drawer(
+      key: const Key('alerts-filter-drawer'),
+      width: MediaQuery.sizeOf(context).width * .88,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Filter alerts',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onClear,
+                    child: const Text('Clear all'),
+                  ),
+                  IconButton(
+                    key: const Key('alerts-filter-close'),
+                    tooltip: 'Close filters',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                children: [
+                  const _FilterSectionTitle('Patient'),
+                  _PatientFilterOption(
+                    key: const Key('alerts-patient-filter-all'),
+                    label: 'All Patients',
+                    selected: selectedPatientId == null,
+                    onTap: () => onPatientSelected(null),
+                  ),
+                  for (final patient in patients)
+                    _PatientFilterOption(
+                      key: ValueKey<String>(
+                        'alerts-patient-filter-${patient.id}',
+                      ),
+                      label: patient.name,
+                      selected: selectedPatientId == patient.id,
+                      onTap: () => onPatientSelected(patient.id),
+                    ),
+                  const Divider(height: 28),
+                  const _FilterSectionTitle('Severity'),
+                  _DrawerFilterOption(
+                    label: 'Warning',
+                    selected: filters.contains(AlertFilter.warning),
+                    onChanged: () => onFilterToggled(AlertFilter.warning),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'Critical',
+                    selected: filters.contains(AlertFilter.critical),
+                    onChanged: () => onFilterToggled(AlertFilter.critical),
+                  ),
+                  const Divider(height: 28),
+                  const _FilterSectionTitle('Metric'),
+                  _DrawerFilterOption(
+                    label: 'Heart Rate',
+                    selected: filters.contains(AlertFilter.heartRate),
+                    onChanged: () => onFilterToggled(AlertFilter.heartRate),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'SpO2',
+                    selected: filters.contains(AlertFilter.spo2),
+                    onChanged: () => onFilterToggled(AlertFilter.spo2),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'Watch Battery',
+                    selected: filters.contains(AlertFilter.watchBattery),
+                    onChanged: () => onFilterToggled(AlertFilter.watchBattery),
+                  ),
+                  const Divider(height: 28),
+                  const _FilterSectionTitle('Status'),
+                  _DrawerFilterOption(
+                    label: 'Unacknowledged',
+                    selected: filters.contains(AlertFilter.unacknowledged),
+                    onChanged: () =>
+                        onFilterToggled(AlertFilter.unacknowledged),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'Acknowledged',
+                    selected: filters.contains(AlertFilter.acknowledged),
+                    onChanged: () => onFilterToggled(AlertFilter.acknowledged),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'Resolved',
+                    selected: filters.contains(AlertFilter.resolved),
+                    onChanged: () => onFilterToggled(AlertFilter.resolved),
+                  ),
+                  _DrawerFilterOption(
+                    label: 'False Alarm',
+                    selected: filters.contains(AlertFilter.falseAlarm),
+                    onChanged: () => onFilterToggled(AlertFilter.falseAlarm),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterSectionTitle extends StatelessWidget {
+  final String label;
+
+  const _FilterSectionTitle(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(label, style: AleraTypography.sectionTitle),
+    );
+  }
+}
+
+class _PatientFilterOption extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PatientFilterOption({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(label),
+      trailing: selected
+          ? const Icon(Icons.check, semanticLabel: 'Selected')
+          : null,
+      onTap: onTap,
+    );
+  }
+}
+
+class _DrawerFilterOption extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onChanged;
+
+  const _DrawerFilterOption({
+    required this.label,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: selected,
+      title: Text(label),
+      onChanged: (_) => onChanged(),
     );
   }
 }

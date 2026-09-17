@@ -111,6 +111,10 @@ void main() {
 
     await tester.tap(find.text('SpO2'));
     await tester.pump();
+    expect(find.text('High Heart Rate'), findsOneWidget);
+
+    await tester.tap(find.text('HR'));
+    await tester.pump();
     expect(find.text('No active alerts right now'), findsOneWidget);
     expect(find.text('No alerts match the selected filters.'), findsOneWidget);
   });
@@ -139,26 +143,55 @@ void main() {
     expect(find.text('High Heart Rate'), findsOneWidget);
     expect(find.text('Low Watch Battery'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('alerts-patient-filter')));
+    await tester.tap(find.byTooltip('Filter alerts'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('alerts-filter-drawer')), findsOneWidget);
+    expect(find.text('Severity'), findsOneWidget);
+    expect(find.text('Metric'), findsOneWidget);
     await tester.tap(
       find.byKey(
         const ValueKey<String>('alerts-patient-filter-geraldine-laggui'),
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('alerts-filter-close')));
+    await tester.pumpAndSettle();
 
     expect(find.text('Geraldine Laggui'), findsWidgets);
     expect(find.text('High Heart Rate'), findsNothing);
     expect(find.text('Low Watch Battery'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('alerts-patient-filter')));
+    await tester.tap(find.byTooltip('Filter alerts'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('alerts-patient-filter-all')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('alerts-filter-close')));
     await tester.pumpAndSettle();
 
     expect(find.text('All Patients'), findsOneWidget);
     expect(find.text('High Heart Rate'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Filter alerts'));
+    await tester.pumpAndSettle();
+    final drawerList = find.descendant(
+      of: find.byKey(const Key('alerts-filter-drawer')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.drag(drawerList, const Offset(0, -300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Watch Battery'), findsOneWidget);
+    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('Acknowledged'), findsOneWidget);
+    expect(find.text('Resolved'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('False Alarm'),
+      160,
+      scrollable: drawerList,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('False Alarm'), findsOneWidget);
   });
 
   testWidgets('API failure preserves mock fallback alerts and offers retry', (
