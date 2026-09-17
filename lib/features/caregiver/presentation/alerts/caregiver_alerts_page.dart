@@ -923,8 +923,12 @@ class _GroupedHistory extends StatelessWidget {
   Widget build(BuildContext context) {
     final Map<String, List<CaregiverAlert>> groups =
         <String, List<CaregiverAlert>>{};
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
     for (final CaregiverAlert alert in alerts) {
-      final int days = DateTime.now().difference(alert.detectedAt).inDays;
+      final DateTime local = alert.detectedAt.toLocal();
+      final DateTime alertDate = DateTime(local.year, local.month, local.day);
+      final int days = today.difference(alertDate).inDays;
       final String label = days <= 0
           ? 'Today'
           : days == 1

@@ -154,23 +154,25 @@ class AlertActionDto {
 
   AlertTimelineEntry toDomain() {
     final description = switch (actionType) {
-      'ACKNOWLEDGE' => note ?? 'A caregiver acknowledged the alert.',
-      'RESOLVE' => note ?? 'A caregiver marked the alert as resolved.',
-      'MARK_FALSE_ALARM' => note ?? 'A caregiver marked this as a false alarm.',
-      'ADD_NOTE' => note ?? 'A caregiver added a note.',
-      'LOG_INTERVENTION' => note ?? 'A caregiver logged an intervention.',
+      'ACKNOWLEDGE' => note ?? 'The caregiver marked this alert as seen.',
+      'RESOLVE' => note ?? 'The caregiver marked this alert as resolved.',
+      'MARK_FALSE_ALARM' =>
+        note ?? 'The caregiver marked this as a false alarm.',
+      'ADD_NOTE' => note ?? 'The caregiver added a note.',
+      'LOG_INTERVENTION' =>
+        note ?? 'The caregiver recorded how they responded.',
       'ESCALATE' => _escalationDescription(),
       _ => note ?? 'The alert was updated.',
     };
     return AlertTimelineEntry(
       occurredAt: performedAt,
       title: switch (actionType) {
-        'ACKNOWLEDGE' => 'Alert acknowledged',
-        'RESOLVE' => 'Alert resolved',
+        'ACKNOWLEDGE' => 'Seen by caregiver',
+        'RESOLVE' => 'Marked as resolved',
         'MARK_FALSE_ALARM' => 'Marked as false alarm',
-        'ADD_NOTE' => 'Note added',
-        'LOG_INTERVENTION' => 'Intervention logged',
-        'ESCALATE' => 'Escalated to critical',
+        'ADD_NOTE' => 'Caregiver added a note',
+        'LOG_INTERVENTION' => 'Caregiver recorded an action',
+        'ESCALATE' => 'Alert became critical',
         _ => 'Alert updated',
       },
       description: description,
@@ -183,10 +185,12 @@ class AlertActionDto {
     final seconds = _optionalInt(metadata['seconds_since_confirmed']);
     final elapsed = seconds == null ? null : _durationLabel(seconds);
     final reading = value == null
+        ? 'The reading reached the critical range'
+        : 'The reading reached $value${unit == null ? '' : ' $unit'}';
+    final timing = elapsed == null
         ? ''
-        : ' at $value${unit == null ? '' : ' $unit'}';
-    final timing = elapsed == null ? '' : ', $elapsed after the warning alert';
-    return 'The alert escalated from warning to critical$reading$timing.';
+        : ', $elapsed after the warning was sent';
+    return '$reading$timing.';
   }
 }
 

@@ -116,10 +116,10 @@ void main() {
     final timeline = await source.fetchTimeline('alert-1');
 
     expect(timeline, hasLength(2));
-    expect(timeline.first.title, 'Escalated to critical');
+    expect(timeline.first.title, 'Alert became critical');
     expect(timeline.first.description, contains('160.00 bpm'));
     expect(timeline.first.description, contains('45 seconds'));
-    expect(timeline.last.title, 'Alert acknowledged');
+    expect(timeline.last.title, 'Seen by caregiver');
     expect(timeline.last.description, 'Calling Nana now.');
   });
 

@@ -1060,9 +1060,8 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
     entries.add(
       AlertTimelineEntry(
         occurredAt: alert.detectedAt,
-        title: 'Abnormality detected',
-        description:
-            '${alert.title} detected at ${_number(alert.reading)} ${alert.unit}',
+        title: _firstReadingTitle(alert),
+        description: 'The reading was ${_number(alert.reading)} ${alert.unit}.',
       ),
     );
   }
@@ -1099,11 +1098,11 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
         occurredAt: confirmedAt,
         title:
             alert.severity == CaregiverAlertSeverity.critical && !hasEscalation
-            ? 'Critical alert confirmed'
-            : 'Warning alert confirmed',
+            ? 'Urgent alert created'
+            : 'Warning alert created',
         description: confirmedAt == alert.detectedAt
-            ? 'The reading met the configured confirmation rules.'
-            : 'The condition persisted for ${_durationBetween(alert.detectedAt, confirmedAt)} and became a caregiver alert.',
+            ? 'Alera confirmed that the reading needed attention.'
+            : 'Alera confirmed this after ${_durationBetween(alert.detectedAt, confirmedAt)} of unusual readings.',
       ),
     );
   }
@@ -1116,14 +1115,25 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
     entries.add(
       AlertTimelineEntry(
         occurredAt: createdAt,
-        title: 'Caregiver notification requested',
-        description: 'The backend queued this alert for caregiver delivery.',
+        title: 'Alert sent to caregiver',
+        description: 'Alera sent this alert to the caregiver app.',
       ),
     );
   }
 
   entries.sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
   return entries;
+}
+
+String _firstReadingTitle(CaregiverAlert alert) {
+  return switch (alert.metric) {
+    CaregiverAlertMetric.heartRate =>
+      alert.title.toLowerCase().contains('low')
+          ? 'Low heart rate noticed'
+          : 'High heart rate noticed',
+    CaregiverAlertMetric.spo2 => 'Low oxygen level noticed',
+    CaregiverAlertMetric.watchBattery => 'Low watch battery noticed',
+  };
 }
 
 String _durationBetween(DateTime start, DateTime end) {

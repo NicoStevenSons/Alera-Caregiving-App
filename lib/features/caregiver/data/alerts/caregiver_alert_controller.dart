@@ -112,9 +112,17 @@ class CaregiverAlertController extends ChangeNotifier {
       final updated = await operation(actionSource);
       final existingIndex = _alerts.indexWhere((item) => item.id == alertId);
       final existing = existingIndex < 0 ? null : _alerts[existingIndex];
-      var hydrated = existing == null || updated.timeline.isNotEmpty
+      var hydrated = existing == null
           ? updated
-          : updated.copyWith(timeline: existing.timeline);
+          : existing.copyWith(
+              severity: updated.severity,
+              status: updated.status,
+              resolvedAt: updated.resolvedAt,
+              timeline: updated.timeline.isEmpty
+                  ? existing.timeline
+                  : updated.timeline,
+              note: updated.note ?? existing.note,
+            );
       final source = timelineSource;
       if (source != null) {
         hydrated = hydrated.copyWith(

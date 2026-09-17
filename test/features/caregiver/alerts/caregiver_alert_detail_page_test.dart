@@ -200,13 +200,13 @@ void main() {
     final timelineSource = _TimelineSource([
       AlertTimelineEntry(
         occurredAt: alert.detectedAt.add(const Duration(minutes: 3)),
-        title: 'Escalated to critical',
-        description: 'Escalated 1 minute after the warning alert.',
+        title: 'Alert became critical',
+        description: 'The reading reached 160 BPM after the warning was sent.',
       ),
       AlertTimelineEntry(
         occurredAt: alert.detectedAt.add(const Duration(minutes: 4)),
-        title: 'Alert acknowledged',
-        description: 'Calling patient now.',
+        title: 'Seen by caregiver',
+        description: 'The caregiver marked this alert as seen.',
       ),
     ]);
     final controller = CaregiverAlertController(
@@ -228,9 +228,9 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -800));
     await tester.pumpAndSettle();
 
-    expect(find.text('Abnormality detected'), findsOneWidget);
-    expect(find.text('Escalated to critical'), findsOneWidget);
-    expect(find.text('Alert acknowledged'), findsOneWidget);
+    expect(find.text('High heart rate noticed'), findsOneWidget);
+    expect(find.text('Alert became critical'), findsOneWidget);
+    expect(find.text('Seen by caregiver'), findsOneWidget);
     controller.dispose();
   });
 }
