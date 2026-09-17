@@ -68,7 +68,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Call'));
     await tester.pump();
-    expect(find.text('Unable to open the calling app.'), findsOneWidget);
+    expect(
+      find.text('No phone number is saved for Maria Santos.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('prefers live patient name and falls back safely', (
