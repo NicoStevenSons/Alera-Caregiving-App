@@ -8,7 +8,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../features/caregiver/data/auth/caregiver_session_controller.dart';
-import '../features/caregiver/data/auth/caregiver_token_store.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
