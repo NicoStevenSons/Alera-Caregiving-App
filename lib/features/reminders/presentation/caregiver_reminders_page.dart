@@ -191,9 +191,16 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   }
 
   Future<void> _snooze(ReminderOccurrence occurrence) async {
+    final note = await _askForNote(
+      title: 'Snooze for patient',
+      hint: 'Why does the patient need more time?',
+      actionLabel: 'Snooze',
+    );
+    if (note == null) return;
     await _run(
-      () => widget.controller.snooze(
+      () => widget.controller.snoozeOnBehalf(
         occurrence.id,
+        note,
         minutes: occurrence.defaultSnoozeMinutes,
       ),
       success:

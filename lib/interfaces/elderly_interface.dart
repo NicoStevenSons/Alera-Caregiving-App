@@ -24,6 +24,7 @@ import '../features/elderly/data/api/elderly_reminder_supabase_service.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
 import '../services/patient_nudge_notification.dart';
+import '../services/reminder_due_notification.dart';
 
 
 class ElderlyInterface extends StatefulWidget {
@@ -54,6 +55,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   bool remindersLoading = true;
   void Function()? _unsubscribeNudges;
+  void Function()? _unsubscribeDueReminders;
 
   late final FifoUploadService fifoUploadService;
 
@@ -82,6 +84,9 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _unsubscribeNudges = PatientNudgeTapBus.instance.subscribe(_openNudge);
+      _unsubscribeDueReminders = ReminderDueTapBus.instance.subscribe(
+        _openDueReminder,
+      );
     });
 
     fifoUploadService = FifoUploadService(
@@ -226,6 +231,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   @override
   void dispose() {
     _unsubscribeNudges?.call();
+    _unsubscribeDueReminders?.call();
     WidgetsBinding.instance.removeObserver(this);
 
     watchPayloadService.dispose();
@@ -239,6 +245,17 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(content: Text('${event.type.label} reminder received.')),
+      );
+  }
+
+  Future<void> _openDueReminder(ReminderDueNotification event) async {
+    if (!mounted) return;
+    await _loadReminders();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Your reminder is due now.')),
       );
   }
 
