@@ -9,6 +9,23 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test('fetches one reminder directly by occurrence id', () async {
+    late http.Request captured;
+    final source = ReminderApiDataSource(
+      session: _Session('token'),
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode(_occurrenceJson()), 200);
+      }),
+    );
+
+    final reminder = await source.fetchOccurrence('occurrence-id');
+
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/v1/reminders/occurrence-id');
+    expect(reminder.id, 'occurrence-id');
+  });
+
   test('parses paginated occurrences and repeated status filters', () async {
     late http.Request captured;
     final source = ReminderApiDataSource(

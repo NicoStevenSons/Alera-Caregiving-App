@@ -240,21 +240,21 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   Future<void> _openDueReminder(ReminderDueNotification event) async {
     if (!mounted) return;
-    await _loadReminders();
-    if (!mounted) return;
-    ElderlyReminder? reminder;
-    for (final item in reminders) {
-      if (item.occurrenceId == event.occurrenceId) {
-        reminder = item;
-        break;
+    try {
+      final occurrence = await reminderService.fetchOccurrence(
+        event.occurrenceId,
+      );
+      if (!mounted) return;
+      final reminder = ElderlyReminder.fromOccurrence(occurrence);
+      await _showReminderDetails(reminder);
+      if (mounted) await _loadReminders();
+    } on ReminderApiFailure catch (error) {
+      if (mounted) _showMessage(error.message);
+    } catch (_) {
+      if (mounted) {
+        _showMessage('Unable to open this reminder. Please try again.');
       }
     }
-    _tabController.animateTo(1);
-    if (reminder == null) {
-      _showMessage('This reminder is no longer available.');
-      return;
-    }
-    await _showReminderDetails(reminder);
   }
 
   Future<void> _completeReminder(ElderlyReminder reminder) async {

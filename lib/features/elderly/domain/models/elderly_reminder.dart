@@ -1,3 +1,5 @@
+import '../../../reminders/domain/reminder_models.dart';
+
 class ElderlyReminder {
   final String occurrenceId;
   final String templateId;
@@ -31,51 +33,50 @@ class ElderlyReminder {
     required this.defaultSnoozeMinutes,
   });
 
-  factory ElderlyReminder.fromSupabase(
-    Map<String, dynamic> json,
-  ) {
-    final template =
-        json['reminder_templates']
-            as Map<String, dynamic>;
+  factory ElderlyReminder.fromOccurrence(ReminderOccurrence occurrence) {
+    return ElderlyReminder(
+      occurrenceId: occurrence.id,
+      templateId: occurrence.templateId,
+      patientId: occurrence.patientId,
+      title: occurrence.title,
+      instructions: occurrence.instructions,
+      category: occurrence.category.apiValue,
+      priority: occurrence.priority.apiValue,
+      scheduledAt: occurrence.scheduledAt,
+      dueAt: occurrence.dueAt,
+      status: occurrence.status.apiValue,
+      snoozeAllowed: occurrence.snoozeAllowed,
+      defaultSnoozeMinutes: occurrence.defaultSnoozeMinutes,
+    );
+  }
+
+  factory ElderlyReminder.fromSupabase(Map<String, dynamic> json) {
+    final template = json['reminder_templates'] as Map<String, dynamic>;
 
     return ElderlyReminder(
-      occurrenceId:
-          json['reminder_occurrence_id'] as String,
+      occurrenceId: json['reminder_occurrence_id'] as String,
 
-      templateId:
-          json['reminder_template_id'] as String,
+      templateId: json['reminder_template_id'] as String,
 
-      patientId:
-          template['patient_id'] as String,
+      patientId: template['patient_id'] as String,
 
-      title:
-          template['title'] as String,
+      title: template['title'] as String,
 
-      instructions:
-          template['instructions'] as String?,
+      instructions: template['instructions'] as String?,
 
-      category:
-          template['category'] as String,
+      category: template['category'] as String,
 
-      priority:
-          template['priority'] as String,
+      priority: template['priority'] as String,
 
-      scheduledAt: DateTime.parse(
-        json['scheduled_at'] as String,
-      ),
+      scheduledAt: DateTime.parse(json['scheduled_at'] as String),
 
-      dueAt: DateTime.parse(
-        json['due_at'] as String,
-      ),
+      dueAt: DateTime.parse(json['due_at'] as String),
 
-      status:
-          json['status'] as String,
+      status: json['status'] as String,
 
-      snoozeAllowed:
-          template['snooze_allowed'] as bool,
+      snoozeAllowed: template['snooze_allowed'] as bool,
 
-      defaultSnoozeMinutes:
-          template['default_snooze_minutes'] as int,
+      defaultSnoozeMinutes: template['default_snooze_minutes'] as int,
     );
   }
 }

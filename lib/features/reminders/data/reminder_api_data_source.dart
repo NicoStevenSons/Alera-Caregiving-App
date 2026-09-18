@@ -69,6 +69,14 @@ class ReminderApiDataSource implements ReminderDataSource {
   final Random _random;
   final Duration timeout;
 
+  Future<ReminderOccurrence> fetchOccurrence(String occurrenceId) async {
+    final decoded = await _request(
+      'GET',
+      '/api/v1/reminders/${Uri.encodeComponent(occurrenceId)}',
+    );
+    return ReminderOccurrenceDto.fromJson(_object(decoded)).value;
+  }
+
   @override
   Future<ReminderPage<ReminderOccurrence>> fetchOccurrences({
     String? patientId,
