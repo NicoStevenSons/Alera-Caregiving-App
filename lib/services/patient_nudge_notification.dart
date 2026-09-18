@@ -35,10 +35,7 @@ class PatientNudgeNotification {
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
   );
 
-  static PatientNudgeNotification? parse(
-    Object? payload, {
-    String? messageId,
-  }) {
+  static PatientNudgeNotification? parse(Object? payload, {String? messageId}) {
     if (payload is! Map || payload['type'] != 'NUDGE') return null;
     final nudgeId = payload['nudge_id'];
     final patientId = payload['patient_id'];
@@ -80,9 +77,7 @@ class PatientNudgeTapBus {
   final _pending = <PatientNudgeNotification>[];
   void Function(PatientNudgeNotification)? _listener;
 
-  void Function() subscribe(
-    void Function(PatientNudgeNotification) listener,
-  ) {
+  void Function() subscribe(void Function(PatientNudgeNotification) listener) {
     _listener = listener;
     final pending = List<PatientNudgeNotification>.of(_pending);
     _pending.clear();

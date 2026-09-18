@@ -4,8 +4,7 @@ import 'package:sqflite/sqflite.dart';
 class AleraDatabase {
   AleraDatabase._();
 
-  static final AleraDatabase instance =
-      AleraDatabase._();
+  static final AleraDatabase instance = AleraDatabase._();
 
   static Database? _database;
 
@@ -20,13 +19,9 @@ class AleraDatabase {
   }
 
   Future<Database> _initializeDatabase() async {
-    final String databasePath =
-        await getDatabasesPath();
+    final String databasePath = await getDatabasesPath();
 
-    final String path = join(
-      databasePath,
-      'alera_local.db',
-    );
+    final String path = join(databasePath, 'alera_local.db');
 
     return openDatabase(
       path,
@@ -36,10 +31,7 @@ class AleraDatabase {
     );
   }
 
-  Future<void> _createDatabase(
-    Database db,
-    int version,
-  ) async {
+  Future<void> _createDatabase(Database db, int version) async {
     await _createUploadQueue(db);
 
     await _createReminderCache(db);
@@ -59,9 +51,7 @@ class AleraDatabase {
     }
   }
 
-  Future<void> _createUploadQueue(
-    Database db,
-  ) async {
+  Future<void> _createUploadQueue(Database db) async {
     await db.execute('''
       CREATE TABLE upload_queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,9 +65,7 @@ class AleraDatabase {
     ''');
   }
 
-  Future<void> _createReminderCache(
-    Database db,
-  ) async {
+  Future<void> _createReminderCache(Database db) async {
     await db.execute('''
       CREATE TABLE reminder_cache (
         occurrence_id TEXT PRIMARY KEY,
@@ -101,9 +89,7 @@ class AleraDatabase {
     ''');
   }
 
-  Future<void> _createReminderActionQueue(
-    Database db,
-  ) async {
+  Future<void> _createReminderActionQueue(Database db) async {
     await db.execute('''
       CREATE TABLE reminder_action_queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

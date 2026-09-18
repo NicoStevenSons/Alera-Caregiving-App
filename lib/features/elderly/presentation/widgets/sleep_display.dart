@@ -28,8 +28,8 @@ class SleepDisplay extends StatelessWidget {
         child: Card(
           elevation: 3,
           shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {

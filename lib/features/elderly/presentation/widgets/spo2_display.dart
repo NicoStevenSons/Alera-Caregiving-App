@@ -18,9 +18,7 @@ class SpO2Display extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
@@ -28,25 +26,18 @@ class SpO2Display extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  SpO2HistoryPage(
-                uploadQueueService:
-                    uploadQueueService,
-              ),
+                  SpO2HistoryPage(uploadQueueService: uploadQueueService),
             ),
           );
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.bloodtype,
-                    color: Colors.red,
-                  ),
+                  Icon(Icons.bloodtype, color: Colors.red),
                   SizedBox(width: 8),
                   Text('SpO2'),
                 ],

@@ -32,12 +32,11 @@ void main() async {
     constraints: Constraints(networkType: NetworkType.connected),
   );
 
-    await Supabase.initialize(
+  await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     publishableKey: AppConfig.supabaseAnonKey,
   );
 
-  
   runApp(const AleraApp());
 }
 

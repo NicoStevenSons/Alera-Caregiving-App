@@ -95,8 +95,7 @@ class _ReadSource implements CaregiverPatientReadDataSource {
   @override
   Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
     String patientId,
-  ) async =>
-    const [];
+  ) async => const [];
 }
 
 PatientListItemDto _item(String id) => PatientListItemDto(

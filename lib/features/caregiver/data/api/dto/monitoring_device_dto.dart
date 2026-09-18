@@ -1,14 +1,6 @@
-enum MonitoringDeviceTypeDto {
-  watch,
-  phone,
-  unknown,
-}
+enum MonitoringDeviceTypeDto { watch, phone, unknown }
 
-enum DeviceConnectionStatusDto {
-  connected,
-  disconnected,
-  unknown,
-}
+enum DeviceConnectionStatusDto { connected, disconnected, unknown }
 
 class MonitoringDeviceDto {
   final String deviceId;
@@ -47,10 +39,7 @@ class MonitoringDeviceDto {
   });
 
   factory MonitoringDeviceDto.fromJson(Map<String, dynamic> json) {
-    final deviceType = _requiredString(
-      json['device_type'],
-      'device_type',
-    );
+    final deviceType = _requiredString(json['device_type'], 'device_type');
 
     final connectionStatus = _requiredString(
       json['connection_status'],
@@ -80,22 +69,13 @@ class MonitoringDeviceDto {
       connectionStatusValue: connectionStatus,
 
       reportedAt: _utcOrNull(json['reported_at']),
-      lastSeenAt: _requiredUtc(
-        json['last_seen_at'],
-        'last_seen_at',
-      ),
+      lastSeenAt: _requiredUtc(json['last_seen_at'], 'last_seen_at'),
       statusChangedAt: _requiredUtc(
         json['status_changed_at'],
         'status_changed_at',
       ),
-      createdAt: _requiredUtc(
-        json['created_at'],
-        'created_at',
-      ),
-      updatedAt: _requiredUtc(
-        json['updated_at'],
-        'updated_at',
-      ),
+      createdAt: _requiredUtc(json['created_at'], 'created_at'),
+      updatedAt: _requiredUtc(json['updated_at'], 'updated_at'),
     );
   }
 }
@@ -117,17 +97,13 @@ DateTime? _utcOrNull(Object? value) {
   if (value == null) return null;
 
   if (value is! String) {
-    throw const FormatException(
-      'timestamp must be a string',
-    );
+    throw const FormatException('timestamp must be a string');
   }
 
   final parsed = DateTime.tryParse(value);
 
   if (parsed == null) {
-    throw const FormatException(
-      'invalid timestamp',
-    );
+    throw const FormatException('invalid timestamp');
   }
 
   return parsed.toUtc();

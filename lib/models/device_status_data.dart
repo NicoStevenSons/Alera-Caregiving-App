@@ -28,7 +28,9 @@ class DeviceStatusData {
       parsedCharging = chargingValue != 0;
     } else if (chargingValue is String) {
       final String normalized = chargingValue.trim().toLowerCase();
-      if (normalized == 'true' || normalized == 'charging' || normalized == '1') {
+      if (normalized == 'true' ||
+          normalized == 'charging' ||
+          normalized == '1') {
         parsedCharging = true;
       } else if (normalized == 'false' ||
           normalized == 'not_charging' ||

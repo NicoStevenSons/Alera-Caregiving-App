@@ -252,8 +252,7 @@ class _HomePatientSource implements CaregiverPatientReadDataSource {
   @override
   Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
     String patientId,
-  ) async =>
-      const [];
+  ) async => const [];
 }
 
 class _RecordingNudges implements CaregiverNudgeDataSource {

@@ -49,18 +49,14 @@ class ClearPendingQueueButton extends StatelessWidget {
         }
 
         final int deletedCount;
-            
-            if (metricType != null) {
-                deletedCount =
-                 await uploadQueueService
-                  .clearPendingQueueByMetric(
-                          metricType!,
-                        );
-              } else {
-                deletedCount =
-                await uploadQueueService
-                .clearPendingQueue();
-              }
+
+        if (metricType != null) {
+          deletedCount = await uploadQueueService.clearPendingQueueByMetric(
+            metricType!,
+          );
+        } else {
+          deletedCount = await uploadQueueService.clearPendingQueue();
+        }
 
         debugPrint(
           'Cleared $deletedCount pending '

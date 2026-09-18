@@ -1,0 +1,13 @@
+group 'com.alera.alera_toast'
+version '0.1-SNAPSHOT'
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.alera.alera_toast'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 21
+    }
+}

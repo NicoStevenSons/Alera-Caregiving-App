@@ -3,16 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/elderly_reminder.dart';
 
 class ElderlyReminderSupabaseService {
-  final SupabaseClient _supabase =
-      Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<List<ElderlyReminder>> getRemindersForPatient(
-    String patientId,
-  ) async {
-    final response =
-        await _supabase
-            .from('reminder_occurrences')
-            .select('''
+  Future<List<ElderlyReminder>> getRemindersForPatient(String patientId) async {
+    final response = await _supabase
+        .from('reminder_occurrences')
+        .select('''
               reminder_occurrence_id,
               reminder_template_id,
               scheduled_at,
@@ -29,37 +25,23 @@ class ElderlyReminderSupabaseService {
                 default_snooze_minutes
               )
             ''')
-            .eq(
-              'reminder_templates.patient_id',
-              patientId,
-            )
-            .order(
-              'due_at',
-              ascending: true,
-            );
+        .eq('reminder_templates.patient_id', patientId)
+        .order('due_at', ascending: true);
 
     return (response as List)
         .map(
-          (json) => ElderlyReminder.fromSupabase(
-            json as Map<String, dynamic>,
-          ),
+          (json) => ElderlyReminder.fromSupabase(json as Map<String, dynamic>),
         )
         .toList();
   }
 
-  Future<String> getPatientUserId(
-    String patientId,
-)   async {
-  final response = await _supabase
-      .from('elderly_patients')
-      .select('user_id')
-      .eq(
-        'patient_id',
-        patientId,
-      )
-      .single();
+  Future<String> getPatientUserId(String patientId) async {
+    final response = await _supabase
+        .from('elderly_patients')
+        .select('user_id')
+        .eq('patient_id', patientId)
+        .single();
 
-  return response['user_id'] as String;
-}
-
+    return response['user_id'] as String;
+  }
 }

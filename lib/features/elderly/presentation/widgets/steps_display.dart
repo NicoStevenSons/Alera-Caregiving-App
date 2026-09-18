@@ -6,10 +6,7 @@ import '../../../../interfaces/pages/records/steps_history_page.dart';
 class StepsDisplay extends StatelessWidget {
   final StepsData stepsData;
 
-  const StepsDisplay({
-    super.key,
-    required this.stepsData,
-  });
+  const StepsDisplay({super.key, required this.stepsData});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +14,7 @@ class StepsDisplay extends StatelessWidget {
       width: double.infinity,
       child: Card(
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         clipBehavior: Clip.antiAlias,
 
         child: InkWell(
@@ -27,10 +22,7 @@ class StepsDisplay extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    StepsHistoryPage(
-                  stepsData: stepsData,
-                ),
+                builder: (context) => StepsHistoryPage(stepsData: stepsData),
               ),
             );
           },
@@ -38,29 +30,21 @@ class StepsDisplay extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(
-                      Icons.stairs,
-                      color: Colors.blue,
-                    ),
+                    Icon(Icons.stairs, color: Colors.blue),
                     SizedBox(width: 8),
                     Text('Activity'),
                   ],
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.only(
-                    top: 70,
-                  ),
+                  padding: const EdgeInsets.only(top: 70),
                   child: Row(
                     children: [
-                      Text(
-                        '${stepsData.sessions.length} sessions today',
-                      ),
+                      Text('${stepsData.sessions.length} sessions today'),
                     ],
                   ),
                 ),
@@ -71,8 +55,7 @@ class StepsDisplay extends StatelessWidget {
                       '${stepsData.displayedTotalSteps} Steps',
                       style: const TextStyle(
                         fontSize: 20,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],

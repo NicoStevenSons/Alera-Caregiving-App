@@ -14,6 +14,9 @@ import 'data/api/caregiver_patient_api_data_source.dart';
 import 'data/api/caregiver_nudge_api_data_source.dart';
 import 'data/api/dto/patient_dto.dart';
 import 'data/patients/caregiver_patient_controller.dart';
+import 'data/api/caregiver_vital_trend_api_data_source.dart';
+import 'data/api/dto/vital_trend_dto.dart';
+import 'presentation/vitals/caregiver_vital_trend_page.dart';
 import 'domain/models/health_snapshot.dart';
 import 'domain/models/caregiver_nudge.dart';
 import 'presentation/home/caregiver_home_page.dart';
@@ -24,6 +27,9 @@ import 'presentation/people/caregiver_people_page.dart';
 import 'presentation/people/add_patient_page.dart';
 import 'presentation/widgets/caregiver_page_app_bar.dart';
 import '../../services/alert_notification.dart';
+import '../reminders/data/reminder_api_data_source.dart';
+import '../reminders/data/reminder_controller.dart';
+import '../reminders/presentation/caregiver_reminders_page.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -35,6 +41,7 @@ class CaregiverShell extends StatefulWidget {
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
+  final ReminderDataSource? reminderDataSource;
 
   const CaregiverShell({
     super.key,
@@ -47,6 +54,7 @@ class CaregiverShell extends StatefulWidget {
     this.loadNotificationAlert,
     this.notificationTapBus,
     this.nudgeDataSource,
+    this.reminderDataSource,
   });
 
   @override
@@ -64,6 +72,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   CaregiverPatientController? _patientController;
   bool _ownsPatientController = false;
   bool _sendingNudge = false;
+  late final ReminderController _reminderController;
 
   @override
   void initState() {
@@ -82,6 +91,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
           : null,
       fallback: widget.repository.getAlerts(),
     )..addListener(_alertsChanged);
+    _reminderController = ReminderController(
+      dataSource: widget.reminderDataSource ?? ReminderApiDataSource(),
+    );
     _alertController.load();
     _patientController = widget.patientController;
     final source = widget.patientDataSource;
@@ -110,6 +122,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
       ..removeListener(_alertsChanged)
       ..dispose();
     if (_ownsPatientController) _patientController?.dispose();
+    _reminderController.dispose();
     super.dispose();
   }
 
@@ -180,6 +193,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
             },
             onAlertTap: (alert) => _openAlertDetail(context, alert),
             onMarkAsSeen: _markAsSeen,
+            onVitalTap: (metric) =>
+                _openVitalTrend(context, careRecipient, metric),
           ),
         ),
       );
@@ -207,6 +222,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
           },
           onAlertTap: (alert) => _openAlertDetail(context, alert),
           onMarkAsSeen: _markAsSeen,
+          onVitalTap: (metric) =>
+              _openVitalTrend(context, careRecipient, metric),
         ),
       ),
     );
@@ -329,10 +346,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
                       onAddPatient: () => _openAddPatient(context),
                     ),
                     _buildAlerts(context),
-                    const _PlaceholderPage(
-                      title: 'Reminders',
-                      isTemporary: true,
-                    ),
+                    _buildReminders(),
                     _PlaceholderPage(
                       title: 'More',
                       isTemporary: true,
@@ -442,6 +456,26 @@ class _CaregiverShellState extends State<CaregiverShell> {
     );
   }
 
+  Widget _buildReminders() {
+    Widget buildPage(List<CareRecipient> patients) => CaregiverRemindersPage(
+      controller: _reminderController,
+      patients: patients.where((patient) => patient.backendBacked).toList(),
+      initialPatientId: _selectedPatientId,
+      onPatientSelected: (patientId) {
+        if (_selectedPatientId != patientId) {
+          setState(() => _selectedPatientId = patientId);
+        }
+      },
+    );
+
+    final controller = _patientController;
+    if (controller == null) return buildPage(_careRecipients);
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => buildPage(controller.visiblePatients),
+    );
+  }
+
   Widget _buildHome(BuildContext context) {
     final controller = _patientController;
     if (controller == null) {
@@ -538,6 +572,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
     onSendNudge: patient.backendBacked
         ? (type) => _sendNudge(patient, type)
         : null,
+    onMetricTap: (metric) => _openVitalTrend(context, patient, metric),
   );
 
   Future<void> _sendNudge(
@@ -631,6 +666,52 @@ class _CaregiverShellState extends State<CaregiverShell> {
       .take(2)
       .map((part) => part.characters.first.toUpperCase())
       .join();
+
+  void _openVitalTrend(
+    BuildContext context,
+    CareRecipient patient,
+    String metric,
+  ) {
+    final trendMetric = switch (metric) {
+      'Heart Rate' => VitalTrendMetric.heartRate,
+      'SpO2' => VitalTrendMetric.spo2,
+      _ => null,
+    };
+
+    if (trendMetric == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('$metric history is not available yet.')),
+        );
+      return;
+    }
+
+    if (!patient.backendBacked) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Trend history is only available for connected patients.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => CaregiverVitalTrendPage(
+          patientId: patient.id,
+          patientName: patient.name,
+          metric: trendMetric,
+          dataSource: CaregiverVitalTrendApiDataSource(),
+        ),
+      ),
+    );
+  }
 }
 
 class _HomePatientState extends StatelessWidget {

@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('connected patient can generate a new login code', (tester) async {
+  testWidgets('connected patient can generate a new login code', (
+    tester,
+  ) async {
     final source = _AccessSource();
     await tester.pumpWidget(
       MaterialApp(
