@@ -1,8 +1,9 @@
-/// Alera status primitives: tone tokens, glyphs, descriptors and renderers.
-///
-/// `AleraBadgedAvatar` (patient photo + overlaid badge) lands in Patch 3.
+/// Alera status primitives: tone tokens, glyphs, descriptors, renderers and
+/// the badged patient avatar composed from them.
 library;
 
+export '../widgets/alera_patient_avatar.dart';
+export 'alera_badged_avatar.dart';
 export 'alera_status_assets.dart';
 export 'alera_status_badge.dart';
 export 'alera_status_chip.dart';
