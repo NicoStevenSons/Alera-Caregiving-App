@@ -37,6 +37,33 @@ class AlertNotification {
   }
 }
 
+/// Delivers ALERT messages received while the app is already in the foreground.
+/// Arrivals are not queued; normal alert loading catches up anything received
+/// before the authenticated caregiver shell exists.
+class AlertNotificationArrivalBus {
+  AlertNotificationArrivalBus();
+
+  static final instance = AlertNotificationArrivalBus();
+
+  final _seen = <String>{};
+  void Function(AlertNotification)? _onAlert;
+
+  void Function() subscribe(void Function(AlertNotification) onAlert) {
+    _onAlert = onAlert;
+    return () {
+      if (identical(_onAlert, onAlert)) {
+        _onAlert = null;
+      }
+    };
+  }
+
+  void handle(AlertNotification? event) {
+    if (event == null || !_seen.add(event.eventId)) return;
+    if (_seen.length > 128) _seen.remove(_seen.first);
+    _onAlert?.call(event);
+  }
+}
+
 /// Retains startup taps until an authenticated caregiver shell subscribes.
 /// Event identity survives unsubscribe so redelivery cannot reopen a route.
 class NotificationTapBus {

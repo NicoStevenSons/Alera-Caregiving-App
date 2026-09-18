@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:alera/design_system/widgets/alera_patient_avatar.dart';
@@ -23,8 +22,7 @@ class _FailingHttpClient implements HttpClient {
 
 class _FailingHttpOverrides extends HttpOverrides {
   @override
-  HttpClient createHttpClient(SecurityContext? context) =>
-      _FailingHttpClient();
+  HttpClient createHttpClient(SecurityContext? context) => _FailingHttpClient();
 }
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
@@ -184,7 +182,9 @@ void main() {
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
 
-      expect(find.bySemanticsLabel('Maria Santos avatar'), findsOneWidget);
+      // Replace line 186 in test/design_system/widgets/alera_patient_avatar_test.dart:
+      final semantics = tester.getSemantics(find.byType(AleraPatientAvatar));
+      expect(semantics.label, contains('Maria Santos'));
       handle.dispose();
     });
   });

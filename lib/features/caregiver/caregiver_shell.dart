@@ -40,6 +40,7 @@ class CaregiverShell extends StatefulWidget {
   final VoidCallback? onSignOut;
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
+  final AlertNotificationArrivalBus? alertArrivalBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
   final ReminderDataSource? reminderDataSource;
 
@@ -53,6 +54,7 @@ class CaregiverShell extends StatefulWidget {
     this.onSignOut,
     this.loadNotificationAlert,
     this.notificationTapBus,
+    this.alertArrivalBus,
     this.nudgeDataSource,
     this.reminderDataSource,
   });
@@ -61,10 +63,12 @@ class CaregiverShell extends StatefulWidget {
   State<CaregiverShell> createState() => _CaregiverShellState();
 }
 
-class _CaregiverShellState extends State<CaregiverShell> {
+class _CaregiverShellState extends State<CaregiverShell>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   String? _selectedPatientId;
   void Function()? _unsubscribeNotifications;
+  void Function()? _unsubscribeAlertArrivals;
   int _notificationRevision = 0;
   late final CareRecipient _homeCareRecipient;
   late final List<CareRecipient> _careRecipients;
@@ -77,6 +81,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _careRecipients = widget.repository.getCareRecipients().toList();
     _homeCareRecipient = _careRecipients.first;
     final CaregiverAlertDataSource alertLoader =
@@ -95,6 +100,11 @@ class _CaregiverShellState extends State<CaregiverShell> {
       dataSource: widget.reminderDataSource ?? ReminderApiDataSource(),
     );
     _alertController.load();
+    if (widget.loadNotificationAlert != null) {
+      _unsubscribeAlertArrivals =
+          (widget.alertArrivalBus ?? AlertNotificationArrivalBus.instance)
+              .subscribe(_receiveAlertNotification);
+    }
     _patientController = widget.patientController;
     final source = widget.patientDataSource;
     if (_patientController == null &&
@@ -117,7 +127,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _unsubscribeNotifications?.call();
+    _unsubscribeAlertArrivals?.call();
     _alertController
       ..removeListener(_alertsChanged)
       ..dispose();
@@ -128,6 +140,30 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   void _alertsChanged() {
     if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _alertController.load();
+      _patientController?.load(refresh: true);
+      _reminderController.refresh();
+    }
+  }
+
+  Future<void> _receiveAlertNotification(AlertNotification event) async {
+    final loader = widget.loadNotificationAlert;
+    if (loader == null) return;
+
+    try {
+      final alert = await loader(event.alertId);
+      if (!mounted) return;
+      _alertController.upsert(alert);
+    } on CaregiverAlertsAuthFailure catch (failure) {
+      if (failure.statusCode == 401) return;
+    } catch (_) {
+      // Resume, Alerts-tab entry, or pull-to-refresh will retry.
+    }
   }
 
   Future<void> _openNotificationAlert(AlertNotification event) async {
@@ -379,9 +415,13 @@ class _CaregiverShellState extends State<CaregiverShell> {
                   height: 68,
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: (index) {
+                    final enteringAlerts = index == 2 && _selectedIndex != 2;
                     setState(() {
                       _selectedIndex = index;
                     });
+                    if (enteringAlerts) {
+                      _alertController.load();
+                    }
                   },
                   destinations: const [
                     NavigationDestination(
@@ -442,6 +482,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
       alerts: widget.repository.getAlerts(),
       careRecipients: patients,
       controller: _alertController,
+      isActive: _selectedIndex == 2,
       onAlertTap: (alert) => _openAlertDetail(context, alert),
     );
 
@@ -674,7 +715,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   ) {
     final trendMetric = switch (metric) {
       'Heart Rate' => VitalTrendMetric.heartRate,
-      'SpO2' => VitalTrendMetric.spo2,
+      'SpO2' || 'SpO₂' => VitalTrendMetric.spo2,
       _ => null,
     };
 

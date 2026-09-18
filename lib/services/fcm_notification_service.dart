@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
@@ -133,7 +134,9 @@ Future<void> notificationActionBackgroundHandler(
             : 'Reminder completed',
       );
     }
-  } catch (_) {}
+  } catch (error) {
+    if (kDebugMode) debugPrint('Reminder notification action failed: $error');
+  }
 }
 
 String _uuidV4() {
@@ -158,6 +161,7 @@ class FcmNotificationService {
   FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   String? _token;
   bool _debugTokenPrinted = false;
+  StreamSubscription<String>? _tokenRefreshSubscription;
   String? get debugToken => kDebugMode ? _token : null;
 
   Future<void> initialize() async {
@@ -222,35 +226,46 @@ class FcmNotificationService {
 
   Future<void> register(CaregiverSessionController session) async {
     if (session.sessionType == null) return;
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = null;
     try {
       await _messaging.requestPermission();
       final token = await _messaging.getToken();
       if (token == null || token.isEmpty) return;
       _token = token;
       await _send(token, session.accessToken, session.sessionType);
-      _messaging.onTokenRefresh.listen((t) async {
+      _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((t) async {
         _token = t;
         await _send(t, session.accessToken, session.sessionType);
       });
-    } catch (_) {}
+    } catch (error) {
+      if (kDebugMode) debugPrint('FCM registration failed: $error');
+    }
   }
 
   Future<void> unregister(CaregiverSessionController session) async {
     final token = _token;
-    if (token == null) return;
+    final bearer = session.accessToken;
+    final sessionType = session.sessionType;
+
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = null;
+    _token = null;
+    _debugTokenPrinted = false;
+
+    if (token == null || bearer == null) return;
     try {
       await http.delete(
-        Uri.parse(
-          '${AppConfig.backendBaseUrl}${_tokenPath(session.sessionType)}',
-        ),
+        Uri.parse('${AppConfig.backendBaseUrl}${_tokenPath(sessionType)}'),
         headers: {
-          'authorization': 'Bearer ${session.accessToken}',
+          'authorization': 'Bearer $bearer',
           'content-type': 'application/json',
         },
         body: jsonEncode({'token': token}),
       );
-    } catch (_) {}
-    _token = null;
+    } catch (error) {
+      if (kDebugMode) debugPrint('FCM unregister failed: $error');
+    }
   }
 
   Future<void> _send(
@@ -282,7 +297,9 @@ class FcmNotificationService {
         }
         return true;
       }());
-    } catch (_) {}
+    } catch (error) {
+      if (kDebugMode) debugPrint('FCM token upload failed: $error');
+    }
   }
 
   Future<void> _foreground(RemoteMessage m) async {
@@ -290,6 +307,11 @@ class FcmNotificationService {
       await _showReminderNotification(_local, m);
       return;
     }
+
+    AlertNotificationArrivalBus.instance.handle(
+      AlertNotification.parse(m.data, messageId: m.messageId),
+    );
+
     final d = {...m.data, '_notification_event_id': m.messageId};
     final isReminder =
         m.data['type'] == 'NUDGE' || m.data['type'] == 'REMINDER_DUE';

@@ -6,6 +6,7 @@ import 'package:alera/design_system/status/alera_status_glyph.dart';
 import 'package:alera/design_system/status/alera_status_tone.dart';
 import 'package:alera/design_system/widgets/alera_patient_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const AleraStatusDescriptor _critical = AleraStatusDescriptor(
@@ -31,9 +32,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const AleraBadgedAvatar(name: 'Maria Santos', status: _critical),
-        ),
+        _host(const AleraBadgedAvatar(name: 'Maria Santos', status: _critical)),
       );
 
       expect(find.byType(AleraPatientAvatar), findsOneWidget);
@@ -67,9 +66,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const AleraBadgedAvatar(name: 'Maria Santos', status: _critical),
-        ),
+        _host(const AleraBadgedAvatar(name: 'Maria Santos', status: _critical)),
       );
 
       final Positioned positioned = tester.widget<Positioned>(
@@ -156,9 +153,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const AleraBadgedAvatar(name: 'Maria Santos', status: _critical),
-        ),
+        _host(const AleraBadgedAvatar(name: 'Maria Santos', status: _critical)),
       );
 
       final AleraStatusBadge badge = tester.widget<AleraStatusBadge>(
@@ -249,9 +244,7 @@ void main() {
       final SemanticsHandle handle = tester.ensureSemantics();
 
       await tester.pumpWidget(
-        _host(
-          const AleraBadgedAvatar(name: 'Maria Santos', status: _critical),
-        ),
+        _host(const AleraBadgedAvatar(name: 'Maria Santos', status: _critical)),
       );
 
       final SemanticsNode merged = tester.getSemantics(

@@ -22,6 +22,7 @@ class CaregiverPatientController extends ChangeNotifier {
   String? errorMessage;
   CaregiverPatientFailureKind? failureKind;
   bool isRefreshing = false;
+  int _loadRevision = 0;
 
   CaregiverPatientController({
     required this.dataSource,
@@ -29,6 +30,7 @@ class CaregiverPatientController extends ChangeNotifier {
   });
 
   Future<void> load({bool refresh = false}) async {
+    final revision = ++_loadRevision;
     if (refresh) {
       isRefreshing = true;
       notifyListeners();
@@ -38,6 +40,7 @@ class CaregiverPatientController extends ChangeNotifier {
     }
     try {
       final page = await dataSource.fetchPatients();
+      if (revision != _loadRevision) return;
       patients = page.items;
       errorMessage = null;
       failureKind = null;
@@ -45,6 +48,7 @@ class CaregiverPatientController extends ChangeNotifier {
           ? CaregiverPatientListState.empty
           : CaregiverPatientListState.success;
     } on CaregiverPatientApiFailure catch (failure) {
+      if (revision != _loadRevision) return;
       errorMessage = failure.message;
       failureKind = failure.kind;
       if ((failure.kind == CaregiverPatientFailureKind.connectivity ||
@@ -57,8 +61,10 @@ class CaregiverPatientController extends ChangeNotifier {
         state = CaregiverPatientListState.error;
       }
     } finally {
-      isRefreshing = false;
-      notifyListeners();
+      if (revision == _loadRevision) {
+        isRefreshing = false;
+        notifyListeners();
+      }
     }
   }
 

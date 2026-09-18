@@ -42,6 +42,8 @@ class CaregiverAlertCard extends StatelessWidget {
         'alera-figma-assets/assets/icons/vitals/spo2.svg',
       CaregiverAlertMetric.watchBattery =>
         'alera-figma-assets/assets/icons/status/info.svg',
+      CaregiverAlertMetric.system =>
+        'alera-figma-assets/assets/icons/status/info.svg',
     };
     final String name = patientName ?? 'Unknown patient';
     final _AlertCardDisplayData displayData = _buildDisplayData(
@@ -170,11 +172,31 @@ class CaregiverAlertCard extends StatelessWidget {
   }
 
   static String _relativeTime(DateTime dateTime) {
-    final int minutes = DateTime.now().difference(dateTime).inMinutes;
+    final Duration elapsed = DateTime.now().difference(dateTime);
+    if (elapsed.isNegative) return 'just now';
+
+    final int minutes = elapsed.inMinutes;
     if (minutes <= 1) return 'just now';
     if (minutes < 60) return '$minutes mins ago';
-    final int hours = minutes ~/ 60;
-    return '$hours hr${hours == 1 ? '' : 's'} ago';
+
+    final int hours = elapsed.inHours;
+    if (hours < 24) return '$hours hr${hours == 1 ? '' : 's'} ago';
+
+    final int days = elapsed.inDays;
+    if (days < 7) return '$days day${days == 1 ? '' : 's'} ago';
+
+    if (days < 30) {
+      final int weeks = days ~/ 7;
+      return '$weeks week${weeks == 1 ? '' : 's'} ago';
+    }
+
+    if (days < 365) {
+      final int months = days ~/ 30;
+      return '$months month${months == 1 ? '' : 's'} ago';
+    }
+
+    final int years = days ~/ 365;
+    return '$years year${years == 1 ? '' : 's'} ago';
   }
 }
 
@@ -225,8 +247,11 @@ _AlertCardDisplayData _buildDisplayData(
       CaregiverAlertMetric.heartRate => 'Heart Rate',
       CaregiverAlertMetric.spo2 => 'SpO₂',
       CaregiverAlertMetric.watchBattery => 'Battery',
+      CaregiverAlertMetric.system => 'System',
     },
-    reading: '$value ${alert.unit}',
+    reading: alert.metric == CaregiverAlertMetric.system && alert.unit.isEmpty
+        ? '--'
+        : '$value ${alert.unit}',
     previousAverage: previousAverageText ?? '--',
     threshold: threshold,
     duration: duration == null ? '--' : '${duration.inMinutes} min',

@@ -138,11 +138,16 @@ class CaregiverSessionController extends ChangeNotifier
 
   Future<void> logout() async {
     ++_revision;
-    await FcmNotificationService.instance.unregister(this);
+    final unregister = FcmNotificationService.instance.unregister(this);
+
     // Remove authenticated routes immediately, including while secure I/O runs.
     _session = null;
     _status = CaregiverSessionStatus.unauthenticated;
     notifyListeners();
+
+    try {
+      await unregister;
+    } catch (_) {}
     await _serialize(_tokenStore.clearSession);
   }
 

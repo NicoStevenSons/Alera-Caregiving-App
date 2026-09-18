@@ -189,10 +189,11 @@ class _AddPatientPageState extends State<AddPatientPage>
       _Step.monitoring: _Step.care,
       _Step.review: _Step.monitoring,
     }[step];
-    if (x == null)
+    if (x == null) {
       Navigator.pop(context);
-    else
+    } else {
       go(x);
+    }
   }
 
   CreatePatientRequest get request => CreatePatientRequest(
@@ -242,11 +243,12 @@ class _AddPatientPageState extends State<AddPatientPage>
       }
       if (mounted) setState(() => step = _Step.created);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(
           () =>
               error = msg(e, 'Unable to create the patient. Please try again.'),
         );
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -262,8 +264,9 @@ class _AddPatientPageState extends State<AddPatientPage>
       );
       if (mounted) setState(() => settingsFailed = false);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => error = msg(e, 'Custom settings were not saved.'));
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -308,8 +311,9 @@ class _AddPatientPageState extends State<AddPatientPage>
       }
       go(_Step.code);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => error = msg(e, 'Unable to issue an access code.'));
+      }
     } finally {
       if (mounted) setState(() => issuing = false);
     }
@@ -430,7 +434,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       ),
       DropdownButtonFormField<String>(
         key: const Key('sex-field'),
-        value: sex,
+        initialValue: sex,
         items: const [
           DropdownMenuItem(value: 'MALE', child: Text('Male')),
           DropdownMenuItem(value: 'FEMALE', child: Text('Female')),
@@ -537,8 +541,9 @@ class _AddPatientPageState extends State<AddPatientPage>
             (!custom ||
                 (int.parse(hrMin.text) <= int.parse(hrMax.text) &&
                     (spo2Max.text.isEmpty ||
-                        int.parse(spo2Min.text) <= int.parse(spo2Max.text)))))
+                        int.parse(spo2Min.text) <= int.parse(spo2Max.text))))) {
           go(returnTo ?? _Step.review);
+        }
       }),
     ]),
   );
@@ -746,10 +751,12 @@ class _AddPatientPageState extends State<AddPatientPage>
     if (x == null || x.isEmpty) return null;
     final n = double.tryParse(x);
     if (n == null) return 'Enter a valid $l.';
-    if (ex ? n <= min : n < min)
+    if (ex ? n <= min : n < min) {
       return 'Enter a $l greater than ${min.toInt()}.';
-    if (max != null && n > max)
+    }
+    if (max != null && n > max) {
       return 'Enter a $l from ${min.toInt()} to ${max.toInt()}.';
+    }
     return null;
   }
 

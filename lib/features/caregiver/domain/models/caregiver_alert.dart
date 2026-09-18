@@ -1,6 +1,6 @@
 enum CaregiverAlertSeverity { warning, critical }
 
-enum CaregiverAlertMetric { heartRate, spo2, watchBattery }
+enum CaregiverAlertMetric { heartRate, spo2, watchBattery, system }
 
 enum CaregiverAlertStatus { active, acknowledged, resolved, falseAlarm }
 

@@ -329,6 +329,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
   bool _submitting = false;
   bool _goingBack = false;
   bool _obscurePassword = true;
+  String? _lastAutoSubmittedPatientCode;
   String? _error;
   String? _householdName;
 
@@ -351,6 +352,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
       _error = null;
       _password.clear();
       _accessCode.clear();
+      _lastAutoSubmittedPatientCode = null;
     });
   }
 
@@ -732,6 +734,19 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                         )
                         ? null
                         : 'Enter a valid patient code.',
+                    onChanged: (value) {
+                      final normalized = normalizePatientAccessCode(value);
+                      final isComplete = isValidPatientAccessCode(normalized);
+                      if (!isComplete) {
+                        _lastAutoSubmittedPatientCode = null;
+                        return;
+                      }
+                      if (!_submitting &&
+                          _lastAutoSubmittedPatientCode != normalized) {
+                        _lastAutoSubmittedPatientCode = normalized;
+                        _submit();
+                      }
+                    },
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
                       hintText: 'XXXX - XXXX - XXXX',

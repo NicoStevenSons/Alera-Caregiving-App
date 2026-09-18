@@ -2,8 +2,9 @@ import '../domain/reminder_models.dart';
 
 String _string(Map<String, dynamic> json, String key) {
   final value = json[key];
-  if (value is! String || value.isEmpty)
+  if (value is! String || value.isEmpty) {
     throw FormatException('$key must be a non-empty string.');
+  }
   return value;
 }
 
@@ -21,15 +22,17 @@ bool _boolean(Map<String, dynamic> json, String key) {
 
 DateTime _dateTime(Map<String, dynamic> json, String key) {
   final parsed = DateTime.tryParse(_string(json, key));
-  if (parsed == null || !parsed.isUtc)
+  if (parsed == null || !parsed.isUtc) {
     throw FormatException('$key must be an ISO-8601 UTC datetime.');
+  }
   return parsed;
 }
 
 String? _optionalString(Map<String, dynamic> json, String key) {
   final value = json[key];
-  if (value != null && value is! String)
+  if (value != null && value is! String) {
     throw FormatException('$key must be a string or null.');
+  }
   return value as String?;
 }
 
@@ -110,8 +113,9 @@ ReminderPage<T> parseReminderPage<T>(
   }
   final items = (decoded['items'] as List)
       .map((item) {
-        if (item is! Map<String, dynamic>)
+        if (item is! Map<String, dynamic>) {
           throw const FormatException('Reminder item must be an object.');
+        }
         return parseItem(item);
       })
       .toList(growable: false);

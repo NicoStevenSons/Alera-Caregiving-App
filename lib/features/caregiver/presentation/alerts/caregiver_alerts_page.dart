@@ -30,6 +30,7 @@ class CaregiverAlertsPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert>? onAlertTap;
   final CaregiverAlertDataSource? alertDataSource;
   final CaregiverAlertController? controller;
+  final bool isActive;
 
   const CaregiverAlertsPage({
     super.key,
@@ -38,6 +39,7 @@ class CaregiverAlertsPage extends StatefulWidget {
     this.onAlertTap,
     this.alertDataSource,
     this.controller,
+    this.isActive = true,
   });
 
   @override
@@ -86,6 +88,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   @override
   void didUpdateWidget(covariant CaregiverAlertsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive && !widget.isActive) {
+      _expandedAlertIds.clear();
+    }
     final patientFilterId = _patientFilterId;
     if (patientFilterId != null &&
         !widget.careRecipients.any(
@@ -216,6 +221,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   }
 
   void _handleAlertTap(BuildContext context, CaregiverAlert alert) {
+    if (_expandedAlertIds.isNotEmpty) {
+      setState(_expandedAlertIds.clear);
+    }
     if (widget.onAlertTap != null) {
       widget.onAlertTap!(alert);
       return;
@@ -228,6 +236,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         alert.status != CaregiverAlertStatus.active) {
       return;
     }
+    setState(() => _expandedAlertIds.remove(alert.id));
     try {
       await _controller.acknowledge(alert.id);
     } catch (_) {
@@ -1048,11 +1057,31 @@ class AlertListCard extends StatelessWidget {
   }
 
   String _relativeTime(DateTime dateTime) {
-    final int minutes = DateTime.now().difference(dateTime).inMinutes;
+    final Duration elapsed = DateTime.now().difference(dateTime);
+    if (elapsed.isNegative) return 'just now';
+
+    final int minutes = elapsed.inMinutes;
     if (minutes <= 1) return 'just now';
     if (minutes < 60) return '$minutes mins ago';
-    final int hours = minutes ~/ 60;
-    return '$hours hr${hours == 1 ? '' : 's'} ago';
+
+    final int hours = elapsed.inHours;
+    if (hours < 24) return '$hours hr${hours == 1 ? '' : 's'} ago';
+
+    final int days = elapsed.inDays;
+    if (days < 7) return '$days day${days == 1 ? '' : 's'} ago';
+
+    if (days < 30) {
+      final int weeks = days ~/ 7;
+      return '$weeks week${weeks == 1 ? '' : 's'} ago';
+    }
+
+    if (days < 365) {
+      final int months = days ~/ 30;
+      return '$months month${months == 1 ? '' : 's'} ago';
+    }
+
+    final int years = days ~/ 365;
+    return '$years year${years == 1 ? '' : 's'} ago';
   }
 }
 

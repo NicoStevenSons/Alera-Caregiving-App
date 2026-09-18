@@ -72,7 +72,13 @@ class CaregiverAlertDto {
       metric: switch (metricType) {
         'HEART_RATE' => CaregiverAlertMetric.heartRate,
         'SPO2' => CaregiverAlertMetric.spo2,
-        _ => throw FormatException('Unsupported alert metric: $metricType'),
+        'BATTERY_LEVEL' => CaregiverAlertMetric.watchBattery,
+        'CONNECTION_STATUS' ||
+        'INACTIVITY' ||
+        'ACTIVITY' ||
+        'SLEEP' ||
+        'SYNC_STATUS' => CaregiverAlertMetric.system,
+        _ => CaregiverAlertMetric.system,
       },
       status: switch (status) {
         'ACTIVE' => CaregiverAlertStatus.active,
@@ -262,6 +268,9 @@ String _metricFromCondition(String? conditionKey) {
   return switch (conditionKey) {
     'HR_HIGH' || 'HR_LOW' => 'HEART_RATE',
     'SPO2_LOW' => 'SPO2',
-    _ => throw const FormatException('Missing or invalid "metric_type".'),
+    'PHONE_BATTERY_LOW' || 'WATCH_BATTERY_LOW' => 'BATTERY_LEVEL',
+    'PHONE_DISCONNECTED' || 'WATCH_DISCONNECTED' => 'CONNECTION_STATUS',
+    'INACTIVITY' => 'INACTIVITY',
+    _ => 'SYSTEM',
   };
 }
