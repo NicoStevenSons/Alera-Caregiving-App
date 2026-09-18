@@ -57,9 +57,7 @@ void main() {
         border: Color(0xFF123456),
       );
 
-      final AleraStatusColors updated = tokens.copyWith(
-        critical: replacement,
-      );
+      final AleraStatusColors updated = tokens.copyWith(critical: replacement);
 
       expect(updated.critical, replacement);
       expect(updated.warning, tokens.warning);

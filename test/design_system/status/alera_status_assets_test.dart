@@ -44,8 +44,7 @@ void main() {
       final String pubspec = File('pubspec.yaml').readAsStringSync();
 
       for (final String path in AleraStatusAssets.all) {
-        final String directory =
-            '${path.substring(0, path.lastIndexOf('/'))}/';
+        final String directory = '${path.substring(0, path.lastIndexOf('/'))}/';
 
         expect(
           pubspec,

@@ -41,9 +41,9 @@ class AleraButton extends StatelessWidget {
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
           return primary
-              ? AleraColors.primary.withValues(alpha:0.38)
+              ? AleraColors.primary.withValues(alpha: 0.38)
               : white
-              ? Colors.white.withValues(alpha:0.55)
+              ? Colors.white.withValues(alpha: 0.55)
               : AleraColors.divider;
         }
 
@@ -72,8 +72,8 @@ class AleraButton extends StatelessWidget {
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
           return primary
-              ? Colors.white.withValues(alpha:0.70)
-              : AleraColors.textSecondary.withValues(alpha:0.50);
+              ? Colors.white.withValues(alpha: 0.70)
+              : AleraColors.textSecondary.withValues(alpha: 0.50);
         }
 
         return primary ? Colors.white : const Color(0xFF6B6385);
@@ -101,11 +101,7 @@ class AleraButton extends StatelessWidget {
     );
 
     final Widget button = icon == null
-        ? FilledButton(
-            onPressed: onPressed,
-            style: style,
-            child: Text(label),
-          )
+        ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
         : FilledButton.icon(
             onPressed: onPressed,
             style: style,

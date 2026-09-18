@@ -41,9 +41,7 @@ void main() {
     });
 
     test('copyWith overrides only the named field', () {
-      final AleraStatusDescriptor updated = _overdue.copyWith(
-        label: 'Missed',
-      );
+      final AleraStatusDescriptor updated = _overdue.copyWith(label: 'Missed');
 
       expect(updated.label, 'Missed');
       expect(updated.tone, AleraStatusTone.critical);

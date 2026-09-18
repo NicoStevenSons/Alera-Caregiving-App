@@ -16,12 +16,14 @@ abstract final class AleraTheme {
 
     return parent.copyWith(
       colorScheme: colorScheme,
-      extensions: <ThemeExtension<dynamic>>[
-        ...parent.extensions.values,
-        colorScheme.brightness == Brightness.dark
-            ? AleraStatusColors.dark()
-            : AleraStatusColors.light(),
-      ],
+      // lib/design_system/alera_theme.dart
+
+      // Change line 20 to explicitly type the list:
+      // lib/design_system/alera_theme.dart
+
+      // Replace the extensions spread with this:
+      extensions: parent.extensions.values.toList()
+        ..add(AleraStatusColors.light()),
       scaffoldBackgroundColor: AleraColors.background,
       dividerColor: AleraColors.divider,
       navigationBarTheme: NavigationBarThemeData(

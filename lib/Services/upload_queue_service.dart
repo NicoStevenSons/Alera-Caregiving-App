@@ -118,20 +118,13 @@ class UploadQueueService {
     );
   }
 
-Future<int> clearPendingQueueByMetric(
-  String metricType,
-) async {
-  final Database db =
-      await _aleraDatabase.database;
+  Future<int> clearPendingQueueByMetric(String metricType) async {
+    final Database db = await _aleraDatabase.database;
 
-  return db.delete(
-    'upload_queue',
-    where:
-        'queue_status = ? AND metric_type = ?',
-    whereArgs: [
-      'PENDING',
-      metricType,
-    ],
-  );
-}
+    return db.delete(
+      'upload_queue',
+      where: 'queue_status = ? AND metric_type = ?',
+      whereArgs: ['PENDING', metricType],
+    );
+  }
 }

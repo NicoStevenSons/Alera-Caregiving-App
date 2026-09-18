@@ -23,7 +23,7 @@ abstract interface class CaregiverPatientReadDataSource {
     int offset = 0,
   });
   Future<PatientDetailDto> fetchPatient(String patientId);
-  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(String patientId,);
+  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(String patientId);
 }
 
 class CaregiverPatientApiDataSource
@@ -51,31 +51,31 @@ class CaregiverPatientApiDataSource
   }
 
   @override
-Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
-  String patientId,
-) async {
-  final response = await _get(
-    '/api/v1/patients/${Uri.encodeComponent(patientId)}/monitoring-devices',
-  );
+  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(
+    String patientId,
+  ) async {
+    final response = await _get(
+      '/api/v1/patients/${Uri.encodeComponent(patientId)}/monitoring-devices',
+    );
 
-  return _parse(() {
-    final decoded = jsonDecode(response.body);
+    return _parse(() {
+      final decoded = jsonDecode(response.body);
 
-    if (decoded is! List) {
-      throw const FormatException(
-        'monitoring devices response must be a list',
-      );
-    }
+      if (decoded is! List) {
+        throw const FormatException(
+          'monitoring devices response must be a list',
+        );
+      }
 
-    return decoded
-        .map(
-          (item) => MonitoringDeviceDto.fromJson(
-            Map<String, dynamic>.from(item as Map),
-          ),
-        )
-        .toList(growable: false);
-  });
-}
+      return decoded
+          .map(
+            (item) => MonitoringDeviceDto.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false);
+    });
+  }
 
   @override
   Future<PatientDetailDto> fetchPatient(String patientId) async {

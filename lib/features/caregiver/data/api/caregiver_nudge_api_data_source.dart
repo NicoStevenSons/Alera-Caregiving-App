@@ -31,7 +31,10 @@ class CaregiverNudgeApiDataSource implements CaregiverNudgeDataSource {
   Future<void> sendNudge(String patientId, CaregiverNudgeType type) async {
     final token = _session.accessToken;
     if (token == null || token.isEmpty) {
-      throw const CaregiverNudgeFailure('Please sign in again.', statusCode: 401);
+      throw const CaregiverNudgeFailure(
+        'Please sign in again.',
+        statusCode: 401,
+      );
     }
     try {
       final response = await _client
@@ -51,11 +54,17 @@ class CaregiverNudgeApiDataSource implements CaregiverNudgeDataSource {
           )
           .timeout(timeout);
       if (_session.accessToken != token) {
-        throw const CaregiverNudgeFailure('Please sign in again.', statusCode: 401);
+        throw const CaregiverNudgeFailure(
+          'Please sign in again.',
+          statusCode: 401,
+        );
       }
       if (response.statusCode == 401) {
         await _session.clearInvalidSession();
-        throw const CaregiverNudgeFailure('Please sign in again.', statusCode: 401);
+        throw const CaregiverNudgeFailure(
+          'Please sign in again.',
+          statusCode: 401,
+        );
       }
       if (response.statusCode == 403) {
         throw const CaregiverNudgeFailure(
@@ -82,9 +91,7 @@ class CaregiverNudgeApiDataSource implements CaregiverNudgeDataSource {
         'The request timed out. Please try again.',
       );
     } on http.ClientException {
-      throw const CaregiverNudgeFailure(
-        'Unable to connect. Please try again.',
-      );
+      throw const CaregiverNudgeFailure('Unable to connect. Please try again.');
     } on CaregiverNudgeFailure {
       rethrow;
     } catch (_) {
@@ -98,7 +105,9 @@ class CaregiverNudgeApiDataSource implements CaregiverNudgeDataSource {
     final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    final hex = bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    final hex = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
         '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
         '${hex.substring(20)}';

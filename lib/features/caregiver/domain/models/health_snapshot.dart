@@ -13,7 +13,9 @@ class MonitoringDevice {
 
   bool get isConnected =>
       connectionStatus == MonitoringDeviceConnectionStatus.connected;
-} extension MonitoringDeviceListLookup on List<MonitoringDevice> {
+}
+
+extension MonitoringDeviceListLookup on List<MonitoringDevice> {
   MonitoringDevice? get watch => _findByName('watch');
 
   MonitoringDevice? get phone => _findByName('phone');
