@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
+import 'alera_notification_presentation.dart';
 import 'alert_notification.dart';
 import 'patient_nudge_notification.dart';
 import 'reminder_due_notification.dart';
@@ -67,29 +68,63 @@ Future<void> _showActionableReminder(
   );
 }
 
-Future<void> _showReminderNotification(
+Future<void> _showHeadsUpNotification(
   FlutterLocalNotificationsPlugin local,
   RemoteMessage message,
 ) async {
   final data = {...message.data, '_notification_event_id': message.messageId};
-  await _showActionableReminder(
-    local,
-    id: message.data['occurrence_id']?.hashCode ?? message.hashCode,
-    data: data,
+  final presentation = AleraNotificationPresentation.fromData(data);
+  if (presentation.hasReminderActions) {
+    await _showActionableReminder(
+      local,
+      id: data['occurrence_id']?.hashCode ?? message.hashCode,
+      data: data,
+    );
+    return;
+  }
+
+  await local.show(
+    id: message.messageId?.hashCode ?? message.hashCode,
+    title:
+        message.notification?.title ??
+        data['title'] as String? ??
+        presentation.fallbackTitle,
+    body:
+        message.notification?.body ??
+        data['body'] as String? ??
+        presentation.fallbackBody,
+    notificationDetails: NotificationDetails(
+      android: AndroidNotificationDetails(
+        presentation.channelId,
+        presentation.channelName,
+        channelDescription: presentation.channelDescription,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.alarm,
+        playSound: true,
+        enableVibration: true,
+      ),
+    ),
+    payload: jsonEncode(data),
   );
 }
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  if (message.data['type'] != 'REMINDER_DUE') return;
   final local = FlutterLocalNotificationsPlugin();
   await local.initialize(
     settings: const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     ),
   );
-  await _showReminderNotification(local, message);
+  // Android already renders messages containing a notification payload. The
+  // manifest routes those through Alera's max-importance default channel.
+  // Data-only messages still need a local notification. Due reminders always
+  // use the local path because it supplies Complete and Snooze actions.
+  if (message.notification == null || message.data['type'] == 'REMINDER_DUE') {
+    await _showHeadsUpNotification(local, message);
+  }
 }
 
 @pragma('vm:entry-point')
@@ -171,44 +206,38 @@ class FcmNotificationService {
           notificationActionBackgroundHandler,
     );
 
-    await _local
+    final android = _local
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_alerts',
-            'Alera alerts',
-            description: 'Caregiver health alerts',
-            importance: Importance.high,
-          ),
-        );
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_patient_reminders_v2',
-            'Patient reminders',
-            description: 'Time-sensitive reminders for patients',
-            importance: Importance.max,
-            playSound: true,
-            enableVibration: true,
-          ),
-        );
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_nudges',
-            'Alera reminders',
-            description: 'Caregiver reminders for patients',
-            importance: Importance.high,
-          ),
-        );
+        >();
+    for (final presentation in const [
+      AleraNotificationPresentation.healthAlert,
+      AleraNotificationPresentation.missedReminder,
+      AleraNotificationPresentation.nudge,
+      AleraNotificationPresentation.deviceStatus,
+      AleraNotificationPresentation.general,
+    ]) {
+      await android?.createNotificationChannel(
+        AndroidNotificationChannel(
+          presentation.channelId,
+          presentation.channelName,
+          description: presentation.channelDescription,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        ),
+      );
+    }
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'alera_patient_reminders_v2',
+        'Patient reminders',
+        description: 'Time-sensitive reminders for patients',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ),
+    );
     FirebaseMessaging.onMessage.listen(_foreground);
     FirebaseMessaging.onMessageOpenedApp.listen(_handle);
     final initialMessage = await _messaging.getInitialMessage();
@@ -286,33 +315,7 @@ class FcmNotificationService {
   }
 
   Future<void> _foreground(RemoteMessage m) async {
-    if (m.data['type'] == 'REMINDER_DUE') {
-      await _showReminderNotification(_local, m);
-      return;
-    }
-    final d = {...m.data, '_notification_event_id': m.messageId};
-    final isReminder =
-        m.data['type'] == 'NUDGE' || m.data['type'] == 'REMINDER_DUE';
-    await _local.show(
-      id: m.hashCode,
-      title:
-          m.notification?.title ??
-          (isReminder ? 'Alera reminder' : 'Alera health alert'),
-      body:
-          m.notification?.body ??
-          (isReminder
-              ? 'You have a reminder due.'
-              : 'A new alert needs your attention.'),
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          isReminder ? 'alera_nudges' : 'alera_alerts',
-          isReminder ? 'Alera reminders' : 'Alera alerts',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-      ),
-      payload: jsonEncode(d),
-    );
+    await _showHeadsUpNotification(_local, m);
   }
 
   void _handle(RemoteMessage message) {
