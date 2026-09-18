@@ -1,5 +1,6 @@
 import 'package:alera/features/caregiver/caregiver_shell.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
+import 'package:alera/features/reminders/presentation/caregiver_reminders_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,7 +25,7 @@ void main() {
 
     await tester.tap(find.text('Reminders'));
     await tester.pumpAndSettle();
-    expect(find.text('Temporary Reminders placeholder'), findsOneWidget);
+    expect(find.byType(CaregiverRemindersPage), findsOneWidget);
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();

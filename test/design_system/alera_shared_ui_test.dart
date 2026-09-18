@@ -72,10 +72,12 @@ void main() {
   testWidgets('feedback replaces the current message', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => AleraFeedback.success(context, 'Saved.'),
-            child: const Text('Save'),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => AleraFeedback.success(context, 'Saved.'),
+              child: const Text('Save'),
+            ),
           ),
         ),
       ),

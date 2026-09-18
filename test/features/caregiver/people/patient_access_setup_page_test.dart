@@ -56,7 +56,7 @@ class _AccessSource implements CaregiverPatientDataSource {
       accessCode: 'RELOGIN-CODE',
       createdByUserId: 'caregiver-1',
       createdAt: DateTime.utc(2026, 9, 17),
-      expiresAt: DateTime.utc(2026, 9, 18),
+      expiresAt: DateTime.utc(2099, 9, 18),
       status: 'ACTIVE',
     );
   }

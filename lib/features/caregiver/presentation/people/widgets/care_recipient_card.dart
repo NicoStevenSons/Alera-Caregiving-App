@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
