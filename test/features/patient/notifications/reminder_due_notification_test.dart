@@ -22,6 +22,21 @@ void main() {
     expect(event?.eventId, 'message:message-1');
   });
 
+  test('adds a notification action without changing reminder identity', () {
+    final event = ReminderDueNotification.parse({
+      'type': 'REMINDER_DUE',
+      'occurrence_id': occurrenceId,
+      'template_id': templateId,
+      'patient_id': patientId,
+    });
+
+    final snoozed = event!.withAction(ReminderNotificationAction.snooze);
+
+    expect(snoozed.occurrenceId, occurrenceId);
+    expect(snoozed.action, ReminderNotificationAction.snooze);
+    expect(snoozed.eventId, '${event.eventId}:snooze');
+  });
+
   test('rejects malformed and unrelated payloads', () {
     for (final payload in <Object?>[
       null,

@@ -1,11 +1,14 @@
 import 'dart:convert';
 
+enum ReminderNotificationAction { open, complete, snooze }
+
 class ReminderDueNotification {
   const ReminderDueNotification._({
     required this.occurrenceId,
     required this.templateId,
     required this.patientId,
     required this.eventId,
+    this.action = ReminderNotificationAction.open,
     this.instructions,
   });
 
@@ -14,6 +17,18 @@ class ReminderDueNotification {
   final String patientId;
   final String? instructions;
   final String eventId;
+  final ReminderNotificationAction action;
+
+  ReminderDueNotification withAction(ReminderNotificationAction value) {
+    return ReminderDueNotification._(
+      occurrenceId: occurrenceId,
+      templateId: templateId,
+      patientId: patientId,
+      eventId: '$eventId:${value.name}',
+      instructions: instructions,
+      action: value,
+    );
+  }
 
   static final _uuid = RegExp(
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',

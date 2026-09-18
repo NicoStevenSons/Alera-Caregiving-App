@@ -55,7 +55,11 @@ void main() {
       throwsA(
         isA<CaregiverNudgeFailure>()
             .having((failure) => failure.statusCode, 'statusCode', 401)
-            .having((failure) => failure.message, 'message', 'Please sign in again.'),
+            .having(
+              (failure) => failure.message,
+              'message',
+              'Please sign in again.',
+            ),
       ),
     );
     expect(session.cleared, isTrue);

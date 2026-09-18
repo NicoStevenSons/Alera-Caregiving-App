@@ -26,6 +26,8 @@ dependencies:
   share_plus: ^12.0.1
   url_launcher: ^6.3.2
   fl_chart: ^1.2.0
+  alera_toast:
+    path: packages/alera_toast
 
 dev_dependencies:
   flutter_test:

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'dart:ui';
 import 'alert_notification.dart';
 import 'patient_nudge_notification.dart';
 import 'reminder_due_notification.dart';
@@ -6,14 +8,145 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:alera_toast/alera_toast.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../features/caregiver/data/auth/caregiver_session_controller.dart';
 import '../features/caregiver/data/auth/caregiver_token_store.dart';
 
+const String _completeReminderAction = 'complete_reminder';
+const String _snoozeReminderAction = 'snooze_reminder';
+
+const AndroidNotificationDetails _reminderNotificationDetails =
+    AndroidNotificationDetails(
+      'alera_patient_reminders_v2',
+      'Patient reminders',
+      channelDescription: 'Time-sensitive reminders for patients',
+      importance: Importance.max,
+      priority: Priority.max,
+      category: AndroidNotificationCategory.alarm,
+      playSound: true,
+      enableVibration: true,
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          _completeReminderAction,
+          'Complete',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          _snoozeReminderAction,
+          'Snooze',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+      ],
+    );
+
+String _reminderTitle(Map<String, dynamic> data) =>
+    data['title'] as String? ?? 'Alera reminder';
+
+String _reminderBody(Map<String, dynamic> data) =>
+    data['body'] as String? ??
+    data['instructions'] as String? ??
+    "It's time for this reminder.";
+
+Future<void> _showActionableReminder(
+  FlutterLocalNotificationsPlugin local, {
+  required int id,
+  required Map<String, dynamic> data,
+}) {
+  return local.show(
+    id: id,
+    title: _reminderTitle(data),
+    body: _reminderBody(data),
+    notificationDetails: const NotificationDetails(
+      android: _reminderNotificationDetails,
+    ),
+    payload: jsonEncode(data),
+  );
+}
+
+Future<void> _showReminderNotification(
+  FlutterLocalNotificationsPlugin local,
+  RemoteMessage message,
+) async {
+  final data = {...message.data, '_notification_event_id': message.messageId};
+  await _showActionableReminder(
+    local,
+    id: message.data['occurrence_id']?.hashCode ?? message.hashCode,
+    data: data,
+  );
+}
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  if (message.data['type'] != 'REMINDER_DUE') return;
+  final local = FlutterLocalNotificationsPlugin();
+  await local.initialize(
+    settings: const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    ),
+  );
+  await _showReminderNotification(local, message);
+}
+
+@pragma('vm:entry-point')
+Future<void> notificationActionBackgroundHandler(
+  NotificationResponse response,
+) async {
+  DartPluginRegistrant.ensureInitialized();
+  if (response.actionId != _completeReminderAction &&
+      response.actionId != _snoozeReminderAction) {
+    return;
+  }
+  final reminder = ReminderDueNotification.fromLocalPayload(response.payload);
+  if (reminder == null) return;
+  final isSnooze = response.actionId == _snoozeReminderAction;
+
+  try {
+    final session = await SecureCaregiverTokenStore().readSession();
+    if (session == null || session.type != SessionType.elderlyPatient) return;
+    final result = await http
+        .post(
+          Uri.parse(
+            '${AppConfig.backendBaseUrl}/api/v1/reminders/'
+            '${Uri.encodeComponent(reminder.occurrenceId)}/'
+            '${isSnooze ? 'snooze' : 'complete'}',
+          ),
+          headers: {
+            'authorization': 'Bearer ${session.token}',
+            'content-type': 'application/json',
+          },
+          body: jsonEncode({
+            'client_action_id': _uuidV4(),
+            if (isSnooze) 'snooze_minutes': 10,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    if ((result.statusCode >= 200 && result.statusCode < 300) ||
+        result.statusCode == 409) {
+      await AleraToast.show(
+        isSnooze
+            ? 'Reminder has been snoozed for 10 minutes'
+            : 'Reminder completed',
+      );
+    }
+  } catch (_) {}
+}
+
+String _uuidV4() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final hex = bytes
+      .map((value) => value.toRadixString(16).padLeft(2, '0'))
+      .join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
+      '${hex.substring(20)}';
 }
 
 class FcmNotificationService {
@@ -33,7 +166,9 @@ class FcmNotificationService {
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
-      onDidReceiveNotificationResponse: (r) => _handleLocalPayload(r.payload),
+      onDidReceiveNotificationResponse: _handleLocalResponse,
+      onDidReceiveBackgroundNotificationResponse:
+          notificationActionBackgroundHandler,
     );
 
     await _local
@@ -54,6 +189,20 @@ class FcmNotificationService {
         >()
         ?.createNotificationChannel(
           const AndroidNotificationChannel(
+            'alera_patient_reminders_v2',
+            'Patient reminders',
+            description: 'Time-sensitive reminders for patients',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+    await _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
             'alera_nudges',
             'Alera reminders',
             description: 'Caregiver reminders for patients',
@@ -66,7 +215,8 @@ class FcmNotificationService {
     if (initialMessage != null) _handle(initialMessage);
     final localLaunch = await _local.getNotificationAppLaunchDetails();
     if (localLaunch?.didNotificationLaunchApp ?? false) {
-      _handleLocalPayload(localLaunch?.notificationResponse?.payload);
+      final response = localLaunch?.notificationResponse;
+      if (response != null) _handleLocalResponse(response);
     }
   }
 
@@ -136,6 +286,10 @@ class FcmNotificationService {
   }
 
   Future<void> _foreground(RemoteMessage m) async {
+    if (m.data['type'] == 'REMINDER_DUE') {
+      await _showReminderNotification(_local, m);
+      return;
+    }
     final d = {...m.data, '_notification_event_id': m.messageId};
     final isReminder =
         m.data['type'] == 'NUDGE' || m.data['type'] == 'REMINDER_DUE';
@@ -176,16 +330,22 @@ class FcmNotificationService {
     );
   }
 
-  void _handleLocalPayload(String? payload) {
-    NotificationTapBus.instance.handle(
-      AlertNotification.fromLocalPayload(payload),
-    );
-    PatientNudgeTapBus.instance.handle(
-      PatientNudgeNotification.fromLocalPayload(payload),
-    );
-    ReminderDueTapBus.instance.handle(
-      ReminderDueNotification.fromLocalPayload(payload),
-    );
+  void _handleLocalResponse(NotificationResponse response) {
+    final parsed = ReminderDueNotification.fromLocalPayload(response.payload);
+    final action = switch (response.actionId) {
+      _completeReminderAction => ReminderNotificationAction.complete,
+      _snoozeReminderAction => ReminderNotificationAction.snooze,
+      _ => ReminderNotificationAction.open,
+    };
+    ReminderDueTapBus.instance.handle(parsed?.withAction(action));
+    if (action == ReminderNotificationAction.open) {
+      NotificationTapBus.instance.handle(
+        AlertNotification.fromLocalPayload(response.payload),
+      );
+      PatientNudgeTapBus.instance.handle(
+        PatientNudgeNotification.fromLocalPayload(response.payload),
+      );
+    }
   }
 
   String _tokenPath(SessionType? sessionType) =>

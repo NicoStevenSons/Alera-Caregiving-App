@@ -246,6 +246,19 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       );
       if (!mounted) return;
       final reminder = ElderlyReminder.fromOccurrence(occurrence);
+      if (event.action == ReminderNotificationAction.complete) {
+        await _completeReminder(reminder);
+        return;
+      }
+      if (event.action == ReminderNotificationAction.snooze) {
+        await _runReminderAction(
+          reminder,
+          () =>
+              reminderService.snooze(reminder.occurrenceId, snoozeMinutes: 10),
+          successMessage: 'Reminder snoozed for 10 minutes.',
+        );
+        return;
+      }
       await _showReminderDetails(reminder);
       if (mounted) await _loadReminders();
     } on ReminderApiFailure catch (error) {
