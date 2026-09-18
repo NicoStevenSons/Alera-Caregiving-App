@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_async_view.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
@@ -123,7 +124,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
             if (_loading)
               const Padding(
                 padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
+                child: AleraLoadingView(label: 'Loading vital trends…'),
               )
             else if (_error != null)
               _TrendError(error: _error!, onRetry: _load)
@@ -336,19 +337,6 @@ class _TrendError extends StatelessWidget {
         ? (error as CaregiverVitalTrendApiFailure).message
         : 'Unable to load vital trends.';
 
-    return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-        child: Column(
-          children: [
-            const Icon(Icons.cloud_off_outlined, size: 36),
-            const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
-      ),
-    );
+    return AleraCard(child: AleraErrorView(message: message, onRetry: onRetry));
   }
 }

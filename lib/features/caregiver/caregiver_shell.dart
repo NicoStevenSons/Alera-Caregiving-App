@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 
 import '../../design_system/alera_spacing.dart';
 import '../../design_system/alera_theme.dart';
-
 import '../../design_system/alera_typography.dart';
+import '../../design_system/widgets/alera_bottom_sheet.dart';
+import '../../design_system/widgets/alera_feedback.dart';
+import '../../design_system/widgets/alera_patient_avatar.dart';
 import 'domain/repositories/caregiver_repository.dart';
 import 'domain/models/care_recipient.dart';
 import 'domain/models/caregiver_alert.dart';
@@ -158,9 +160,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   void _notificationUnavailable() {
     Navigator.of(context).popUntil((route) => route.isFirst);
     setState(() => _selectedIndex = 2);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('This alert is no longer available.')),
-    );
+    AleraFeedback.error(context, 'This alert is no longer available.');
   }
 
   void _openCareRecipient(BuildContext context, CareRecipient careRecipient) {
@@ -428,10 +428,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
       await _alertController.acknowledge(alert.id);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('We couldn’t update this alert. Please try again.'),
-          ),
+        AleraFeedback.error(
+          context,
+          'We couldn’t update this alert. Please try again.',
         );
       }
     }
@@ -585,25 +584,19 @@ class _CaregiverShellState extends State<CaregiverShell> {
     try {
       await source.sendNudge(patient.id, type);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('${type.label} sent to ${patient.name}.')),
-        );
+      AleraFeedback.success(
+        context,
+        '${type.label} sent to ${patient.name}.',
+      );
     } on CaregiverNudgeFailure catch (failure) {
       if (!mounted || failure.statusCode == 401) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(failure.message)));
+      AleraFeedback.error(context, failure.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Unable to send the reminder. Please try again.'),
-          ),
-        );
+      AleraFeedback.error(
+        context,
+        'Unable to send the reminder. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _sendingNudge = false);
     }
@@ -615,11 +608,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
   ) {
     if (patients.length < 2) return;
 
-    showModalBottomSheet<void>(
+    showAleraBottomSheet<void>(
       context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
+      builder: (sheetContext) => Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -634,9 +625,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
                 ListTile(
                   key: ValueKey<String>('patient-switch-${patient.id}'),
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    child: Text(_patientInitials(patient.name)),
-                  ),
+                  leading: AleraPatientAvatar(name: patient.name),
                   title: Text(patient.name),
                   subtitle: Text(patient.relationshipLabel),
                   trailing:
@@ -654,18 +643,9 @@ class _CaregiverShellState extends State<CaregiverShell> {
                 ),
             ],
           ),
-        ),
       ),
     );
   }
-
-  String _patientInitials(String name) => name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .take(2)
-      .map((part) => part.characters.first.toUpperCase())
-      .join();
 
   void _openVitalTrend(
     BuildContext context,
@@ -679,24 +659,15 @@ class _CaregiverShellState extends State<CaregiverShell> {
     };
 
     if (trendMetric == null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('$metric history is not available yet.')),
-        );
+      AleraFeedback.show(context, '$metric history is not available yet.');
       return;
     }
 
     if (!patient.backendBacked) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Trend history is only available for connected patients.',
-            ),
-          ),
-        );
+      AleraFeedback.show(
+        context,
+        'Trend history is only available for connected patients.',
+      );
       return;
     }
 

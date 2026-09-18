@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_async_view.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_feedback.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
 import 'widgets/care_recipient_card.dart';
@@ -24,9 +26,7 @@ class CaregiverPeoplePage extends StatelessWidget {
   });
 
   void _showMockFeedback(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AleraFeedback.show(context, message);
   }
 
   @override
@@ -71,22 +71,21 @@ class CaregiverPeoplePage extends StatelessWidget {
   Widget _buildBody(BuildContext context, List<CareRecipient> recipients) {
     final patientController = controller;
     if (patientController?.state == CaregiverPatientListState.initialLoading) {
-      return const Center(
+      return const AleraLoadingView(
         key: Key('people-loading'),
-        child: CircularProgressIndicator(),
+        label: 'Loading patients…',
       );
     }
     if (patientController?.state == CaregiverPatientListState.error) {
-      return _PeopleMessage(
+      return AleraErrorView(
         key: const Key('people-error'),
-        icon: Icons.cloud_off,
-        title: patientController!.errorMessage ?? 'Unable to load patients.',
-        actionLabel: 'Retry',
-        onAction: patientController.load,
+        message: patientController!.errorMessage ?? 'Unable to load patients.',
+        retryLabel: 'Retry',
+        onRetry: patientController.load,
       );
     }
     if (patientController?.state == CaregiverPatientListState.empty) {
-      return _PeopleMessage(
+      return AleraEmptyView(
         key: const Key('people-empty'),
         icon: Icons.people_outline,
         title: 'No patients yet',
@@ -159,36 +158,6 @@ class _DemoBanner extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
     ),
     child: const Text('Demo data — the patient service is currently offline.'),
-  );
-}
-
-class _PeopleMessage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String actionLabel;
-  final VoidCallback? onAction;
-  const _PeopleMessage({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.actionLabel,
-    this.onAction,
-  });
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 44, color: AleraColors.textSecondary),
-          const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onAction, child: Text(actionLabel)),
-        ],
-      ),
-    ),
   );
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_feedback.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
@@ -290,9 +291,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
   }
 
   void _mock(String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    AleraFeedback.show(context, '$action is mock-only for now.');
   }
 
   @override

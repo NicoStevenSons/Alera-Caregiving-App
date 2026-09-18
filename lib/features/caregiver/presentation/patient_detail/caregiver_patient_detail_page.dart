@@ -6,6 +6,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_feedback.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
@@ -48,9 +49,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   });
 
   void _showFeedback(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AleraFeedback.show(context, message);
   }
 
   Future<void> _openContactApp(

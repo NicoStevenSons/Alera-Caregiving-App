@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../alera_colors.dart';
 import '../alera_typography.dart';
 
-enum AleraButtonVariant { primary, secondary, white, pill, lightPill }
+enum AleraButtonVariant { primary, secondary, danger, white, pill, lightPill }
 
 class AleraButton extends StatelessWidget {
   final String label;
@@ -32,6 +32,7 @@ class AleraButton extends StatelessWidget {
         variant == AleraButtonVariant.pill;
 
     final bool white = variant == AleraButtonVariant.white;
+    final bool danger = variant == AleraButtonVariant.danger;
 
     final bool pill =
         variant == AleraButtonVariant.pill ||
@@ -40,15 +41,19 @@ class AleraButton extends StatelessWidget {
     final ButtonStyle style = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return primary
-              ? AleraColors.primary.withValues(alpha:0.38)
+          return danger
+              ? AleraColors.critical.withValues(alpha: 0.38)
+              : primary
+              ? AleraColors.primary.withValues(alpha: 0.38)
               : white
-              ? Colors.white.withValues(alpha:0.55)
+              ? Colors.white.withValues(alpha: 0.55)
               : AleraColors.divider;
         }
 
         if (states.contains(WidgetState.pressed)) {
-          return primary
+          return danger
+              ? const Color(0xFFD74455)
+              : primary
               ? const Color(0xFF7449C9)
               : white
               ? const Color(0xFFF4F1FA)
@@ -56,14 +61,18 @@ class AleraButton extends StatelessWidget {
         }
 
         if (states.contains(WidgetState.hovered)) {
-          return primary
+          return danger
+              ? const Color(0xFFFF7C8A)
+              : primary
               ? const Color(0xFFC3A7F5)
               : white
               ? const Color(0xFFF8F6FC)
               : const Color(0xFFC9C2E0);
         }
 
-        return primary
+        return danger
+            ? AleraColors.critical
+            : primary
             ? const Color(0xFFAE8BEA)
             : white
             ? Colors.white
@@ -71,12 +80,12 @@ class AleraButton extends StatelessWidget {
       }),
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return primary
-              ? Colors.white.withValues(alpha:0.70)
-              : AleraColors.textSecondary.withValues(alpha:0.50);
+          return primary || danger
+              ? Colors.white.withValues(alpha: 0.70)
+              : AleraColors.textSecondary.withValues(alpha: 0.50);
         }
 
-        return primary ? Colors.white : const Color(0xFF6B6385);
+        return primary || danger ? Colors.white : const Color(0xFF6B6385);
       }),
       minimumSize: WidgetStateProperty.all(
         Size(expand ? double.infinity : 0, height),

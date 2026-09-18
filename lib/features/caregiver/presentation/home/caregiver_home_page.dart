@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
+import '../../../../design_system/widgets/alera_feedback.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
@@ -44,9 +45,7 @@ class CaregiverHomePage extends StatelessWidget {
   });
 
   void _mock(BuildContext context, String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    AleraFeedback.show(context, '$action is mock-only for now.');
   }
 
   @override

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_page_app_bar.dart';
 
-class CaregiverPageAppBar extends StatelessWidget
-    implements PreferredSizeWidget {
+class CaregiverPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
 
@@ -12,16 +10,10 @@ class CaregiverPageAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      automaticallyImplyLeading: false,
-      titleSpacing: 16,
-      title: Text(title, style: AleraTypography.pageTitle),
+    return AleraPageAppBar(
+      title: title,
       actions: actions,
+      automaticallyImplyLeading: false,
     );
   }
 
@@ -34,11 +26,5 @@ IconButton caregiverPageAction({
   required VoidCallback onPressed,
   required IconData icon,
 }) {
-  return IconButton(
-    tooltip: tooltip,
-    color: AleraColors.primarySoft,
-    iconSize: 24,
-    onPressed: onPressed,
-    icon: Icon(icon),
-  );
+  return aleraPageAction(tooltip: tooltip, onPressed: onPressed, icon: icon);
 }

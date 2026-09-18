@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_spacing.dart';
+import '../../../design_system/widgets/alera_bottom_sheet.dart';
+import '../../../design_system/widgets/alera_dialog.dart';
+import '../../../design_system/widgets/alera_feedback.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
 import '../data/reminder_api_data_source.dart';
@@ -219,26 +222,15 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   }
 
   Future<void> _archive(ReminderTemplate template) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAleraConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Archive schedule?'),
-        content: Text(
-          'Future occurrences for “${template.title}” will be canceled.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Archive'),
-          ),
-        ],
-      ),
+      title: 'Archive schedule?',
+      message: 'Future occurrences for “${template.title}” will be canceled.',
+      cancelLabel: 'Keep',
+      confirmLabel: 'Archive',
+      destructive: true,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       await _run(() => widget.controller.archiveTemplate(template.id));
     }
   }
@@ -260,14 +252,10 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     try {
       await operation();
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(success)));
+      AleraFeedback.success(context, success);
     } on ReminderApiFailure catch (error) {
       if (!mounted || error.statusCode == 401) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(error.message)));
+      AleraFeedback.error(context, error.message);
     }
   }
 
@@ -275,10 +263,9 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     BuildContext context,
     String patientId,
   ) async {
-    final draft = await showModalBottomSheet<ReminderTemplateDraft>(
+    final draft = await showAleraBottomSheet<ReminderTemplateDraft>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (context) => _CreateReminderSheet(patientId: patientId),
     );
     if (draft == null) return;
@@ -320,8 +307,8 @@ class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
+  Widget build(BuildContext context) => AleraDialog(
+    title: widget.title,
     content: TextField(
       key: const Key('reminder-action-note'),
       controller: _controller,
