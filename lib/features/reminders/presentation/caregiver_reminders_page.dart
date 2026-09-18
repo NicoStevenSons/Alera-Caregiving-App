@@ -249,11 +249,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     required String actionLabel,
   }) => showDialog<String>(
     context: context,
-    builder: (context) => _ReminderNoteDialog(
-      title: title,
-      hint: hint,
-      actionLabel: actionLabel,
-    ),
+    builder: (context) =>
+        _ReminderNoteDialog(title: title, hint: hint, actionLabel: actionLabel),
   );
 
   Future<void> _run(
