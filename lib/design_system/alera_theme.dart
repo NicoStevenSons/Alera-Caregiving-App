@@ -17,7 +17,11 @@ abstract final class AleraTheme {
     return parent.copyWith(
       colorScheme: colorScheme,
       extensions: parent.extensions.values.toList()
-        ..add(AleraStatusColors.light()),
+        ..add(
+          parent.brightness == Brightness.dark
+              ? AleraStatusColors.dark()
+              : AleraStatusColors.light(),
+        ),
       scaffoldBackgroundColor: AleraColors.background,
       dividerColor: AleraColors.divider,
       navigationBarTheme: NavigationBarThemeData(

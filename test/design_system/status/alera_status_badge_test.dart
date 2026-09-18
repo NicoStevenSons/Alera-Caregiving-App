@@ -87,9 +87,7 @@ void main() {
       expect(decoration.color, isNot(expected.fill));
     });
 
-    testWidgets('resolves dark theme tone colour', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('resolves dark theme tone colour', (WidgetTester tester) async {
       await tester.pumpWidget(
         _host(
           const AleraStatusBadge(descriptor: _lowBattery),
@@ -143,9 +141,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const AleraStatusBadge(descriptor: _lowBattery, diameter: 30),
-        ),
+        _host(const AleraStatusBadge(descriptor: _lowBattery, diameter: 30)),
       );
 
       final Container container = _container(tester);

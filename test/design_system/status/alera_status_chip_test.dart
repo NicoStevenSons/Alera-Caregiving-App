@@ -32,7 +32,9 @@ void main() {
     testWidgets('shows the descriptor label and glyph', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(_host(const AleraStatusChip(descriptor: _overdue)));
+      await tester.pumpWidget(
+        _host(const AleraStatusChip(descriptor: _overdue)),
+      );
 
       expect(find.text('Overdue'), findsOneWidget);
       expect(find.byType(AleraStatusIcon), findsOneWidget);
@@ -56,7 +58,9 @@ void main() {
     ) async {
       final SemanticsHandle handle = tester.ensureSemantics();
 
-      await tester.pumpWidget(_host(const AleraStatusChip(descriptor: _overdue)));
+      await tester.pumpWidget(
+        _host(const AleraStatusChip(descriptor: _overdue)),
+      );
 
       expect(find.bySemanticsLabel('Overdue'), findsOneWidget);
       handle.dispose();
@@ -65,7 +69,9 @@ void main() {
     testWidgets('resolves light theme colours from AleraStatusColors', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(_host(const AleraStatusChip(descriptor: _overdue)));
+      await tester.pumpWidget(
+        _host(const AleraStatusChip(descriptor: _overdue)),
+      );
 
       final BoxDecoration decoration =
           _decoration(tester).decoration as BoxDecoration;
@@ -114,21 +120,29 @@ void main() {
         find.byType(AleraStatusIcon),
       );
 
-      expect(padding.padding, const EdgeInsets.symmetric(horizontal: 8, vertical: 4));
+      expect(
+        padding.padding,
+        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      );
       expect(icon.size, 12);
     });
 
     testWidgets('medium size uses looser padding and a larger icon', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(_host(const AleraStatusChip(descriptor: _overdue)));
+      await tester.pumpWidget(
+        _host(const AleraStatusChip(descriptor: _overdue)),
+      );
 
       final Padding padding = tester.widget<Padding>(find.byType(Padding));
       final AleraStatusIcon icon = tester.widget<AleraStatusIcon>(
         find.byType(AleraStatusIcon),
       );
 
-      expect(padding.padding, const EdgeInsets.symmetric(horizontal: 12, vertical: 6));
+      expect(
+        padding.padding,
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      );
       expect(icon.size, 14);
     });
   });
