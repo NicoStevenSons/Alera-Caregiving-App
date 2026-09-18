@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'alera_colors.dart';
+import 'alera_spacing.dart';
 
 abstract final class AleraTheme {
   static ThemeData caregiver(ThemeData parent) {
@@ -17,6 +18,37 @@ abstract final class AleraTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AleraColors.background,
       dividerColor: AleraColors.divider,
+      inputDecorationTheme: parent.inputDecorationTheme.copyWith(
+        filled: true,
+        fillColor: AleraColors.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AleraSpacing.medium,
+          vertical: 14,
+        ),
+        labelStyle: const TextStyle(color: AleraColors.textSecondary),
+        helperStyle: const TextStyle(color: AleraColors.textSecondary),
+        errorStyle: const TextStyle(color: AleraColors.critical),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+          borderSide: const BorderSide(color: AleraColors.divider),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+          borderSide: const BorderSide(color: AleraColors.divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+          borderSide: const BorderSide(color: AleraColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+          borderSide: const BorderSide(color: AleraColors.critical),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+          borderSide: const BorderSide(color: AleraColors.critical, width: 2),
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AleraColors.surface,
         indicatorColor: Colors.transparent,

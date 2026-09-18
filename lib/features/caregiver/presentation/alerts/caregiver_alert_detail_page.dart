@@ -6,6 +6,8 @@ import '../../../../design_system/widgets/alera_feedback.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../design_system/widgets/alera_dialog.dart';
+import '../../../../design_system/widgets/alera_text_input_dialog.dart';
 import '../../../../services/patient_contact_actions.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
@@ -27,6 +29,95 @@ class CaregiverAlertDetailPage extends StatefulWidget {
   @override
   State<CaregiverAlertDetailPage> createState() =>
       _CaregiverAlertDetailPageState();
+}
+
+class _InterventionDialog extends StatefulWidget {
+  const _InterventionDialog({required this.onSubmit});
+
+  final Future<void> Function(CaregiverInterventionType type, String note)
+  onSubmit;
+
+  @override
+  State<_InterventionDialog> createState() => _InterventionDialogState();
+}
+
+class _InterventionDialogState extends State<_InterventionDialog> {
+  final TextEditingController _noteController = TextEditingController();
+  CaregiverInterventionType _type = CaregiverInterventionType.patientCheck;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AleraDialog(
+    title: 'Log Intervention',
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DropdownButtonFormField<CaregiverInterventionType>(
+          key: const Key('intervention-type-field'),
+          initialValue: _type,
+          decoration: const InputDecoration(labelText: 'Intervention'),
+          items: [
+            for (final value in CaregiverInterventionType.values)
+              DropdownMenuItem(value: value, child: Text(value.label)),
+          ],
+          onChanged: _submitting
+              ? null
+              : (value) {
+                  if (value != null) setState(() => _type = value);
+                },
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('intervention-note-field'),
+          controller: _noteController,
+          enabled: !_submitting,
+          maxLines: 3,
+          decoration: InputDecoration(labelText: 'Note', errorText: _error),
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: _submitting ? null : () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      AleraButton(
+        label: _submitting ? 'Saving…' : 'Log Intervention',
+        expand: false,
+        height: 42,
+        onPressed: _submitting ? null : _submit,
+      ),
+    ],
+  );
+
+  Future<void> _submit() async {
+    final note = _noteController.text.trim();
+    if (note.isEmpty) {
+      setState(() => _error = 'Note is required.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await widget.onSubmit(_type, note);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = 'We couldn’t update this alert. Please try again.';
+      });
+    }
+  }
 }
 
 class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
@@ -122,173 +213,29 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     required String fieldLabel,
     required bool requiredText,
     required Future<CaregiverAlert> Function(String? text) submit,
-  }) async {
-    final controller = TextEditingController();
-    var submitting = false;
-    String? error;
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                key: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
-                controller: controller,
-                enabled: !submitting,
-                maxLines: 3,
-                decoration: InputDecoration(labelText: fieldLabel),
-              ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : title,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      final text = controller.text.trim();
-                      if (requiredText && text.isEmpty) {
-                        setDialogState(
-                          () => error = '$fieldLabel is required.',
-                        );
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await submit(text.isEmpty ? null : text);
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-              expand: false,
-              height: 42,
-            ),
-          ],
-        ),
-      ),
-    );
-    controller.dispose();
-  }
+  }) => showAleraAsyncTextInputDialog(
+    context: context,
+    title: title,
+    fieldLabel: fieldLabel,
+    submitLabel: title,
+    requiredInput: requiredText,
+    fieldKey: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
+    failureMessage: 'We couldn’t update this alert. Please try again.',
+    onSubmit: (value) async {
+      await submit(value);
+    },
+  );
 
-  Future<void> _showIntervention() async {
-    final note = TextEditingController();
-    var type = CaregiverInterventionType.patientCheck;
-    var submitting = false;
-    String? error;
-    await showDialog<void>(
+  Future<void> _showIntervention() => showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Log Intervention'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<CaregiverInterventionType>(
-                key: const Key('intervention-type-field'),
-                initialValue: type,
-                decoration: const InputDecoration(labelText: 'Intervention'),
-                items: CaregiverInterventionType.values
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(value.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: submitting
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          setDialogState(() => type = value);
-                        }
-                      },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('intervention-note-field'),
-                controller: note,
-                enabled: !submitting,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Note'),
-              ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : 'Log Intervention',
-              expand: false,
-              height: 42,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      if (note.text.trim().isEmpty) {
-                        setDialogState(() => error = 'Note is required.');
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await widget.alertController!.logIntervention(
-                          _alert.id,
-                          type,
-                          note.text.trim(),
-                        );
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-            ),
-          ],
+      builder: (_) => _InterventionDialog(
+        onSubmit: (type, note) => widget.alertController!.logIntervention(
+          _alert.id,
+          type,
+          note,
         ),
       ),
     );
-    note.dispose();
-  }
 
   void _mock(String action) {
     AleraFeedback.show(context, '$action is mock-only for now.');

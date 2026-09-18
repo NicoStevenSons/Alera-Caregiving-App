@@ -4,6 +4,7 @@ import '../../../design_system/alera_spacing.dart';
 import '../../../design_system/widgets/alera_bottom_sheet.dart';
 import '../../../design_system/widgets/alera_dialog.dart';
 import '../../../design_system/widgets/alera_feedback.dart';
+import '../../../design_system/widgets/alera_text_input_dialog.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
 import '../data/reminder_api_data_source.dart';
@@ -239,10 +240,13 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     required String title,
     required String hint,
     required String actionLabel,
-  }) => showDialog<String>(
+  }) => showAleraTextInputDialog(
     context: context,
-    builder: (context) =>
-        _ReminderNoteDialog(title: title, hint: hint, actionLabel: actionLabel),
+    title: title,
+    fieldLabel: hint,
+    submitLabel: actionLabel,
+    cancelLabel: 'Back',
+    fieldKey: const Key('reminder-action-note'),
   );
 
   Future<void> _run(
@@ -273,62 +277,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       () => widget.controller.createTemplate(draft),
       success: 'Reminder created.',
     );
-  }
-}
-
-class _ReminderNoteDialog extends StatefulWidget {
-  const _ReminderNoteDialog({
-    required this.title,
-    required this.hint,
-    required this.actionLabel,
-  });
-
-  final String title;
-  final String hint;
-  final String actionLabel;
-
-  @override
-  State<_ReminderNoteDialog> createState() => _ReminderNoteDialogState();
-}
-
-class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AleraDialog(
-    title: widget.title,
-    content: TextField(
-      key: const Key('reminder-action-note'),
-      controller: _controller,
-      autofocus: true,
-      maxLines: 3,
-      decoration: InputDecoration(labelText: widget.hint),
-      onSubmitted: (_) => _submit(),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Back'),
-      ),
-      FilledButton(onPressed: _submit, child: Text(widget.actionLabel)),
-    ],
-  );
-
-  void _submit() {
-    final note = _controller.text.trim();
-    if (note.isNotEmpty) Navigator.pop(context, note);
   }
 }
 
@@ -507,24 +455,13 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        AleraSpacing.medium,
-        0,
-        AleraSpacing.medium,
-        MediaQuery.viewInsetsOf(context).bottom + AleraSpacing.medium,
-      ),
-      child: Form(
+  Widget build(BuildContext context) => AleraBottomSheetShell(
+    title: 'Create reminder',
+    child: Form(
         key: _formKey,
         child: ListView(
           shrinkWrap: true,
           children: [
-            Text(
-              'Create reminder',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AleraSpacing.medium),
             TextFormField(
               key: const Key('reminder-title-field'),
               controller: _title,
@@ -632,7 +569,6 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
             ),
           ],
         ),
-      ),
     ),
   );
 
