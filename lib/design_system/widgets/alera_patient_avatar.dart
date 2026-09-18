@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AleraPatientAvatar extends StatelessWidget {
-  const AleraPatientAvatar({
-    super.key,
-    required this.name,
-    this.radius = 20,
-  });
+  const AleraPatientAvatar({super.key, required this.name, this.radius = 20});
 
   final String name;
   final double radius;
@@ -21,11 +17,7 @@ class AleraPatientAvatar extends StatelessWidget {
         .map((word) => word.characters.first.toUpperCase())
         .join();
     final seed = name.codeUnits.fold(0, (sum, value) => sum + value);
-    const colors = [
-      Color(0xFF8165C7),
-      Color(0xFF4D91A8),
-      Color(0xFFB36B8D),
-    ];
+    const colors = [Color(0xFF8165C7), Color(0xFF4D91A8), Color(0xFFB36B8D)];
 
     return Semantics(
       image: true,

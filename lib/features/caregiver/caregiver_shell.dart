@@ -584,10 +584,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
     try {
       await source.sendNudge(patient.id, type);
       if (!mounted) return;
-      AleraFeedback.success(
-        context,
-        '${type.label} sent to ${patient.name}.',
-      );
+      AleraFeedback.success(context, '${type.label} sent to ${patient.name}.');
     } on CaregiverNudgeFailure catch (failure) {
       if (!mounted || failure.statusCode == 401) return;
       AleraFeedback.error(context, failure.message);
@@ -611,38 +608,38 @@ class _CaregiverShellState extends State<CaregiverShell> {
     showAleraBottomSheet<void>(
       context: context,
       builder: (sheetContext) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Switch patient',
-                style: Theme.of(sheetContext).textTheme.titleLarge,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Switch patient',
+              style: Theme.of(sheetContext).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            for (final patient in patients)
+              ListTile(
+                key: ValueKey<String>('patient-switch-${patient.id}'),
+                contentPadding: EdgeInsets.zero,
+                leading: AleraPatientAvatar(name: patient.name),
+                title: Text(patient.name),
+                subtitle: Text(patient.relationshipLabel),
+                trailing:
+                    patient.id == _selectedPatientId ||
+                        (_selectedPatientId == null &&
+                            patient == patients.first)
+                    ? const Icon(Icons.check, semanticLabel: 'Selected')
+                    : null,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  if (mounted) {
+                    setState(() => _selectedPatientId = patient.id);
+                  }
+                },
               ),
-              const SizedBox(height: 8),
-              for (final patient in patients)
-                ListTile(
-                  key: ValueKey<String>('patient-switch-${patient.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  leading: AleraPatientAvatar(name: patient.name),
-                  title: Text(patient.name),
-                  subtitle: Text(patient.relationshipLabel),
-                  trailing:
-                      patient.id == _selectedPatientId ||
-                          (_selectedPatientId == null &&
-                              patient == patients.first)
-                      ? const Icon(Icons.check, semanticLabel: 'Selected')
-                      : null,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    if (mounted) {
-                      setState(() => _selectedPatientId = patient.id);
-                    }
-                  },
-                ),
-            ],
-          ),
+          ],
+        ),
       ),
     );
   }

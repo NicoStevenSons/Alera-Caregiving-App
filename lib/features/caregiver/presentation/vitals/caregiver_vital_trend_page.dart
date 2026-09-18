@@ -337,6 +337,8 @@ class _TrendError extends StatelessWidget {
         ? (error as CaregiverVitalTrendApiFailure).message
         : 'Unable to load vital trends.';
 
-    return AleraCard(child: AleraErrorView(message: message, onRetry: onRetry));
+    return AleraCard(
+      child: AleraErrorView(message: message, onRetry: onRetry),
+    );
   }
 }

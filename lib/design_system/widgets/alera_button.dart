@@ -110,11 +110,7 @@ class AleraButton extends StatelessWidget {
     );
 
     final Widget button = icon == null
-        ? FilledButton(
-            onPressed: onPressed,
-            style: style,
-            child: Text(label),
-          )
+        ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
         : FilledButton.icon(
             onPressed: onPressed,
             style: style,

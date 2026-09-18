@@ -48,7 +48,7 @@ class HomePatientHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-          AleraPatientAvatar(name: careRecipient.name, radius: 25),
+                      AleraPatientAvatar(name: careRecipient.name, radius: 25),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

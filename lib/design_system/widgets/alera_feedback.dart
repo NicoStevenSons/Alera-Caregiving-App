@@ -27,17 +27,11 @@ abstract final class AleraFeedback {
       );
   }
 
-  static void success(BuildContext context, String message) => show(
-    context,
-    message,
-    tone: AleraFeedbackTone.success,
-  );
+  static void success(BuildContext context, String message) =>
+      show(context, message, tone: AleraFeedbackTone.success);
 
-  static void error(BuildContext context, String message) => show(
-    context,
-    message,
-    tone: AleraFeedbackTone.error,
-  );
+  static void error(BuildContext context, String message) =>
+      show(context, message, tone: AleraFeedbackTone.error);
 
   static Color _background(AleraFeedbackTone tone) => switch (tone) {
     AleraFeedbackTone.info => AleraColors.textPrimary,

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/widgets/alera_page_app_bar.dart';
 
-class CaregiverPageAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CaregiverPageAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
 

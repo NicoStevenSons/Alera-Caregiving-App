@@ -38,7 +38,9 @@ void main() {
     expect(find.text('No reminders yet'), findsOneWidget);
   });
 
-  testWidgets('confirmation dialog returns the selected result', (tester) async {
+  testWidgets('confirmation dialog returns the selected result', (
+    tester,
+  ) async {
     bool? result;
     await tester.pumpWidget(
       MaterialApp(

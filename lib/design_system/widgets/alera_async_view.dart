@@ -20,7 +20,11 @@ class AleraLoadingView extends StatelessWidget {
           const CircularProgressIndicator(),
           if (label != null) ...[
             const SizedBox(height: AleraSpacing.medium),
-            Text(label!, style: AleraTypography.body, textAlign: TextAlign.center),
+            Text(
+              label!,
+              style: AleraTypography.body,
+              textAlign: TextAlign.center,
+            ),
           ],
         ],
       ),
