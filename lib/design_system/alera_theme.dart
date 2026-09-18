@@ -16,12 +16,6 @@ abstract final class AleraTheme {
 
     return parent.copyWith(
       colorScheme: colorScheme,
-      // lib/design_system/alera_theme.dart
-
-      // Change line 20 to explicitly type the list:
-      // lib/design_system/alera_theme.dart
-
-      // Replace the extensions spread with this:
       extensions: parent.extensions.values.toList()
         ..add(AleraStatusColors.light()),
       scaffoldBackgroundColor: AleraColors.background,
