@@ -14,7 +14,7 @@ import '../models/steps_data.dart';
 import '../models/device_status_data.dart';
 import '../models/sleep_data.dart';
 
-import '../features/elderly/presentation/widgets/device_status_dialog.dart';
+import '../features/elderly/presentation/device_status_tab.dart';
 import '../features/elderly/presentation/widgets/sleep_display.dart';
 import '../features/elderly/presentation/widgets/heart_rate_display.dart';
 import '../features/elderly/presentation/widgets/spo2_display.dart';
@@ -134,7 +134,8 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           'device=${data.deviceName}, '
           'model=${data.deviceModel}, '
           'connected=${data.connectedToPhone}, '
-          'phone=${data.connectedPhoneName}',
+          'phone=${data.connectedPhoneName}, ' +
+          'charging=${data.isCharging}',
         );
 
         setState(() {
@@ -144,6 +145,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             deviceModel: data.deviceModel,
             connectedToPhone: data.connectedToPhone,
             connectedPhoneName: data.connectedPhoneName,
+            isCharging: data.isCharging,
             measuredAt: data.measuredAt,
           );
         });
@@ -245,7 +247,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.purple,
@@ -258,6 +260,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             tabs: [
               Tab(text: 'Vitals'),
               Tab(text: 'Reminders'),
+              Tab(text: 'Devices'),
             ],
           ),
 
@@ -270,21 +273,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
                   style: TextStyle(color: Colors.white),
                 ),
               ),
-            IconButton(
-              icon: Icon(
-                deviceStatusData.connectedToPhone == true
-                    ? Icons.watch
-                    : Icons.watch_off,
-              ),
-
-              onPressed: () {
-                showDeviceStatusDialog(
-                  context: context,
-                  deviceStatusData: deviceStatusData,
-                );
-              },
-            ),
-
             const SizedBox(width: 12),
           ],
         ),
@@ -347,7 +335,12 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
                   ),
                 ],
               ),
-            )
+            ),
+
+            // DEVICES TAB
+            DeviceStatusTab(
+              deviceStatusData: deviceStatusData,
+            ),
     
           ],
         ),
