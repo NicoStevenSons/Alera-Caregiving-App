@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 
 const MethodChannel _aleraNativeChannel = MethodChannel('com.alera/toast');
@@ -20,10 +18,13 @@ class AleraNotificationAvatar {
   static Future<Uint8List?> render({
     required String patientName,
     required String metricType,
+    Uint8List? photoBytes,
   }) {
-    return _aleraNativeChannel.invokeMethod<Uint8List>(
-      'renderNotificationAvatar',
-      <String, String>{'patient_name': patientName, 'metric_type': metricType},
-    );
+    return _aleraNativeChannel
+        .invokeMethod<Uint8List>('renderNotificationAvatar', <String, Object?>{
+          'patient_name': patientName,
+          'metric_type': metricType,
+          'photo_bytes': ?photoBytes,
+        });
   }
 }
