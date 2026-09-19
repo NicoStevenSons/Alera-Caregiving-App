@@ -233,6 +233,108 @@ void main() {
     expect(find.text('Seen by caregiver'), findsOneWidget);
     controller.dispose();
   });
+  testWidgets('battery detail avoids fabricated vital-sign fields', (
+    tester,
+  ) async {
+    final alert = CaregiverAlert(
+      id: 'battery-detail',
+      careRecipientId: 'patient',
+      conditionKey: 'PHONE_BATTERY_LOW',
+      title: 'Patient Phone Battery Low',
+      description: '',
+      severity: CaregiverAlertSeverity.warning,
+      metric: CaregiverAlertMetric.watchBattery,
+      status: CaregiverAlertStatus.active,
+      hasReading: false,
+      reading: 0,
+      threshold: null,
+      unit: '%',
+      triggerDuration: null,
+      detectedAt: DateTime(2026, 9, 19, 18, 5),
+      timeline: const [],
+    );
+
+    await tester.pumpWidget(_detailPage(alert: alert));
+
+    expect(find.text('Alert Details'), findsOneWidget);
+    expect(find.text('Device'), findsOneWidget);
+    expect(find.text('Patient phone'), findsOneWidget);
+    expect(find.text('Battery status'), findsOneWidget);
+    expect(find.text('Low battery'), findsOneWidget);
+    expect(find.text('Monitoring impact'), findsOneWidget);
+    expect(find.text('Reading'), findsNothing);
+    expect(find.text('Threshold'), findsNothing);
+    expect(find.text('Duration'), findsNothing);
+  });
+
+  testWidgets('disconnect detail shows connection facts instead of readings', (
+    tester,
+  ) async {
+    final alert = CaregiverAlert(
+      id: 'disconnect-detail',
+      careRecipientId: 'patient',
+      conditionKey: 'WATCH_DISCONNECTED',
+      title: 'Smartwatch Disconnected',
+      description: '',
+      severity: CaregiverAlertSeverity.warning,
+      metric: CaregiverAlertMetric.system,
+      status: CaregiverAlertStatus.active,
+      hasReading: false,
+      reading: 0,
+      threshold: null,
+      unit: '',
+      triggerDuration: null,
+      detectedAt: DateTime(2026, 9, 19, 13, 46),
+      timeline: const [],
+    );
+
+    await tester.pumpWidget(_detailPage(alert: alert));
+
+    expect(find.text('Device'), findsOneWidget);
+    expect(find.text('Smartwatch'), findsOneWidget);
+    expect(find.text('Connection'), findsOneWidget);
+    expect(find.text('Disconnected'), findsOneWidget);
+    expect(find.text('Monitoring impact'), findsOneWidget);
+    expect(
+      find.text(
+        'Live health updates may be delayed until the device reconnects.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Reading'), findsNothing);
+    expect(find.text('Threshold'), findsNothing);
+    expect(find.text('Duration'), findsNothing);
+  });
+
+  testWidgets('device timeline uses event language instead of fake readings', (
+    tester,
+  ) async {
+    final alert = CaregiverAlert(
+      id: 'disconnect-timeline',
+      careRecipientId: 'patient',
+      conditionKey: 'WATCH_DISCONNECTED',
+      title: 'Smartwatch Disconnected',
+      description: '',
+      severity: CaregiverAlertSeverity.warning,
+      metric: CaregiverAlertMetric.system,
+      status: CaregiverAlertStatus.active,
+      hasReading: false,
+      reading: 0,
+      threshold: null,
+      unit: '',
+      triggerDuration: null,
+      detectedAt: DateTime(2026, 9, 19, 13, 46),
+      timeline: const [],
+    );
+
+    await tester.pumpWidget(_detailPage(alert: alert));
+
+    expect(
+      find.text('Smartwatch was reported as disconnected.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('The reading was'), findsNothing);
+  });
 }
 
 Widget _detailPage({required CaregiverAlert alert, CareRecipient? recipient}) {

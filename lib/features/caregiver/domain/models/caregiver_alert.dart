@@ -33,6 +33,7 @@ class CaregiverAlert {
   final CaregiverAlertSeverity severity;
   final CaregiverAlertMetric metric;
   final CaregiverAlertStatus status;
+  final bool hasReading;
   final double reading;
   final double? threshold;
   final String unit;
@@ -54,6 +55,7 @@ class CaregiverAlert {
     required this.severity,
     required this.metric,
     required this.status,
+    this.hasReading = true,
     required this.reading,
     required this.threshold,
     required this.unit,
@@ -83,6 +85,7 @@ class CaregiverAlert {
       severity: severity ?? this.severity,
       metric: metric,
       status: status ?? this.status,
+      hasReading: hasReading,
       reading: reading,
       threshold: threshold,
       unit: unit,

@@ -10,6 +10,7 @@ import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../data/alerts/caregiver_alert_controller.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
+import '../widgets/caregiver_alert_presentation.dart';
 
 class CaregiverAlertDetailPage extends StatefulWidget {
   final CaregiverAlert alert;
@@ -300,17 +301,14 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     final CaregiverAlert alert = _alert;
     final actions = widget.alertController;
     final busy = actions?.isBusy(alert.id) ?? false;
-    final bool heartRate = alert.metric == CaregiverAlertMetric.heartRate;
-    final bool spo2 = alert.metric == CaregiverAlertMetric.spo2;
     final bool critical = alert.severity == CaregiverAlertSeverity.critical;
     final Color severityColor = critical
         ? AleraColors.critical
         : AleraColors.warning;
-    final String iconPath = heartRate
-        ? 'alera-figma-assets/assets/icons/mini_status/heart_rate.svg'
-        : spo2
-        ? 'alera-figma-assets/assets/icons/mini_status/spo2.svg'
-        : 'alera-figma-assets/assets/icons/mini_status/info.svg';
+    final Color accentColor = CaregiverAlertPresentation.accentColor(alert);
+    final String iconPath = CaregiverAlertPresentation.largeIconPath(
+      alert.metric,
+    );
     final String patientName =
         alert.patientDisplayName ??
         widget.careRecipient?.name ??
@@ -344,13 +342,15 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                     alert: alert,
                     patientName: patientName,
                     iconPath: iconPath,
+                    accentColor: accentColor,
                     severityColor: severityColor,
                     onStatusTap: () => _mock('Status update'),
                   ),
                   const SizedBox(height: 12),
                   _DetailsCard(alert: alert),
                   const SizedBox(height: 12),
-                  if (alert.description.trim().isNotEmpty) ...[
+                  if (_isVitalAlert(alert) &&
+                      alert.description.trim().isNotEmpty) ...[
                     _ContextCard(careRecipient: widget.careRecipient),
                     const SizedBox(height: 12),
                   ],
@@ -492,6 +492,7 @@ class _SummaryCard extends StatelessWidget {
   final CaregiverAlert alert;
   final String patientName;
   final String iconPath;
+  final Color accentColor;
   final Color severityColor;
   final VoidCallback onStatusTap;
 
@@ -499,6 +500,7 @@ class _SummaryCard extends StatelessWidget {
     required this.alert,
     required this.patientName,
     required this.iconPath,
+    required this.accentColor,
     required this.severityColor,
     required this.onStatusTap,
   });
@@ -506,6 +508,8 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool critical = alert.severity == CaregiverAlertSeverity.critical;
+    final Color statusColor = _statusColor(alert.status);
+
     return AleraCard(
       padding: EdgeInsets.zero,
       child: Stack(
@@ -515,7 +519,7 @@ class _SummaryCard extends StatelessWidget {
             top: 0,
             bottom: 0,
             child: ColoredBox(
-              color: severityColor,
+              color: accentColor,
               child: const SizedBox(width: 7),
             ),
           ),
@@ -552,9 +556,7 @@ class _SummaryCard extends StatelessWidget {
                             onTap: onStatusTap,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: AleraColors.critical.withValues(
-                                  alpha: 0.14,
-                                ),
+                                color: statusColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Padding(
@@ -564,8 +566,8 @@ class _SummaryCard extends StatelessWidget {
                                 ),
                                 child: Text(
                                   _statusLabel(alert.status),
-                                  style: const TextStyle(
-                                    color: AleraColors.critical,
+                                  style: TextStyle(
+                                    color: statusColor,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -606,86 +608,141 @@ class _DetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool heartRate = alert.metric == CaregiverAlertMetric.heartRate;
-    final bool spo2 = alert.metric == CaregiverAlertMetric.spo2;
+    final Color accentColor = CaregiverAlertPresentation.accentColor(alert);
+    final List<_AlertDetailFactData> facts = _detailFacts(alert, accentColor);
+
     return _SectionCard(
       title: 'Alert Details',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  label: 'Reading',
-                  value: _number(alert.reading),
-                  unit: alert.unit,
-                  color: AleraColors.critical,
-                  assetPath: heartRate
-                      ? 'alera-figma-assets/assets/icons/mini_status/heart_rate.svg'
-                      : spo2
-                      ? 'alera-figma-assets/assets/icons/mini_status/spo2.svg'
-                      : 'alera-figma-assets/assets/icons/mini_status/info.svg',
-                ),
-              ),
-              Expanded(
-                child: _Metric(
-                  label: 'Threshold',
-                  value: alert.threshold == null
-                      ? '--'
-                      : _number(alert.threshold!),
-                  unit: alert.unit,
-                  color: AleraColors.warning,
-                  assetPath:
-                      'alera-figma-assets/assets/icons/status/warning.svg',
-                ),
-              ),
-              Expanded(
-                child: _Metric(
-                  label: 'Duration',
-                  value: alert.triggerDuration == null
-                      ? '--'
-                      : '${alert.triggerDuration!.inMinutes}',
-                  unit: alert.triggerDuration == null ? '' : 'minutes',
-                  color: const Color(0xFFA684FF),
-                  assetPath:
-                      'alera-figma-assets/assets/icons/mini_status/info.svg',
-                ),
-              ),
-              Expanded(
-                child: _Metric(
-                  label: 'Detected at',
-                  value: _time(alert.detectedAt),
-                  unit: _period(alert.detectedAt),
-                  color: AleraColors.textSecondary,
-                  icon: Icons.calendar_today,
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double factWidth = (constraints.maxWidth - 12) / 2;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 16,
+                children: [
+                  for (final fact in facts)
+                    SizedBox(
+                      width: factWidth,
+                      child: _AlertDetailFact(fact: fact),
+                    ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F3FF),
-              borderRadius: BorderRadius.circular(12),
+          _AlertImpact(
+            label: _impactLabel(alert),
+            message: _impactText(alert),
+            accentColor: accentColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AlertDetailFactData {
+  final String label;
+  final String value;
+  final Color color;
+  final String? assetPath;
+  final IconData? icon;
+
+  const _AlertDetailFactData({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.assetPath,
+    this.icon,
+  });
+}
+
+class _AlertDetailFact extends StatelessWidget {
+  final _AlertDetailFactData fact;
+
+  const _AlertDetailFact({required this.fact});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (fact.assetPath != null)
+              AleraSvgIcon(assetPath: fact.assetPath!, width: 17, height: 17)
+            else if (fact.icon != null)
+              Icon(fact.icon, color: fact.color, size: 17),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                fact.label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: fact.color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            child: Row(
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          fact.value,
+          style: AleraTypography.sectionTitle.copyWith(
+            color: fact.color,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AlertImpact extends StatelessWidget {
+  final String label;
+  final String message;
+  final Color accentColor;
+
+  const _AlertImpact({
+    required this.label,
+    required this.message,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: accentColor, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Color(0xFFA684FF),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    alert.description.trim().isEmpty
-                        ? 'No additional alert description is available.'
-                        : alert.description,
-                    style: AleraTypography.body.copyWith(fontSize: 12),
+                Text(
+                  label,
+                  style: AleraTypography.label.copyWith(
+                    color: accentColor,
+                    fontSize: 11,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  style: AleraTypography.body.copyWith(fontSize: 12),
                 ),
               ],
             ),
@@ -693,6 +750,191 @@ class _DetailsCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+List<_AlertDetailFactData> _detailFacts(
+  CaregiverAlert alert,
+  Color accentColor,
+) {
+  final String reading = alert.hasReading
+      ? '${_number(alert.reading)} ${alert.unit}'.trim()
+      : 'Unavailable';
+  final String detected =
+      '${_time(alert.detectedAt)} ${_period(alert.detectedAt)}';
+  final String? resolved = alert.resolvedAt == null
+      ? null
+      : '${_time(alert.resolvedAt!)} ${_period(alert.resolvedAt!)}';
+
+  switch (alert.metric) {
+    case CaregiverAlertMetric.heartRate:
+    case CaregiverAlertMetric.spo2:
+      return [
+        _AlertDetailFactData(
+          label: 'Reading',
+          value: reading,
+          color: accentColor,
+          assetPath: CaregiverAlertPresentation.badgeAssetPath(alert.metric),
+        ),
+        _AlertDetailFactData(
+          label: 'Threshold',
+          value: alert.threshold == null
+              ? 'Not available'
+              : '${_number(alert.threshold!)} ${alert.unit}'.trim(),
+          color: AleraColors.warning,
+          assetPath: 'alera-figma-assets/assets/icons/status/warning.svg',
+        ),
+        _AlertDetailFactData(
+          label: 'Duration',
+          value: alert.triggerDuration == null
+              ? 'Immediate'
+              : _formatDuration(alert.triggerDuration!),
+          color: AleraColors.primary,
+          icon: Icons.timer_outlined,
+        ),
+        _AlertDetailFactData(
+          label: 'Detected at',
+          value: detected,
+          color: AleraColors.textSecondary,
+          icon: Icons.schedule,
+        ),
+      ];
+
+    case CaregiverAlertMetric.watchBattery:
+      return [
+        _AlertDetailFactData(
+          label: 'Device',
+          value: _deviceLabel(alert),
+          color: accentColor,
+          icon: Icons.devices_outlined,
+        ),
+        _AlertDetailFactData(
+          label: alert.hasReading ? 'Battery level' : 'Battery status',
+          value: alert.hasReading ? reading : 'Low battery',
+          color: accentColor,
+          assetPath: 'alera-figma-assets/assets/icons/mini_status/battery.svg',
+        ),
+        _AlertDetailFactData(
+          label: 'Detected at',
+          value: detected,
+          color: AleraColors.textSecondary,
+          icon: Icons.schedule,
+        ),
+        if (resolved != null)
+          _AlertDetailFactData(
+            label: 'Resolved at',
+            value: resolved,
+            color: AleraColors.success,
+            icon: Icons.check_circle_outline,
+          ),
+      ];
+
+    case CaregiverAlertMetric.system:
+      if (_isDisconnectAlert(alert)) {
+        return [
+          _AlertDetailFactData(
+            label: 'Device',
+            value: _deviceLabel(alert),
+            color: accentColor,
+            icon: Icons.devices_outlined,
+          ),
+          _AlertDetailFactData(
+            label: 'Connection',
+            value: 'Disconnected',
+            color: accentColor,
+            icon: Icons.link_off,
+          ),
+          _AlertDetailFactData(
+            label: 'Detected at',
+            value: detected,
+            color: AleraColors.textSecondary,
+            icon: Icons.schedule,
+          ),
+          if (resolved != null)
+            _AlertDetailFactData(
+              label: 'Resolved at',
+              value: resolved,
+              color: AleraColors.success,
+              icon: Icons.check_circle_outline,
+            ),
+        ];
+      }
+      return [
+        _AlertDetailFactData(
+          label: 'System event',
+          value: alert.title,
+          color: accentColor,
+          icon: Icons.info_outline,
+        ),
+        _AlertDetailFactData(
+          label: 'Detected at',
+          value: detected,
+          color: AleraColors.textSecondary,
+          icon: Icons.schedule,
+        ),
+        if (resolved != null)
+          _AlertDetailFactData(
+            label: 'Resolved at',
+            value: resolved,
+            color: AleraColors.success,
+            icon: Icons.check_circle_outline,
+          ),
+      ];
+
+    case CaregiverAlertMetric.activity:
+      return [
+        _AlertDetailFactData(
+          label: 'Activity',
+          value: _conditionKey(alert).endsWith('INACTIVITY')
+              ? 'No movement detected'
+              : alert.title,
+          color: accentColor,
+          assetPath: CaregiverAlertPresentation.badgeAssetPath(alert.metric),
+        ),
+        _AlertDetailFactData(
+          label: 'Detected at',
+          value: detected,
+          color: AleraColors.textSecondary,
+          icon: Icons.schedule,
+        ),
+        if (alert.triggerDuration != null)
+          _AlertDetailFactData(
+            label: 'Duration',
+            value: _formatDuration(alert.triggerDuration!),
+            color: AleraColors.primary,
+            icon: Icons.timer_outlined,
+          ),
+        if (resolved != null)
+          _AlertDetailFactData(
+            label: 'Resolved at',
+            value: resolved,
+            color: AleraColors.success,
+            icon: Icons.check_circle_outline,
+          ),
+      ];
+
+    case CaregiverAlertMetric.sleep:
+      return [
+        _AlertDetailFactData(
+          label: 'Sleep event',
+          value: alert.title,
+          color: accentColor,
+          assetPath: CaregiverAlertPresentation.badgeAssetPath(alert.metric),
+        ),
+        _AlertDetailFactData(
+          label: 'Detected at',
+          value: detected,
+          color: AleraColors.textSecondary,
+          icon: Icons.schedule,
+        ),
+        if (resolved != null)
+          _AlertDetailFactData(
+            label: 'Resolved at',
+            value: resolved,
+            color: AleraColors.success,
+            icon: Icons.check_circle_outline,
+          ),
+      ];
   }
 }
 
@@ -766,6 +1008,7 @@ class _TimelineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = _timelineEntries(alert);
+    final Color accentColor = CaregiverAlertPresentation.accentColor(alert);
     return _SectionCard(
       title: 'Timeline',
       child: Column(
@@ -776,16 +1019,12 @@ class _TimelineCard extends StatelessWidget {
               children: [
                 Column(
                   children: [
-                    const Icon(
-                      Icons.circle,
-                      color: Color(0xFFA684FF),
-                      size: 16,
-                    ),
+                    Icon(Icons.circle, color: accentColor, size: 16),
                     if (index != entries.length - 1)
                       Container(
                         width: 2,
                         height: 32,
-                        color: AleraColors.primarySoft,
+                        color: accentColor.withValues(alpha: 0.20),
                       ),
                   ],
                 ),
@@ -1061,7 +1300,7 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
       AlertTimelineEntry(
         occurredAt: alert.detectedAt,
         title: _firstReadingTitle(alert),
-        description: 'The reading was ${_number(alert.reading)} ${alert.unit}.',
+        description: _initialTimelineDescription(alert),
       ),
     );
   }
@@ -1100,9 +1339,7 @@ List<AlertTimelineEntry> _timelineEntries(CaregiverAlert alert) {
             alert.severity == CaregiverAlertSeverity.critical && !hasEscalation
             ? 'Urgent alert created'
             : 'Warning alert created',
-        description: confirmedAt == alert.detectedAt
-            ? 'Alera confirmed that the reading needed attention.'
-            : 'Alera confirmed this after ${_durationBetween(alert.detectedAt, confirmedAt)} of unusual readings.',
+        description: _confirmationDescription(alert, confirmedAt),
       ),
     );
   }
@@ -1134,8 +1371,120 @@ String _firstReadingTitle(CaregiverAlert alert) {
     CaregiverAlertMetric.spo2 => 'Low oxygen level noticed',
     CaregiverAlertMetric.activity => alert.title,
     CaregiverAlertMetric.sleep => alert.title,
-    CaregiverAlertMetric.watchBattery => 'Low watch battery noticed',
+    CaregiverAlertMetric.watchBattery =>
+      'Low ${_deviceLabel(alert).toLowerCase()} battery noticed',
     CaregiverAlertMetric.system => alert.title,
+  };
+}
+
+bool _isVitalAlert(CaregiverAlert alert) =>
+    alert.metric == CaregiverAlertMetric.heartRate ||
+    alert.metric == CaregiverAlertMetric.spo2;
+
+String _conditionKey(CaregiverAlert alert) => alert.conditionKey.toString();
+
+bool _isDisconnectAlert(CaregiverAlert alert) =>
+    _conditionKey(alert).endsWith('DISCONNECTED');
+
+String _deviceLabel(CaregiverAlert alert) {
+  final String key = _conditionKey(alert);
+  if (key.contains('PHONE_')) return 'Patient phone';
+  if (key.contains('WATCH_')) return 'Smartwatch';
+  return 'Monitoring device';
+}
+
+String _formatDuration(Duration duration) {
+  if (duration.inMinutes < 1) return '${duration.inSeconds} sec';
+  if (duration.inHours < 1) return '${duration.inMinutes} min';
+  final int hours = duration.inHours;
+  final int minutes = duration.inMinutes.remainder(60);
+  return minutes == 0 ? '$hours hr' : '$hours hr $minutes min';
+}
+
+String _impactLabel(CaregiverAlert alert) {
+  if (_isVitalAlert(alert)) return 'Why this alert was raised';
+  if (alert.metric == CaregiverAlertMetric.watchBattery ||
+      _isDisconnectAlert(alert)) {
+    return 'Monitoring impact';
+  }
+  return 'Alert context';
+}
+
+String _impactText(CaregiverAlert alert) {
+  final String description = alert.description.trim();
+  if (description.isNotEmpty) return description;
+
+  switch (alert.metric) {
+    case CaregiverAlertMetric.heartRate:
+    case CaregiverAlertMetric.spo2:
+      return 'Alera detected a monitored vital sign outside the configured range.';
+    case CaregiverAlertMetric.watchBattery:
+      if (alert.status == CaregiverAlertStatus.resolved) {
+        return 'The low-battery condition has cleared. Monitoring may have been interrupted while power was low.';
+      }
+      return 'Low battery can interrupt monitoring if the device powers off before it is charged.';
+    case CaregiverAlertMetric.system:
+      if (_isDisconnectAlert(alert)) {
+        if (alert.status == CaregiverAlertStatus.resolved) {
+          return 'The connection has recovered. Live health updates may have been delayed while the device was disconnected.';
+        }
+        return 'Live health updates may be delayed until the device reconnects.';
+      }
+      return 'Alera detected a system or synchronization event that may affect monitoring.';
+    case CaregiverAlertMetric.activity:
+      return 'Alera detected unusually low movement during the monitored activity window.';
+    case CaregiverAlertMetric.sleep:
+      return 'Alera detected a sleep-related monitoring event that may need review.';
+  }
+}
+
+String _initialTimelineDescription(CaregiverAlert alert) {
+  switch (alert.metric) {
+    case CaregiverAlertMetric.heartRate:
+    case CaregiverAlertMetric.spo2:
+      if (!alert.hasReading) {
+        return 'Alera detected an abnormal vital-sign condition.';
+      }
+      return 'The reading was ${_number(alert.reading)} ${alert.unit}.';
+    case CaregiverAlertMetric.watchBattery:
+      if (alert.hasReading) {
+        return '${_deviceLabel(alert)} battery was ${_number(alert.reading)} ${alert.unit}.';
+      }
+      return 'Alera detected a low-battery condition on ${_deviceLabel(alert).toLowerCase()}.';
+    case CaregiverAlertMetric.system:
+      if (_isDisconnectAlert(alert)) {
+        return '${_deviceLabel(alert)} was reported as disconnected.';
+      }
+      return alert.description.trim().isEmpty
+          ? 'Alera detected a system monitoring event.'
+          : alert.description;
+    case CaregiverAlertMetric.activity:
+      return _conditionKey(alert).endsWith('INACTIVITY')
+          ? 'Alera detected an inactivity condition during monitoring.'
+          : 'Alera detected an activity-related monitoring event.';
+    case CaregiverAlertMetric.sleep:
+      return 'Alera detected a sleep-related monitoring event.';
+  }
+}
+
+String _confirmationDescription(CaregiverAlert alert, DateTime confirmedAt) {
+  final bool immediate = confirmedAt == alert.detectedAt;
+  if (_isVitalAlert(alert)) {
+    return immediate
+        ? 'Alera confirmed that the reading needed attention.'
+        : 'Alera confirmed this after ${_durationBetween(alert.detectedAt, confirmedAt)} of unusual readings.';
+  }
+  return immediate
+      ? 'Alera confirmed that this alert needed attention.'
+      : 'Alera confirmed this alert after ${_durationBetween(alert.detectedAt, confirmedAt)}.';
+}
+
+Color _statusColor(CaregiverAlertStatus status) {
+  return switch (status) {
+    CaregiverAlertStatus.active => AleraColors.textSecondary,
+    CaregiverAlertStatus.acknowledged => AleraColors.primary,
+    CaregiverAlertStatus.resolved => AleraColors.success,
+    CaregiverAlertStatus.falseAlarm => AleraColors.textSecondary,
   };
 }
 

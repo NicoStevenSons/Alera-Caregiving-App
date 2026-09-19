@@ -336,8 +336,8 @@ _AlertCardDisplayData _buildDisplayData(
       reading = _eventValue(alert, formattedReading);
       break;
     case CaregiverAlertMetric.watchBattery:
-      metricLabel = 'Battery level';
-      reading = formattedReading;
+      metricLabel = alert.hasReading ? 'Battery level' : 'Battery status';
+      reading = alert.hasReading ? formattedReading : 'Low battery';
       secondaryLabel = 'Device';
       secondaryValue = _deviceLabel(alert) ?? 'Device';
       break;
@@ -382,6 +382,7 @@ _AlertCardDisplayData _buildDisplayData(
 }
 
 String _eventValue(CaregiverAlert alert, String formattedReading) {
+  if (!alert.hasReading) return alert.title;
   if (alert.unit.trim().isEmpty && alert.reading == 0) return alert.title;
   return formattedReading;
 }

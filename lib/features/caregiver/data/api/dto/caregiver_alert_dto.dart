@@ -90,6 +90,7 @@ class CaregiverAlertDto {
         'ARCHIVED' => CaregiverAlertStatus.resolved,
         _ => throw FormatException('Unsupported alert status: $status'),
       },
+      hasReading: readingValue != null,
       reading: readingValue ?? 0,
       threshold: thresholdValue,
       unit: readingUnit ?? '',
