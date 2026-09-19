@@ -1,0 +1,392 @@
+diff --git a/packages/alera_toast/lib/alera_toast.dart b/packages/alera_toast/lib/alera_toast.dart
+--- a/packages/alera_toast/lib/alera_toast.dart
++++ b/packages/alera_toast/lib/alera_toast.dart
+@@ -1,11 +1,32 @@
++import 'dart:typed_data';
++
+ import 'package:flutter/services.dart';
++
++const MethodChannel _aleraNativeChannel = MethodChannel('com.alera/toast');
+ 
+ /// Displays short, system-styled feedback without opening the app.
+ class AleraToast {
+   AleraToast._();
+ 
+-  static const _channel = MethodChannel('com.alera/toast');
++  static Future<void> show(String message) => _aleraNativeChannel
++      .invokeMethod<void>('show', <String, String>{'message': message});
++}
+ 
+-  static Future<void> show(String message) =>
+-      _channel.invokeMethod<void>('show', <String, String>{'message': message});
++/// Builds the Android notification large icon in native code so it also works
++/// from Firebase Messaging's background isolate.
++class AleraNotificationAvatar {
++  AleraNotificationAvatar._();
++
++  static Future<Uint8List?> render({
++    required String patientName,
++    required String metricType,
++  }) {
++    return _aleraNativeChannel.invokeMethod<Uint8List>(
++      'renderNotificationAvatar',
++      <String, String>{
++        'patient_name': patientName,
++        'metric_type': metricType,
++      },
++    );
++  }
+ }
+diff --git a/packages/alera_toast/android/build.gradle b/packages/alera_toast/android/build.gradle
+--- a/packages/alera_toast/android/build.gradle
++++ b/packages/alera_toast/android/build.gradle
+@@ -11,3 +11,7 @@
+         minSdk 21
+     }
+ }
++
++dependencies {
++    implementation 'androidx.core:core:1.17.0'
++}
+diff --git a/packages/alera_toast/android/src/main/java/com/alera/alera_toast/AleraToastPlugin.java b/packages/alera_toast/android/src/main/java/com/alera/alera_toast/AleraToastPlugin.java
+--- a/packages/alera_toast/android/src/main/java/com/alera/alera_toast/AleraToastPlugin.java
++++ b/packages/alera_toast/android/src/main/java/com/alera/alera_toast/AleraToastPlugin.java
+@@ -1,15 +1,133 @@
+ package com.alera.alera_toast;
+ 
+ import android.content.Context;
++import android.graphics.Bitmap;
++import android.graphics.Canvas;
++import android.graphics.Color;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.Typeface;
+ import android.os.Handler;
+ import android.os.Looper;
+ import android.widget.Toast;
++import androidx.core.graphics.PathParser;
+ import io.flutter.embedding.engine.plugins.FlutterPlugin;
+ import io.flutter.plugin.common.MethodCall;
+ import io.flutter.plugin.common.MethodChannel;
+-
+-/** Shows Android system toast feedback from both foreground and background engines. */
++import java.io.ByteArrayOutputStream;
++
++/**
++ * Small native helpers used from both foreground and Firebase background
++ * engines. Notification-avatar rendering lives here because Flutter background
++ * isolates cannot use dart:ui/rootBundle rendering.
++ */
+ public final class AleraToastPlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
++  private static final int AVATAR_SIZE = 192;
++  private static final float AVATAR_CENTER_X = 88f;
++  private static final float AVATAR_CENTER_Y = 88f;
++  private static final float AVATAR_RADIUS = 78f;
++  private static final float BADGE_CENTER_X = 140f;
++  private static final float BADGE_CENTER_Y = 140f;
++  private static final float BADGE_RING_RADIUS = 32f;
++  private static final float BADGE_RADIUS = 28f;
++
++  private static final int[] AVATAR_COLORS = {
++    Color.rgb(0x81, 0x65, 0xC7),
++    Color.rgb(0x4D, 0x91, 0xA8),
++    Color.rgb(0xB3, 0x6B, 0x8D),
++  };
++
++  // Exact path data and visible colors from alera-figma-assets/
++  // assets/icons/mini_status.
++  private static final MetricBadge HEART_RATE_BADGE = new MetricBadge(
++      "#FEE4E6",
++      "#FF637E",
++      "M13.3 3.5C14.6333 3.5 15.7501 3.97963 16.6504 4.93889C17.5507 5.89815 "
++          + "18.0005 7.03889 18 8.36111C18 8.59444 17.9867 8.82466 17.96 9.05178"
++          + "C17.9333 9.27889 17.8867 9.50237 17.82 9.72222H12.82L11.46 7.73889"
++          + "C11.3933 7.63518 11.3 7.55092 11.18 7.48611C11.06 7.4213 10.9333 "
++          + "7.38889 10.8 7.38889C10.6267 7.38889 10.4701 7.44074 10.3304 7.54444"
++          + "C10.1907 7.64815 10.0939 7.77778 10.04 7.93333L8.96 11.0833L8.26 "
++          + "10.0722C8.19333 9.96852 8.1 9.88426 7.98 9.81944C7.86 9.75463 7.73333 "
++          + "9.72222 7.6 9.72222H2.18C2.11333 9.50185 2.06667 9.27837 2.04 9.05178"
++          + "C2.01333 8.82518 2 8.60144 2 8.38055C2 7.04537 2.44667 5.89815 3.34 "
++          + "4.93889C4.23333 3.97963 5.34667 3.5 6.68 3.5C7.32 3.5 7.92347 3.62315 "
++          + "8.4904 3.86944C9.05733 4.11574 9.56053 4.45926 10 4.9C10.4267 4.45926 "
++          + "10.9235 4.11574 11.4904 3.86944C12.0573 3.62315 12.6605 3.5 13.3 3.5Z"
++          + "M10 17.5C9.76 17.5 9.53013 17.458 9.3104 17.374C9.09067 17.29 8.89387 "
++          + "17.1635 8.72 16.9944L3.36 11.7639C3.28 11.6861 3.20667 11.6083 3.14 "
++          + "11.5306C3.07333 11.4528 3.00667 11.3685 2.94 11.2778H7.16L8.52 13.2611"
++          + "C8.58667 13.3648 8.68 13.4491 8.8 13.5139C8.92 13.5787 9.04667 13.6111 "
++          + "9.18 13.6111C9.35333 13.6111 9.51333 13.5593 9.66 13.4556C9.80667 "
++          + "13.3518 9.90667 13.2222 9.96 13.0667L11.04 9.91666L11.72 10.9278"
++          + "C11.8 11.0315 11.9 11.1157 12.02 11.1806C12.14 11.2454 12.2667 11.2778 "
++          + "12.4 11.2778H17.04L16.84 11.5111L16.64 11.7444L11.26 16.9944C11.0867 "
++          + "17.163 10.8933 17.2895 10.68 17.374C10.4667 17.4585 10.24 17.5005 "
++          + "10 17.5Z");
++
++  private static final MetricBadge SPO2_BADGE = new MetricBadge(
++      "#E0E7FF",
++      "#7C86FF",
++      "M9.58824 18C7.70784 18 6.13984 17.3601 4.88424 16.0804C3.62863 14.8007 "
++          + "3.00055 13.2078 3 11.3018C3 10.0221 3.48396 8.63343 4.45188 7.13587"
++          + "C5.4198 5.63831 6.88486 4.02503 8.84706 2.29603C9.05294 2.10543 "
++          + "9.29671 2.00686 9.57835 2.00033C9.86 1.99379 10.1035 2.08555 10.3088 "
++          + "2.2756C10.5422 2.47982 10.7653 2.68403 10.9784 2.88824C11.1914 "
++          + "3.09246 11.4005 3.28986 11.6059 3.48046C11.1255 4.02503 10.6693 "
++          + "4.66844 10.2372 5.41068C9.8051 6.15293 9.58878 6.89136 9.58824 "
++          + "7.62598C9.58824 8.91933 10.031 10.0188 10.9166 10.9244C11.8022 11.83 "
++          + "12.8692 12.2826 14.1176 12.282C14.4745 12.282 14.8212 12.2447 15.1578 "
++          + "12.1701C15.4943 12.0955 15.827 11.9695 16.1559 11.7919C16.0461 "
++          + "13.5754 15.3735 15.0561 14.1382 16.234C12.9029 17.4119 11.3863 "
++          + "18.0005 9.58824 18ZM12.0588 9.7498C11.5098 9.15077 11.2353 8.44284 "
++          + "11.2353 7.62598C11.2353 7.10864 11.4447 6.50962 11.8636 5.82891"
++          + "C12.2825 5.1482 12.876 4.44707 13.6441 3.72552C13.7814 3.60299 "
++          + "13.9392 3.54173 14.1176 3.54173C14.2961 3.54173 14.4539 3.60299 "
++          + "14.5912 3.72552C15.401 4.4743 16.0049 5.17216 16.4029 5.81911"
++          + "C16.801 6.46605 17 7.06835 17 7.62598C17 8.44284 16.7255 9.15077 "
++          + "16.1765 9.7498C15.6275 10.3488 14.9412 10.6483 14.1176 10.6483"
++          + "C13.2941 10.6483 12.6078 10.3488 12.0588 9.7498ZM9.81471 15.5494"
++          + "C9.97941 15.5358 10.1202 15.471 10.2372 15.355C10.3541 15.239 "
++          + "10.4123 15.0996 10.4118 14.9368C10.4118 14.7462 10.35 14.5932 "
++          + "10.2265 14.4777C10.1029 14.3623 9.9451 14.3111 9.75294 14.3242"
++          + "C9.1902 14.365 8.59314 14.212 7.96176 13.8651C7.33039 13.5182 "
++          + "6.93235 12.8884 6.76765 11.9757C6.7402 11.826 6.66827 11.7034 "
++          + "6.55188 11.6081C6.43549 11.5128 6.30153 11.4652 6.15 11.4652"
++          + "C5.95784 11.4652 5.8 11.5368 5.67647 11.68C5.55294 11.8232 "
++          + "5.51176 11.9899 5.55294 12.1799C5.78627 13.4188 6.33529 14.3037 "
++          + "7.2 14.8347C8.06471 15.3657 8.93627 15.6039 9.81471 15.5494Z");
++
++  private static final String INFO_PATH =
++      "M10.5704 13.7704C10.7235 13.6168 10.8 13.4267 10.8 13.2V10"
++          + "C10.8 9.77333 10.7232 9.58346 10.5696 9.4304C10.416 9.27733 "
++          + "10.2261 9.20053 10 9.2C9.77386 9.19946 9.584 9.27626 9.4304 "
++          + "9.4304C9.2768 9.58453 9.2 9.7744 9.2 10V13.2C9.2 13.4267 "
++          + "9.2768 13.6168 9.4304 13.7704C9.584 13.924 9.77386 14.0005 "
++          + "10 14C10.2261 13.9995 10.4163 13.9235 10.5704 13.7704Z"
++          + "M10.5704 7.3696C10.7235 7.21653 10.8 7.02667 10.8 6.8"
++          + "C10.8 6.57333 10.7232 6.38347 10.5696 6.2304C10.416 6.07733 "
++          + "10.2261 6.00053 10 6C9.77386 5.99947 9.584 6.07627 9.4304 "
++          + "6.2304C9.2768 6.38453 9.2 6.5744 9.2 6.8C9.2 7.0256 "
++          + "9.2768 7.21573 9.4304 7.3704C9.584 7.52507 9.77386 7.6016 "
++          + "10 7.6C10.2261 7.5984 10.4163 7.5216 10.5704 7.3696Z"
++          + "M10 18C8.89333 18 7.85333 17.7899 6.88 17.3696C5.90667 16.9493 "
++          + "5.06 16.3795 4.34 15.66C3.62 14.9405 3.05013 14.0939 2.6304 "
++          + "13.12C2.21067 12.1461 2.00053 11.1061 2 10C1.99947 8.89386 "
++          + "2.2096 7.85387 2.6304 6.88C3.0512 5.90613 3.62107 5.05947 "
++          + "4.34 4.34C5.05893 3.62053 5.9056 3.05067 6.88 2.6304"
++          + "C7.8544 2.21013 8.8944 2 10 2C11.1056 2 12.1456 2.21013 "
++          + "13.12 2.6304C14.0944 3.05067 14.9411 3.62053 15.66 4.34"
++          + "C16.3789 5.05947 16.9491 5.90613 17.3704 6.88C17.7917 7.85387 "
++          + "18.0016 8.89386 18 10C17.9984 11.1061 17.7883 12.1461 "
++          + "17.3696 13.12C16.9509 14.0939 16.3811 14.9405 15.66 15.66"
++          + "C14.9389 16.3795 14.0923 16.9496 13.12 17.3704C12.1477 17.7912 "
++          + "11.1077 18.0011 10 18Z";
++
++  private static final MetricBadge INFO_BADGE =
++      new MetricBadge("#E8E0FF", "#AE8BEA", INFO_PATH);
++  private static final MetricBadge SYSTEM_BADGE =
++      new MetricBadge("#DBEBFE", "#50A2FF", INFO_PATH);
++
+   private Context applicationContext;
+   private MethodChannel channel;
+ 
+@@ -22,11 +140,18 @@
+ 
+   @Override
+   public void onMethodCall(MethodCall call, MethodChannel.Result result) {
+-    if (!"show".equals(call.method)) {
+-      result.notImplemented();
+-      return;
+-    }
+-
++    if ("show".equals(call.method)) {
++      showToast(call, result);
++      return;
++    }
++    if ("renderNotificationAvatar".equals(call.method)) {
++      renderNotificationAvatar(call, result);
++      return;
++    }
++    result.notImplemented();
++  }
++
++  private void showToast(MethodCall call, MethodChannel.Result result) {
+     final String message = call.argument("message");
+     if (message == null || message.isEmpty()) {
+       result.error("invalid_message", "A toast message is required.", null);
+@@ -36,6 +161,131 @@
+     new Handler(Looper.getMainLooper()).post(
+         () -> Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show());
+     result.success(null);
++  }
++
++  private void renderNotificationAvatar(MethodCall call, MethodChannel.Result result) {
++    final String patientName = call.argument("patient_name");
++    final String metricType = call.argument("metric_type");
++    if (patientName == null || patientName.trim().isEmpty()) {
++      result.error("invalid_patient_name", "A patient name is required.", null);
++      return;
++    }
++
++    try {
++      result.success(buildNotificationAvatar(patientName, metricType));
++    } catch (RuntimeException exception) {
++      result.error(
++          "avatar_render_failed",
++          "Could not render the notification avatar.",
++          null);
++    }
++  }
++
++  private byte[] buildNotificationAvatar(String patientName, String metricType) {
++    final Bitmap bitmap =
++        Bitmap.createBitmap(AVATAR_SIZE, AVATAR_SIZE, Bitmap.Config.ARGB_8888);
++    final Canvas canvas = new Canvas(bitmap);
++
++    final Paint avatarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    avatarPaint.setColor(avatarColor(patientName));
++    canvas.drawCircle(
++        AVATAR_CENTER_X,
++        AVATAR_CENTER_Y,
++        AVATAR_RADIUS,
++        avatarPaint);
++
++    final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    textPaint.setColor(Color.WHITE);
++    textPaint.setTextAlign(Paint.Align.CENTER);
++    textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
++    textPaint.setTextSize(60f);
++    final Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
++    final float textY =
++        AVATAR_CENTER_Y - ((fontMetrics.ascent + fontMetrics.descent) / 2f);
++    canvas.drawText(initials(patientName), AVATAR_CENTER_X, textY, textPaint);
++
++    final MetricBadge badge = badgeFor(metricType);
++    final Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    ringPaint.setColor(Color.WHITE);
++    canvas.drawCircle(
++        BADGE_CENTER_X,
++        BADGE_CENTER_Y,
++        BADGE_RING_RADIUS,
++        ringPaint);
++
++    canvas.save();
++    canvas.translate(BADGE_CENTER_X - BADGE_RADIUS, BADGE_CENTER_Y - BADGE_RADIUS);
++    final float badgeScale = (BADGE_RADIUS * 2f) / 20f;
++    canvas.scale(badgeScale, badgeScale);
++
++    final Paint badgeBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    badgeBackgroundPaint.setColor(Color.parseColor(badge.backgroundColor));
++    canvas.drawCircle(10f, 10f, 10f, badgeBackgroundPaint);
++
++    final Path glyph = PathParser.createPathFromPathData(badge.pathData);
++    if (glyph != null) {
++      final Paint glyphPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++      glyphPaint.setColor(Color.parseColor(badge.foregroundColor));
++      glyphPaint.setStyle(Paint.Style.FILL);
++      canvas.drawPath(glyph, glyphPaint);
++    }
++    canvas.restore();
++
++    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
++    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
++    bitmap.recycle();
++    return stream.toByteArray();
++  }
++
++  private static int avatarColor(String name) {
++    int seed = 0;
++    for (int index = 0; index < name.length(); index++) {
++      seed += name.charAt(index);
++    }
++    return AVATAR_COLORS[Math.floorMod(seed, AVATAR_COLORS.length)];
++  }
++
++  private static String initials(String name) {
++    final String trimmed = name.trim();
++    if (trimmed.isEmpty()) {
++      return "?";
++    }
++
++    final String[] words = trimmed.split("\\s+");
++    final StringBuilder initials = new StringBuilder();
++    for (int index = 0; index < words.length && index < 2; index++) {
++      if (words[index].isEmpty()) {
++        continue;
++      }
++      final int codePoint = words[index].codePointAt(0);
++      initials.appendCodePoint(Character.toUpperCase(codePoint));
++    }
++    return initials.length() == 0 ? "?" : initials.toString();
++  }
++
++  private static MetricBadge badgeFor(String metricType) {
++    if ("HEART_RATE".equals(metricType)) {
++      return HEART_RATE_BADGE;
++    }
++    if ("SPO2".equals(metricType)) {
++      return SPO2_BADGE;
++    }
++    if ("BATTERY_LEVEL".equals(metricType)) {
++      return INFO_BADGE;
++    }
++    return SYSTEM_BADGE;
++  }
++
++  private static final class MetricBadge {
++    final String backgroundColor;
++    final String foregroundColor;
++    final String pathData;
++
++    MetricBadge(String backgroundColor, String foregroundColor, String pathData) {
++      this.backgroundColor = backgroundColor;
++      this.foregroundColor = foregroundColor;
++      this.pathData = pathData;
++    }
+   }
+ 
+   @Override
+diff --git a/lib/services/fcm_notification_service.dart b/lib/services/fcm_notification_service.dart
+--- a/lib/services/fcm_notification_service.dart
++++ b/lib/services/fcm_notification_service.dart
+@@ -2,18 +2,40 @@
+   FlutterLocalNotificationsPlugin local, {
+   required int id,
+   required Map<String, dynamic> data,
+-}) {
+-  return local.show(
++}) async {
++  ByteArrayAndroidBitmap? largeIcon;
++  final String? patientName = (data['patient_display_name'] as String?)?.trim();
++  final String metricType = data['metric_type'] as String? ?? 'SYSTEM';
++
++  if (patientName != null && patientName.isNotEmpty) {
++    try {
++      final bytes = await AleraNotificationAvatar.render(
++        patientName: patientName,
++        metricType: metricType,
++      );
++      if (bytes != null && bytes.isNotEmpty) {
++        largeIcon = ByteArrayAndroidBitmap(bytes);
++      }
++    } catch (error) {
++      if (kDebugMode) {
++        debugPrint('Alert notification avatar rendering failed: $error');
++      }
++    }
++  }
++
++  await local.show(
+     id: id,
+     title: _alertTitle(data),
+     body: _alertBody(data),
+-    notificationDetails: const NotificationDetails(
++    notificationDetails: NotificationDetails(
+       android: AndroidNotificationDetails(
+         'alera_alerts',
+         'Alera alerts',
+         channelDescription: 'Caregiver health alerts',
+         importance: Importance.high,
+         priority: Priority.high,
++        largeIcon: largeIcon,
++        visibility: NotificationVisibility.private,
+       ),
+     ),
+     payload: jsonEncode(data),

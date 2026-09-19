@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
-import '../../../../../design_system/status/status.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
 
@@ -19,17 +19,15 @@ class CareRecipientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isStable = careRecipient.status == CareStatus.stable;
+
     return AleraCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(10, 10, 14, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AleraBadgedAvatar(
-            name: careRecipient.name,
-            radius: 20,
-            status: PatientStatusChip.describe(careRecipient.status, context),
-          ),
+          AleraPatientAvatar(name: careRecipient.name, radius: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -52,12 +50,15 @@ class CareRecipientCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                 ],
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: PatientStatusChip(
-                    careRecipient.status,
-                    size: AleraStatusChipSize.small,
-                  ),
+                _StatusRow(
+                  assetPath: isStable
+                      ? 'alera-figma-assets/assets/icons/status/stable.svg'
+                      : 'alera-figma-assets/assets/icons/status/warning.svg',
+                  label: careRecipient.backendBacked
+                      ? careRecipient.monitoringStatusLabel
+                      : isStable
+                      ? 'Stable'
+                      : 'High Heart Rate',
                 ),
                 const SizedBox(height: 2),
                 _StatusRow(

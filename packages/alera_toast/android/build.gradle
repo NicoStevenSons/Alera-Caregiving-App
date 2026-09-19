@@ -11,3 +11,7 @@ android {
         minSdk 21
     }
 }
+
+dependencies {
+    implementation 'androidx.core:core:1.17.0'
+}

@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
-import '../../../../design_system/status/adapters/alert_severity_chip.dart';
-import '../../../../design_system/status/alera_badged_avatar.dart';
-import '../../../../design_system/status/alera_status_chip.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/models/caregiver_alert.dart';
 
@@ -38,7 +36,7 @@ class CaregiverAlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool critical = alert.severity == CaregiverAlertSeverity.critical;
     final Color stripe = critical ? AleraColors.critical : AleraColors.warning;
-    final String iconPath = switch (alert.metric) {
+    final String largeIconPath = switch (alert.metric) {
       CaregiverAlertMetric.heartRate =>
         'alera-figma-assets/assets/icons/vitals/heart_rate.svg',
       CaregiverAlertMetric.spo2 =>
@@ -47,6 +45,22 @@ class CaregiverAlertCard extends StatelessWidget {
         'alera-figma-assets/assets/icons/status/info.svg',
       CaregiverAlertMetric.system =>
         'alera-figma-assets/assets/icons/status/info.svg',
+    };
+    final String badgeIconPath = switch (alert.metric) {
+      CaregiverAlertMetric.heartRate =>
+        'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
+      CaregiverAlertMetric.spo2 =>
+        'alera-figma-assets/assets/icons/mini_status/spo2.svg',
+      CaregiverAlertMetric.watchBattery =>
+        'alera-figma-assets/assets/icons/mini_status/info.svg',
+      CaregiverAlertMetric.system =>
+        'alera-figma-assets/assets/icons/mini_status/system.svg',
+    };
+    final String badgeLabel = switch (alert.metric) {
+      CaregiverAlertMetric.heartRate => 'Heart rate',
+      CaregiverAlertMetric.spo2 => 'SpO₂',
+      CaregiverAlertMetric.watchBattery => 'Battery',
+      CaregiverAlertMetric.system => 'System',
     };
     final String name = patientName ?? 'Unknown patient';
     final _AlertCardDisplayData displayData = _buildDisplayData(
@@ -89,44 +103,38 @@ class CaregiverAlertCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Center(
-                            child: AleraSvgIcon(
-                              assetPath: iconPath,
-                              width: 56,
-                              height: 56,
-                              semanticLabel: alert.title,
+                        if (showPatientName)
+                          _AlertPatientAvatar(
+                            name: name,
+                            radius: 28,
+                            badgeAssetPath: badgeIconPath,
+                            badgeSemanticLabel: badgeLabel,
+                          )
+                        else
+                          SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: Center(
+                              child: AleraSvgIcon(
+                                assetPath: largeIconPath,
+                                width: 56,
+                                height: 56,
+                                semanticLabel: alert.title,
+                              ),
                             ),
                           ),
-                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (showPatientName && name.isNotEmpty)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    AleraBadgedAvatar(
-                                      name: name,
-                                      radius: 18,
-                                      status: AlertSeverityChip.describe(
-                                        alert.severity,
-                                        context,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      name,
-                                      style: const TextStyle(
-                                        color: AleraColors.textSecondary,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    color: AleraColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
                                 ),
                               Text(
                                 alert.title,
@@ -136,13 +144,6 @@ class CaregiverAlertCard extends StatelessWidget {
                                   fontWeight: unread
                                       ? FontWeight.w700
                                       : FontWeight.w600,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: AlertSeverityChip(
-                                  alert.severity,
-                                  size: AleraStatusChipSize.small,
                                 ),
                               ),
                               AnimatedSwitcher(
@@ -221,6 +222,57 @@ class CaregiverAlertCard extends StatelessWidget {
 
     final int years = days ~/ 365;
     return '$years year${years == 1 ? '' : 's'} ago';
+  }
+}
+
+class _AlertPatientAvatar extends StatelessWidget {
+  final String name;
+  final double radius;
+  final String badgeAssetPath;
+  final String badgeSemanticLabel;
+
+  const _AlertPatientAvatar({
+    required this.name,
+    required this.radius,
+    required this.badgeAssetPath,
+    required this.badgeSemanticLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double diameter = radius * 2;
+
+    return MergeSemantics(
+      child: SizedBox(
+        width: diameter,
+        height: diameter,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AleraPatientAvatar(name: name, radius: radius),
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                width: 22,
+                height: 22,
+                padding: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: AleraSvgIcon(
+                  assetPath: badgeAssetPath,
+                  width: 20,
+                  height: 20,
+                  semanticLabel: '$badgeSemanticLabel alert',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

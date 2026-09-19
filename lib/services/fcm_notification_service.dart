@@ -52,6 +52,56 @@ String _reminderBody(Map<String, dynamic> data) =>
     data['instructions'] as String? ??
     "It's time for this reminder.";
 
+String _alertTitle(Map<String, dynamic> data) =>
+    data['title'] as String? ?? 'Alera health alert';
+
+String _alertBody(Map<String, dynamic> data) =>
+    data['body'] as String? ?? 'A new alert needs your attention.';
+
+Future<void> _showAlertNotification(
+  FlutterLocalNotificationsPlugin local, {
+  required int id,
+  required Map<String, dynamic> data,
+}) async {
+  ByteArrayAndroidBitmap? largeIcon;
+  final String? patientName = (data['patient_display_name'] as String?)?.trim();
+  final String metricType = data['metric_type'] as String? ?? 'SYSTEM';
+
+  if (patientName != null && patientName.isNotEmpty) {
+    try {
+      final bytes = await AleraNotificationAvatar.render(
+        patientName: patientName,
+        metricType: metricType,
+      );
+      if (bytes != null && bytes.isNotEmpty) {
+        largeIcon = ByteArrayAndroidBitmap(bytes);
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Alert notification avatar rendering failed: $error');
+      }
+    }
+  }
+
+  await local.show(
+    id: id,
+    title: _alertTitle(data),
+    body: _alertBody(data),
+    notificationDetails: NotificationDetails(
+      android: AndroidNotificationDetails(
+        'alera_alerts',
+        'Alera alerts',
+        channelDescription: 'Caregiver health alerts',
+        importance: Importance.high,
+        priority: Priority.high,
+        largeIcon: largeIcon,
+        visibility: NotificationVisibility.private,
+      ),
+    ),
+    payload: jsonEncode(data),
+  );
+}
+
 Future<void> _showActionableReminder(
   FlutterLocalNotificationsPlugin local, {
   required int id,
@@ -83,14 +133,27 @@ Future<void> _showReminderNotification(
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  if (message.data['type'] != 'REMINDER_DUE') return;
+  final type = message.data['type'];
+  if (type != 'REMINDER_DUE' && type != 'ALERT') return;
+
   final local = FlutterLocalNotificationsPlugin();
   await local.initialize(
     settings: const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     ),
   );
-  await _showReminderNotification(local, message);
+
+  if (type == 'REMINDER_DUE') {
+    await _showReminderNotification(local, message);
+    return;
+  }
+
+  final data = {...message.data, '_notification_event_id': message.messageId};
+  await _showAlertNotification(
+    local,
+    id: message.data['alert_id']?.hashCode ?? message.hashCode,
+    data: data,
+  );
 }
 
 @pragma('vm:entry-point')
@@ -308,27 +371,31 @@ class FcmNotificationService {
       return;
     }
 
-    AlertNotificationArrivalBus.instance.handle(
-      AlertNotification.parse(m.data, messageId: m.messageId),
-    );
+    if (m.data['type'] == 'ALERT') {
+      AlertNotificationArrivalBus.instance.handle(
+        AlertNotification.parse(m.data, messageId: m.messageId),
+      );
+      final d = {
+        ...m.data,
+        if (!m.data.containsKey('title') && m.notification?.title != null)
+          'title': m.notification!.title!,
+        if (!m.data.containsKey('body') && m.notification?.body != null)
+          'body': m.notification!.body!,
+        '_notification_event_id': m.messageId,
+      };
+      await _showAlertNotification(_local, id: m.hashCode, data: d);
+      return;
+    }
 
     final d = {...m.data, '_notification_event_id': m.messageId};
-    final isReminder =
-        m.data['type'] == 'NUDGE' || m.data['type'] == 'REMINDER_DUE';
     await _local.show(
       id: m.hashCode,
-      title:
-          m.notification?.title ??
-          (isReminder ? 'Alera reminder' : 'Alera health alert'),
-      body:
-          m.notification?.body ??
-          (isReminder
-              ? 'You have a reminder due.'
-              : 'A new alert needs your attention.'),
-      notificationDetails: NotificationDetails(
+      title: m.notification?.title ?? 'Alera reminder',
+      body: m.notification?.body ?? 'You have a reminder due.',
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          isReminder ? 'alera_nudges' : 'alera_alerts',
-          isReminder ? 'Alera reminders' : 'Alera alerts',
+          'alera_nudges',
+          'Alera reminders',
           importance: Importance.high,
           priority: Priority.high,
         ),
