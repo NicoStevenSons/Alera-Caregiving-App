@@ -74,6 +74,26 @@ String? _trimmedOrNull(String? value) {
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
+class PatientProfilePhotoResponse {
+  final String patientId;
+  final String profilePhotoUrl;
+
+  const PatientProfilePhotoResponse({
+    required this.patientId,
+    required this.profilePhotoUrl,
+  });
+
+  factory PatientProfilePhotoResponse.fromJson(Map<String, dynamic> json) {
+    return PatientProfilePhotoResponse(
+      patientId: _requiredString(json['patient_id'], 'patient_id'),
+      profilePhotoUrl: _requiredString(
+        json['profile_photo_url'],
+        'profile_photo_url',
+      ),
+    );
+  }
+}
+
 class PatientCreatedResponse {
   final String patientId;
   final String userId;

@@ -70,4 +70,12 @@ class _AccessSource implements CaregiverPatientDataSource {
     String patientId,
     UpdateMonitoringSettingsRequest request,
   ) => throw UnimplementedError();
+
+  @override
+  Future<PatientProfilePhotoResponse> uploadProfilePhoto(
+    String patientId, {
+    required List<int> bytes,
+    required String filename,
+    required String contentType,
+  }) => throw UnimplementedError();
 }

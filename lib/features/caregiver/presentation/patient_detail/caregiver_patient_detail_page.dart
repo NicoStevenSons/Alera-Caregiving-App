@@ -7,6 +7,7 @@ import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
@@ -293,12 +294,10 @@ class _CaregiverPatientDetailLoaderPageState
           color: const Color(0xFFB4AEC2),
         ),
       ),
-      body: Center(
-        child: failure == null
-            ? const CircularProgressIndicator(
-                key: Key('patient-detail-loading'),
-              )
-            : Column(
+      body: failure == null
+          ? const _PatientDetailLoadingSkeleton()
+          : Center(
+              child: Column(
                 key: Key(
                   failure.kind == CaregiverPatientFailureKind.notFound
                       ? 'patient-detail-not-found'
@@ -328,7 +327,7 @@ class _CaregiverPatientDetailLoaderPageState
                   ],
                 ],
               ),
-      ),
+            ),
     );
   }
 
@@ -511,6 +510,140 @@ class _Counter extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PatientDetailLoadingSkeleton extends StatelessWidget {
+  const _PatientDetailLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      key: const Key('patient-detail-loading'),
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AleraSpacing.medium,
+        AleraSpacing.small,
+        AleraSpacing.medium,
+        AleraSpacing.medium,
+      ),
+      children: const [
+        _PatientSummarySkeleton(),
+        SizedBox(height: 12),
+
+        _PatientCountersSkeleton(),
+        SizedBox(height: 12),
+
+        _PatientSectionSkeleton(lineWidths: [.72, .48]),
+        SizedBox(height: 12),
+
+        _PatientSectionSkeleton(lineWidths: [.62, .38]),
+        SizedBox(height: 12),
+
+        _PatientSectionSkeleton(lineWidths: [.82, .55]),
+        SizedBox(height: 12),
+
+        _PatientSectionSkeleton(lineWidths: [.68, .46, .58]),
+      ],
+    );
+  }
+}
+
+class _PatientSummarySkeleton extends StatelessWidget {
+  const _PatientSummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      child: Row(
+        children: [
+          const AleraSkeletonCircle(size: 58),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                AleraSkeletonBar(widthFactor: .62, height: 14),
+                SizedBox(height: 9),
+                AleraSkeletonBar(widthFactor: .42, height: 10),
+                SizedBox(height: 9),
+                AleraSkeletonBar(widthFactor: .52, height: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PatientCountersSkeleton extends StatelessWidget {
+  const _PatientCountersSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(child: _CounterSkeleton()),
+          SizedBox(width: 12),
+          Expanded(child: _CounterSkeleton()),
+          SizedBox(width: 12),
+          Expanded(child: _CounterSkeleton()),
+        ],
+      ),
+    );
+  }
+}
+
+class _CounterSkeleton extends StatelessWidget {
+  const _CounterSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const AleraSkeletonBlock(width: 34, height: 34, borderRadius: 10),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              AleraSkeletonBar(widthFactor: .55, height: 12),
+              SizedBox(height: 6),
+              AleraSkeletonBar(widthFactor: .82, height: 8),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PatientSectionSkeleton extends StatelessWidget {
+  final List<double> lineWidths;
+
+  const _PatientSectionSkeleton({required this.lineWidths});
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AleraSkeletonBar(widthFactor: .38, height: 14),
+          const SizedBox(height: 14),
+          for (int index = 0; index < lineWidths.length; index++) ...[
+            AleraSkeletonBar(
+              widthFactor: lineWidths[index],
+              height: index == 0 ? 12 : 10,
+            ),
+            if (index != lineWidths.length - 1) const SizedBox(height: 10),
+          ],
         ],
       ),
     );
