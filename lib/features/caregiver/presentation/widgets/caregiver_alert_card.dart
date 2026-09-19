@@ -12,6 +12,7 @@ import 'caregiver_alert_presentation.dart';
 class CaregiverAlertCard extends StatelessWidget {
   final CaregiverAlert alert;
   final String? patientName;
+  final String? patientPhotoUrl;
   final VoidCallback? onToggleExpanded;
   final VoidCallback? onViewMore;
   final VoidCallback? onMarkAsSeen;
@@ -24,6 +25,7 @@ class CaregiverAlertCard extends StatelessWidget {
     super.key,
     required this.alert,
     this.patientName,
+    this.patientPhotoUrl,
     this.onToggleExpanded,
     this.onViewMore,
     this.onMarkAsSeen,
@@ -89,6 +91,7 @@ class CaregiverAlertCard extends StatelessWidget {
                         if (showPatientName)
                           _AlertPatientAvatar(
                             name: name,
+                            photoUrl: patientPhotoUrl,
                             radius: 28,
                             badgeAssetPath: badgeIconPath,
                             badgeSemanticLabel: badgeLabel,
@@ -210,12 +213,14 @@ class CaregiverAlertCard extends StatelessWidget {
 
 class _AlertPatientAvatar extends StatelessWidget {
   final String name;
+  final String? photoUrl;
   final double radius;
   final String badgeAssetPath;
   final String badgeSemanticLabel;
 
   const _AlertPatientAvatar({
     required this.name,
+    this.photoUrl,
     required this.radius,
     required this.badgeAssetPath,
     required this.badgeSemanticLabel,
@@ -232,7 +237,7 @@ class _AlertPatientAvatar extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            AleraPatientAvatar(name: name, radius: radius),
+            AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: radius),
             Positioned(
               right: -2,
               bottom: -2,

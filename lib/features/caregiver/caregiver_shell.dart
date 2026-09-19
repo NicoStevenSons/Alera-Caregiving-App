@@ -755,6 +755,7 @@ class _CaregiverShellState extends State<CaregiverShell>
                   contentPadding: EdgeInsets.zero,
                   leading: AleraBadgedAvatar(
                     name: patient.name,
+                    photoUrl: patient.profilePhotoUrl,
                     radius: 20,
                     status: PatientStatusChip.describe(
                       patient.status,

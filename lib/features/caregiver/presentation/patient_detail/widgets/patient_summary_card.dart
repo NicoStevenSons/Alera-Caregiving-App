@@ -146,37 +146,3 @@ class _QuickAction extends StatelessWidget {
     );
   }
 }
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> words = name.trim().split(RegExp(r'\s+'));
-    final String initials = words
-        .where((word) => word.isNotEmpty)
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-    final int colorSeed = name.codeUnits.fold(0, (sum, value) => sum + value);
-    const List<Color> colors = [
-      Color(0xFF8165C7),
-      Color(0xFF4D91A8),
-      Color(0xFFB36B8D),
-    ];
-
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: colors[colorSeed % colors.length],
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}

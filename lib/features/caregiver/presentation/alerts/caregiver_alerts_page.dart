@@ -5,6 +5,7 @@ import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/status/adapters/alert_severity_chip.dart';
 import '../../../../design_system/status/alera_badged_avatar.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
+import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/models/care_recipient.dart';
@@ -297,6 +298,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
               children: [
                 _PatientFilterChip(
                   label: _patientFilterLabel,
+                  photoUrl: _patientFilterId == null
+                      ? null
+                      : _recipientFor(_patientFilterId!)?.profilePhotoUrl,
                   selected: _patientFilterId != null,
                   onTap: _openFilterDrawer,
                 ),
@@ -398,6 +402,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                                                 _recipientFor(
                                                   alert.careRecipientId,
                                                 )?.name,
+                                            patientPhotoUrl: _recipientFor(
+                                              alert.careRecipientId,
+                                            )?.profilePhotoUrl,
                                             showPatientName: true,
                                             unread:
                                                 alert.status ==
@@ -451,11 +458,13 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
 
 class _PatientFilterChip extends StatelessWidget {
   final String label;
+  final String? photoUrl;
   final bool selected;
   final VoidCallback onTap;
 
   const _PatientFilterChip({
     required this.label,
+    this.photoUrl,
     required this.selected,
     required this.onTap,
   });
@@ -466,7 +475,9 @@ class _PatientFilterChip extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8),
       child: AleraPill(
         label: label,
-        leading: const Icon(Icons.people_outline, size: 20),
+        leading: selected
+            ? AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 10)
+            : const Icon(Icons.people_outline, size: 20),
         selected: selected,
         variant: AleraPillVariant.filter,
         onTap: onTap,
@@ -544,6 +555,7 @@ class _AlertFilterDrawer extends StatelessWidget {
                         'alerts-patient-filter-${patient.id}',
                       ),
                       label: patient.name,
+                      photoUrl: patient.profilePhotoUrl,
                       selected: selectedPatientId == patient.id,
                       onTap: () => onPatientSelected(patient.id),
                     ),
@@ -625,12 +637,14 @@ class _FilterSectionTitle extends StatelessWidget {
 
 class _PatientFilterOption extends StatelessWidget {
   final String label;
+  final String? photoUrl;
   final bool selected;
   final VoidCallback onTap;
 
   const _PatientFilterOption({
     super.key,
     required this.label,
+    this.photoUrl,
     required this.selected,
     required this.onTap,
   });
@@ -639,6 +653,7 @@ class _PatientFilterOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      leading: AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
       title: Text(label),
       trailing: selected
           ? const Icon(Icons.check, semanticLabel: 'Selected')
@@ -970,6 +985,9 @@ class _GroupedHistory extends StatelessWidget {
                 patientName:
                     alert.patientDisplayName ??
                     recipientFor(alert.careRecipientId)?.name,
+                patientPhotoUrl: recipientFor(
+                  alert.careRecipientId,
+                )?.profilePhotoUrl,
                 showPatientName: true,
                 unread: alert.status == CaregiverAlertStatus.active,
                 expanded: expandedAlertIds.contains(alert.id),
@@ -1020,6 +1038,7 @@ class AlertListCard extends StatelessWidget {
             children: [
               AleraBadgedAvatar(
                 name: identity,
+                photoUrl: recipient?.profilePhotoUrl,
                 radius: 20,
                 status: AlertSeverityChip.describe(alert.severity, context),
               ),
