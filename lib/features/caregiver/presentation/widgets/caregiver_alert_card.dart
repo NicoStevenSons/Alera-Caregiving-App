@@ -7,6 +7,7 @@ import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/models/caregiver_alert.dart';
+import 'caregiver_alert_presentation.dart';
 
 class CaregiverAlertCard extends StatelessWidget {
   final CaregiverAlert alert;
@@ -34,34 +35,16 @@ class CaregiverAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool critical = alert.severity == CaregiverAlertSeverity.critical;
-    final Color stripe = critical ? AleraColors.critical : AleraColors.warning;
-    final String largeIconPath = switch (alert.metric) {
-      CaregiverAlertMetric.heartRate =>
-        'alera-figma-assets/assets/icons/vitals/heart_rate.svg',
-      CaregiverAlertMetric.spo2 =>
-        'alera-figma-assets/assets/icons/vitals/spo2.svg',
-      CaregiverAlertMetric.watchBattery =>
-        'alera-figma-assets/assets/icons/status/info.svg',
-      CaregiverAlertMetric.system =>
-        'alera-figma-assets/assets/icons/status/info.svg',
-    };
-    final String badgeIconPath = switch (alert.metric) {
-      CaregiverAlertMetric.heartRate =>
-        'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
-      CaregiverAlertMetric.spo2 =>
-        'alera-figma-assets/assets/icons/mini_status/spo2.svg',
-      CaregiverAlertMetric.watchBattery =>
-        'alera-figma-assets/assets/icons/mini_status/info.svg',
-      CaregiverAlertMetric.system =>
-        'alera-figma-assets/assets/icons/mini_status/system.svg',
-    };
-    final String badgeLabel = switch (alert.metric) {
-      CaregiverAlertMetric.heartRate => 'Heart rate',
-      CaregiverAlertMetric.spo2 => 'SpO₂',
-      CaregiverAlertMetric.watchBattery => 'Battery',
-      CaregiverAlertMetric.system => 'System',
-    };
+    final Color stripe = CaregiverAlertPresentation.accentColor(alert);
+    final String largeIconPath = CaregiverAlertPresentation.largeIconPath(
+      alert.metric,
+    );
+    final String badgeIconPath = CaregiverAlertPresentation.badgeAssetPath(
+      alert.metric,
+    );
+    final String badgeLabel = CaregiverAlertPresentation.typeLabel(
+      alert.metric,
+    );
     final String name = patientName ?? 'Unknown patient';
     final _AlertCardDisplayData displayData = _buildDisplayData(
       alert,
@@ -322,6 +305,8 @@ _AlertCardDisplayData _buildDisplayData(
     metricLabel: switch (alert.metric) {
       CaregiverAlertMetric.heartRate => 'Heart Rate',
       CaregiverAlertMetric.spo2 => 'SpO₂',
+      CaregiverAlertMetric.activity => 'Activity',
+      CaregiverAlertMetric.sleep => 'Sleep',
       CaregiverAlertMetric.watchBattery => 'Battery',
       CaregiverAlertMetric.system => 'System',
     },

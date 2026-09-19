@@ -12,6 +12,7 @@ import '../../domain/models/caregiver_alert.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../../data/alerts/caregiver_alert_controller.dart';
 import '../widgets/caregiver_alert_card.dart';
+import '../widgets/caregiver_alert_presentation.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 
 enum AlertFilter {
@@ -998,16 +999,10 @@ class AlertListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool heartRate = alert.metric == CaregiverAlertMetric.heartRate;
-    final bool spo2 = alert.metric == CaregiverAlertMetric.spo2;
-    final Color stripe = alert.severity == CaregiverAlertSeverity.critical
-        ? AleraColors.critical
-        : AleraColors.warning;
-    final String iconPath = heartRate
-        ? 'alera-figma-assets/assets/icons/mini_status/heart_rate.svg'
-        : spo2
-        ? 'alera-figma-assets/assets/icons/mini_status/spo2.svg'
-        : 'alera-figma-assets/assets/icons/mini_status/info.svg';
+    final Color stripe = CaregiverAlertPresentation.accentColor(alert);
+    final String iconPath = CaregiverAlertPresentation.badgeAssetPath(
+      alert.metric,
+    );
     final String identity = recipient?.name ?? 'Unknown patient';
     return Material(
       color: const Color(0xFFFCFBFF),

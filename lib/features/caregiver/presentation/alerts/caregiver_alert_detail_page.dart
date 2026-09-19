@@ -1132,6 +1132,8 @@ String _firstReadingTitle(CaregiverAlert alert) {
           ? 'Low heart rate noticed'
           : 'High heart rate noticed',
     CaregiverAlertMetric.spo2 => 'Low oxygen level noticed',
+    CaregiverAlertMetric.activity => alert.title,
+    CaregiverAlertMetric.sleep => alert.title,
     CaregiverAlertMetric.watchBattery => 'Low watch battery noticed',
     CaregiverAlertMetric.system => alert.title,
   };

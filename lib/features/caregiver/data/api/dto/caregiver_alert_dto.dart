@@ -73,11 +73,9 @@ class CaregiverAlertDto {
         'HEART_RATE' => CaregiverAlertMetric.heartRate,
         'SPO2' => CaregiverAlertMetric.spo2,
         'BATTERY_LEVEL' => CaregiverAlertMetric.watchBattery,
-        'CONNECTION_STATUS' ||
-        'INACTIVITY' ||
-        'ACTIVITY' ||
-        'SLEEP' ||
-        'SYNC_STATUS' => CaregiverAlertMetric.system,
+        'INACTIVITY' || 'ACTIVITY' => CaregiverAlertMetric.activity,
+        'SLEEP' => CaregiverAlertMetric.sleep,
+        'CONNECTION_STATUS' || 'SYNC_STATUS' => CaregiverAlertMetric.system,
         _ => CaregiverAlertMetric.system,
       },
       status: switch (status) {
