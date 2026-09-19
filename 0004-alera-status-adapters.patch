@@ -1,0 +1,1518 @@
+From 22cb9c4efa9a4d08d00da127cce1228500a52752 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sat, 19 Sep 2026 03:41:38 +0000
+Subject: [PATCH] feat(design-system): add 5 domain status adapters, integrate
+ into caregiver UI
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Patch 4 of the status badge standardization. Rebased on ab2ba4b ('fix: batch
+fix while waiting for uptime') per the pre-flight instruction — every file
+in the hotfix reference list was re-read from that commit before editing;
+none of its behaviors (extended relative-time formatting, CaregiverAlertMetric
+.system handling, tab-lifecycle/optimistic-seen logic) are touched or reverted
+here.
+
+Adapters (lib/design_system/status/adapters/), each a thin StatelessWidget
+plus a static describe() returning the raw AleraStatusDescriptor for reuse
+with AleraBadgedAvatar:
+
+- AlertSeverityChip: CaregiverAlertSeverity has only {warning, critical} —
+  no info state exists in the domain model, despite the original 3-tone plan.
+- ReminderStatusChip: CaregiverReminderStatus has only {missed, upcoming,
+  completed} — no separate overdue/snoozed state. Added a missing
+  reminderMissed label; 'missed' was incorrectly going to reuse 'Overdue'.
+- DeviceStatusChip: connection (PatientDeviceConnectionStatus, which does
+  have ) and battery (a raw percent) are independent in the data
+  model. Low battery overrides 'Connected' only when actually connected, at
+  or below a 20%-default, overridable threshold; a disconnected device's
+  battery reading never overrides its offline state.
+- PatientStatusChip: maps CareStatus (health/monitoring status), not
+  PatientAccessState (account connection) — the original plan's 'Patient
+  State' domain (Active/Pending Access/Inactive) is access state and remains
+  unbuilt; this adapter answers a different question under the name the
+  Patch 4 directive used. warning/needsAttention share a tone, split by
+  icon+label.
+- VitalTrendChip: VitalTrendSeverity only carries magnitude (info/warning/
+  critical), not direction. Added a local VitalTrendDirection enum (not a
+  backend concept) so a call site with the actual reading and the patient's
+  normal range can supply direction; omitting it renders a direction-neutral
+  fallback rather than guessing. critical-high get distinct labels from
+  warning-high (High vs Elevated), and critical-low from warning-low
+  (Critically low vs Low), so tone is never the only distinguishing signal.
+
+Feature integration:
+- CareRecipientCard (patient list, a genuine multi-patient feed): initials-only
+  CircleAvatar -> AleraBadgedAvatar carrying CareStatus; ad hoc
+  stable/'High Heart Rate' text row -> PatientStatusChip driven by the typed
+  enum instead of a string fallback.
+- CaregiverAlertCard: added AleraBadgedAvatar (radius 18, so the badge's 14px
+  floor lands at ~39% of avatar diameter rather than overwhelming a smaller
+  avatar) next to the patient name in the showPatientName branch, and an
+  AlertSeverityChip under the title so severity is never colour-stripe-only.
+- caregiver_shell.dart patient switcher: CircleAvatar+initials ->
+  AleraBadgedAvatar with the patient's CareStatus; removed the now-unused
+  _patientInitials helper.
+- caregiver_alerts_page.dart's AlertListCard (defined, currently unused by any
+  call site): _InitialAvatar -> AleraBadgedAvatar, for when it is wired up.
+
+Updated test/features/caregiver/people/caregiver_people_page_test.dart:
+'High Heart Rate' was an arbitrary placeholder for any non-stable status with
+no tie to Maria Santos's actual CareStatus.needsAttention (confirmed against
+the mock fixture); PatientStatusChip now renders 'Attention needed', the
+correct label for her real status. Widened the card-height assertion since
+the new status chip has more vertical padding than the plain text row it
+replaced — flagged inline to confirm the exact number with a real test run.
+
+Barrel: exported all 5 adapters from status.dart.
+
+Tests: one file per adapter covering every enum value's tone/label/icon,
+tone-sharing-but-label/icon-differing pairs (PatientStatusChip
+warning/needsAttention, VitalTrendChip's four warning/critical x direction
+combinations), the device battery-override interaction and its threshold
+override, and labelOverride pass-through.
+---
+ .../status/adapters/alert_severity_chip.dart  |  57 +++++++
+ .../status/adapters/device_status_chip.dart   | 110 +++++++++++++
+ .../status/adapters/patient_status_chip.dart  |  83 ++++++++++
+ .../status/adapters/reminder_status_chip.dart |  65 ++++++++
+ .../status/adapters/vital_trend_chip.dart     | 109 +++++++++++++
+ .../status/alera_status_labels.dart           |  22 +++
+ lib/design_system/status/status.dart          |   9 +-
+ lib/features/caregiver/caregiver_shell.dart   |  18 +--
+ .../alerts/caregiver_alerts_page.dart         |  35 +---
+ .../people/widgets/care_recipient_card.dart   |  68 ++------
+ .../widgets/caregiver_alert_card.dart         |  36 ++++-
+ .../adapters/alert_severity_chip_test.dart    |  82 ++++++++++
+ .../adapters/device_status_chip_test.dart     | 153 ++++++++++++++++++
+ .../adapters/patient_status_chip_test.dart    | 108 +++++++++++++
+ .../adapters/reminder_status_chip_test.dart   |  72 +++++++++
+ .../adapters/vital_trend_chip_test.dart       | 147 +++++++++++++++++
+ .../people/caregiver_people_page_test.dart    |  11 +-
+ 17 files changed, 1082 insertions(+), 103 deletions(-)
+ create mode 100644 lib/design_system/status/adapters/alert_severity_chip.dart
+ create mode 100644 lib/design_system/status/adapters/device_status_chip.dart
+ create mode 100644 lib/design_system/status/adapters/patient_status_chip.dart
+ create mode 100644 lib/design_system/status/adapters/reminder_status_chip.dart
+ create mode 100644 lib/design_system/status/adapters/vital_trend_chip.dart
+ create mode 100644 test/design_system/status/adapters/alert_severity_chip_test.dart
+ create mode 100644 test/design_system/status/adapters/device_status_chip_test.dart
+ create mode 100644 test/design_system/status/adapters/patient_status_chip_test.dart
+ create mode 100644 test/design_system/status/adapters/reminder_status_chip_test.dart
+ create mode 100644 test/design_system/status/adapters/vital_trend_chip_test.dart
+
+diff --git a/lib/design_system/status/adapters/alert_severity_chip.dart b/lib/design_system/status/adapters/alert_severity_chip.dart
+new file mode 100644
+index 0000000..5023737
+--- /dev/null
++++ b/lib/design_system/status/adapters/alert_severity_chip.dart
+@@ -0,0 +1,57 @@
++import 'package:flutter/material.dart';
++
++import '../../../features/caregiver/domain/models/caregiver_alert.dart';
++import '../alera_status_chip.dart';
++import '../alera_status_descriptor.dart';
++import '../alera_status_glyph.dart';
++import '../alera_status_labels.dart';
++import '../alera_status_tone.dart';
++
++/// Maps [CaregiverAlertSeverity] to an [AleraStatusChip].
++///
++/// [CaregiverAlertSeverity] currently has only `warning` and `critical` — there
++/// is no `info` alert severity in the domain model. If one is added later,
++/// this adapter's `switch` will fail to compile until a case is added for it,
++/// which is the point: an unhandled severity should never silently render as
++/// something else.
++class AlertSeverityChip extends StatelessWidget {
++  final CaregiverAlertSeverity severity;
++  final String? labelOverride;
++  final AleraStatusChipSize size;
++
++  const AlertSeverityChip(
++    this.severity, {
++    super.key,
++    this.labelOverride,
++    this.size = AleraStatusChipSize.medium,
++  });
++
++  static AleraStatusDescriptor describe(
++    CaregiverAlertSeverity severity,
++    BuildContext context,
++  ) {
++    final AleraStatusLabels labels = AleraStatusLabels.of(context);
++
++    return switch (severity) {
++      CaregiverAlertSeverity.critical => AleraStatusDescriptor(
++        tone: AleraStatusTone.critical,
++        glyph: const AleraStatusGlyph.material(Icons.error),
++        label: labels.alertCritical,
++      ),
++      CaregiverAlertSeverity.warning => AleraStatusDescriptor(
++        tone: AleraStatusTone.warning,
++        glyph: const AleraStatusGlyph.material(Icons.warning_amber),
++        label: labels.alertWarning,
++      ),
++    };
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return AleraStatusChip(
++      descriptor: describe(severity, context),
++      labelOverride: labelOverride,
++      size: size,
++    );
++  }
++}
+diff --git a/lib/design_system/status/adapters/device_status_chip.dart b/lib/design_system/status/adapters/device_status_chip.dart
+new file mode 100644
+index 0000000..7f68a40
+--- /dev/null
++++ b/lib/design_system/status/adapters/device_status_chip.dart
+@@ -0,0 +1,110 @@
++import 'package:flutter/material.dart';
++
++import '../../../features/caregiver/data/api/dto/patient_dto.dart'
++    show PatientDeviceConnectionStatus;
++import '../alera_status_assets.dart';
++import '../alera_status_chip.dart';
++import '../alera_status_descriptor.dart';
++import '../alera_status_glyph.dart';
++import '../alera_status_labels.dart';
++import '../alera_status_tone.dart';
++
++/// Maps device connectivity (and, when known, battery level) to an
++/// [AleraStatusChip].
++///
++/// Connection and battery are two independent facts about a device in the
++/// data model — a connection-status enum and a separate raw battery
++/// percentage — there is no single enum with a combined "low battery" state.
++/// This adapter reflects that: it renders connection status by default, and
++/// only shows a low-battery warning in place of "Connected" when the device
++/// is actually connected and its battery is at or below [lowBatteryThreshold].
++/// A disconnected device's battery reading is stale, so battery never
++/// overrides a non-connected state.
++class DeviceStatusChip extends StatelessWidget {
++  final PatientDeviceConnectionStatus connectionStatus;
++
++  /// 0–100, or null when unknown. Only consulted while [connectionStatus] is
++  /// `connected`.
++  final int? batteryPercent;
++
++  /// No house convention exists yet for what counts as "low"; 20% is this
++  /// adapter's default and can be overridden per call site.
++  final int lowBatteryThreshold;
++
++  final String? labelOverride;
++  final AleraStatusChipSize size;
++
++  const DeviceStatusChip(
++    this.connectionStatus, {
++    super.key,
++    this.batteryPercent,
++    this.lowBatteryThreshold = 20,
++    this.labelOverride,
++    this.size = AleraStatusChipSize.medium,
++  });
++
++  static AleraStatusDescriptor describe(
++    PatientDeviceConnectionStatus connectionStatus,
++    BuildContext context, {
++    int? batteryPercent,
++    int lowBatteryThreshold = 20,
++  }) {
++    final AleraStatusLabels labels = AleraStatusLabels.of(context);
++
++    if (connectionStatus == PatientDeviceConnectionStatus.connected &&
++        batteryPercent != null &&
++        batteryPercent <= lowBatteryThreshold) {
++      return AleraStatusDescriptor(
++        tone: AleraStatusTone.warning,
++        glyph: const AleraStatusGlyph(
++          assetPath: AleraStatusAssets.deviceLowBattery,
++          fallbackIcon: Icons.battery_alert,
++        ),
++        label: labels.deviceLowBattery,
++      );
++    }
++
++    return switch (connectionStatus) {
++      PatientDeviceConnectionStatus.connected => AleraStatusDescriptor(
++        tone: AleraStatusTone.success,
++        glyph: const AleraStatusGlyph.material(Icons.wifi),
++        label: labels.deviceOnline,
++      ),
++      PatientDeviceConnectionStatus.syncing => AleraStatusDescriptor(
++        tone: AleraStatusTone.info,
++        glyph: const AleraStatusGlyph.material(Icons.sync),
++        label: labels.deviceSyncing,
++      ),
++      PatientDeviceConnectionStatus.failed => AleraStatusDescriptor(
++        tone: AleraStatusTone.critical,
++        glyph: const AleraStatusGlyph.material(Icons.sync_problem),
++        label: labels.deviceSyncFailed,
++      ),
++      PatientDeviceConnectionStatus.disconnected ||
++      PatientDeviceConnectionStatus.notConnected => AleraStatusDescriptor(
++        tone: AleraStatusTone.neutral,
++        glyph: const AleraStatusGlyph.material(Icons.wifi_off),
++        label: labels.deviceOffline,
++      ),
++      PatientDeviceConnectionStatus.unknown => AleraStatusDescriptor(
++        tone: AleraStatusTone.neutral,
++        glyph: const AleraStatusGlyph.material(Icons.help_outline),
++        label: labels.deviceUnknown,
++      ),
++    };
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return AleraStatusChip(
++      descriptor: describe(
++        connectionStatus,
++        context,
++        batteryPercent: batteryPercent,
++        lowBatteryThreshold: lowBatteryThreshold,
++      ),
++      labelOverride: labelOverride,
++      size: size,
++    );
++  }
++}
+diff --git a/lib/design_system/status/adapters/patient_status_chip.dart b/lib/design_system/status/adapters/patient_status_chip.dart
+new file mode 100644
+index 0000000..90d11fc
+--- /dev/null
++++ b/lib/design_system/status/adapters/patient_status_chip.dart
+@@ -0,0 +1,83 @@
++import 'package:flutter/material.dart';
++
++import '../../../features/caregiver/domain/models/care_recipient.dart';
++import '../alera_status_chip.dart';
++import '../alera_status_descriptor.dart';
++import '../alera_status_glyph.dart';
++import '../alera_status_labels.dart';
++import '../alera_status_tone.dart';
++
++/// Maps [CareStatus] — a patient's health/monitoring status — to an
++/// [AleraStatusChip].
++///
++/// This is a different domain from patient *access* state (whether the
++/// patient's account is connected — `PatientAccessState` in the API layer):
++/// the original five-domain plan's "Patient State" referred to access state
++/// (Active / Pending Access / Inactive) and remains unbuilt. This adapter
++/// covers what the Patch 4 directive actually asked for under the same name —
++/// Stable / Attention needed / Critical — which is [CareStatus].
++///
++/// `warning` and `needsAttention` share an amber tone; they're told apart by
++/// icon and label since telling them apart by a colour split would have been
++/// a guess about intended UX. Drop whichever of the two you don't need.
++class PatientStatusChip extends StatelessWidget {
++  final CareStatus status;
++  final String? labelOverride;
++  final AleraStatusChipSize size;
++
++  const PatientStatusChip(
++    this.status, {
++    super.key,
++    this.labelOverride,
++    this.size = AleraStatusChipSize.medium,
++  });
++
++  static AleraStatusDescriptor describe(
++    CareStatus status,
++    BuildContext context,
++  ) {
++    final AleraStatusLabels labels = AleraStatusLabels.of(context);
++
++    return switch (status) {
++      CareStatus.critical => AleraStatusDescriptor(
++        tone: AleraStatusTone.critical,
++        glyph: const AleraStatusGlyph.material(Icons.error),
++        label: labels.patientStatusCritical,
++      ),
++      CareStatus.warning => AleraStatusDescriptor(
++        tone: AleraStatusTone.warning,
++        glyph: const AleraStatusGlyph.material(Icons.warning_amber),
++        label: labels.patientStatusWarning,
++      ),
++      CareStatus.needsAttention => AleraStatusDescriptor(
++        tone: AleraStatusTone.warning,
++        glyph: const AleraStatusGlyph.material(Icons.flag),
++        label: labels.patientStatusNeedsAttention,
++      ),
++      CareStatus.stable => AleraStatusDescriptor(
++        tone: AleraStatusTone.success,
++        glyph: const AleraStatusGlyph.material(Icons.check_circle_outline),
++        label: labels.patientStatusStable,
++      ),
++      CareStatus.noData => AleraStatusDescriptor(
++        tone: AleraStatusTone.neutral,
++        glyph: const AleraStatusGlyph.material(Icons.remove_circle_outline),
++        label: labels.patientStatusNoData,
++      ),
++      CareStatus.unknown => AleraStatusDescriptor(
++        tone: AleraStatusTone.neutral,
++        glyph: const AleraStatusGlyph.material(Icons.help_outline),
++        label: labels.patientStatusUnknown,
++      ),
++    };
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return AleraStatusChip(
++      descriptor: describe(status, context),
++      labelOverride: labelOverride,
++      size: size,
++    );
++  }
++}
+diff --git a/lib/design_system/status/adapters/reminder_status_chip.dart b/lib/design_system/status/adapters/reminder_status_chip.dart
+new file mode 100644
+index 0000000..aa3f8cc
+--- /dev/null
++++ b/lib/design_system/status/adapters/reminder_status_chip.dart
+@@ -0,0 +1,65 @@
++import 'package:flutter/material.dart';
++
++import '../../../features/caregiver/domain/models/caregiver_reminder.dart';
++import '../alera_status_chip.dart';
++import '../alera_status_descriptor.dart';
++import '../alera_status_glyph.dart';
++import '../alera_status_labels.dart';
++import '../alera_status_tone.dart';
++
++/// Maps [CaregiverReminderStatus] to an [AleraStatusChip].
++///
++/// [CaregiverReminderStatus] has three states — `missed`, `upcoming`,
++/// `completed` — not the four-state (Pending / Overdue / Completed / Missed)
++/// model originally sketched for this domain. There is no separate "overdue"
++/// or "snoozed" state here; `upcoming` covers everything not yet due. The
++/// richer `ReminderOccurrenceStatus` in `features/reminders/domain` does have
++/// `due`/`snoozed`/`completedLate` etc., but that's the patient-side reminder
++/// lifecycle model, not what the caregiver feed's `CaregiverReminder` uses —
++/// a separate adapter for that model is a follow-up, not this one.
++class ReminderStatusChip extends StatelessWidget {
++  final CaregiverReminderStatus status;
++  final String? labelOverride;
++  final AleraStatusChipSize size;
++
++  const ReminderStatusChip(
++    this.status, {
++    super.key,
++    this.labelOverride,
++    this.size = AleraStatusChipSize.medium,
++  });
++
++  static AleraStatusDescriptor describe(
++    CaregiverReminderStatus status,
++    BuildContext context,
++  ) {
++    final AleraStatusLabels labels = AleraStatusLabels.of(context);
++
++    return switch (status) {
++      CaregiverReminderStatus.missed => AleraStatusDescriptor(
++        tone: AleraStatusTone.critical,
++        glyph: const AleraStatusGlyph.material(Icons.alarm),
++        label: labels.reminderMissed,
++      ),
++      CaregiverReminderStatus.upcoming => AleraStatusDescriptor(
++        tone: AleraStatusTone.info,
++        glyph: const AleraStatusGlyph.material(Icons.event_outlined),
++        label: labels.reminderScheduled,
++      ),
++      CaregiverReminderStatus.completed => AleraStatusDescriptor(
++        tone: AleraStatusTone.success,
++        glyph: const AleraStatusGlyph.material(Icons.check_circle),
++        label: labels.reminderCompleted,
++      ),
++    };
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return AleraStatusChip(
++      descriptor: describe(status, context),
++      labelOverride: labelOverride,
++      size: size,
++    );
++  }
++}
+diff --git a/lib/design_system/status/adapters/vital_trend_chip.dart b/lib/design_system/status/adapters/vital_trend_chip.dart
+new file mode 100644
+index 0000000..6e27599
+--- /dev/null
++++ b/lib/design_system/status/adapters/vital_trend_chip.dart
+@@ -0,0 +1,109 @@
++import 'package:flutter/material.dart';
++
++import '../../../features/caregiver/data/api/dto/vital_trend_dto.dart'
++    show VitalTrendSeverity;
++import '../alera_status_chip.dart';
++import '../alera_status_descriptor.dart';
++import '../alera_status_glyph.dart';
++import '../alera_status_labels.dart';
++import '../alera_status_tone.dart';
++
++/// Which side of the normal range a vital reading fell on.
++///
++/// [VitalTrendSeverity] (the real backend model) only carries magnitude of
++/// concern — `info` / `warning` / `critical` — not direction. There is no
++/// existing enum for "above range" vs "below range" anywhere in the codebase;
++/// this one exists solely so this adapter can pick a correct arrow rather than
++/// guessing. A call site that has the actual reading and the patient's normal
++/// range (`PatientDto.normalHrMin`/`normalHrMax`,
++/// `usualSpo2Min`/`usualSpo2Max`) should compare them and pass the result
++/// here. Passing null renders a direction-neutral label and icon — correct
++/// for `info`/`unknown` severity, a fallback (not a claim of accuracy) for
++/// `warning`/`critical`.
++enum VitalTrendDirection { aboveRange, belowRange }
++
++/// Maps a [VitalTrendSeverity] and, when known, a [VitalTrendDirection] to an
++/// [AleraStatusChip].
++///
++/// Kept off `AleraStatusDot` deliberately: a dot carries no glyph, so an
++/// elevated dot and a low dot (or a merely-elevated dot and a dangerously-high
++/// one) would be visually identical amber or red circles. This chip's arrow
++/// and its label are what actually distinguish them.
++class VitalTrendChip extends StatelessWidget {
++  final VitalTrendSeverity severity;
++  final VitalTrendDirection? direction;
++  final String? labelOverride;
++  final AleraStatusChipSize size;
++
++  const VitalTrendChip(
++    this.severity, {
++    super.key,
++    this.direction,
++    this.labelOverride,
++    this.size = AleraStatusChipSize.medium,
++  });
++
++  static AleraStatusDescriptor describe(
++    VitalTrendSeverity severity,
++    BuildContext context, {
++    VitalTrendDirection? direction,
++  }) {
++    final AleraStatusLabels labels = AleraStatusLabels.of(context);
++
++    return switch (severity) {
++      VitalTrendSeverity.info => AleraStatusDescriptor(
++        tone: AleraStatusTone.success,
++        glyph: const AleraStatusGlyph.material(Icons.remove),
++        label: labels.vitalNormal,
++      ),
++      VitalTrendSeverity.warning => switch (direction) {
++        VitalTrendDirection.aboveRange => AleraStatusDescriptor(
++          tone: AleraStatusTone.warning,
++          glyph: const AleraStatusGlyph.material(Icons.arrow_upward),
++          label: labels.vitalElevated,
++        ),
++        VitalTrendDirection.belowRange => AleraStatusDescriptor(
++          tone: AleraStatusTone.warning,
++          glyph: const AleraStatusGlyph.material(Icons.arrow_downward),
++          label: labels.vitalLow,
++        ),
++        null => AleraStatusDescriptor(
++          tone: AleraStatusTone.warning,
++          glyph: const AleraStatusGlyph.material(Icons.warning_amber),
++          label: labels.vitalWarning,
++        ),
++      },
++      VitalTrendSeverity.critical => switch (direction) {
++        VitalTrendDirection.aboveRange => AleraStatusDescriptor(
++          tone: AleraStatusTone.critical,
++          glyph: const AleraStatusGlyph.material(Icons.arrow_upward),
++          label: labels.vitalHigh,
++        ),
++        VitalTrendDirection.belowRange => AleraStatusDescriptor(
++          tone: AleraStatusTone.critical,
++          glyph: const AleraStatusGlyph.material(Icons.arrow_downward),
++          label: labels.vitalCriticallyLow,
++        ),
++        null => AleraStatusDescriptor(
++          tone: AleraStatusTone.critical,
++          glyph: const AleraStatusGlyph.material(Icons.error),
++          label: labels.vitalCritical,
++        ),
++      },
++      VitalTrendSeverity.unknown => AleraStatusDescriptor(
++        tone: AleraStatusTone.neutral,
++        glyph: const AleraStatusGlyph.material(Icons.help_outline),
++        label: labels.vitalUnknown,
++      ),
++    };
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return AleraStatusChip(
++      descriptor: describe(severity, context, direction: direction),
++      labelOverride: labelOverride,
++      size: size,
++    );
++  }
++}
+diff --git a/lib/design_system/status/alera_status_labels.dart b/lib/design_system/status/alera_status_labels.dart
+index c258701..fe467c4 100644
+--- a/lib/design_system/status/alera_status_labels.dart
++++ b/lib/design_system/status/alera_status_labels.dart
+@@ -30,6 +30,7 @@ class AleraStatusLabels {
+ 
+   // Reminder state.
+   String get reminderOverdue => 'Overdue';
++  String get reminderMissed => 'Missed';
+   String get reminderSnoozed => 'Snoozed';
+   String get reminderScheduled => 'Scheduled';
+   String get reminderCompleted => 'Completed';
+@@ -38,14 +39,35 @@ class AleraStatusLabels {
+   String get deviceOnline => 'Online';
+   String get deviceLowBattery => 'Low battery';
+   String get deviceOffline => 'Offline';
++  String get deviceSyncing => 'Syncing';
++  String get deviceSyncFailed => 'Sync failed';
++  String get deviceUnknown => 'Unknown';
+ 
+   // Patient state.
+   String get patientActive => 'Active';
+   String get patientPendingAccess => 'Pending access';
+   String get patientInactive => 'Inactive';
+ 
++  // Patient monitoring status. A distinct domain from patient access state
++  // above: this is the patient's health/monitoring status (CareStatus), not
++  // whether their account is connected (PatientAccessState). The original
++  // five-domain plan named the access-state domain "Patient State"; this one
++  // answers a different question and existed under this same adapter name in
++  // the Patch 4 directive.
++  String get patientStatusStable => 'Stable';
++  String get patientStatusWarning => 'Warning';
++  String get patientStatusCritical => 'Critical';
++  String get patientStatusNeedsAttention => 'Attention needed';
++  String get patientStatusNoData => 'No data';
++  String get patientStatusUnknown => 'Unknown';
++
+   // Vital / trend labels.
+   String get vitalElevated => 'Elevated';
+   String get vitalNormal => 'Normal';
+   String get vitalLow => 'Low';
++  String get vitalHigh => 'High';
++  String get vitalCriticallyLow => 'Critically low';
++  String get vitalWarning => 'Warning';
++  String get vitalCritical => 'Critical';
++  String get vitalUnknown => 'Unknown';
+ }
+diff --git a/lib/design_system/status/status.dart b/lib/design_system/status/status.dart
+index 01df5d2..495fc3a 100644
+--- a/lib/design_system/status/status.dart
++++ b/lib/design_system/status/status.dart
+@@ -1,8 +1,13 @@
+-/// Alera status primitives: tone tokens, glyphs, descriptors, renderers and
+-/// the badged patient avatar composed from them.
++/// Alera status primitives: tone tokens, glyphs, descriptors, renderers, the
++/// badged patient avatar, and the domain adapters built on top of them.
+ library;
+ 
+ export '../widgets/alera_patient_avatar.dart';
++export 'adapters/alert_severity_chip.dart';
++export 'adapters/device_status_chip.dart';
++export 'adapters/patient_status_chip.dart';
++export 'adapters/reminder_status_chip.dart';
++export 'adapters/vital_trend_chip.dart';
+ export 'alera_badged_avatar.dart';
+ export 'alera_status_assets.dart';
+ export 'alera_status_badge.dart';
+diff --git a/lib/features/caregiver/caregiver_shell.dart b/lib/features/caregiver/caregiver_shell.dart
+index 54bd449..9eea409 100644
+--- a/lib/features/caregiver/caregiver_shell.dart
++++ b/lib/features/caregiver/caregiver_shell.dart
+@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
+ 
+ import '../../design_system/alera_spacing.dart';
+ import '../../design_system/alera_theme.dart';
++import '../../design_system/status/status.dart';
+ 
+ import '../../design_system/alera_typography.dart';
+ import 'domain/repositories/caregiver_repository.dart';
+@@ -675,8 +676,13 @@ class _CaregiverShellState extends State<CaregiverShell>
+                 ListTile(
+                   key: ValueKey<String>('patient-switch-${patient.id}'),
+                   contentPadding: EdgeInsets.zero,
+-                  leading: CircleAvatar(
+-                    child: Text(_patientInitials(patient.name)),
++                  leading: AleraBadgedAvatar(
++                    name: patient.name,
++                    radius: 20,
++                    status: PatientStatusChip.describe(
++                      patient.status,
++                      sheetContext,
++                    ),
+                   ),
+                   title: Text(patient.name),
+                   subtitle: Text(patient.relationshipLabel),
+@@ -700,14 +706,6 @@ class _CaregiverShellState extends State<CaregiverShell>
+     );
+   }
+ 
+-  String _patientInitials(String name) => name
+-      .trim()
+-      .split(RegExp(r'\s+'))
+-      .where((part) => part.isNotEmpty)
+-      .take(2)
+-      .map((part) => part.characters.first.toUpperCase())
+-      .join();
+-
+   void _openVitalTrend(
+     BuildContext context,
+     CareRecipient patient,
+diff --git a/lib/features/caregiver/presentation/alerts/caregiver_alerts_page.dart b/lib/features/caregiver/presentation/alerts/caregiver_alerts_page.dart
+index 0e8da05..ec88b28 100644
+--- a/lib/features/caregiver/presentation/alerts/caregiver_alerts_page.dart
++++ b/lib/features/caregiver/presentation/alerts/caregiver_alerts_page.dart
+@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
+ 
+ import '../../../../design_system/alera_colors.dart';
+ import '../../../../design_system/alera_typography.dart';
++import '../../../../design_system/status/adapters/alert_severity_chip.dart';
++import '../../../../design_system/status/alera_badged_avatar.dart';
+ import '../../../../design_system/widgets/alera_pill.dart';
+ import '../../../../design_system/widgets/alera_refresh_indicator.dart';
+ import '../../../../design_system/widgets/alera_svg_icon.dart';
+@@ -1020,7 +1022,11 @@ class AlertListCard extends StatelessWidget {
+           ),
+           child: Row(
+             children: [
+-              _InitialAvatar(name: identity),
++              AleraBadgedAvatar(
++                name: identity,
++                radius: 20,
++                status: AlertSeverityChip.describe(alert.severity, context),
++              ),
+               const SizedBox(width: 8),
+               AleraSvgIcon(assetPath: iconPath, width: 28, height: 28),
+               const SizedBox(width: 8),
+@@ -1084,30 +1090,3 @@ class AlertListCard extends StatelessWidget {
+     return '$years year${years == 1 ? '' : 's'} ago';
+   }
+ }
+-
+-class _InitialAvatar extends StatelessWidget {
+-  final String name;
+-
+-  const _InitialAvatar({required this.name});
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final String initials = name
+-        .trim()
+-        .split(RegExp(r'\s+'))
+-        .where((word) => word.isNotEmpty)
+-        .take(2)
+-        .map((word) => word.characters.first.toUpperCase())
+-        .join();
+-    const colors = [Color(0xFF8165C7), Color(0xFF4D91A8), Color(0xFFB36B8D)];
+-    final int seed = name.codeUnits.fold(0, (sum, value) => sum + value);
+-    return CircleAvatar(
+-      radius: 20,
+-      backgroundColor: colors[seed % colors.length],
+-      child: Text(
+-        initials,
+-        style: const TextStyle(color: Colors.white, fontSize: 12),
+-      ),
+-    );
+-  }
+-}
+diff --git a/lib/features/caregiver/presentation/people/widgets/care_recipient_card.dart b/lib/features/caregiver/presentation/people/widgets/care_recipient_card.dart
+index ea6184e..f1b11c9 100644
+--- a/lib/features/caregiver/presentation/people/widgets/care_recipient_card.dart
++++ b/lib/features/caregiver/presentation/people/widgets/care_recipient_card.dart
+@@ -1,8 +1,9 @@
+ import 'package:flutter/material.dart';
+ 
+-import '../../../../../design_system/alera_colors.dart';
+ import '../../../../../design_system/alera_spacing.dart';
+ import '../../../../../design_system/alera_typography.dart';
++import '../../../../../design_system/status/adapters/patient_status_chip.dart';
++import '../../../../../design_system/status/alera_badged_avatar.dart';
+ import '../../../../../design_system/widgets/alera_card.dart';
+ import '../../../../../design_system/widgets/alera_svg_icon.dart';
+ import '../../../domain/models/care_recipient.dart';
+@@ -19,15 +20,17 @@ class CareRecipientCard extends StatelessWidget {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    final bool isStable = careRecipient.status == CareStatus.stable;
+-
+     return AleraCard(
+       onTap: onTap,
+       padding: const EdgeInsets.fromLTRB(10, 10, 14, 12),
+       child: Row(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+-          _InitialAvatar(name: careRecipient.name),
++          AleraBadgedAvatar(
++            name: careRecipient.name,
++            radius: 20,
++            status: PatientStatusChip.describe(careRecipient.status, context),
++          ),
+           const SizedBox(width: 10),
+           Expanded(
+             child: Column(
+@@ -50,15 +53,12 @@ class CareRecipientCard extends StatelessWidget {
+                   ),
+                   const SizedBox(height: 2),
+                 ],
+-                _StatusRow(
+-                  assetPath: isStable
+-                      ? 'alera-figma-assets/assets/icons/status/stable.svg'
+-                      : 'alera-figma-assets/assets/icons/status/warning.svg',
+-                  label: careRecipient.backendBacked
+-                      ? careRecipient.monitoringStatusLabel
+-                      : isStable
+-                      ? 'Stable'
+-                      : 'High Heart Rate',
++                Padding(
++                  padding: const EdgeInsets.symmetric(vertical: 2),
++                  child: PatientStatusChip(
++                    careRecipient.status,
++                    size: AleraStatusChipSize.small,
++                  ),
+                 ),
+                 const SizedBox(height: 2),
+                 _StatusRow(
+@@ -105,48 +105,6 @@ class CareRecipientCard extends StatelessWidget {
+   }
+ }
+ 
+-class _InitialAvatar extends StatelessWidget {
+-  final String name;
+-
+-  const _InitialAvatar({required this.name});
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final List<String> words = name
+-        .trim()
+-        .split(RegExp(r'\s+'))
+-        .where((word) => word.isNotEmpty)
+-        .toList();
+-
+-    final String initials = words
+-        .take(2)
+-        .map((word) => word.characters.first.toUpperCase())
+-        .join();
+-
+-    const List<Color> colors = [
+-      AleraColors.primary,
+-      AleraColors.information,
+-      AleraColors.critical,
+-    ];
+-
+-    final int colorIndex =
+-        name.codeUnits.fold(0, (sum, value) => sum + value) % colors.length;
+-
+-    return CircleAvatar(
+-      radius: 20,
+-      backgroundColor: colors[colorIndex],
+-      child: Text(
+-        initials,
+-        style: const TextStyle(
+-          color: Colors.white,
+-          fontSize: 14,
+-          fontWeight: FontWeight.w700,
+-        ),
+-      ),
+-    );
+-  }
+-}
+-
+ class _StatusRow extends StatelessWidget {
+   final String assetPath;
+   final String label;
+diff --git a/lib/features/caregiver/presentation/widgets/caregiver_alert_card.dart b/lib/features/caregiver/presentation/widgets/caregiver_alert_card.dart
+index 7d22e79..5e7896a 100644
+--- a/lib/features/caregiver/presentation/widgets/caregiver_alert_card.dart
++++ b/lib/features/caregiver/presentation/widgets/caregiver_alert_card.dart
+@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
+ 
+ import '../../../../design_system/alera_colors.dart';
+ import '../../../../design_system/alera_typography.dart';
++import '../../../../design_system/status/adapters/alert_severity_chip.dart';
++import '../../../../design_system/status/alera_badged_avatar.dart';
++import '../../../../design_system/status/alera_status_chip.dart';
+ import '../../../../design_system/widgets/alera_card.dart';
+ import '../../../../design_system/widgets/alera_button.dart';
+ import '../../../../design_system/widgets/alera_svg_icon.dart';
+@@ -104,12 +107,26 @@ class CaregiverAlertCard extends StatelessWidget {
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               if (showPatientName && name.isNotEmpty)
+-                                Text(
+-                                  name,
+-                                  style: const TextStyle(
+-                                    color: AleraColors.textSecondary,
+-                                    fontSize: 10,
+-                                  ),
++                                Row(
++                                  mainAxisSize: MainAxisSize.min,
++                                  children: [
++                                    AleraBadgedAvatar(
++                                      name: name,
++                                      radius: 18,
++                                      status: AlertSeverityChip.describe(
++                                        alert.severity,
++                                        context,
++                                      ),
++                                    ),
++                                    const SizedBox(width: 6),
++                                    Text(
++                                      name,
++                                      style: const TextStyle(
++                                        color: AleraColors.textSecondary,
++                                        fontSize: 10,
++                                      ),
++                                    ),
++                                  ],
+                                 ),
+                               Text(
+                                 alert.title,
+@@ -121,6 +138,13 @@ class CaregiverAlertCard extends StatelessWidget {
+                                       : FontWeight.w600,
+                                 ),
+                               ),
++                              Padding(
++                                padding: const EdgeInsets.only(top: 2),
++                                child: AlertSeverityChip(
++                                  alert.severity,
++                                  size: AleraStatusChipSize.small,
++                                ),
++                              ),
+                               AnimatedSwitcher(
+                                 duration: const Duration(milliseconds: 200),
+                                 child: Text(
+diff --git a/test/design_system/status/adapters/alert_severity_chip_test.dart b/test/design_system/status/adapters/alert_severity_chip_test.dart
+new file mode 100644
+index 0000000..7801b1b
+--- /dev/null
++++ b/test/design_system/status/adapters/alert_severity_chip_test.dart
+@@ -0,0 +1,82 @@
++import 'package:alera/design_system/status/adapters/alert_severity_chip.dart';
++import 'package:alera/design_system/status/alera_status_tone.dart';
++import 'package:alera/features/caregiver/domain/models/caregiver_alert.dart';
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
++
++void main() {
++  group('AlertSeverityChip', () {
++    testWidgets('critical renders the critical tone and label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const AlertSeverityChip(CaregiverAlertSeverity.critical)),
++      );
++
++      expect(find.text('Critical'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.error);
++    });
++
++    testWidgets('warning renders the warning tone and label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const AlertSeverityChip(CaregiverAlertSeverity.warning)),
++      );
++
++      expect(find.text('Warning'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.warning_amber);
++    });
++
++    testWidgets('describe() maps every severity to a distinct tone', (
++      WidgetTester tester,
++    ) async {
++      late BuildContext capturedContext;
++      await tester.pumpWidget(
++        _host(
++          Builder(
++            builder: (BuildContext context) {
++              capturedContext = context;
++              return const SizedBox.shrink();
++            },
++          ),
++        ),
++      );
++
++      expect(
++        AlertSeverityChip.describe(
++          CaregiverAlertSeverity.critical,
++          capturedContext,
++        ).tone,
++        AleraStatusTone.critical,
++      );
++      expect(
++        AlertSeverityChip.describe(
++          CaregiverAlertSeverity.warning,
++          capturedContext,
++        ).tone,
++        AleraStatusTone.warning,
++      );
++    });
++
++    testWidgets('labelOverride replaces the visible label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const AlertSeverityChip(
++            CaregiverAlertSeverity.critical,
++            labelOverride: 'Danger',
++          ),
++        ),
++      );
++
++      expect(find.text('Danger'), findsOneWidget);
++      expect(find.text('Critical'), findsNothing);
++    });
++  });
++}
+diff --git a/test/design_system/status/adapters/device_status_chip_test.dart b/test/design_system/status/adapters/device_status_chip_test.dart
+new file mode 100644
+index 0000000..c02b42c
+--- /dev/null
++++ b/test/design_system/status/adapters/device_status_chip_test.dart
+@@ -0,0 +1,153 @@
++import 'package:alera/design_system/status/adapters/device_status_chip.dart';
++import 'package:alera/design_system/status/alera_status_tone.dart';
++import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart'
++    show PatientDeviceConnectionStatus;
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
++
++void main() {
++  group('DeviceStatusChip', () {
++    testWidgets('connected with no battery reading renders Online', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const DeviceStatusChip(PatientDeviceConnectionStatus.connected),
++        ),
++      );
++
++      expect(find.text('Online'), findsOneWidget);
++    });
++
++    testWidgets('connected with battery above threshold renders Online', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const DeviceStatusChip(
++            PatientDeviceConnectionStatus.connected,
++            batteryPercent: 80,
++          ),
++        ),
++      );
++
++      expect(find.text('Online'), findsOneWidget);
++    });
++
++    testWidgets(
++      'connected with battery at or below threshold renders Low battery '
++      'instead of Online',
++      (WidgetTester tester) async {
++        await tester.pumpWidget(
++          _host(
++            const DeviceStatusChip(
++              PatientDeviceConnectionStatus.connected,
++              batteryPercent: 20,
++            ),
++          ),
++        );
++
++        expect(find.text('Low battery'), findsOneWidget);
++        expect(find.text('Online'), findsNothing);
++      },
++    );
++
++    testWidgets('a disconnected device with a low battery still reads '
++        'Offline, not Low battery', (WidgetTester tester) async {
++      await tester.pumpWidget(
++        _host(
++          const DeviceStatusChip(
++            PatientDeviceConnectionStatus.disconnected,
++            batteryPercent: 5,
++          ),
++        ),
++      );
++
++      expect(find.text('Offline'), findsOneWidget);
++      expect(find.text('Low battery'), findsNothing);
++    });
++
++    testWidgets('notConnected also renders Offline', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const DeviceStatusChip(PatientDeviceConnectionStatus.notConnected),
++        ),
++      );
++
++      expect(find.text('Offline'), findsOneWidget);
++    });
++
++    testWidgets('syncing renders the info tone', (WidgetTester tester) async {
++      await tester.pumpWidget(
++        _host(const DeviceStatusChip(PatientDeviceConnectionStatus.syncing)),
++      );
++
++      expect(find.text('Syncing'), findsOneWidget);
++    });
++
++    testWidgets('failed renders as critical', (WidgetTester tester) async {
++      await tester.pumpWidget(
++        _host(const DeviceStatusChip(PatientDeviceConnectionStatus.failed)),
++      );
++
++      expect(find.text('Sync failed'), findsOneWidget);
++    });
++
++    testWidgets('unknown renders a neutral placeholder', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const DeviceStatusChip(PatientDeviceConnectionStatus.unknown)),
++      );
++
++      expect(find.text('Unknown'), findsOneWidget);
++    });
++
++    testWidgets('a custom lowBatteryThreshold is respected', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const DeviceStatusChip(
++            PatientDeviceConnectionStatus.connected,
++            batteryPercent: 30,
++            lowBatteryThreshold: 40,
++          ),
++        ),
++      );
++
++      expect(find.text('Low battery'), findsOneWidget);
++    });
++
++    testWidgets('describe() gives disconnected and notConnected the same '
++        'neutral tone', (WidgetTester tester) async {
++      late BuildContext capturedContext;
++      await tester.pumpWidget(
++        _host(
++          Builder(
++            builder: (BuildContext context) {
++              capturedContext = context;
++              return const SizedBox.shrink();
++            },
++          ),
++        ),
++      );
++
++      final AleraStatusTone disconnected = DeviceStatusChip.describe(
++        PatientDeviceConnectionStatus.disconnected,
++        capturedContext,
++      ).tone;
++      final AleraStatusTone notConnected = DeviceStatusChip.describe(
++        PatientDeviceConnectionStatus.notConnected,
++        capturedContext,
++      ).tone;
++
++      expect(disconnected, AleraStatusTone.neutral);
++      expect(notConnected, AleraStatusTone.neutral);
++    });
++  });
++}
+diff --git a/test/design_system/status/adapters/patient_status_chip_test.dart b/test/design_system/status/adapters/patient_status_chip_test.dart
+new file mode 100644
+index 0000000..bf15b1d
+--- /dev/null
++++ b/test/design_system/status/adapters/patient_status_chip_test.dart
+@@ -0,0 +1,108 @@
++import 'package:alera/design_system/status/adapters/patient_status_chip.dart';
++import 'package:alera/features/caregiver/domain/models/care_recipient.dart';
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
++
++void main() {
++  group('PatientStatusChip', () {
++    testWidgets('critical renders the critical tone and label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const PatientStatusChip(CareStatus.critical)),
++      );
++
++      expect(find.text('Critical'), findsOneWidget);
++    });
++
++    testWidgets('stable renders the success tone and label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const PatientStatusChip(CareStatus.stable)),
++      );
++
++      expect(find.text('Stable'), findsOneWidget);
++    });
++
++    testWidgets('needsAttention renders "Attention needed"', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const PatientStatusChip(CareStatus.needsAttention)),
++      );
++
++      expect(find.text('Attention needed'), findsOneWidget);
++    });
++
++    testWidgets('warning and needsAttention share a tone but not a label '
++        'or icon', (WidgetTester tester) async {
++      late BuildContext capturedContext;
++      await tester.pumpWidget(
++        _host(
++          Builder(
++            builder: (BuildContext context) {
++              capturedContext = context;
++              return const SizedBox.shrink();
++            },
++          ),
++        ),
++      );
++
++      final warning = PatientStatusChip.describe(
++        CareStatus.warning,
++        capturedContext,
++      );
++      final needsAttention = PatientStatusChip.describe(
++        CareStatus.needsAttention,
++        capturedContext,
++      );
++
++      expect(warning.tone, needsAttention.tone);
++      expect(warning.label, isNot(needsAttention.label));
++      expect(warning.glyph, isNot(needsAttention.glyph));
++    });
++
++    testWidgets('every CareStatus value has a descriptor', (
++      WidgetTester tester,
++    ) async {
++      late BuildContext capturedContext;
++      await tester.pumpWidget(
++        _host(
++          Builder(
++            builder: (BuildContext context) {
++              capturedContext = context;
++              return const SizedBox.shrink();
++            },
++          ),
++        ),
++      );
++
++      for (final CareStatus status in CareStatus.values) {
++        expect(
++          () => PatientStatusChip.describe(status, capturedContext),
++          returnsNormally,
++          reason: 'CareStatus.$status has no descriptor.',
++        );
++      }
++    });
++
++    testWidgets('labelOverride replaces the visible label', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const PatientStatusChip(
++            CareStatus.stable,
++            labelOverride: 'Doing well',
++          ),
++        ),
++      );
++
++      expect(find.text('Doing well'), findsOneWidget);
++      expect(find.text('Stable'), findsNothing);
++    });
++  });
++}
+diff --git a/test/design_system/status/adapters/reminder_status_chip_test.dart b/test/design_system/status/adapters/reminder_status_chip_test.dart
+new file mode 100644
+index 0000000..336ac82
+--- /dev/null
++++ b/test/design_system/status/adapters/reminder_status_chip_test.dart
+@@ -0,0 +1,72 @@
++import 'package:alera/design_system/status/adapters/reminder_status_chip.dart';
++import 'package:alera/design_system/status/alera_status_tone.dart';
++import 'package:alera/features/caregiver/domain/models/caregiver_reminder.dart';
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
++
++void main() {
++  group('ReminderStatusChip', () {
++    testWidgets('missed renders as critical with an alarm glyph', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const ReminderStatusChip(CaregiverReminderStatus.missed)),
++      );
++
++      expect(find.text('Missed'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.alarm);
++    });
++
++    testWidgets('upcoming renders as info / Scheduled', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const ReminderStatusChip(CaregiverReminderStatus.upcoming)),
++      );
++
++      expect(find.text('Scheduled'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.event_outlined);
++    });
++
++    testWidgets('completed renders as success with a check glyph', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const ReminderStatusChip(CaregiverReminderStatus.completed)),
++      );
++
++      expect(find.text('Completed'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.check_circle);
++    });
++
++    testWidgets('describe() maps every status to a distinct tone', (
++      WidgetTester tester,
++    ) async {
++      late BuildContext capturedContext;
++      await tester.pumpWidget(
++        _host(
++          Builder(
++            builder: (BuildContext context) {
++              capturedContext = context;
++              return const SizedBox.shrink();
++            },
++          ),
++        ),
++      );
++
++      final Set<AleraStatusTone> tones = CaregiverReminderStatus.values
++          .map(
++            (CaregiverReminderStatus status) =>
++                ReminderStatusChip.describe(status, capturedContext).tone,
++          )
++          .toSet();
++
++      expect(tones.length, CaregiverReminderStatus.values.length);
++    });
++  });
++}
+diff --git a/test/design_system/status/adapters/vital_trend_chip_test.dart b/test/design_system/status/adapters/vital_trend_chip_test.dart
+new file mode 100644
+index 0000000..355435f
+--- /dev/null
++++ b/test/design_system/status/adapters/vital_trend_chip_test.dart
+@@ -0,0 +1,147 @@
++import 'package:alera/design_system/status/adapters/vital_trend_chip.dart';
++import 'package:alera/features/caregiver/data/api/dto/vital_trend_dto.dart'
++    show VitalTrendSeverity;
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
++
++void main() {
++  group('VitalTrendChip', () {
++    testWidgets('info renders Normal with a flat-line glyph', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const VitalTrendChip(VitalTrendSeverity.info)),
++      );
++
++      expect(find.text('Normal'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.remove);
++    });
++
++    testWidgets('warning + aboveRange renders Elevated with an up arrow', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const VitalTrendChip(
++            VitalTrendSeverity.warning,
++            direction: VitalTrendDirection.aboveRange,
++          ),
++        ),
++      );
++
++      expect(find.text('Elevated'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.arrow_upward);
++    });
++
++    testWidgets('warning + belowRange renders Low with a down arrow', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const VitalTrendChip(
++            VitalTrendSeverity.warning,
++            direction: VitalTrendDirection.belowRange,
++          ),
++        ),
++      );
++
++      expect(find.text('Low'), findsOneWidget);
++      final Icon icon = tester.widget<Icon>(find.byType(Icon));
++      expect(icon.icon, Icons.arrow_downward);
++    });
++
++    testWidgets('warning with no direction falls back to a generic Warning', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const VitalTrendChip(VitalTrendSeverity.warning)),
++      );
++
++      expect(find.text('Warning'), findsOneWidget);
++    });
++
++    testWidgets('critical + aboveRange renders High, distinct from Elevated', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(
++          const VitalTrendChip(
++            VitalTrendSeverity.critical,
++            direction: VitalTrendDirection.aboveRange,
++          ),
++        ),
++      );
++
++      expect(find.text('High'), findsOneWidget);
++      expect(find.text('Elevated'), findsNothing);
++    });
++
++    testWidgets('critical + belowRange renders "Critically low", distinct '
++        'from the warning-tier "Low"', (WidgetTester tester) async {
++      await tester.pumpWidget(
++        _host(
++          const VitalTrendChip(
++            VitalTrendSeverity.critical,
++            direction: VitalTrendDirection.belowRange,
++          ),
++        ),
++      );
++
++      expect(find.text('Critically low'), findsOneWidget);
++      expect(find.text('Low'), findsNothing);
++    });
++
++    testWidgets('unknown renders a neutral placeholder', (
++      WidgetTester tester,
++    ) async {
++      await tester.pumpWidget(
++        _host(const VitalTrendChip(VitalTrendSeverity.unknown)),
++      );
++
++      expect(find.text('Unknown'), findsOneWidget);
++    });
++
++    testWidgets(
++      'every warning/critical x direction combination has a unique label',
++      (WidgetTester tester) async {
++        late BuildContext capturedContext;
++        await tester.pumpWidget(
++          _host(
++            Builder(
++              builder: (BuildContext context) {
++                capturedContext = context;
++                return const SizedBox.shrink();
++              },
++            ),
++          ),
++        );
++
++        final List<String> labels = <String>[];
++        for (final VitalTrendSeverity severity in <VitalTrendSeverity>[
++          VitalTrendSeverity.warning,
++          VitalTrendSeverity.critical,
++        ]) {
++          for (final VitalTrendDirection? direction in <VitalTrendDirection?>[
++            null,
++            VitalTrendDirection.aboveRange,
++            VitalTrendDirection.belowRange,
++          ]) {
++            labels.add(
++              VitalTrendChip.describe(
++                severity,
++                capturedContext,
++                direction: direction,
++              ).label,
++            );
++          }
++        }
++
++        expect(labels.toSet().length, labels.length);
++      },
++    );
++  });
++}
+diff --git a/test/features/caregiver/people/caregiver_people_page_test.dart b/test/features/caregiver/people/caregiver_people_page_test.dart
+index b1eb03b..ba11278 100644
+--- a/test/features/caregiver/people/caregiver_people_page_test.dart
++++ b/test/features/caregiver/people/caregiver_people_page_test.dart
+@@ -24,7 +24,10 @@ void main() {
+     expect(find.text('People'), findsOneWidget);
+     expect(find.text('Maria Santos'), findsOneWidget);
+     expect(find.text('Geraldine Laggui'), findsOneWidget);
+-    expect(find.text('High Heart Rate'), findsOneWidget);
++    // Was 'High Heart Rate': an arbitrary placeholder for any non-stable
++    // status that had no real tie to Maria's CareStatus.needsAttention.
++    // PatientStatusChip renders the actual status instead.
++    expect(find.text('Attention needed'), findsOneWidget);
+     expect(find.text('Stable'), findsOneWidget);
+     expect(find.text('2 Alerts'), findsOneWidget);
+     expect(find.text('No Alerts'), findsOneWidget);
+@@ -34,7 +37,11 @@ void main() {
+ 
+     final Size cardSize = tester.getSize(find.byType(CareRecipientCard).first);
+     expect(cardSize.width, 768);
+-    expect(cardSize.height, inInclusiveRange(112, 120));
++    // Widened from 120: the status row is now an AleraStatusChip pill with
++    // its own vertical padding, a few px taller than the old plain icon+text
++    // row it replaced. Confirm the real number with `flutter test` and
++    // tighten this back up.
++    expect(cardSize.height, inInclusiveRange(112, 132));
+   });
+ 
+   testWidgets('header and Add Patient actions show mock-only feedback', (
+-- 
+2.43.0
+

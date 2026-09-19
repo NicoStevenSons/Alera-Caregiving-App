@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
-import '../../../../../design_system/status/adapters/patient_status_chip.dart';
-import '../../../../../design_system/status/alera_badged_avatar.dart';
+import '../../../../../design_system/status/status.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';

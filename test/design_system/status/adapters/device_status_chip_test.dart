@@ -13,9 +13,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const DeviceStatusChip(PatientDeviceConnectionStatus.connected),
-        ),
+        _host(const DeviceStatusChip(PatientDeviceConnectionStatus.connected)),
       );
 
       expect(find.text('Online'), findsOneWidget);

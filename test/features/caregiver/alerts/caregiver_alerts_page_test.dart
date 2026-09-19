@@ -30,7 +30,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Alerts'), findsOneWidget);
-    expect(find.text('Warning'), findsOneWidget);
+    expect(find.text('Warning').first, findsOneWidget);
     expect(find.text('Critical'), findsOneWidget);
     expect(find.text('HR'), findsOneWidget);
     expect(find.text('SpO2'), findsOneWidget);
