@@ -8,6 +8,7 @@ class CareRecipient {
   final String relationshipLabel;
   final String? addressOrRoom;
   final String? phoneNumber;
+  final String? profilePhotoUrl;
   final String monitoringStatusLabel;
   final bool backendBacked;
   final CareStatus status;
@@ -22,6 +23,7 @@ class CareRecipient {
     required this.relationshipLabel,
     this.addressOrRoom,
     this.phoneNumber,
+    this.profilePhotoUrl,
     this.monitoringStatusLabel = 'Stable',
     this.backendBacked = false,
     required this.status,

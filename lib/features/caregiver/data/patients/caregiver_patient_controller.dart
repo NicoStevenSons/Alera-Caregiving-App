@@ -125,6 +125,7 @@ CareRecipient patientListItemToCareRecipient(
     relationshipLabel: 'Under your care',
     addressOrRoom: patient.addressOrRoom,
     phoneNumber: patient.phoneNumber,
+    profilePhotoUrl: patient.profilePhotoUrl,
     monitoringStatusLabel: switch (summary.monitoringStatus) {
       PatientMonitoringStatus.noData => 'No data',
       PatientMonitoringStatus.unknown => summary.monitoringStatusValue,

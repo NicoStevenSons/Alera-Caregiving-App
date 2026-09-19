@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
 class PatientDetailSummaryCard extends StatelessWidget {
@@ -23,7 +24,11 @@ class PatientDetailSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _InitialAvatar(name: careRecipient.name),
+              AleraPatientAvatar(
+                name: careRecipient.name,
+                photoUrl: careRecipient.profilePhotoUrl,
+                radius: 24,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

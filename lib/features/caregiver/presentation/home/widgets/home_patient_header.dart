@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
 class HomePatientHeader extends StatelessWidget {
@@ -47,7 +48,11 @@ class HomePatientHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      _InitialAvatar(name: careRecipient.name),
+                      AleraPatientAvatar(
+                        name: careRecipient.name,
+                        photoUrl: careRecipient.profilePhotoUrl,
+                        radius: 25,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

@@ -165,7 +165,8 @@ class _CaregiverShellState extends State<CaregiverShell>
   }
 
   void _startPatientPolling() {
-    if (_patientPollTimer != null || widget.patientPollingInterval <= Duration.zero) {
+    if (_patientPollTimer != null ||
+        widget.patientPollingInterval <= Duration.zero) {
       return;
     }
     _patientPollTimer = Timer.periodic(widget.patientPollingInterval, (_) {
@@ -358,6 +359,7 @@ class _CaregiverShellState extends State<CaregiverShell>
           id: patient.patientId,
           name: patient.fullName,
           relationshipLabel: 'Under your care',
+          profilePhotoUrl: patient.profilePhotoUrl,
           status: CareStatus.stable,
           alertCount: 0,
           reminderCount: 0,

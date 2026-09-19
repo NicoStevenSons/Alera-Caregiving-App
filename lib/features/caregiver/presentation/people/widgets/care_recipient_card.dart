@@ -27,7 +27,11 @@ class CareRecipientCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AleraPatientAvatar(name: careRecipient.name, radius: 20),
+          AleraPatientAvatar(
+            name: careRecipient.name,
+            photoUrl: careRecipient.profilePhotoUrl,
+            radius: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
