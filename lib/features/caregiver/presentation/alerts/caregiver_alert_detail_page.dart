@@ -11,6 +11,7 @@ import '../../domain/models/caregiver_alert.dart';
 import '../../data/alerts/caregiver_alert_controller.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../widgets/caregiver_alert_presentation.dart';
+import '../../../../design_system/widgets/alera_patient_avatar.dart';
 
 class CaregiverAlertDetailPage extends StatefulWidget {
   final CaregiverAlert alert;
@@ -341,6 +342,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                   _SummaryCard(
                     alert: alert,
                     patientName: patientName,
+                    patientPhotoUrl: widget.careRecipient?.profilePhotoUrl,
                     iconPath: iconPath,
                     accentColor: accentColor,
                     severityColor: severityColor,
@@ -491,6 +493,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
 class _SummaryCard extends StatelessWidget {
   final CaregiverAlert alert;
   final String patientName;
+  final String? patientPhotoUrl;
   final String iconPath;
   final Color accentColor;
   final Color severityColor;
@@ -499,6 +502,7 @@ class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.alert,
     required this.patientName,
+    this.patientPhotoUrl,
     required this.iconPath,
     required this.accentColor,
     required this.severityColor,
@@ -528,7 +532,41 @@ class _SummaryCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AleraSvgIcon(assetPath: iconPath, width: 70, height: 70),
+                SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AleraPatientAvatar(
+                        name: patientName,
+                        photoUrl: patientPhotoUrl,
+                        radius: 35,
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 26,
+                          height: 26,
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: AleraSvgIcon(
+                            assetPath:
+                                CaregiverAlertPresentation.badgeAssetPath(
+                                  alert.metric,
+                                ),
+                            width: 20,
+                            height: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -1172,71 +1210,6 @@ class _SectionCard extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final Color color;
-  final String? assetPath;
-  final IconData? icon;
-
-  const _Metric({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-    this.assetPath,
-    this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            if (assetPath != null)
-              AleraSvgIcon(assetPath: assetPath!, width: 17, height: 17)
-            else if (icon != null)
-              Icon(icon, color: color, size: 17),
-            const SizedBox(width: 3),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 24,
-            height: 1,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          unit,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }
