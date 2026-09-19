@@ -18,16 +18,15 @@ class HeartRateDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: (){
-          Navigator.push(context, MaterialPageRoute(builder: (context) => HeartRateHistoryPage(
-                uploadQueueService:
-                    uploadQueueService,
-             ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  HeartRateHistoryPage(uploadQueueService: uploadQueueService),
             ),
           );
         },
@@ -39,21 +38,14 @@ class HeartRateDisplay extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.favorite, color: Colors.red),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Heart Rate',
-                  ),
+                  const Text('Heart Rate'),
                 ],
               ),
 
               Padding(
-                padding: const EdgeInsets.only(
-                  top: 70,
-                ),
+                padding: const EdgeInsets.only(top: 70),
                 child: Row(
                   children: [
                     Text(

@@ -11,10 +11,7 @@ import 'patient_access.dart';
 class PatientQrScannerPage extends StatefulWidget {
   final CaregiverSessionController sessionController;
 
-  const PatientQrScannerPage({
-    super.key,
-    required this.sessionController,
-  });
+  const PatientQrScannerPage({super.key, required this.sessionController});
 
   @override
   State<PatientQrScannerPage> createState() => _PatientQrScannerPageState();
@@ -58,8 +55,8 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
     } on MobileScannerException {
       if (mounted && !_disposed) {
         setState(
-          () => _error =
-              'Camera access is needed to scan your patient QR code.',
+          () =>
+              _error = 'Camera access is needed to scan your patient QR code.',
         );
       }
     }
@@ -133,7 +130,7 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
     );
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,

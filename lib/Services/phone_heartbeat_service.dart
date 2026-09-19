@@ -50,18 +50,14 @@ class PhoneHeartbeatService {
     try {
       final batteryPercent = await _battery.batteryLevel;
 
-      debugPrint(
-        'Sending phone heartbeat: battery=$batteryPercent%',
-      );
+      debugPrint('Sending phone heartbeat: battery=$batteryPercent%');
 
       await deviceStatusApiService.sendPhoneStatus(
         connectionStatus: 'CONNECTED',
         batteryPercent: batteryPercent,
       );
     } catch (error) {
-      debugPrint(
-        'Phone heartbeat failed: $error',
-      );
+      debugPrint('Phone heartbeat failed: $error');
     } finally {
       _sending = false;
     }

@@ -147,7 +147,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
           content: Text(
             _status.status == PatientAccessState.connected
                 ? 'Use this when ${widget.patientName} needs to sign in on a '
-                    'new or reset phone. Any older unused code will stop working.'
+                      'new or reset phone. Any older unused code will stop working.'
                 : 'The previous unused code will stop working.',
           ),
           actions: [

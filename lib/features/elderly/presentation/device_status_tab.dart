@@ -5,10 +5,7 @@ import '../../../../models/device_status_data.dart';
 class DeviceStatusTab extends StatelessWidget {
   final DeviceStatusData deviceStatusData;
 
-  const DeviceStatusTab({
-    super.key,
-    required this.deviceStatusData,
-  });
+  const DeviceStatusTab({super.key, required this.deviceStatusData});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +18,7 @@ class DeviceStatusTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DeviceHeroCard(
-            data: deviceStatusData,
-            connected: connected,
-          ),
+          _DeviceHeroCard(data: deviceStatusData, connected: connected),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -54,10 +48,7 @@ class DeviceStatusTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _BatteryCard(
-            battery: battery,
-            isCharging: charging,
-          ),
+          _BatteryCard(battery: battery, isCharging: charging),
           const SizedBox(height: 16),
           _DetailsCard(data: deviceStatusData),
           const SizedBox(height: 16),
@@ -72,25 +63,20 @@ class _DeviceHeroCard extends StatelessWidget {
   final DeviceStatusData data;
   final bool? connected;
 
-  const _DeviceHeroCard({
-    required this.data,
-    required this.connected,
-  });
+  const _DeviceHeroCard({required this.data, required this.connected});
 
   @override
   Widget build(BuildContext context) {
     final Color statusColor = connected == true
         ? Colors.green
         : connected == false
-            ? Colors.redAccent
-            : Colors.grey;
+        ? Colors.redAccent
+        : Colors.grey;
 
     return Card(
       elevation: 0,
       color: Colors.purple.shade50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: Row(
@@ -118,15 +104,15 @@ class _DeviceHeroCard extends StatelessWidget {
                   Text(
                     data.displayedDeviceName,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     data.deviceModel ?? 'Smartwatch',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -189,25 +175,25 @@ class _StatusTile extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 3),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 3),
             Text(
               supportingText,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
             ),
           ],
         ),
@@ -220,15 +206,13 @@ class _BatteryCard extends StatelessWidget {
   final int? battery;
   final bool? isCharging;
 
-  const _BatteryCard({
-    required this.battery,
-    required this.isCharging,
-  });
+  const _BatteryCard({required this.battery, required this.isCharging});
 
   @override
   Widget build(BuildContext context) {
-    final double? progress =
-        battery == null ? null : battery!.clamp(0, 100).toDouble() / 100;
+    final double? progress = battery == null
+        ? null
+        : battery!.clamp(0, 100).toDouble() / 100;
 
     String message;
     if (isCharging == true) {
@@ -236,7 +220,8 @@ class _BatteryCard extends StatelessWidget {
     } else if (battery == null) {
       message = 'Battery information has not arrived from the watch yet.';
     } else if (battery! <= 20) {
-      message = 'Battery is low. Charge the watch soon to keep monitoring active.';
+      message =
+          'Battery is low. Charge the watch soon to keep monitoring active.';
     } else {
       message = 'Battery level is healthy for continued monitoring.';
     }
@@ -264,15 +249,15 @@ class _BatteryCard extends StatelessWidget {
                 Text(
                   'Watch battery',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const Spacer(),
                 Text(
                   battery == null ? '--' : '$battery%',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -285,9 +270,9 @@ class _BatteryCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
           ],
         ),
@@ -316,9 +301,9 @@ class _DetailsCard extends StatelessWidget {
           children: [
             Text(
               'Device details',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 16),
             _DetailRow(
@@ -371,10 +356,7 @@ class _DetailRow extends StatelessWidget {
         Icon(icon, size: 21, color: Colors.purple.shade500),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.black54),
-          ),
+          child: Text(label, style: const TextStyle(color: Colors.black54)),
         ),
         Flexible(
           child: Text(
@@ -427,9 +409,9 @@ class _LastUpdateCard extends StatelessWidget {
           Expanded(
             child: Text(
               'Last device update: ${_formatLastUpdate()}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
             ),
           ),
         ],

@@ -35,7 +35,7 @@ class PatientMonitoringDevicesCard extends StatelessWidget {
             name: 'Phone',
             assetPath:
                 'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
-            device:  devices.phone,
+            device: devices.phone,
           ),
         ],
       ),
@@ -101,10 +101,7 @@ class _DeviceRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                name,
-                style: AleraTypography.body.copyWith(fontSize: 13),
-              ),
+              Text(name, style: AleraTypography.body.copyWith(fontSize: 13)),
               Row(
                 children: [
                   if (available) ...[
@@ -127,10 +124,7 @@ class _DeviceRow extends StatelessWidget {
             ],
           ),
         ),
-        Text(
-          _batteryLabel,
-          style: AleraTypography.label,
-        ),
+        Text(_batteryLabel, style: AleraTypography.label),
         const SizedBox(width: 7),
         Icon(
           Icons.battery_5_bar,

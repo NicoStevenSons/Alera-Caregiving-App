@@ -77,10 +77,8 @@ class CaregiverPatientController extends ChangeNotifier {
   Future<PatientDetailDto> loadDetail(String patientId) =>
       dataSource.fetchPatient(patientId);
 
-  Future<List<MonitoringDeviceDto>> loadMonitoringDevices(
-  String patientId,
-    ) =>
-    dataSource.fetchMonitoringDevices(patientId);
+  Future<List<MonitoringDeviceDto>> loadMonitoringDevices(String patientId) =>
+      dataSource.fetchMonitoringDevices(patientId);
 
   List<CareRecipient> get visiblePatients =>
       state == CaregiverPatientListState.demoFallback
@@ -88,9 +86,10 @@ class CaregiverPatientController extends ChangeNotifier {
       : patients.map(patientListItemToCareRecipient).toList(growable: false);
 }
 
-CareRecipient patientListItemToCareRecipient( PatientListItemDto patient, {
+CareRecipient patientListItemToCareRecipient(
+  PatientListItemDto patient, {
   List<MonitoringDevice> devices = const [],
-  }) {
+}) {
   final summary = patient.currentSummary;
   final status = switch (summary.monitoringStatus) {
     PatientMonitoringStatus.critical => CareStatus.critical,
@@ -161,9 +160,7 @@ CareRecipient patientDetailToCareRecipient(
   );
 }
 
-MonitoringDevice monitoringDeviceDtoToDomain(
-  MonitoringDeviceDto device,
-) {
+MonitoringDevice monitoringDeviceDtoToDomain(MonitoringDeviceDto device) {
   final name = switch (device.deviceType) {
     MonitoringDeviceTypeDto.watch => 'Watch',
     MonitoringDeviceTypeDto.phone => 'Phone',

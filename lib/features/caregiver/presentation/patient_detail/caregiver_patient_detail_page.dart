@@ -31,6 +31,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final PatientAccessStatus? patientAccessStatus;
   final VoidCallback? onPatientAccessAction;
+  final ValueChanged<String>? onVitalTap;
 
   const CaregiverPatientDetailPage({
     super.key,
@@ -43,6 +44,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     this.onMarkAsSeen,
     this.patientAccessStatus,
     this.onPatientAccessAction,
+    this.onVitalTap,
   });
 
   void _showFeedback(BuildContext context, String message) {
@@ -149,10 +151,14 @@ class CaregiverPatientDetailPage extends StatelessWidget {
             const SizedBox(height: 12),
             PatientVitalSummarySection(
               snapshot: careRecipient.healthSnapshot,
-              onVitalTap: (label) => _showFeedback(
-                context,
-                '$label history is mock-only for now.',
-              ),
+              onVitalTap: (label) {
+                if (onVitalTap != null) {
+                  onVitalTap!(label);
+                  return;
+                }
+
+                _showFeedback(context, '$label history is mock-only for now.');
+              },
             ),
             const SizedBox(height: 12),
             PatientRemindersSection(
@@ -178,6 +184,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final CaregiverPatientDataSource? patientDataSource;
+  final ValueChanged<String>? onVitalTap;
 
   const CaregiverPatientDetailLoaderPage({
     super.key,
@@ -190,6 +197,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.patientDataSource,
+    this.onVitalTap,
   });
 
   @override
@@ -204,7 +212,6 @@ class _CaregiverPatientDetailLoaderPageState
   CaregiverPatientApiFailure? _failure;
   Timer? _refreshTimer;
 
-
   @override
   void initState() {
     super.initState();
@@ -216,7 +223,7 @@ class _CaregiverPatientDetailLoaderPageState
     );
   }
 
-   @override
+  @override
   void dispose() {
     _refreshTimer?.cancel();
     super.dispose();
@@ -266,6 +273,7 @@ class _CaregiverPatientDetailLoaderPageState
         onMarkAsSeen: widget.onMarkAsSeen,
         patientAccessStatus: _patientAccessStatus,
         onPatientAccessAction: _openPatientAccess,
+        onVitalTap: widget.onVitalTap,
       );
     }
     final failure = _failure;
@@ -380,8 +388,7 @@ class _PatientAccessStatusCard extends StatelessWidget {
           if (onAction != null &&
               status.status == PatientAccessState.invitePending)
             AleraButton(label: 'Open invitation', onPressed: onAction!),
-          if (onAction != null &&
-              status.status == PatientAccessState.connected)
+          if (onAction != null && status.status == PatientAccessState.connected)
             AleraButton(label: 'Generate login code', onPressed: onAction!),
         ],
       ),
