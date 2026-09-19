@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
@@ -11,65 +12,73 @@ class AleraStartupScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final height = constraints.maxHeight;
+            final isCompact = height < 700;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    'assets/icons/alera-logo-no-padding.png',
-                    width: 112,
-                    height: 112,
-                    fit: BoxFit.contain,
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'alera-figma-assets/assets/icons/onboarding/alera-logo.svg',
+                              width: isCompact ? 220 : 250,
+                              fit: BoxFit.contain,
+                            ),
+                            SizedBox(height: isCompact ? 36 : 50),
+                            Text(
+                              'Welcome to Alera',
+                              textAlign: TextAlign.center,
+                              style: AleraTypography.pageTitle.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Connect with your household.',
+                              textAlign: TextAlign.center,
+                              style: AleraTypography.body.copyWith(
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 22),
-
-                  const Text(
-                    'Alera',
-                    style: AleraTypography.pageTitle,
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    'Care, connected.',
-                    style: AleraTypography.body,
-                    textAlign: TextAlign.center,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 40),
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: AleraColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Getting things ready...',
+                          textAlign: TextAlign.center,
+                          style: AleraTypography.label.copyWith(fontSize: 10),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 42,
-              child: Column(
-                children: [
-                  const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      color: AleraColors.primary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  Text(
-                    'Getting things ready...',
-                    style: AleraTypography.label.copyWith(
-                      color: AleraColors.textSecondary.withValues(alpha: 0.72),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
