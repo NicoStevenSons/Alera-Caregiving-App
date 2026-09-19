@@ -27,6 +27,7 @@ class CaregiverAlert {
   final String id;
   final String careRecipientId;
   final String? patientDisplayName;
+  final String? conditionKey;
   final String title;
   final String description;
   final CaregiverAlertSeverity severity;
@@ -47,6 +48,7 @@ class CaregiverAlert {
     required this.id,
     required this.careRecipientId,
     this.patientDisplayName,
+    this.conditionKey,
     required this.title,
     required this.description,
     required this.severity,
@@ -75,6 +77,7 @@ class CaregiverAlert {
       id: id,
       careRecipientId: careRecipientId,
       patientDisplayName: patientDisplayName,
+      conditionKey: conditionKey,
       title: title,
       description: description,
       severity: severity ?? this.severity,

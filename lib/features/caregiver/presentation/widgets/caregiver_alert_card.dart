@@ -262,7 +262,8 @@ class _AlertPatientAvatar extends StatelessWidget {
 class _AlertCardDisplayData {
   final String metricLabel;
   final String reading;
-  final String previousAverage;
+  final String? secondaryLabel;
+  final String? secondaryValue;
   final String threshold;
   final String duration;
   final String detectedAt;
@@ -273,7 +274,8 @@ class _AlertCardDisplayData {
   const _AlertCardDisplayData({
     required this.metricLabel,
     required this.reading,
-    required this.previousAverage,
+    required this.secondaryLabel,
+    required this.secondaryValue,
     required this.threshold,
     required this.duration,
     required this.detectedAt,
@@ -291,6 +293,9 @@ _AlertCardDisplayData _buildDisplayData(
   final String value = alert.reading % 1 == 0
       ? alert.reading.toStringAsFixed(0)
       : alert.reading.toStringAsFixed(1);
+  final String formattedReading = alert.unit.trim().isEmpty
+      ? value
+      : '$value ${alert.unit}';
   final String threshold = alert.threshold == null
       ? '--'
       : '${alert.threshold! % 1 == 0 ? alert.threshold!.toStringAsFixed(0) : alert.threshold!.toStringAsFixed(1)} ${alert.unit}';
@@ -301,27 +306,72 @@ _AlertCardDisplayData _buildDisplayData(
       : localDetectedAt.hour % 12;
   final String detected =
       '$hour:${localDetectedAt.minute.toString().padLeft(2, '0')} ${localDetectedAt.hour >= 12 ? 'PM' : 'AM'}';
+
+  late final String metricLabel;
+  late final String reading;
+  String? secondaryLabel;
+  String? secondaryValue;
+
+  switch (alert.metric) {
+    case CaregiverAlertMetric.heartRate:
+      metricLabel = 'Heart Rate';
+      reading = formattedReading;
+      secondaryLabel = 'Previous Avg';
+      secondaryValue = previousAverageText ?? '--';
+      break;
+    case CaregiverAlertMetric.spo2:
+      metricLabel = 'SpO₂';
+      reading = formattedReading;
+      secondaryLabel = 'Previous Avg';
+      secondaryValue = previousAverageText ?? '--';
+      break;
+    case CaregiverAlertMetric.activity:
+      metricLabel = 'Activity';
+      reading = alert.conditionKey == 'INACTIVITY'
+          ? 'No movement detected'
+          : _eventValue(alert, formattedReading);
+      break;
+    case CaregiverAlertMetric.sleep:
+      metricLabel = 'Sleep';
+      reading = _eventValue(alert, formattedReading);
+      break;
+    case CaregiverAlertMetric.watchBattery:
+      metricLabel = 'Battery level';
+      reading = formattedReading;
+      secondaryLabel = 'Device';
+      secondaryValue = _deviceLabel(alert) ?? 'Device';
+      break;
+    case CaregiverAlertMetric.system:
+      final String? device = _deviceLabel(alert);
+      metricLabel = device == null ? 'System' : 'Device';
+      reading = device ?? alert.title;
+      switch (alert.conditionKey) {
+        case 'PHONE_DISCONNECTED':
+        case 'WATCH_DISCONNECTED':
+        case 'DEVICE_DISCONNECTED':
+          secondaryLabel = 'Connection';
+          secondaryValue = 'Disconnected';
+          break;
+        case 'SYNC_FAILURE':
+          secondaryLabel = 'Sync';
+          secondaryValue = 'Failed';
+          break;
+        default:
+          break;
+      }
+      break;
+  }
+
   return _AlertCardDisplayData(
-    metricLabel: switch (alert.metric) {
-      CaregiverAlertMetric.heartRate => 'Heart Rate',
-      CaregiverAlertMetric.spo2 => 'SpO₂',
-      CaregiverAlertMetric.activity => 'Activity',
-      CaregiverAlertMetric.sleep => 'Sleep',
-      CaregiverAlertMetric.watchBattery => 'Battery',
-      CaregiverAlertMetric.system => 'System',
-    },
-    reading: alert.metric == CaregiverAlertMetric.system && alert.unit.isEmpty
-        ? '--'
-        : '$value ${alert.unit}',
-    previousAverage: previousAverageText ?? '--',
+    metricLabel: metricLabel,
+    reading: reading,
+    secondaryLabel: secondaryLabel,
+    secondaryValue: secondaryValue,
     threshold: threshold,
     duration: duration == null ? '--' : '${duration.inMinutes} min',
     detectedAt: detected,
     status: switch (alert.status) {
-      CaregiverAlertStatus.active =>
-        alert.severity == CaregiverAlertSeverity.critical
-            ? 'Critical'
-            : 'Elevated',
+      CaregiverAlertStatus.active => 'Active',
       CaregiverAlertStatus.acknowledged => 'Acknowledged',
       CaregiverAlertStatus.resolved => 'Resolved',
       CaregiverAlertStatus.falseAlarm => 'False alarm',
@@ -329,6 +379,20 @@ _AlertCardDisplayData _buildDisplayData(
     reason: alert.description.isEmpty ? 'Not specified' : alert.description,
     relativeTime: CaregiverAlertCard._relativeTime(alert.detectedAt),
   );
+}
+
+String _eventValue(CaregiverAlert alert, String formattedReading) {
+  if (alert.unit.trim().isEmpty && alert.reading == 0) return alert.title;
+  return formattedReading;
+}
+
+String? _deviceLabel(CaregiverAlert alert) {
+  return switch (alert.conditionKey) {
+    'PHONE_DISCONNECTED' || 'PHONE_BATTERY_LOW' => 'Patient phone',
+    'WATCH_DISCONNECTED' || 'WATCH_BATTERY_LOW' => 'Smartwatch',
+    'DEVICE_DISCONNECTED' || 'BATTERY_LOW' => 'Device',
+    _ => null,
+  };
 }
 
 class _ExpandedDetails extends StatelessWidget {
@@ -360,12 +424,13 @@ class _ExpandedDetails extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(
-              child: _Detail(
-                label: 'Previous Avg',
-                value: data.previousAverage,
+            if (data.secondaryLabel != null && data.secondaryValue != null)
+              Expanded(
+                child: _Detail(
+                  label: data.secondaryLabel!,
+                  value: data.secondaryValue!,
+                ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -405,17 +470,19 @@ class _Detail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: AleraTypography.body.copyWith(fontSize: 11),
-        children: [
-          TextSpan(
-            text: '$label\n',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AleraTypography.body.copyWith(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
-          TextSpan(text: value),
-        ],
-      ),
+        ),
+        Text(value, style: AleraTypography.body.copyWith(fontSize: 11)),
+      ],
     );
   }
 }

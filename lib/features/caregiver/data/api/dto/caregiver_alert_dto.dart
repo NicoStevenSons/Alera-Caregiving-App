@@ -4,6 +4,7 @@ class CaregiverAlertDto {
   final String alertId;
   final String patientId;
   final String? patientDisplayName;
+  final String? conditionKey;
   final String title;
   final String? evaluationReason;
   final String severity;
@@ -21,6 +22,7 @@ class CaregiverAlertDto {
     required this.alertId,
     required this.patientId,
     required this.patientDisplayName,
+    this.conditionKey,
     required this.title,
     required this.evaluationReason,
     required this.severity,
@@ -42,6 +44,7 @@ class CaregiverAlertDto {
       alertId: _requiredString(json, 'alert_id'),
       patientId: _requiredString(json, 'patient_id'),
       patientDisplayName: _optionalString(json['patient_display_name']),
+      conditionKey: conditionKey,
       title: _optionalString(json['title']) ?? 'Health alert',
       evaluationReason: _optionalString(json['evaluation_reason']),
       severity: _requiredString(json, 'severity'),
@@ -62,6 +65,7 @@ class CaregiverAlertDto {
       id: alertId,
       careRecipientId: patientId,
       patientDisplayName: patientDisplayName,
+      conditionKey: conditionKey,
       title: title,
       description: evaluationReason ?? '',
       severity: switch (severity) {

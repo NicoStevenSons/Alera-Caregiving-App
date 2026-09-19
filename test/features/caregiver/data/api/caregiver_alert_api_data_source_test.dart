@@ -185,6 +185,7 @@ void main() {
     expect(alert.id, 'hr-alert');
     expect(alert.careRecipientId, 'patient-1');
     expect(alert.patientDisplayName, 'Nana');
+    expect(alert.conditionKey, 'HR_HIGH');
     expect(alert.metric, CaregiverAlertMetric.heartRate);
     expect(alert.severity, CaregiverAlertSeverity.warning);
     expect(alert.status, CaregiverAlertStatus.active);
