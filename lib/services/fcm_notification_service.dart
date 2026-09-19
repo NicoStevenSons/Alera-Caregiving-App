@@ -58,14 +58,67 @@ String _alertTitle(Map<String, dynamic> data) =>
 String _alertBody(Map<String, dynamic> data) =>
     data['body'] as String? ?? 'A new alert needs your attention.';
 
+String _alertHeadline(Map<String, dynamic> data) {
+  final title = _alertTitle(data).trim();
+  return title.contains(':') ? title.replaceFirst(':', ' •') : title;
+}
+
+String _alertReading(Map<String, dynamic> data) {
+  final body = _alertBody(data);
+  final parts = body.split('•');
+  return (parts.length > 1 ? parts.last : body).trim();
+}
+
+String _alertDetails(Map<String, dynamic> data) {
+  final metricType = (data['metric_type'] as String? ?? '').toUpperCase();
+  final title = _alertTitle(data).toLowerCase();
+  final reading = _alertReading(data);
+
+  switch (metricType) {
+    case 'HEART_RATE':
+      if (title.contains('high')) {
+        return title.contains('critical')
+            ? 'Heart rate is dangerously high at $reading.'
+            : 'Heart rate is high at $reading.';
+      }
+      if (title.contains('low')) {
+        return title.contains('critical')
+            ? 'Heart rate is dangerously low at $reading.'
+            : 'Heart rate is low at $reading.';
+      }
+      return 'Heart rate needs attention at $reading.';
+    case 'SPO2':
+      if (title.contains('low')) {
+        return title.contains('critical')
+            ? 'SpO₂ is dangerously low at $reading.'
+            : 'SpO₂ is low at $reading.';
+      }
+      return 'SpO₂ needs attention at $reading.';
+    case 'BATTERY_LEVEL':
+      return reading.isNotEmpty
+          ? 'Watch battery is low at $reading.'
+          : 'Watch battery is low.';
+    default:
+      if (title.contains('disconnected')) {
+        return 'Smartwatch disconnected. Please check the device connection.';
+      }
+      return _alertBody(data);
+  }
+}
+
 Future<void> _showAlertNotification(
   FlutterLocalNotificationsPlugin local, {
   required int id,
   required Map<String, dynamic> data,
 }) async {
-  ByteArrayAndroidBitmap? largeIcon;
+  final String title = _alertTitle(data);
+  final String headline = _alertHeadline(data);
+  final String details = _alertDetails(data);
   final String? patientName = (data['patient_display_name'] as String?)?.trim();
   final String metricType = data['metric_type'] as String? ?? 'SYSTEM';
+  final String? patientId = (data['patient_id'] as String?)?.trim();
+
+  MessagingStyleInformation? messagingStyle;
 
   if (patientName != null && patientName.isNotEmpty) {
     try {
@@ -73,9 +126,22 @@ Future<void> _showAlertNotification(
         patientName: patientName,
         metricType: metricType,
       );
-      if (bytes != null && bytes.isNotEmpty) {
-        largeIcon = ByteArrayAndroidBitmap(bytes);
-      }
+
+      final alertPerson = Person(
+        name: headline,
+        key: patientId?.isNotEmpty == true ? patientId : patientName,
+        important: true,
+        icon: bytes != null && bytes.isNotEmpty
+            ? ByteArrayAndroidIcon(bytes)
+            : null,
+      );
+
+      messagingStyle = MessagingStyleInformation(
+        const Person(name: 'Alera', key: 'alera'),
+        conversationTitle: patientName,
+        groupConversation: false,
+        messages: <Message>[Message(details, DateTime.now(), alertPerson)],
+      );
     } catch (error) {
       if (kDebugMode) {
         debugPrint('Alert notification avatar rendering failed: $error');
@@ -85,8 +151,8 @@ Future<void> _showAlertNotification(
 
   await local.show(
     id: id,
-    title: _alertTitle(data),
-    body: _alertBody(data),
+    title: patientName ?? title,
+    body: '$headline — $details',
     notificationDetails: NotificationDetails(
       android: AndroidNotificationDetails(
         'alera_alerts',
@@ -94,8 +160,9 @@ Future<void> _showAlertNotification(
         channelDescription: 'Caregiver health alerts',
         importance: Importance.high,
         priority: Priority.high,
-        largeIcon: largeIcon,
+        styleInformation: messagingStyle,
         visibility: NotificationVisibility.private,
+        category: AndroidNotificationCategory.message,
       ),
     ),
     payload: jsonEncode(data),

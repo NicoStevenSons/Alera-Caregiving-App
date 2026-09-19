@@ -24,10 +24,10 @@ import java.io.ByteArrayOutputStream;
 public final class AleraToastPlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
   private static final int AVATAR_SIZE = 192;
   private static final float AVATAR_CENTER_X = 88f;
-  private static final float AVATAR_CENTER_Y = 88f;
+  private static final float AVATAR_CENTER_Y = 92f;
   private static final float AVATAR_RADIUS = 78f;
   private static final float BADGE_CENTER_X = 140f;
-  private static final float BADGE_CENTER_Y = 140f;
+  private static final float BADGE_CENTER_Y = 144f;
   private static final float BADGE_RING_RADIUS = 32f;
   private static final float BADGE_RADIUS = 28f;
 

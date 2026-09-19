@@ -869,7 +869,8 @@ class _EmptyActiveAlerts extends StatelessWidget {
         child: Column(
           children: [
             AleraSvgIcon(
-              assetPath: 'alera-figma-assets/assets/icons/status/stable.svg',
+              assetPath:
+                  'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
               width: 48,
               height: 48,
               semanticLabel: 'No active alerts',

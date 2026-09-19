@@ -30,6 +30,7 @@ class CaregiverPatientController extends ChangeNotifier {
   });
 
   Future<void> load({bool refresh = false}) async {
+    final hadPatients = patients.isNotEmpty;
     final revision = ++_loadRevision;
     if (refresh) {
       isRefreshing = true;
@@ -51,9 +52,14 @@ class CaregiverPatientController extends ChangeNotifier {
       if (revision != _loadRevision) return;
       errorMessage = failure.message;
       failureKind = failure.kind;
-      if ((failure.kind == CaregiverPatientFailureKind.connectivity ||
-              failure.kind == CaregiverPatientFailureKind.server) &&
-          demoPatients.isNotEmpty) {
+      final transientFailure =
+          failure.kind == CaregiverPatientFailureKind.connectivity ||
+          failure.kind == CaregiverPatientFailureKind.server;
+      if (refresh && hadPatients && transientFailure) {
+        // Background/periodic refreshes keep the last known-good dashboard
+        // instead of replacing it with demo/error data after one timeout.
+        state = CaregiverPatientListState.success;
+      } else if (transientFailure && demoPatients.isNotEmpty) {
         patients = const [];
         state = CaregiverPatientListState.demoFallback;
       } else {
