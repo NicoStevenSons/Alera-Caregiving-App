@@ -4,6 +4,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
 import 'widgets/care_recipient_card.dart';
@@ -71,10 +72,7 @@ class CaregiverPeoplePage extends StatelessWidget {
   Widget _buildBody(BuildContext context, List<CareRecipient> recipients) {
     final patientController = controller;
     if (patientController?.state == CaregiverPatientListState.initialLoading) {
-      return const Center(
-        key: Key('people-loading'),
-        child: CircularProgressIndicator(),
-      );
+      return const _PeopleLoadingSkeleton();
     }
     if (patientController?.state == CaregiverPatientListState.error) {
       return _PeopleMessage(
@@ -217,6 +215,103 @@ class _AddPatientButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PeopleLoadingSkeleton extends StatelessWidget {
+  const _PeopleLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      key: const Key('people-loading'),
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AleraSpacing.medium,
+        12,
+        AleraSpacing.medium,
+        AleraSpacing.medium,
+      ),
+      itemCount: 3,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => const _CareRecipientCardSkeleton(),
+    );
+  }
+}
+
+class _CareRecipientCardSkeleton extends StatelessWidget {
+  const _CareRecipientCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      padding: const EdgeInsets.fromLTRB(10, 10, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AleraSkeletonCircle(size: 40),
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                AleraSkeletonBar(widthFactor: .58, height: 15),
+                SizedBox(height: 7),
+
+                AleraSkeletonBar(widthFactor: .42, height: 10),
+                SizedBox(height: 10),
+
+                _PeopleStatusSkeleton(widthFactor: .34),
+                SizedBox(height: 7),
+
+                _PeopleStatusSkeleton(widthFactor: .28),
+                SizedBox(height: 7),
+
+                _PeopleStatusSkeleton(widthFactor: .38),
+                SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: AleraSkeletonBar(widthFactor: .72, height: 9),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: AleraSkeletonBar(widthFactor: .72, height: 9),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: AleraSkeletonBlock(width: 18, height: 18, borderRadius: 6),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PeopleStatusSkeleton extends StatelessWidget {
+  final double widthFactor;
+
+  const _PeopleStatusSkeleton({required this.widthFactor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const AleraSkeletonBlock(width: 16, height: 16, borderRadius: 5),
+        const SizedBox(width: 6),
+        Expanded(child: AleraSkeletonBar(widthFactor: widthFactor, height: 10)),
+      ],
     );
   }
 }
