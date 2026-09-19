@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/status/adapters/alert_severity_chip.dart';
+import '../../../../design_system/status/alera_badged_avatar.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
@@ -1020,7 +1022,11 @@ class AlertListCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _InitialAvatar(name: identity),
+              AleraBadgedAvatar(
+                name: identity,
+                radius: 20,
+                status: AlertSeverityChip.describe(alert.severity, context),
+              ),
               const SizedBox(width: 8),
               AleraSvgIcon(assetPath: iconPath, width: 28, height: 28),
               const SizedBox(width: 8),
@@ -1082,32 +1088,5 @@ class AlertListCard extends StatelessWidget {
 
     final int years = days ~/ 365;
     return '$years year${years == 1 ? '' : 's'} ago';
-  }
-}
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final String initials = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-    const colors = [Color(0xFF8165C7), Color(0xFF4D91A8), Color(0xFFB36B8D)];
-    final int seed = name.codeUnits.fold(0, (sum, value) => sum + value);
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: colors[seed % colors.length],
-      child: Text(
-        initials,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-    );
   }
 }

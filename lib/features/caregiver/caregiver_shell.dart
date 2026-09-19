@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../design_system/alera_spacing.dart';
 import '../../design_system/alera_theme.dart';
+import '../../design_system/status/status.dart';
 
 import '../../design_system/alera_typography.dart';
 import 'domain/repositories/caregiver_repository.dart';
@@ -675,8 +676,13 @@ class _CaregiverShellState extends State<CaregiverShell>
                 ListTile(
                   key: ValueKey<String>('patient-switch-${patient.id}'),
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    child: Text(_patientInitials(patient.name)),
+                  leading: AleraBadgedAvatar(
+                    name: patient.name,
+                    radius: 20,
+                    status: PatientStatusChip.describe(
+                      patient.status,
+                      sheetContext,
+                    ),
                   ),
                   title: Text(patient.name),
                   subtitle: Text(patient.relationshipLabel),
@@ -699,14 +705,6 @@ class _CaregiverShellState extends State<CaregiverShell>
       ),
     );
   }
-
-  String _patientInitials(String name) => name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .take(2)
-      .map((part) => part.characters.first.toUpperCase())
-      .join();
 
   void _openVitalTrend(
     BuildContext context,

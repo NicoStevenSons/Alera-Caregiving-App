@@ -30,6 +30,7 @@ class AleraStatusLabels {
 
   // Reminder state.
   String get reminderOverdue => 'Overdue';
+  String get reminderMissed => 'Missed';
   String get reminderSnoozed => 'Snoozed';
   String get reminderScheduled => 'Scheduled';
   String get reminderCompleted => 'Completed';
@@ -38,14 +39,35 @@ class AleraStatusLabels {
   String get deviceOnline => 'Online';
   String get deviceLowBattery => 'Low battery';
   String get deviceOffline => 'Offline';
+  String get deviceSyncing => 'Syncing';
+  String get deviceSyncFailed => 'Sync failed';
+  String get deviceUnknown => 'Unknown';
 
   // Patient state.
   String get patientActive => 'Active';
   String get patientPendingAccess => 'Pending access';
   String get patientInactive => 'Inactive';
 
+  // Patient monitoring status. A distinct domain from patient access state
+  // above: this is the patient's health/monitoring status (CareStatus), not
+  // whether their account is connected (PatientAccessState). The original
+  // five-domain plan named the access-state domain "Patient State"; this one
+  // answers a different question and existed under this same adapter name in
+  // the Patch 4 directive.
+  String get patientStatusStable => 'Stable';
+  String get patientStatusWarning => 'Warning';
+  String get patientStatusCritical => 'Critical';
+  String get patientStatusNeedsAttention => 'Attention needed';
+  String get patientStatusNoData => 'No data';
+  String get patientStatusUnknown => 'Unknown';
+
   // Vital / trend labels.
   String get vitalElevated => 'Elevated';
   String get vitalNormal => 'Normal';
   String get vitalLow => 'Low';
+  String get vitalHigh => 'High';
+  String get vitalCriticallyLow => 'Critically low';
+  String get vitalWarning => 'Warning';
+  String get vitalCritical => 'Critical';
+  String get vitalUnknown => 'Unknown';
 }

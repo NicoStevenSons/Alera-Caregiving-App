@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/status/adapters/alert_severity_chip.dart';
+import '../../../../design_system/status/alera_badged_avatar.dart';
+import '../../../../design_system/status/alera_status_chip.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
@@ -104,12 +107,26 @@ class CaregiverAlertCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (showPatientName && name.isNotEmpty)
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    color: AleraColors.textSecondary,
-                                    fontSize: 10,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AleraBadgedAvatar(
+                                      name: name,
+                                      radius: 18,
+                                      status: AlertSeverityChip.describe(
+                                        alert.severity,
+                                        context,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        color: AleraColors.textSecondary,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               Text(
                                 alert.title,
@@ -119,6 +136,13 @@ class CaregiverAlertCard extends StatelessWidget {
                                   fontWeight: unread
                                       ? FontWeight.w700
                                       : FontWeight.w600,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: AlertSeverityChip(
+                                  alert.severity,
+                                  size: AleraStatusChipSize.small,
                                 ),
                               ),
                               AnimatedSwitcher(

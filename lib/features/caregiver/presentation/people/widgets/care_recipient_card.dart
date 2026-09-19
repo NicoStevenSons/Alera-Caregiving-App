@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
+import '../../../../../design_system/status/adapters/patient_status_chip.dart';
+import '../../../../../design_system/status/alera_badged_avatar.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
@@ -19,15 +20,17 @@ class CareRecipientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isStable = careRecipient.status == CareStatus.stable;
-
     return AleraCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(10, 10, 14, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InitialAvatar(name: careRecipient.name),
+          AleraBadgedAvatar(
+            name: careRecipient.name,
+            radius: 20,
+            status: PatientStatusChip.describe(careRecipient.status, context),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -50,15 +53,12 @@ class CareRecipientCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                 ],
-                _StatusRow(
-                  assetPath: isStable
-                      ? 'alera-figma-assets/assets/icons/status/stable.svg'
-                      : 'alera-figma-assets/assets/icons/status/warning.svg',
-                  label: careRecipient.backendBacked
-                      ? careRecipient.monitoringStatusLabel
-                      : isStable
-                      ? 'Stable'
-                      : 'High Heart Rate',
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: PatientStatusChip(
+                    careRecipient.status,
+                    size: AleraStatusChipSize.small,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 _StatusRow(
@@ -100,48 +100,6 @@ class CareRecipientCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> words = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .toList();
-
-    final String initials = words
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-
-    const List<Color> colors = [
-      AleraColors.primary,
-      AleraColors.information,
-      AleraColors.critical,
-    ];
-
-    final int colorIndex =
-        name.codeUnits.fold(0, (sum, value) => sum + value) % colors.length;
-
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: colors[colorIndex],
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }
