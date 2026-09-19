@@ -32,7 +32,7 @@ class SleepDataReader(
         List<SleepSessionData> {
 
         val now = Instant.now()
-        val startTime = now.minus(365, ChronoUnit.DAYS)
+        val startTime = now.minus(7, ChronoUnit.DAYS)
 
         val response =
             healthConnectClient.readRecords(

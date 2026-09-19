@@ -182,6 +182,10 @@ class CurrentHealthSummaryDto {
   final PatientDeviceConnectionStatus deviceConnectionStatus;
   final String deviceConnectionStatusValue;
   final DateTime? lastDeviceSyncAt;
+  final int? todaySteps;
+  final DateTime? stepsUpdatedAt;
+  final int? latestSleepDurationSeconds;
+  final DateTime? latestSleepDate;
 
   const CurrentHealthSummaryDto({
     required this.latestHeartRate,
@@ -194,6 +198,11 @@ class CurrentHealthSummaryDto {
     required this.deviceConnectionStatus,
     required this.deviceConnectionStatusValue,
     required this.lastDeviceSyncAt,
+    required this.todaySteps,
+    required this.stepsUpdatedAt,
+    required this.latestSleepDurationSeconds,
+    required this.latestSleepDate,
+    
   });
 
   factory CurrentHealthSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -208,6 +217,13 @@ class CurrentHealthSummaryDto {
     return CurrentHealthSummaryDto(
       latestHeartRate: _readingOrNull(json['latest_heart_rate']),
       latestSpo2: _readingOrNull(json['latest_spo2']),
+
+      todaySteps: _nullableInt(json['today_steps'],'today_steps',),
+      stepsUpdatedAt: _utcOrNull(json['steps_updated_at'],),
+      latestSleepDurationSeconds: _nullableInt(json['latest_sleep_duration_seconds'],'latest_sleep_duration_seconds',),
+      latestSleepDate: _dateOrNull(json['latest_sleep_date'],),
+
+
       lastCheckIn: _utcOrNull(json['last_check_in']),
       activeAlertCount: _requiredInt(
         json['active_alert_count'],

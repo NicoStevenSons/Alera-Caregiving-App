@@ -2,14 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../Services/device_status_api_service.dart';
+import '../features/elderly/data/api/device_status_api_service.dart';
 import '../Services/fifo_upload_service.dart';
-import '../Services/health_event_api_service.dart';
+import '../features/elderly/data/api/health_event_api_service.dart';
 import '../Services/phone_heartbeat_service.dart';
 import '../Services/upload_queue_service.dart';
 import '../Services/watch_listener_controller.dart';
 import '../Services/watch_payload_service.dart';
+
 import '../config/app_config.dart';
+
 import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/presentation/device_status_tab.dart';
 import '../features/elderly/presentation/patient_reminder_detail_page.dart';
@@ -20,13 +22,17 @@ import '../features/elderly/presentation/widgets/spo2_display.dart';
 import '../features/elderly/presentation/widgets/steps_display.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/reminders/data/reminder_api_data_source.dart';
+
 import '../models/device_status_data.dart';
 import '../models/heart_rate_data.dart';
 import '../models/sleep_data.dart';
 import '../models/spo2_data.dart';
 import '../models/steps_data.dart';
+
 import '../services/patient_nudge_notification.dart';
 import '../services/reminder_due_notification.dart';
+import '../Services/health_connect_refresh_service.dart';
+import '../features/elderly/data/api/activity_data_api_service.dart';
 
 class ElderlyInterface extends StatefulWidget {
   final VoidCallback? onSignOut;
@@ -39,23 +45,31 @@ class ElderlyInterface extends StatefulWidget {
 
 class _ElderlyInterfaceState extends State<ElderlyInterface>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+      
   final WatchPayloadService watchPayloadService = WatchPayloadService();
 
-  final HealthEventApiService healthEventApiService = HealthEventApiService(
-    baseUrl: AppConfig.backendBaseUrl,
-    patientId: AppConfig.testPatientId,
-  );
+  final HealthEventApiService healthEventApiService = HealthEventApiService(baseUrl: AppConfig.backendBaseUrl, patientId: AppConfig.testPatientId, );
+
+  final ActivityDataApiService activityDataApiService = ActivityDataApiService(baseUrl:AppConfig.backendBaseUrl, patientId:AppConfig.testPatientId,);
 
   final UploadQueueService uploadQueueService = UploadQueueService();
 
   final ReminderApiDataSource reminderService = ReminderApiDataSource();
 
+  final HealthConnectRefreshService healthConnectRefreshService = HealthConnectRefreshService();
+
+
+
+  Timer? _stepsRefreshTimer;
+
   List<ElderlyReminder> reminders = [];
 
   bool remindersLoading = true;
+
   final Set<String> _busyReminderIds = <String>{};
 
   late final TabController _tabController;
+
   void Function()? _unsubscribeNudges;
   void Function()? _unsubscribeDueReminders;
 
@@ -112,6 +126,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       uploadQueueService: uploadQueueService,
       healthEventApiService: healthEventApiService,
       fifoUploadService: fifoUploadService,
+      activityDataApiService: activityDataApiService,
       onHeartRateUpdated: (HeartRateData data) {
         if (!mounted) return;
 
@@ -173,15 +188,17 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     _loadReminders();
 
-    watchListenerController.start();
-
     unawaited(
       watchPayloadService.requestWatchStatus(),
     );
 
-    _processPendingQueue();
+    watchListenerController.start();
 
     phoneHeartbeatService.start();
+
+    _startStepsRefreshTimer();
+
+      _processPendingQueue();
   }
 
   Future<void> _processPendingQueue() async {
@@ -192,13 +209,48 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     await fifoUploadService.processQueue();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      debugPrint('App resumed. Processing pending queue.');
-      unawaited(_processPendingQueue());
-    }
+@override
+void didChangeAppLifecycleState(
+  AppLifecycleState state,
+) {
+  if (state == AppLifecycleState.resumed) {
+    debugPrint(
+      'App resumed. Refreshing Health Connect '
+      'data and processing pending queue.',
+    );
+
+    unawaited(
+      healthConnectRefreshService
+          .refreshSteps(),
+    );
+
+    unawaited(
+      healthConnectRefreshService
+          .refreshSleep(),
+    );
+
+    unawaited(
+      _processPendingQueue(),
+    );
+
+    _startStepsRefreshTimer();
+
+    return;
   }
+
+  if (
+      state == AppLifecycleState.paused ||
+      state == AppLifecycleState.detached
+  ) {
+    debugPrint(
+      'App left foreground. '
+      'Stopping foreground steps timer.',
+    );
+
+    _stepsRefreshTimer?.cancel();
+    _stepsRefreshTimer = null;
+  }
+}
 
   Future<void> _loadReminders() async {
     try {
@@ -225,11 +277,20 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   @override
   void dispose() {
+    _stepsRefreshTimer?.cancel();
+    _stepsRefreshTimer = null;
+
     _unsubscribeNudges?.call();
     _unsubscribeDueReminders?.call();
+
+    phoneHeartbeatService.stop();
+    
     _tabController.dispose();
+
     WidgetsBinding.instance.removeObserver(this);
+
     watchPayloadService.dispose();
+
     super.dispose();
   }
 
@@ -242,6 +303,30 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
         SnackBar(content: Text('${event.type.label} reminder received.')),
       );
   }
+
+  void _startStepsRefreshTimer() {
+  _stepsRefreshTimer?.cancel();
+
+  debugPrint(
+    'Starting 15-minute Health Connect '
+    'steps refresh timer.',
+  );
+
+  _stepsRefreshTimer = Timer.periodic(
+    const Duration(minutes: 15),
+    (_) {
+      debugPrint(
+        '15-minute Health Connect '
+        'steps refresh triggered.',
+      );
+
+      unawaited(
+        healthConnectRefreshService
+            .refreshSteps(),
+      );
+    },
+  );
+}
 
   Future<void> _openDueReminder(ReminderDueNotification event) async {
     if (!mounted) return;
@@ -426,4 +511,5 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       ),
     );
   }
+
 }

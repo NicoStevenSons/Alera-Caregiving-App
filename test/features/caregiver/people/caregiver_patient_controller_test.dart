@@ -112,6 +112,10 @@ PatientListItemDto _item(String id) => PatientListItemDto(
   currentSummary: CurrentHealthSummaryDto(
     latestHeartRate: null,
     latestSpo2: null,
+    todaySteps: 90,
+    stepsUpdatedAt: DateTime.utc(2026, 9, 6, 10, 3),
+    latestSleepDurationSeconds: 24120,
+    latestSleepDate: DateTime(2026, 9, 5),
     lastCheckIn: null,
     activeAlertCount: 0,
     highestActiveAlertSeverity: null,

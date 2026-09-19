@@ -92,11 +92,12 @@ class HomeHealthSummary extends StatelessWidget {
                 child: _Metric(
                   assetPath:
                       'alera-figma-assets/assets/icons/vitals/activity.svg',
-                  label: careRecipient.backendBacked
+                  label: snapshot.steps == null
                       ? 'Activity — mock-only'
-                      : snapshot.steps == null
-                      ? 'No activity'
-                      : 'Active',
+                      : '${snapshot.steps} steps',
+                      timestamp: _timestamp(
+                        snapshot.stepsUpdatedAt,
+                          ),
                   color: const Color(0xFF73C838),
                   onTap: () => onMetricTap('Activity'),
                 ),

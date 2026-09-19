@@ -38,9 +38,13 @@ class HealthSnapshot {
   final double? spo2Percent;
   final String? spo2Unit;
   final DateTime? spo2RecordedAt;
+
   final int? steps;
+  final DateTime? stepsUpdatedAt;
   final String stressLabel;
   final Duration sleepDuration;
+  final DateTime? sleepDate;
+
   final int careRiskScore;
   final String careRiskLabel;
   final DateTime lastCheckIn;
@@ -57,9 +61,13 @@ class HealthSnapshot {
     required this.spo2Percent,
     this.spo2Unit,
     this.spo2RecordedAt,
+
     required this.steps,
+    this.stepsUpdatedAt,
     required this.stressLabel,
     required this.sleepDuration,
+    this.sleepDate,
+
     required this.careRiskScore,
     required this.careRiskLabel,
     required this.lastCheckIn,

@@ -86,8 +86,8 @@ class ReminderApiDataSource implements ReminderDataSource {
   }) async {
     final query = <String, dynamic>{'limit': '$limit', 'offset': '$offset'};
     if (patientId != null) query['patient_id'] = patientId;
-    if (statuses.isNotEmpty)
-      query['status'] = statuses.map((e) => e.apiValue).toList();
+    if (statuses.isNotEmpty){
+      query['status'] = statuses.map((e) => e.apiValue).toList();}
     final decoded = await _request('GET', '/api/v1/reminders', query: query);
     return parseReminderPage(
       decoded,
@@ -107,8 +107,8 @@ class ReminderApiDataSource implements ReminderDataSource {
       'limit': '$limit',
       'offset': '$offset',
     };
-    if (statuses.isNotEmpty)
-      query['status'] = statuses.map((e) => e.apiValue).toList();
+    if (statuses.isNotEmpty){
+      query['status'] = statuses.map((e) => e.apiValue).toList(); }
     final decoded = await _request(
       'GET',
       '/api/v1/reminder-templates',
@@ -292,8 +292,9 @@ class ReminderApiDataSource implements ReminderDataSource {
   }
 
   Map<String, dynamic> _object(Object? value) {
-    if (value is! Map<String, dynamic>)
+    if (value is! Map<String, dynamic>){
       throw const ReminderApiFailure('The reminder response was invalid.');
+      }
     return value;
   }
 

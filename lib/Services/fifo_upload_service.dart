@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'health_event_api_service.dart';
+import '../features/elderly/data/api/health_event_api_service.dart';
 import 'upload_queue_service.dart';
 
 class FifoUploadService {

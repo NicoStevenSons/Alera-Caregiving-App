@@ -27,6 +27,9 @@ class MainActivity : FlutterFragmentActivity() {
 
         private const val WATCH_STATUS_CHANNEL =
             "com.alera.payloadextraction/watch_status"
+
+        private const val HEALTH_REFRESH_CHANNEL =
+            "com.alera.payloadextraction/health_refresh"   
     }
 
     private lateinit var healthConnectClient:HealthConnectClient
@@ -68,13 +71,32 @@ class MainActivity : FlutterFragmentActivity() {
                 "Sleep granted: $sleepGranted"
         )
 
-        if (stepsGranted) {
-            readAndSendTodaySteps()
-        }
+        lifecycleScope.launch {
 
-        if (sleepGranted) {
-            readAndSendRecentSleep()
+    if (stepsGranted) {
+        try {
+            readAndSendTodaySteps()
+        } catch (exception: Exception) {
+            Log.e(
+                "AleraHealthConnect",
+                "Initial steps refresh failed",
+                exception
+            )
         }
+    }
+
+    if (sleepGranted) {
+        try {
+            readAndSendRecentSleep()
+        } catch (exception: Exception) {
+            Log.e(
+                "AleraHealthConnect",
+                "Initial sleep refresh failed",
+                exception
+            )
+        }
+    }
+}
 
         if (!stepsGranted || !sleepGranted) {
             Log.w(
@@ -84,15 +106,6 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
-
-private fun refreshSteps() {
-    Log.d(
-        "AleraHealthConnect",
-        "Refreshing Health Connect steps"
-    )
-
-    readAndSendTodaySteps()
-}//for testing
 
     override fun onCreate(
     savedInstanceState: Bundle?
@@ -138,14 +151,6 @@ private fun refreshSteps() {
                 "sleep=$sleepGranted"
         )
 
-        if (stepsGranted) {
-            readAndSendTodaySteps()
-        }
-
-        if (sleepGranted) {
-            readAndSendRecentSleep()
-        }
-
         val missingPermissions =
             healthPermissions.filterNot {
                 grantedPermissions.contains(it)
@@ -159,131 +164,146 @@ private fun refreshSteps() {
     }
 }
 
-    private fun readAndSendTodaySteps() {
-    lifecycleScope.launch {
-        try {
-            val sessions =
-                stepsDataReader.readAllStepSessions()
+    private suspend fun readAndSendTodaySteps() {
+    try {
+        val sessions =
+            stepsDataReader.readAllStepSessions()
 
-                Log.d(
+        Log.d(
+            "AleraHealthConnect",
+            "Step sessions found: ${sessions.size}"
+        )
+
+        sessions.forEach { session ->
+            Log.d(
                 "AleraHealthConnect",
-                "Step sessions found: ${sessions.size}"
-                )
-
-                sessions.forEach { session ->
-                Log.d(
-                    "AleraHealthConnect",
-                    "Steps: ${session.stepCount}, " +
+                "Steps: ${session.stepCount}, " +
                     "start=${session.startTime}, " +
                     "end=${session.endTime}"
-                    )
-                        }
-
-            val sessionsJson =
-                sessions.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                ) { session ->
-                    """
-                    {
-                      "step_count": ${session.stepCount},
-                      "start_time": "${session.startTime}",
-                      "end_time": "${session.endTime}"
-                    }
-                    """.trimIndent()
-                }
-
-            val payload =
-                """
-                {
-                  "event_type": "steps",
-                  "sessions": $sessionsJson
-                }
-                """.trimIndent()
-
-            Log.d(
-                "AleraHealthConnect",
-                "Steps payload: $payload"
-            )
-
-            PayloadEventBridge.sendPayload(payload)
-        } catch (exception: Exception) {
-            Log.e(
-                "AleraHealthConnect",
-                "Failed to read step sessions",
-                exception
             )
         }
+
+        val sessionsJson =
+            sessions.joinToString(
+                separator = ",",
+                prefix = "[",
+                postfix = "]"
+            ) { session ->
+                """
+                {
+                  "step_count": ${session.stepCount},
+                  "start_time": "${session.startTime}",
+                  "end_time": "${session.endTime}"
+                }
+                """.trimIndent()
+            }
+
+        val payload =
+            """
+            {
+              "event_type": "steps",
+              "sessions": $sessionsJson
+            }
+            """.trimIndent()
+
+        Log.d(
+            "AleraHealthConnect",
+            "Steps payload: $payload"
+        )
+
+        PayloadEventBridge.sendPayload(
+            payload
+        )
+
+    } catch (exception: Exception) {
+
+        Log.e(
+            "AleraHealthConnect",
+            "Failed to read step sessions",
+            exception
+        )
+
+        throw exception
     }
 }
-    private fun readAndSendRecentSleep() {
-    lifecycleScope.launch {
-        try {
-            val sessions =
-                sleepDataReader.readRecentSleepSessions()
 
-            Log.d(
-                "AleraHealthConnect",
-                "Sleep sessions found: ${sessions.size}"
-            )
+    private suspend fun readAndSendRecentSleep() {
+    try {
+        val sessions =
+            sleepDataReader.readRecentSleepSessions()
 
-            val sessionsJson =
-                sessions.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                ) { session ->
+        Log.d(
+            "AleraHealthConnect",
+            "Sleep sessions found: ${sessions.size}"
+        )
 
-                    val stagesJson =
-                        session.stages.joinToString(
-                            separator = ",",
-                            prefix = "[",
-                            postfix = "]"
-                        ) { stage ->
-                            """
-                            {
-                              "stage": ${stage.stage},
-                              "start_time": "${stage.startTime}",
-                              "end_time": "${stage.endTime}"
-                            }
-                            """.trimIndent()
+        val sessionsJson =
+            sessions.joinToString(
+                separator = ",",
+                prefix = "[",
+                postfix = "]"
+            ) { session ->
+
+                val stagesJson =
+                    session.stages.joinToString(
+                        separator = ",",
+                        prefix = "[",
+                        postfix = "]"
+                    ) { stage ->
+                        """
+                        {
+                          "stage": ${stage.stage},
+                          "start_time": "${stage.startTime}",
+                          "end_time": "${stage.endTime}"
                         }
-
-                    """
-                    {
-                      "start_time": "${session.startTime}",
-                      "end_time": "${session.endTime}",
-                      "title": ${session.title?.let { "\"$it\"" } ?: "null"},
-                      "notes": ${session.notes?.let { "\"$it\"" } ?: "null"},
-                      "stages": $stagesJson
+                        """.trimIndent()
                     }
-                    """.trimIndent()
-                }
 
-            val payload =
                 """
                 {
-                  "event_type": "sleep",
-                  "sessions": $sessionsJson
+                  "start_time": "${session.startTime}",
+                  "end_time": "${session.endTime}",
+                  "title": ${
+                      session.title?.let {
+                          "\"$it\""
+                      } ?: "null"
+                  },
+                  "notes": ${
+                      session.notes?.let {
+                          "\"$it\""
+                      } ?: "null"
+                  },
+                  "stages": $stagesJson
                 }
                 """.trimIndent()
+            }
 
-            Log.d(
-                "AleraHealthConnect",
-                "Sleep payload: $payload"
-            )
+        val payload =
+            """
+            {
+              "event_type": "sleep",
+              "sessions": $sessionsJson
+            }
+            """.trimIndent()
 
-            PayloadEventBridge.sendPayload(
-                payload
-            )
-        } catch (exception: Exception) {
-            Log.e(
-                "AleraHealthConnect",
-                "Failed to read sleep sessions",
-                exception
-            )
-        }
+        Log.d(
+            "AleraHealthConnect",
+            "Sleep payload: $payload"
+        )
+
+        PayloadEventBridge.sendPayload(
+            payload
+        )
+
+    } catch (exception: Exception) {
+
+        Log.e(
+            "AleraHealthConnect",
+            "Failed to read sleep sessions",
+            exception
+        )
+
+        throw exception
     }
 }
 
@@ -335,7 +355,15 @@ override fun configureFlutterEngine(
                             "Flutter listener ready - refreshing steps"
                         )
 
-                        readAndSendTodaySteps()
+                        try {
+                                readAndSendTodaySteps()
+                                    } catch (exception: Exception) {
+                                Log.e(
+                                    "AleraHealthConnect",
+                                    "Flutter listener steps refresh failed",
+                                exception
+                                )
+                        }
                     }
 
                     if (
@@ -346,10 +374,18 @@ override fun configureFlutterEngine(
                             "Flutter listener ready - refreshing sleep"
                         )
 
-                        readAndSendRecentSleep()
+                        try {
+                            readAndSendRecentSleep()
+                                } catch (exception: Exception) {
+                            Log.e(
+                            "AleraHealthConnect",
+                            "Flutter listener sleep refresh failed",
+                                exception
+                            )
                     }
                 }
             }
+        }
 
             override fun onCancel(
                 arguments: Any?
@@ -389,5 +425,125 @@ override fun configureFlutterEngine(
             }
         }
     }
+
+    MethodChannel(
+    flutterEngine.dartExecutor.binaryMessenger,
+    HEALTH_REFRESH_CHANNEL
+).setMethodCallHandler { call, result ->
+
+    when (call.method) {
+
+        "refreshSteps" -> {
+            lifecycleScope.launch {
+                try {
+                    val grantedPermissions =
+                        healthConnectClient
+                            .permissionController
+                            .getGrantedPermissions()
+
+                    val stepsPermission =
+                        HealthPermission.getReadPermission(
+                            StepsRecord::class
+                        )
+
+                    if (
+                        !grantedPermissions.contains(
+                            stepsPermission
+                        )
+                    ) {
+                        result.error(
+                            "STEPS_PERMISSION_MISSING",
+                            "Health Connect steps permission is not granted.",
+                            null
+                        )
+
+                        return@launch
+                    }
+
+                    Log.d(
+                        "AleraHealthConnect",
+                        "Flutter requested steps refresh"
+                    )
+
+                    readAndSendTodaySteps()
+
+                    result.success(true)
+
+                } catch (exception: Exception) {
+
+                    Log.e(
+                        "AleraHealthConnect",
+                        "Steps refresh failed",
+                        exception
+                    )
+
+                    result.error(
+                        "STEPS_REFRESH_FAILED",
+                        exception.message,
+                        null
+                    )
+                }
+            }
+        }
+
+        "refreshSleep" -> {
+            lifecycleScope.launch {
+                try {
+                    val grantedPermissions =
+                        healthConnectClient
+                            .permissionController
+                            .getGrantedPermissions()
+
+                    val sleepPermission =
+                        HealthPermission.getReadPermission(
+                            SleepSessionRecord::class
+                        )
+
+                    if (
+                        !grantedPermissions.contains(
+                            sleepPermission
+                        )
+                    ) {
+                        result.error(
+                            "SLEEP_PERMISSION_MISSING",
+                            "Health Connect sleep permission is not granted.",
+                            null
+                        )
+
+                        return@launch
+                    }
+
+                    Log.d(
+                        "AleraHealthConnect",
+                        "Flutter requested sleep refresh"
+                    )
+
+                    readAndSendRecentSleep()
+
+                    result.success(true)
+
+                } catch (exception: Exception) {
+
+                    Log.e(
+                        "AleraHealthConnect",
+                        "Sleep refresh failed",
+                        exception
+                    )
+
+                    result.error(
+                        "SLEEP_REFRESH_FAILED",
+                        exception.message,
+                        null
+                    )
+                }
+            }
+        }
+
+        else -> {
+            result.notImplemented()
+        }
+    }
+}
+    
 }
 }

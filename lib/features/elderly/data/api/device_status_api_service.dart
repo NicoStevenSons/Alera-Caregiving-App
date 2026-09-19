@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import '../features/caregiver/data/auth/caregiver_session_controller.dart';
-import '../models/device_status_data.dart';
+import '../../../caregiver/data/auth/caregiver_session_controller.dart';
+import '../../../../models/device_status_data.dart';
 
 class DeviceStatusApiService {
   final String baseUrl;

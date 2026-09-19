@@ -3,7 +3,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../config/app_config.dart';
 import 'fifo_upload_service.dart';
-import 'health_event_api_service.dart';
+import '../features/elderly/data/api/health_event_api_service.dart';
 import 'upload_queue_service.dart';
 
 const String aleraBackgroundSyncTask = 'aleraBackgroundSyncTask';

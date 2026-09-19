@@ -132,9 +132,17 @@ CareRecipient patientListItemToCareRecipient(
       spo2Percent: summary.latestSpo2?.value,
       spo2Unit: summary.latestSpo2?.unit,
       spo2RecordedAt: summary.latestSpo2?.recordedAt,
-      steps: null,
+
+      steps: summary.todaySteps,
+      stepsUpdatedAt: summary.stepsUpdatedAt,
+
       stressLabel: 'No data',
-      sleepDuration: Duration.zero,
+
+      sleepDuration: Duration(
+        seconds: summary.latestSleepDurationSeconds ?? 0,
+      ),
+      sleepDate: summary.latestSleepDate,
+
       careRiskScore: 0,
       careRiskLabel: 'Not assessed',
       lastCheckIn:

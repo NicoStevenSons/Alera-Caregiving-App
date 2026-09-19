@@ -276,23 +276,29 @@ PatientListItemDto _patient(String name) => PatientListItemDto(
   accountStatus: 'ACTIVE',
   createdAt: DateTime.utc(2026, 9, 6),
   currentSummary: CurrentHealthSummaryDto(
-    latestHeartRate: LatestMetricReadingDto(
-      value: 81,
-      unit: 'bpm',
-      recordedAt: DateTime.utc(2026, 9, 6, 10, 1),
-    ),
-    latestSpo2: LatestMetricReadingDto(
-      value: 97,
-      unit: '%',
-      recordedAt: DateTime.utc(2026, 9, 6, 10, 2),
-    ),
-    lastCheckIn: DateTime.utc(2026, 9, 6, 10, 2),
-    activeAlertCount: 2,
-    highestActiveAlertSeverity: 'WARNING',
-    monitoringStatus: PatientMonitoringStatus.warning,
-    monitoringStatusValue: 'WARNING',
-    deviceConnectionStatus: PatientDeviceConnectionStatus.connected,
-    deviceConnectionStatusValue: 'CONNECTED',
-    lastDeviceSyncAt: DateTime.utc(2026, 9, 6, 10),
+  latestHeartRate: LatestMetricReadingDto(
+    value: 81,
+    unit: 'bpm',
+    recordedAt: DateTime.utc(2026, 9, 6, 10, 1),
   ),
+  latestSpo2: LatestMetricReadingDto(
+    value: 97,
+    unit: '%',
+    recordedAt: DateTime.utc(2026, 9, 6, 10, 2),
+  ),
+
+  todaySteps: 90,
+  stepsUpdatedAt: DateTime.utc(2026, 9, 6, 10, 3),
+  latestSleepDurationSeconds: 24120,
+  latestSleepDate: DateTime(2026, 9, 5),
+
+  lastCheckIn: DateTime.utc(2026, 9, 6, 10, 2),
+  activeAlertCount: 2,
+  highestActiveAlertSeverity: 'WARNING',
+  monitoringStatus: PatientMonitoringStatus.warning,
+  monitoringStatusValue: 'WARNING',
+  deviceConnectionStatus: PatientDeviceConnectionStatus.connected,
+  deviceConnectionStatusValue: 'CONNECTED',
+  lastDeviceSyncAt: DateTime.utc(2026, 9, 6, 10),
+),
 );

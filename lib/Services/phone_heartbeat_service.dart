@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/foundation.dart';
 
-import 'device_status_api_service.dart';
+import '../features/elderly/data/api/device_status_api_service.dart';
 
 class PhoneHeartbeatService {
   final DeviceStatusApiService deviceStatusApiService;

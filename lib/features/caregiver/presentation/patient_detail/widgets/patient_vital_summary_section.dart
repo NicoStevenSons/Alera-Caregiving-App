@@ -65,14 +65,20 @@ class PatientVitalSummarySection extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _UnavailableVitalCard(
+                child: _VitalCard(
                   backgroundAsset:
-                      'alera-figma-assets/assets/icons/vitals/cards/sleep_background.svg',
+                    'alera-figma-assets/assets/icons/vitals/cards/sleep_background.svg',
                   iconAsset:
-                      'alera-figma-assets/assets/icons/vitals/card_icons/sleep.svg',
+                    'alera-figma-assets/assets/icons/vitals/card_icons/sleep.svg',
                   title: 'Sleep',
-                  textColor: const Color(0xFF520EAB),
-                  onTap: () => onVitalTap('Sleep'),
+                  value: snapshot.sleepDuration == Duration.zero
+                  ? 'Unavailable'
+                  : _formatSleepDuration(
+                    snapshot.sleepDuration,
+                      ),
+                    unit: '',
+                    textColor: const Color(0xFF520EAB),
+                    onTap: () => onVitalTap('Sleep'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -90,12 +96,14 @@ class PatientVitalSummarySection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _UnavailableVitalCard(
+          _VitalCard(
             backgroundAsset:
-                'alera-figma-assets/assets/icons/vitals/cards/activity_background.svg',
+              'alera-figma-assets/assets/icons/vitals/cards/activity_background.svg',
             iconAsset:
                 'alera-figma-assets/assets/icons/vitals/card_icons/activity.svg',
             title: 'Activity',
+            value: snapshot.steps?.toString() ?? 'Unavailable',
+            unit: snapshot.steps == null ? '' : 'steps',
             textColor: const Color(0xFF3C6300),
             onTap: () => onVitalTap('Activity'),
           ),
@@ -103,7 +111,23 @@ class PatientVitalSummarySection extends StatelessWidget {
       ),
     );
   }
-}
+
+  String _formatSleepDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+   if (hours > 0 && minutes > 0) {
+     return '${hours}h ${minutes}m';
+    }
+
+    if (hours > 0) {
+     return '${hours}h';
+    }
+
+   return '${minutes}m';
+  }
+
+  }
 
 class _UnavailableVitalCard extends StatelessWidget {
   final String backgroundAsset;
