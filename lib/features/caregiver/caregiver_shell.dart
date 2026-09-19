@@ -33,6 +33,7 @@ import '../../services/alert_notification.dart';
 import '../reminders/data/reminder_api_data_source.dart';
 import '../reminders/data/reminder_controller.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
+import '../startup/presentation/alera_startup_screen.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -86,6 +87,12 @@ class _CaregiverShellState extends State<CaregiverShell>
   Timer? _patientPollTimer;
   late final ReminderController _reminderController;
 
+  void _patientsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -123,6 +130,7 @@ class _CaregiverShellState extends State<CaregiverShell>
         demoPatients: _careRecipients,
       )..load();
     }
+    _patientController?.addListener(_patientsChanged);
     _syncPatientPolling();
     // AuthGate supplies this loader only for an active caregiver session.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -143,7 +151,11 @@ class _CaregiverShellState extends State<CaregiverShell>
     _alertController
       ..removeListener(_alertsChanged)
       ..dispose();
-    if (_ownsPatientController) _patientController?.dispose();
+    _patientController?.removeListener(_patientsChanged);
+
+    if (_ownsPatientController) {
+      _patientController?.dispose();
+    }
     _reminderController.dispose();
     super.dispose();
   }
@@ -415,6 +427,12 @@ class _CaregiverShellState extends State<CaregiverShell>
 
   @override
   Widget build(BuildContext context) {
+    final patientController = _patientController;
+
+    if (patientController != null &&
+        patientController.state == CaregiverPatientListState.initialLoading) {
+      return const AleraStartupScreen();
+    }
     final SystemUiOverlayStyle systemBarStyle = _selectedIndex == 0
         ? const SystemUiOverlayStyle(
             statusBarColor: Color(0xFFC3A7F5),

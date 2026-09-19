@@ -19,6 +19,7 @@ import '../../data/auth/caregiver_auth_api.dart';
 import '../../data/auth/caregiver_session_controller.dart';
 import '../../data/auth/caregiver_token_store.dart';
 import '../../domain/repositories/caregiver_repository.dart';
+import '../../../startup/presentation/alera_startup_screen.dart';
 
 class HouseholdCodeInput extends StatefulWidget {
   final TextEditingController controller;
@@ -260,9 +261,7 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
   @override
   Widget build(BuildContext context) {
     final Widget page = switch (_session.status) {
-      CaregiverSessionStatus.restoring => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      CaregiverSessionStatus.restoring => const AleraStartupScreen(),
       CaregiverSessionStatus.unauthenticated => Theme(
         data: AleraTheme.caregiver(Theme.of(context)),
         child: HouseholdAuthFlow(sessionController: _session),

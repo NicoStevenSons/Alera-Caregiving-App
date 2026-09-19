@@ -51,6 +51,7 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
+    - assets/icons/
     - alera-figma-assets/assets/icons/status/
     - alera-figma-assets/assets/icons/mini_status/
     - alera-figma-assets/assets/icons/vitals/
