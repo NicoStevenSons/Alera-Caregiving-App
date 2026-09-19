@@ -183,6 +183,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     watchListenerController.start();
 
+    unawaited(
+      watchPayloadService.requestWatchStatus(),
+    );
+
     _processPendingQueue();
 
     phoneHeartbeatService.start();

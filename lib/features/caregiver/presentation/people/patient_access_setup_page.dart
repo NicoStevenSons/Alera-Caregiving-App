@@ -65,10 +65,11 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _foreground = state == AppLifecycleState.resumed;
-    if (_foreground)
+    if (_foreground) {
       _startPolling();
-    else
+    } else {
       _stopPolling();
+    }
   }
 
   bool get _pendingExpired =>

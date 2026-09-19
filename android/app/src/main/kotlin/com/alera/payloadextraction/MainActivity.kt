@@ -10,6 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodChannel
+
 import kotlinx.coroutines.launch
 
 import androidx.health.connect.client.records.StepsRecord
@@ -22,6 +24,9 @@ class MainActivity : FlutterFragmentActivity() {
     companion object {
         private const val PAYLOAD_CHANNEL =
             "com.alera.payloadextraction/payloads"
+
+        private const val WATCH_STATUS_CHANNEL =
+            "com.alera.payloadextraction/watch_status"
     }
 
     private lateinit var healthConnectClient:HealthConnectClient
@@ -282,79 +287,107 @@ private fun refreshSteps() {
     }
 }
 
-    override fun configureFlutterEngine(
-        flutterEngine: FlutterEngine
-    ) {
-        super.configureFlutterEngine(
-            flutterEngine
-        )
-
-        EventChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
-            PAYLOAD_CHANNEL
-        ).setStreamHandler(
-            object : EventChannel.StreamHandler {
-
-                override fun onListen(
-    arguments: Any?,
-    events: EventChannel.EventSink?
+override fun configureFlutterEngine(
+    flutterEngine: FlutterEngine
 ) {
-    Log.d(
-        "AleraFlutterBridge",
-        "Flutter started listening"
+    super.configureFlutterEngine(
+        flutterEngine
     )
 
-    PayloadEventBridge.attachSink(events)
+    EventChannel(
+        flutterEngine.dartExecutor.binaryMessenger,
+        PAYLOAD_CHANNEL
+    ).setStreamHandler(
+        object : EventChannel.StreamHandler {
 
-    lifecycleScope.launch {
-        val grantedPermissions =
-            healthConnectClient
-                .permissionController
-                .getGrantedPermissions()
+            override fun onListen(
+                arguments: Any?,
+                events: EventChannel.EventSink?
+            ) {
+                Log.d(
+                    "AleraFlutterBridge",
+                    "Flutter started listening"
+                )
 
-        val stepsPermission =
-            HealthPermission.getReadPermission(
-                StepsRecord::class
-            )
+                PayloadEventBridge.attachSink(events)
 
-        val sleepPermission =
-            HealthPermission.getReadPermission(
-                SleepSessionRecord::class
-            )
+                lifecycleScope.launch {
+                    val grantedPermissions =
+                        healthConnectClient
+                            .permissionController
+                            .getGrantedPermissions()
 
-        if (stepsPermission in grantedPermissions) {
-            Log.d(
-                "AleraHealthConnect",
-                "Flutter listener ready - refreshing steps"
-            )
+                    val stepsPermission =
+                        HealthPermission.getReadPermission(
+                            StepsRecord::class
+                        )
 
-            readAndSendTodaySteps()
+                    val sleepPermission =
+                        HealthPermission.getReadPermission(
+                            SleepSessionRecord::class
+                        )
+
+                    if (
+                        stepsPermission in grantedPermissions
+                    ) {
+                        Log.d(
+                            "AleraHealthConnect",
+                            "Flutter listener ready - refreshing steps"
+                        )
+
+                        readAndSendTodaySteps()
+                    }
+
+                    if (
+                        sleepPermission in grantedPermissions
+                    ) {
+                        Log.d(
+                            "AleraHealthConnect",
+                            "Flutter listener ready - refreshing sleep"
+                        )
+
+                        readAndSendRecentSleep()
+                    }
+                }
+            }
+
+            override fun onCancel(
+                arguments: Any?
+            ) {
+                Log.d(
+                    "AleraFlutterBridge",
+                    "Flutter stopped listening"
+                )
+
+                PayloadEventBridge.attachSink(
+                    null
+                )
+            }
         }
+    )
 
-        if (sleepPermission in grantedPermissions) {
-            Log.d(
-                "AleraHealthConnect",
-                "Flutter listener ready - refreshing sleep"
-            )
+    MethodChannel(
+        flutterEngine.dartExecutor.binaryMessenger,
+        WATCH_STATUS_CHANNEL
+    ).setMethodCallHandler { call, result ->
 
-            readAndSendRecentSleep()
+        when (call.method) {
+
+            "requestWatchStatus" -> {
+                val requester =
+                    WatchStatusRequester(
+                        applicationContext
+                    )
+
+                requester.requestStatus()
+
+                result.success(true)
+            }
+
+            else -> {
+                result.notImplemented()
+            }
         }
     }
 }
-
-                override fun onCancel(
-                    arguments: Any?
-                ) {
-                    Log.d(
-                        "AleraFlutterBridge",
-                        "Flutter stopped listening"
-                    )
-
-                    PayloadEventBridge.attachSink(
-                        null
-                    )
-                }
-            }
-        )
-    }
 }

@@ -8,7 +8,6 @@ import 'config/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'services/fcm_notification_service.dart';
-
 import 'Services/background_sync_service.dart';
 
 import 'interfaces/interface_selection.dart';

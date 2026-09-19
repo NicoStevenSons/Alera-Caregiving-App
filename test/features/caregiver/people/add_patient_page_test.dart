@@ -183,8 +183,9 @@ class _Source implements CaregiverPatientDataSource {
     UpdateMonitoringSettingsRequest r,
   ) async {
     patchCalls++;
-    if (patchFails && patchCalls == 1)
+    if (patchFails && patchCalls == 1) {
       throw const CaregiverPatientApiFailure('Settings rejected');
+    }
     return MonitoringSettingsResponse(
       patientId: id,
       thresholdMode: PatientThresholdMode.custom,
