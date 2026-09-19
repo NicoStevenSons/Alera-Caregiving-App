@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../design_system/alera_colors.dart';
@@ -15,17 +18,33 @@ import 'patient_access_setup_page.dart';
 
 enum _Step { intro, personal, care, monitoring, review, created, pairing, code }
 
+class PatientPhotoSelection {
+  final Uint8List bytes;
+  final String filename;
+  final String contentType;
+
+  const PatientPhotoSelection({
+    required this.bytes,
+    required this.filename,
+    required this.contentType,
+  });
+}
+
+typedef PatientPhotoPicker = Future<PatientPhotoSelection?> Function();
+
 class AddPatientPage extends StatefulWidget {
   final CaregiverPatientDataSource dataSource;
   final Future<PatientDetailDto> Function(String patientId)? loadPatientDetail;
   final String? householdCode;
   final FutureOr<void> Function(PatientCreatedResponse) onPatientCreated;
+  final PatientPhotoPicker? pickPatientPhoto;
   const AddPatientPage({
     super.key,
     required this.dataSource,
     this.loadPatientDetail,
     required this.householdCode,
     required this.onPatientCreated,
+    this.pickPatientPhoto,
   });
   @override
   State<AddPatientPage> createState() => _AddPatientPageState();
@@ -54,11 +73,16 @@ class _AddPatientPageState extends State<AddPatientPage>
   _Step? returnTo;
   DateTime? birthdate;
   String? sex, error;
+  Uint8List? _profilePhotoBytes;
+  String? _profilePhotoFilename;
+  String? _profilePhotoContentType;
+  String? _profilePhotoError;
   bool custom = false,
       busy = false,
       issuing = false,
       called = false,
-      settingsFailed = false;
+      settingsFailed = false,
+      photoUploadFailed = false;
   PatientCreatedResponse? created;
   PatientAccessCodeResponse? issued;
   Timer? _pollTimer;
@@ -221,15 +245,205 @@ class _AddPatientPageState extends State<AddPatientPage>
       );
   String msg(Object e, String fallback) =>
       e is CaregiverPatientApiFailure ? e.message : fallback;
+
+  Future<void> pickProfilePhoto() async {
+    if (widget.pickPatientPhoto != null) {
+      final selected = await widget.pickPatientPhoto!();
+      if (selected == null || !mounted) return;
+
+      _applyProfilePhotoSelection(
+        bytes: selected.bytes,
+        filename: selected.filename,
+        contentType: selected.contentType,
+      );
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
+
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop photo',
+
+          // Alera top bar
+          toolbarColor: const Color(0xFFF9F5FF),
+          toolbarWidgetColor: const Color(0xFF3F365C),
+
+          // Main crop area
+          backgroundColor: const Color(0xFFF5F0FA),
+          dimmedLayerColor: const Color(0x99000000),
+
+          // Alera purple instead of orange
+          activeControlsWidgetColor: const Color(0xFFA884E8),
+
+          // Keep the square crop fixed
+          lockAspectRatio: true,
+          showCropGrid: true,
+
+          // IMPORTANT: keep controls visible
+          hideBottomControls: false,
+
+          aspectRatioPresets: [CropAspectRatioPreset.square],
+        ),
+        IOSUiSettings(
+          title: 'Crop photo',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          aspectRatioPresets: const [CropAspectRatioPreset.square],
+        ),
+      ],
+    );
+    if (cropped == null) return;
+
+    final croppedFile = XFile(cropped.path);
+    final bytes = await croppedFile.readAsBytes();
+    if (!mounted) return;
+
+    final contentType = _profilePhotoMimeType(croppedFile);
+    if (contentType == null) {
+      setState(() {
+        _profilePhotoError = 'Choose a JPEG, PNG, or WebP image.';
+      });
+      return;
+    }
+
+    _applyProfilePhotoSelection(
+      bytes: bytes,
+      filename: croppedFile.name,
+      contentType: contentType,
+    );
+  }
+
+  void _applyProfilePhotoSelection({
+    required Uint8List bytes,
+    required String filename,
+    required String contentType,
+  }) {
+    if (bytes.length > 5 * 1024 * 1024) {
+      setState(() {
+        _profilePhotoError = 'Choose a photo that is 5 MB or smaller.';
+      });
+      return;
+    }
+
+    const allowedTypes = {'image/jpeg', 'image/png', 'image/webp'};
+    if (!allowedTypes.contains(contentType.toLowerCase())) {
+      setState(() {
+        _profilePhotoError = 'Choose a JPEG, PNG, or WebP image.';
+      });
+      return;
+    }
+
+    setState(() {
+      _profilePhotoBytes = bytes;
+      _profilePhotoFilename = filename;
+      _profilePhotoContentType = contentType.toLowerCase();
+      _profilePhotoError = null;
+      photoUploadFailed = false;
+    });
+  }
+
+  void removeProfilePhoto() {
+    setState(() {
+      _profilePhotoBytes = null;
+      _profilePhotoFilename = null;
+      _profilePhotoContentType = null;
+      _profilePhotoError = null;
+      photoUploadFailed = false;
+    });
+  }
+
+  String? _profilePhotoMimeType(XFile file) {
+    final mime = file.mimeType?.toLowerCase();
+    if (mime == 'image/jpeg' || mime == 'image/png' || mime == 'image/webp') {
+      return mime;
+    }
+
+    final lower = file.name.toLowerCase();
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return null;
+  }
+
+  Future<void> _uploadProfilePhoto() async {
+    final bytes = _profilePhotoBytes;
+    final filename = _profilePhotoFilename;
+    final contentType = _profilePhotoContentType;
+    final patient = created;
+
+    if (bytes == null ||
+        filename == null ||
+        contentType == null ||
+        patient == null) {
+      return;
+    }
+
+    final result = await widget.dataSource.uploadProfilePhoto(
+      patient.patientId,
+      bytes: bytes,
+      filename: filename,
+      contentType: contentType,
+    );
+
+    created = PatientCreatedResponse(
+      patientId: patient.patientId,
+      userId: patient.userId,
+      householdId: patient.householdId,
+      accountStatus: patient.accountStatus,
+      assignment: patient.assignment,
+      fullName: patient.fullName,
+      birthdate: patient.birthdate,
+      sex: patient.sex,
+      phoneNumber: patient.phoneNumber,
+      addressOrRoom: patient.addressOrRoom,
+      profilePhotoUrl: result.profilePhotoUrl,
+      emergencyContactName: patient.emergencyContactName,
+      emergencyContactPhone: patient.emergencyContactPhone,
+      knownConditions: patient.knownConditions,
+      medications: patient.medications,
+      baselineHeartRate: patient.baselineHeartRate,
+      baselineSpo2: patient.baselineSpo2,
+      monitoringNotes: patient.monitoringNotes,
+      createdAt: patient.createdAt,
+    );
+  }
+
+  Future<void> retryPhotoUpload() async {
+    if (created == null || busy || _profilePhotoBytes == null) return;
+    setState(() {
+      busy = true;
+      _profilePhotoError = null;
+    });
+    try {
+      await _uploadProfilePhoto();
+      photoUploadFailed = false;
+      await widget.onPatientCreated(created!);
+    } catch (e) {
+      photoUploadFailed = true;
+      _profilePhotoError = msg(
+        e,
+        'The patient was created, but the photo could not be uploaded.',
+      );
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> create() async {
     if (busy || created != null) return;
     setState(() => busy = true);
     try {
       created = await widget.dataSource.createPatient(request);
-      if (!called) {
-        called = true;
-        await widget.onPatientCreated(created!);
-      }
       if (custom) {
         try {
           await widget.dataSource.updateMonitoringSettings(
@@ -241,6 +455,25 @@ class _AddPatientPageState extends State<AddPatientPage>
           error = msg(e, 'Profile exists but custom settings were not saved.');
         }
       }
+
+      if (_profilePhotoBytes != null) {
+        try {
+          await _uploadProfilePhoto();
+          photoUploadFailed = false;
+        } catch (e) {
+          photoUploadFailed = true;
+          _profilePhotoError = msg(
+            e,
+            'The patient was created, but the photo could not be uploaded.',
+          );
+        }
+      }
+
+      if (!called) {
+        called = true;
+        await widget.onPatientCreated(created!);
+      }
+
       if (mounted) setState(() => step = _Step.created);
     } catch (e) {
       if (mounted) {
@@ -410,6 +643,54 @@ class _AddPatientPageState extends State<AddPatientPage>
     key: p,
     child: list([
       Text('Personal Information', style: AleraTypography.pageTitle),
+      const SizedBox(height: 12),
+      Center(
+        child: Column(
+          children: [
+            CircleAvatar(
+              key: const Key('patient-profile-photo-preview'),
+              radius: 46,
+              backgroundColor: AleraColors.primarySoft,
+              backgroundImage: _profilePhotoBytes == null
+                  ? null
+                  : MemoryImage(_profilePhotoBytes!),
+              child: _profilePhotoBytes == null
+                  ? const Icon(Icons.person_outline, size: 42)
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              children: [
+                TextButton.icon(
+                  key: const Key('choose-patient-photo'),
+                  onPressed: pickProfilePhoto,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(
+                    _profilePhotoBytes == null
+                        ? 'Choose photo'
+                        : 'Change photo',
+                  ),
+                ),
+                if (_profilePhotoBytes != null)
+                  TextButton(
+                    key: const Key('remove-patient-photo'),
+                    onPressed: removeProfilePhoto,
+                    child: const Text('Remove'),
+                  ),
+              ],
+            ),
+            if (_profilePhotoError != null)
+              Text(
+                _profilePhotoError!,
+                key: const Key('patient-photo-error'),
+                style: const TextStyle(color: AleraColors.critical),
+                textAlign: TextAlign.center,
+              ),
+          ],
+        ),
+      ),
       field(
         name,
         'Full name *',
@@ -549,6 +830,17 @@ class _AddPatientPageState extends State<AddPatientPage>
   );
   Widget review() => list([
     Text('Review', style: AleraTypography.pageTitle),
+    if (_profilePhotoBytes != null) ...[
+      const SizedBox(height: 8),
+      Center(
+        child: CircleAvatar(
+          key: const Key('review-patient-photo'),
+          radius: 42,
+          backgroundImage: MemoryImage(_profilePhotoBytes!),
+        ),
+      ),
+      const SizedBox(height: 8),
+    ],
     summary('Personal', name.text, () => edit(_Step.personal)),
     summary(
       'Care',
@@ -598,6 +890,18 @@ class _AddPatientPageState extends State<AddPatientPage>
     Text('Monitoring: ${custom ? 'Custom' : 'Alera defaults'}'),
     const Text('Patient access: Not connected'),
     const Text('Smartwatch: Not connected'),
+    if (photoUploadFailed) ...[
+      if (_profilePhotoError != null)
+        Text(
+          _profilePhotoError!,
+          key: const Key('patient-photo-upload-error'),
+          style: const TextStyle(color: AleraColors.critical),
+        ),
+      AleraButton(
+        label: busy ? 'Uploading…' : 'Retry photo upload',
+        onPressed: busy ? null : retryPhotoUpload,
+      ),
+    ],
     if (settingsFailed) ...[
       err,
       AleraButton(

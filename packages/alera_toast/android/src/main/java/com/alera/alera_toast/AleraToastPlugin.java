@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Typeface;
@@ -166,14 +169,20 @@ public final class AleraToastPlugin implements FlutterPlugin, MethodChannel.Meth
   private void renderNotificationAvatar(MethodCall call, MethodChannel.Result result) {
     final String patientName = call.argument("patient_name");
     final String metricType = call.argument("metric_type");
-    if (patientName == null || patientName.trim().isEmpty()) {
+    final byte[] photoBytes = call.argument("photo_bytes");    if (patientName == null || patientName.trim().isEmpty()) {
       result.error("invalid_patient_name", "A patient name is required.", null);
       return;
     }
 
     try {
-      result.success(buildNotificationAvatar(patientName, metricType));
-    } catch (RuntimeException exception) {
+      result.success(
+          buildNotificationAvatar(
+              patientName,
+              metricType,
+              photoBytes
+          )
+      ); 
+      } catch (RuntimeException exception) {
       result.error(
           "avatar_render_failed",
           "Could not render the notification avatar.",
@@ -181,29 +190,109 @@ public final class AleraToastPlugin implements FlutterPlugin, MethodChannel.Meth
     }
   }
 
-  private byte[] buildNotificationAvatar(String patientName, String metricType) {
+  private byte[] buildNotificationAvatar(
+      String patientName,
+      String metricType,
+      byte[] photoBytes
+  ){ 
     final Bitmap bitmap =
         Bitmap.createBitmap(AVATAR_SIZE, AVATAR_SIZE, Bitmap.Config.ARGB_8888);
     final Canvas canvas = new Canvas(bitmap);
 
-    final Paint avatarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    avatarPaint.setColor(avatarColor(patientName));
-    canvas.drawCircle(
-        AVATAR_CENTER_X,
-        AVATAR_CENTER_Y,
-        AVATAR_RADIUS,
-        avatarPaint);
+    Bitmap patientPhoto = null;
 
-    final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    textPaint.setColor(Color.WHITE);
-    textPaint.setTextAlign(Paint.Align.CENTER);
-    textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-    textPaint.setTextSize(60f);
-    final Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-    final float textY =
-        AVATAR_CENTER_Y - ((fontMetrics.ascent + fontMetrics.descent) / 2f);
-    canvas.drawText(initials(patientName), AVATAR_CENTER_X, textY, textPaint);
+if (photoBytes != null && photoBytes.length > 0) {
+  patientPhoto = BitmapFactory.decodeByteArray(
+      photoBytes,
+      0,
+      photoBytes.length
+  );
+}
 
+if (patientPhoto != null) {
+  final int sourceSize = Math.min(
+      patientPhoto.getWidth(),
+      patientPhoto.getHeight()
+  );
+
+  final int sourceLeft =
+      (patientPhoto.getWidth() - sourceSize) / 2;
+  final int sourceTop =
+      (patientPhoto.getHeight() - sourceSize) / 2;
+
+  final Rect sourceRect = new Rect(
+      sourceLeft,
+      sourceTop,
+      sourceLeft + sourceSize,
+      sourceTop + sourceSize
+  );
+
+  final RectF destinationRect = new RectF(
+      AVATAR_CENTER_X - AVATAR_RADIUS,
+      AVATAR_CENTER_Y - AVATAR_RADIUS,
+      AVATAR_CENTER_X + AVATAR_RADIUS,
+      AVATAR_CENTER_Y + AVATAR_RADIUS
+  );
+
+  final Path clipPath = new Path();
+  clipPath.addCircle(
+      AVATAR_CENTER_X,
+      AVATAR_CENTER_Y,
+      AVATAR_RADIUS,
+      Path.Direction.CW
+  );
+
+  canvas.save();
+  canvas.clipPath(clipPath);
+
+  final Paint photoPaint = new Paint(
+      Paint.ANTI_ALIAS_FLAG |
+      Paint.FILTER_BITMAP_FLAG
+  );
+
+  canvas.drawBitmap(
+      patientPhoto,
+      sourceRect,
+      destinationRect,
+      photoPaint
+  );
+
+  canvas.restore();
+
+  patientPhoto.recycle();
+} else {
+  final Paint avatarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  avatarPaint.setColor(avatarColor(patientName));
+
+  canvas.drawCircle(
+      AVATAR_CENTER_X,
+      AVATAR_CENTER_Y,
+      AVATAR_RADIUS,
+      avatarPaint
+  );
+
+  final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  textPaint.setColor(Color.WHITE);
+  textPaint.setTextAlign(Paint.Align.CENTER);
+  textPaint.setTypeface(
+      Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+  );
+  textPaint.setTextSize(60f);
+
+  final Paint.FontMetrics fontMetrics =
+      textPaint.getFontMetrics();
+
+  final float textY =
+      AVATAR_CENTER_Y -
+      ((fontMetrics.ascent + fontMetrics.descent) / 2f);
+
+  canvas.drawText(
+      initials(patientName),
+      AVATAR_CENTER_X,
+      textY,
+      textPaint
+  );
+}
     final MetricBadge badge = badgeFor(metricType);
     final Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     ringPaint.setColor(Color.WHITE);

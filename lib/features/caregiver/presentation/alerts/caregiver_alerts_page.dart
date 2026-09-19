@@ -8,6 +8,7 @@ import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
@@ -396,6 +397,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                                             bottom: 8,
                                           ),
                                           child: CaregiverAlertCard(
+                                            key: ValueKey(alert.id),
                                             alert: alert,
                                             patientName:
                                                 alert.patientDisplayName ??
@@ -754,7 +756,6 @@ class _AlertCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color placeholder = Color(0xFFE5DCF5);
     return Container(
       height: compact ? 64 : 76,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -771,48 +772,20 @@ class _AlertCardSkeleton extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: placeholder,
-              shape: BoxShape.circle,
-            ),
-          ),
+          const AleraSkeletonCircle(size: 44),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SkeletonBar(widthFactor: .72),
+                AleraSkeletonBar(widthFactor: .72),
                 SizedBox(height: 8),
-                _SkeletonBar(widthFactor: .45, height: 9),
+                AleraSkeletonBar(widthFactor: .45, height: 9),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SkeletonBar extends StatelessWidget {
-  final double widthFactor;
-  final double height;
-
-  const _SkeletonBar({required this.widthFactor, this.height = 12});
-
-  @override
-  Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: const Color(0xFFE5DCF5),
-          borderRadius: BorderRadius.circular(height / 2),
-        ),
       ),
     );
   }
@@ -930,7 +903,7 @@ class _EmptyHistory extends StatelessWidget {
   }
 }
 
-class _GroupedHistory extends StatelessWidget {
+class _GroupedHistory extends StatefulWidget {
   final List<CaregiverAlert> alerts;
   final CareRecipient? Function(String id) recipientFor;
   final ValueChanged<CaregiverAlert> onAlertTap;
@@ -948,56 +921,161 @@ class _GroupedHistory extends StatelessWidget {
   });
 
   @override
+  State<_GroupedHistory> createState() => _GroupedHistoryState();
+}
+
+class _GroupedHistoryState extends State<_GroupedHistory> {
+  static const int _collapsedLimit = 5;
+
+  final Set<String> _expandedGroups = <String>{};
+
+  void _toggleGroup(String label) {
+    setState(() {
+      if (!_expandedGroups.add(label)) {
+        _expandedGroups.remove(label);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Map<String, List<CaregiverAlert>> groups =
         <String, List<CaregiverAlert>>{};
+
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
-    for (final CaregiverAlert alert in alerts) {
+
+    for (final CaregiverAlert alert in widget.alerts) {
       final DateTime local = alert.detectedAt.toLocal();
+
       final DateTime alertDate = DateTime(local.year, local.month, local.day);
+
       final int days = today.difference(alertDate).inDays;
-      final String label = days <= 0
-          ? 'Today'
-          : days == 1
-          ? 'Yesterday'
-          : 'Earlier';
+
+      final String label = switch (days) {
+        <= 0 => 'Today',
+        1 => 'Yesterday',
+        >= 2 && <= 6 => 'Last 7 days',
+        _ => 'Earlier',
+      };
+
       groups.putIfAbsent(label, () => <CaregiverAlert>[]).add(alert);
     }
-    const order = ['Today', 'Yesterday', 'Earlier'];
+
+    const List<String> order = ['Today', 'Yesterday', 'Last 7 days', 'Earlier'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final String label in order)
-          if (groups[label] != null) ...[
-            Text(
-              label,
-              style: const TextStyle(
-                color: AleraColors.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+          if (groups[label] case final List<CaregiverAlert> group) ...[
+            _HistoryGroup(
+              label: label,
+              alerts: group,
+              expanded: _expandedGroups.contains(label),
+              collapsedLimit: _collapsedLimit,
+              recipientFor: widget.recipientFor,
+              expandedAlertIds: widget.expandedAlertIds,
+              onToggleExpanded: widget.onToggleExpanded,
+              onAlertTap: widget.onAlertTap,
+              onMarkAsSeen: widget.onMarkAsSeen,
+              onToggleGroup: () => _toggleGroup(label),
+            ),
+          ],
+      ],
+    );
+  }
+}
+
+class _HistoryGroup extends StatelessWidget {
+  final String label;
+  final List<CaregiverAlert> alerts;
+  final bool expanded;
+  final int collapsedLimit;
+  final CareRecipient? Function(String id) recipientFor;
+  final Set<String> expandedAlertIds;
+  final ValueChanged<String> onToggleExpanded;
+  final ValueChanged<CaregiverAlert> onAlertTap;
+  final VoidCallback? onMarkAsSeen;
+  final VoidCallback onToggleGroup;
+
+  const _HistoryGroup({
+    required this.label,
+    required this.alerts,
+    required this.expanded,
+    required this.collapsedLimit,
+    required this.recipientFor,
+    required this.expandedAlertIds,
+    required this.onToggleExpanded,
+    required this.onAlertTap,
+    required this.onMarkAsSeen,
+    required this.onToggleGroup,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool canExpand = alerts.length > collapsedLimit;
+
+    final List<CaregiverAlert> visibleAlerts = expanded
+        ? alerts
+        : alerts.take(collapsedLimit).toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
               ),
             ),
-            const SizedBox(height: 7),
-            for (final CaregiverAlert alert in groups[label]!) ...[
-              CaregiverAlertCard(
-                alert: alert,
-                patientName:
-                    alert.patientDisplayName ??
-                    recipientFor(alert.careRecipientId)?.name,
-                patientPhotoUrl: recipientFor(
-                  alert.careRecipientId,
-                )?.profilePhotoUrl,
-                showPatientName: true,
-                unread: alert.status == CaregiverAlertStatus.active,
-                expanded: expandedAlertIds.contains(alert.id),
-                onToggleExpanded: () => onToggleExpanded(alert.id),
-                onViewMore: () => onAlertTap(alert),
-                onMarkAsSeen: onMarkAsSeen,
+            if (canExpand)
+              TextButton(
+                onPressed: onToggleGroup,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(
+                  expanded
+                      ? 'Show less'
+                      : 'See more (${alerts.length - collapsedLimit})',
+                  style: AleraTypography.label.copyWith(
+                    color: AleraColors.primary,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-            ],
           ],
+        ),
+
+        const SizedBox(height: 7),
+
+        for (final CaregiverAlert alert in visibleAlerts) ...[
+          CaregiverAlertCard(
+            key: ValueKey(alert.id),
+            alert: alert,
+            patientName:
+                alert.patientDisplayName ??
+                recipientFor(alert.careRecipientId)?.name,
+            patientPhotoUrl: recipientFor(
+              alert.careRecipientId,
+            )?.profilePhotoUrl,
+            showPatientName: true,
+            unread: alert.status == CaregiverAlertStatus.active,
+            expanded: expandedAlertIds.contains(alert.id),
+            onToggleExpanded: () => onToggleExpanded(alert.id),
+            onViewMore: () => onAlertTap(alert),
+            onMarkAsSeen: onMarkAsSeen,
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        const SizedBox(height: 4),
       ],
     );
   }
