@@ -71,10 +71,7 @@ class SetupOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AleraCard(
       onTap: onTap,
-      elevation: 0,
       color: selected ? AleraColors.surfaceTint : AleraColors.surface,
-      borderColor: selected ? AleraColors.primaryBorder : AleraColors.divider,
-      borderWidth: selected ? 1.5 : 1,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,10 +204,7 @@ class SetupLabeledValue extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AleraTypography.body.copyWith(fontSize: 12),
-        ),
+        Text(label, style: AleraTypography.body.copyWith(fontSize: 12)),
         const SizedBox(height: 2),
         Text(
           has ? value!.trim() : emptyText,
@@ -226,8 +220,18 @@ class SetupLabeledValue extends StatelessWidget {
 }
 
 const List<String> _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /// "Jan 12, 1952"

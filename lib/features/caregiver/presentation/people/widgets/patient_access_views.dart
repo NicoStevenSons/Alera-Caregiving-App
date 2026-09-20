@@ -35,9 +35,6 @@ class PatientAccessIntroContent extends StatelessWidget {
           bottomSpacing: 24,
         ),
         AleraCard(
-          elevation: 0,
-          color: AleraColors.surfaceTint,
-          borderColor: AleraColors.divider,
           padding: const EdgeInsets.all(20),
           child: const Column(
             children: [
@@ -106,8 +103,6 @@ class PatientAccessCodeContent extends StatelessWidget {
           bottomSpacing: 16,
         ),
         AleraCard(
-          elevation: 0,
-          borderColor: AleraColors.divider,
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,16 +141,15 @@ class PatientAccessCodeContent extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AleraColors.surfaceTint,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AleraColors.divider),
                   ),
                   child: QrImageView(
                     key: const Key('access-code-qr'),
                     data: buildPatientAccessQrPayload(accessCode: accessCode),
                     size: 150,
                     padding: EdgeInsets.zero,
-                    backgroundColor: Colors.white,
+                    backgroundColor: Colors.transparent,
                   ),
                 ),
               ),
@@ -220,8 +214,6 @@ class PatientAccessNoticeContent extends StatelessWidget {
       children: [
         const SetupHeader(title: 'Patient access', bottomSpacing: 16),
         AleraCard(
-          elevation: 0,
-          borderColor: AleraColors.divider,
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: SizedBox(
             width: double.infinity,
@@ -380,7 +372,6 @@ class _ValidityStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AleraColors.surfaceTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AleraColors.divider),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -476,9 +467,6 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return AleraCard(
       onTap: onTap,
-      elevation: 0,
-      color: AleraColors.surfaceTint,
-      borderColor: AleraColors.divider,
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

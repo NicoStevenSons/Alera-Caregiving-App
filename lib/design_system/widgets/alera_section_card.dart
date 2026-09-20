@@ -11,6 +11,7 @@ class AleraSectionCard extends StatelessWidget {
   final VoidCallback? onActionPressed;
   final double contentSpacing;
   final Widget? titleTrailing;
+  final TextStyle? titleStyle;
 
   const AleraSectionCard({
     super.key,
@@ -20,6 +21,7 @@ class AleraSectionCard extends StatelessWidget {
     this.onActionPressed,
     this.contentSpacing = 10.0,
     this.titleTrailing,
+    this.titleStyle,
   });
 
   @override
@@ -38,7 +40,10 @@ class AleraSectionCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(title, style: AleraTypography.sectionTitle),
+                    Text(
+                      title,
+                      style: titleStyle ?? AleraTypography.sectionTitle,
+                    ),
                     if (titleTrailing != null) ...[
                       const SizedBox(width: 6),
                       titleTrailing!,

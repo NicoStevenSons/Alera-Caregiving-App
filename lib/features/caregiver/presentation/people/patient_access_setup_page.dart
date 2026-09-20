@@ -282,8 +282,18 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        leadingWidth: 56,
         title: Text('Patient access', style: AleraTypography.pageTitle),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
+          onPressed: () => Navigator.maybePop(context),
+        ),
       ),
       body: SafeArea(
         child: Column(

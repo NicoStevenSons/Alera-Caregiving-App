@@ -9,6 +9,7 @@ import '../../../../design_system/alera_theme.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../../../interfaces/elderly_interface.dart';
 import '../../../patient/data/auth/patient_auth_api.dart';
 import '../../../patient/presentation/patient_access.dart';
@@ -758,39 +759,8 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                       }
                     },
                     onFieldSubmitted: (_) => _submit(),
-                    decoration: InputDecoration(
-                      hintText: 'XXXX - XXXX - XXXX',
-                      hintStyle: const TextStyle(color: Color(0xFFB5A6DB)),
-                      filled: true,
-                      fillColor: const Color(0xFFF7F3FF),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: AleraColors.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: AleraColors.critical,
-                        ),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: AleraColors.critical,
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
+                    decoration: aleraInputDecoration(
+                      hint: 'XXXX - XXXX - XXXX',
                     ),
                   ),
                   if (_error != null) ...[
@@ -833,6 +803,10 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
     );
   }
 
+  /// Delegates to the app's one shared text-field widget (also used by Add
+  /// Patient and patient access) so sign-in fields can never drift from it
+  /// again - including keeping their rounded/filled look while [_submitting]
+  /// disables them, which the field's own `disabledBorder` now covers.
   Widget _authTextField({
     required Key key,
     required TextEditingController controller,
@@ -844,62 +818,19 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
     String? Function(String?)? validator,
     ValueChanged<String>? onFieldSubmitted,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AleraTypography.label.copyWith(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          key: key,
-          controller: controller,
-          enabled: !_submitting,
-          keyboardType: keyboardType,
-          obscureText: obscureText,
-          autocorrect: false,
-          enableSuggestions: !obscureText,
-          validator: validator,
-          onFieldSubmitted: onFieldSubmitted,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFFB5A6DB)),
-            filled: true,
-            fillColor: const Color(0xFFF7F3FF),
-            suffixIcon: suffixIcon,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AleraColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AleraColors.critical),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AleraColors.critical,
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-          ),
-        ),
-      ],
+    return AleraTextField(
+      fieldKey: key,
+      controller: controller,
+      label: label,
+      hint: hintText,
+      enabled: !_submitting,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      autocorrect: false,
+      suffixIcon: suffixIcon,
+      validator: validator,
+      onFieldSubmitted: onFieldSubmitted,
+      bottomSpacing: 0,
     );
   }
 

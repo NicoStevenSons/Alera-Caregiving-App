@@ -639,11 +639,16 @@ class _AddPatientPageState extends State<AddPatientPage>
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        leadingWidth: 56,
         title: Text('Add Patient', style: AleraTypography.pageTitle),
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
           onPressed: back,
         ),
       ),
@@ -723,9 +728,6 @@ class _AddPatientPageState extends State<AddPatientPage>
         bottomSpacing: 24,
       ),
       AleraCard(
-        elevation: 0,
-        color: AleraColors.surfaceTint,
-        borderColor: AleraColors.divider,
         padding: const EdgeInsets.all(20),
         child: const Column(
           children: [
@@ -772,103 +774,114 @@ class _AddPatientPageState extends State<AddPatientPage>
           subtitle: 'Fill in information about your patient.',
           bottomSpacing: 20,
         ),
-        Center(
+        AleraCard(
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              CircleAvatar(
-                key: const Key('patient-profile-photo-preview'),
-                radius: 46,
-                backgroundColor: AleraColors.primarySoft,
-                backgroundImage: _profilePhotoBytes == null
-                    ? null
-                    : MemoryImage(_profilePhotoBytes!),
-                child: _profilePhotoBytes == null
-                    ? const Icon(
-                        Icons.person_outline,
-                        size: 42,
-                        color: AleraColors.textPrimary,
-                      )
-                    : null,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                children: [
-                  TextButton.icon(
-                    key: const Key('choose-patient-photo'),
-                    onPressed: pickProfilePhoto,
-                    style: TextButton.styleFrom(
-                      foregroundColor: AleraColors.primary,
+              Center(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      key: const Key('patient-profile-photo-preview'),
+                      radius: 46,
+                      backgroundColor: AleraColors.primarySoft,
+                      backgroundImage: _profilePhotoBytes == null
+                          ? null
+                          : MemoryImage(_profilePhotoBytes!),
+                      child: _profilePhotoBytes == null
+                          ? const Icon(
+                              Icons.person_outline,
+                              size: 42,
+                              color: AleraColors.textPrimary,
+                            )
+                          : null,
                     ),
-                    icon: const Icon(Icons.photo_library_outlined, size: 18),
-                    label: Text(
-                      _profilePhotoBytes == null
-                          ? 'Choose photo'
-                          : 'Change photo',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          key: const Key('choose-patient-photo'),
+                          onPressed: pickProfilePhoto,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AleraColors.primary,
+                          ),
+                          icon: const Icon(
+                            Icons.photo_library_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _profilePhotoBytes == null
+                                ? 'Choose photo'
+                                : 'Change photo',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (_profilePhotoBytes != null)
+                          TextButton(
+                            key: const Key('remove-patient-photo'),
+                            onPressed: removeProfilePhoto,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AleraColors.textSecondary,
+                            ),
+                            child: const Text(
+                              'Remove',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                  if (_profilePhotoBytes != null)
-                    TextButton(
-                      key: const Key('remove-patient-photo'),
-                      onPressed: removeProfilePhoto,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AleraColors.textSecondary,
-                      ),
-                      child: const Text(
-                        'Remove',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                    if (_profilePhotoError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          _profilePhotoError!,
+                          key: const Key('patient-photo-error'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AleraColors.critical,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-              if (_profilePhotoError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    _profilePhotoError!,
-                    key: const Key('patient-photo-error'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AleraColors.critical,
-                    ),
-                  ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 20),
+              field(
+                name,
+                'Full name',
+                'Enter patient’s full name',
+                key: const Key('patient-name-field'),
+                required: true,
+                v: (x) => x == null || x.trim().isEmpty
+                    ? 'Enter the patient’s full name.'
+                    : x.trim().length > 150
+                    ? 'Use 150 characters or fewer.'
+                    : null,
+              ),
+              field(
+                phone,
+                'Phone number',
+                'Enter patient’s phone number',
+                phone: true,
+                v: (x) => (x?.length ?? 0) > 11
+                    ? 'Use 11 characters or fewer.'
+                    : null,
+              ),
+              field(address, 'Address', 'Enter patient’s address or room'),
+              birthdateField(),
+              sexField(),
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        field(
-          name,
-          'Full name',
-          'Enter patient’s full name',
-          key: const Key('patient-name-field'),
-          required: true,
-          v: (x) => x == null || x.trim().isEmpty
-              ? 'Enter the patient’s full name.'
-              : x.trim().length > 150
-              ? 'Use 150 characters or fewer.'
-              : null,
-        ),
-        field(
-          phone,
-          'Phone number',
-          'Enter patient’s phone number',
-          phone: true,
-          v: (x) =>
-              (x?.length ?? 0) > 11 ? 'Use 11 characters or fewer.' : null,
-        ),
-        field(address, 'Address', 'Enter patient’s address or room'),
-        birthdateField(),
-        sexField(),
       ],
       bottom: bottomBar([
         SetupButtonRow(
@@ -1012,51 +1025,61 @@ class _AddPatientPageState extends State<AddPatientPage>
               'Baseline readings are reference values and do not control alert thresholds.',
           bottomSpacing: 20,
         ),
-        field(
-          emergencyName,
-          'Emergency contact name',
-          'Enter emergency contact’s full name',
-          v: (x) =>
-              (x?.length ?? 0) > 150 ? 'Use 150 characters or fewer.' : null,
+        AleraCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              field(
+                emergencyName,
+                'Emergency contact name',
+                'Enter emergency contact’s full name',
+                v: (x) => (x?.length ?? 0) > 150
+                    ? 'Use 150 characters or fewer.'
+                    : null,
+              ),
+              field(
+                emergencyPhone,
+                'Emergency contact phone',
+                'Enter emergency contact’s phone number',
+                keyboard: TextInputType.phone,
+                v: (x) => (x?.length ?? 0) > 30
+                    ? 'Use 30 characters or fewer.'
+                    : null,
+              ),
+              field(
+                conditions,
+                'Known conditions (Separate with comma)',
+                'e.g. Hypertension, Diabetes',
+              ),
+              field(medications, 'Medications', 'Enter patient’s medications'),
+              field(
+                hr,
+                'Baseline heart rate',
+                'Enter baseline heart rate',
+                key: const Key('heart-rate-field'),
+                keyboard: const TextInputType.numberWithOptions(decimal: true),
+                suffix: 'bpm',
+                v: (x) => number(x, 0, null, true, 'heart rate'),
+              ),
+              field(
+                spo2,
+                'Baseline SpO₂',
+                'Enter baseline SpO₂',
+                key: const Key('spo2-field'),
+                keyboard: const TextInputType.numberWithOptions(decimal: true),
+                suffix: '%',
+                v: (x) => number(x, 0, 100, false, 'SpO₂'),
+              ),
+              field(
+                notes,
+                'Monitoring notes',
+                'Add any notes for monitoring',
+                maxLines: 3,
+              ),
+            ],
+          ),
         ),
-        field(
-          emergencyPhone,
-          'Emergency contact phone',
-          'Enter emergency contact’s phone number',
-          keyboard: TextInputType.phone,
-          v: (x) =>
-              (x?.length ?? 0) > 30 ? 'Use 30 characters or fewer.' : null,
-        ),
-        field(
-          conditions,
-          'Known conditions (Separate with comma)',
-          'e.g. Hypertension, Diabetes',
-        ),
-        field(medications, 'Medications', 'Enter patient’s medications'),
-        field(
-          hr,
-          'Baseline heart rate',
-          'Enter baseline heart rate',
-          key: const Key('heart-rate-field'),
-          keyboard: const TextInputType.numberWithOptions(decimal: true),
-          suffix: 'bpm',
-          v: (x) => number(x, 0, null, true, 'heart rate'),
-        ),
-        field(
-          spo2,
-          'Baseline SpO₂',
-          'Enter baseline SpO₂',
-          key: const Key('spo2-field'),
-          keyboard: const TextInputType.numberWithOptions(decimal: true),
-          suffix: '%',
-          v: (x) => number(x, 0, 100, false, 'SpO₂'),
-        ),
-        field(
-          notes,
-          'Monitoring notes',
-          'Add any notes for monitoring',
-          maxLines: 3,
-        ),
+        const SizedBox(height: 4),
         Center(
           child: TextButton(
             onPressed: () {
@@ -1129,47 +1152,53 @@ class _AddPatientPageState extends State<AddPatientPage>
         ),
         if (custom) ...[
           const SizedBox(height: 24),
-          rangeSection('Heart rate (bpm)', [
-            rangeField(
-              hrMin,
-              'Minimum',
-              '60',
-              'bpm',
-              const Key('hr-min-field'),
-              (x) => requiredInteger(x, 1, 999, 'a minimum heart rate'),
+          AleraCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                rangeSection('Heart rate (bpm)', [
+                  rangeField(
+                    hrMin,
+                    'Minimum',
+                    '60',
+                    'bpm',
+                    const Key('hr-min-field'),
+                    (x) => requiredInteger(x, 1, 999, 'a minimum heart rate'),
+                  ),
+                  rangeField(
+                    hrMax,
+                    'Maximum',
+                    '100',
+                    'bpm',
+                    const Key('hr-max-field'),
+                    (x) => requiredInteger(x, 1, 999, 'a maximum heart rate'),
+                  ),
+                ]),
+                const SizedBox(height: 20),
+                rangeSection('Blood oxygen (SpO₂)', [
+                  rangeField(
+                    spo2Min,
+                    'Minimum',
+                    '95',
+                    '%',
+                    const Key('spo2-min-field'),
+                    (x) => requiredInteger(x, 0, 100, 'a minimum SpO₂'),
+                  ),
+                  rangeField(
+                    spo2Max,
+                    'Maximum (optional)',
+                    'Enter value',
+                    '%',
+                    const Key('spo2-max-field'),
+                    (x) => integer(x, 0, 100, 'SpO₂ maximum'),
+                  ),
+                ]),
+              ],
             ),
-            rangeField(
-              hrMax,
-              'Maximum',
-              '100',
-              'bpm',
-              const Key('hr-max-field'),
-              (x) => requiredInteger(x, 1, 999, 'a maximum heart rate'),
-            ),
-          ]),
-          const SizedBox(height: 20),
-          rangeSection('Blood oxygen (SpO₂)', [
-            rangeField(
-              spo2Min,
-              'Minimum',
-              '95',
-              '%',
-              const Key('spo2-min-field'),
-              (x) => requiredInteger(x, 0, 100, 'a minimum SpO₂'),
-            ),
-            rangeField(
-              spo2Max,
-              'Maximum (optional)',
-              'Enter value',
-              '%',
-              const Key('spo2-max-field'),
-              (x) => integer(x, 0, 100, 'SpO₂ maximum'),
-            ),
-          ]),
+          ),
           const SizedBox(height: 20),
           AleraCard(
-            elevation: 0,
-            borderColor: AleraColors.divider,
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1280,6 +1309,22 @@ class _AddPatientPageState extends State<AddPatientPage>
     return 'HR ${hrMin.text.trim()}–${hrMax.text.trim()} bpm  ·  $spo2Text';
   }
 
+  /// [AleraSectionCard] with a smaller heading, used only on the Review
+  /// step: four stacked section cards read better with a compact title
+  /// than the app's usual 20px section heading.
+  Widget reviewSectionCard({
+    required String title,
+    required Widget child,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+  }) => AleraSectionCard(
+    title: title,
+    actionLabel: actionLabel,
+    onActionPressed: onActionPressed,
+    titleStyle: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+    child: child,
+  );
+
   Widget review() => frame(
     children: [
       const SetupHeader(
@@ -1297,7 +1342,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         ),
         const SizedBox(height: 16),
       ],
-      AleraSectionCard(
+      reviewSectionCard(
         title: 'Personal Information',
         actionLabel: 'Edit',
         onActionPressed: () => edit(_Step.personal),
@@ -1356,7 +1401,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         ),
       ),
       const SizedBox(height: 12),
-      AleraSectionCard(
+      reviewSectionCard(
         title: 'Care Information',
         actionLabel: 'Edit',
         onActionPressed: () => edit(_Step.care),
@@ -1394,7 +1439,7 @@ class _AddPatientPageState extends State<AddPatientPage>
               ),
       ),
       const SizedBox(height: 12),
-      AleraSectionCard(
+      reviewSectionCard(
         title: 'Monitoring Settings',
         actionLabel: 'Edit',
         onActionPressed: () => edit(_Step.monitoring),
@@ -1418,7 +1463,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         ),
       ),
       const SizedBox(height: 12),
-      AleraSectionCard(
+      reviewSectionCard(
         title: 'Connection',
         child: Column(
           children: const [
@@ -1479,8 +1524,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       ),
       if (photoUploadFailed) ...[
         AleraCard(
-          elevation: 0,
-          borderColor: AleraColors.critical.withValues(alpha: 0.5),
+          color: AleraColors.critical.withValues(alpha: 0.06),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1508,8 +1552,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       ],
       if (settingsFailed) ...[
         AleraCard(
-          elevation: 0,
-          borderColor: AleraColors.critical.withValues(alpha: 0.5),
+          color: AleraColors.critical.withValues(alpha: 0.06),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1539,8 +1582,6 @@ class _AddPatientPageState extends State<AddPatientPage>
         const SizedBox(height: 16),
       ],
       AleraCard(
-        elevation: 0,
-        borderColor: AleraColors.divider,
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
