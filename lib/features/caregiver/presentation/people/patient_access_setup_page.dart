@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
@@ -279,6 +278,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
@@ -287,7 +287,6 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         leadingWidth: 56,
-        title: Text('Patient access', style: AleraTypography.pageTitle),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.chevron_left, size: 28),

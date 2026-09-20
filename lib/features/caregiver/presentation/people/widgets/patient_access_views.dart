@@ -35,30 +35,27 @@ class PatientAccessIntroContent extends StatelessWidget {
               'Generate a one-time code for the patient to scan or enter to connect their Alera account.',
           bottomSpacing: 24,
         ),
-        AleraCard(
-          padding: const EdgeInsets.all(20),
-          child: const Column(
-            children: [
-              _InfoRow(
-                icon: Icons.schedule_outlined,
-                title: 'Valid for 24 hours',
-                subtitle: 'The code will expire after 24 hours.',
-              ),
-              SizedBox(height: 20),
-              _InfoRow(
-                icon: Icons.verified_user_outlined,
-                title: 'One-time use only',
-                subtitle: 'This code can only be used once.',
-              ),
-              SizedBox(height: 20),
-              _InfoRow(
-                icon: Icons.people_outline,
-                title: 'For the patient',
-                subtitle:
-                    'Have the patient scan the QR code or enter the code on their device.',
-              ),
-            ],
-          ),
+        const Column(
+          children: [
+            _InfoRow(
+              icon: Icons.schedule_outlined,
+              title: 'Valid for 24 hours',
+              subtitle: 'The code will expire after 24 hours.',
+            ),
+            SizedBox(height: 20),
+            _InfoRow(
+              icon: Icons.verified_user_outlined,
+              title: 'One-time use only',
+              subtitle: 'This code can only be used once.',
+            ),
+            SizedBox(height: 20),
+            _InfoRow(
+              icon: Icons.people_outline,
+              title: 'For the patient',
+              subtitle:
+                  'Have the patient scan the QR code or enter the code on their device.',
+            ),
+          ],
         ),
       ],
     );

@@ -646,7 +646,6 @@ class _AddPatientPageState extends State<AddPatientPage>
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         leadingWidth: 56,
-        title: Text('Add Patient', style: AleraTypography.pageTitle),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.chevron_left, size: 28),
