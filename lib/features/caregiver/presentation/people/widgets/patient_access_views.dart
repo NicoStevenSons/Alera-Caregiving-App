@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import 'patient_setup_widgets.dart';
 
 /// Payload encoded in the patient access QR code. The patient app decodes
@@ -194,14 +195,19 @@ class PatientAccessCodeContent extends StatelessWidget {
 /// Status card for states with no code on screen: connected, expired,
 /// invitation pending, unavailable.
 class PatientAccessNoticeContent extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+
+  /// A branded SVG (e.g. the shared "success" checkmark used in Active
+  /// Alerts' empty state), used instead of [icon] when set.
+  final String? iconAsset;
   final String title;
   final String message;
   final String? detail;
 
   const PatientAccessNoticeContent({
     super.key,
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.title,
     required this.message,
     this.detail,
@@ -219,16 +225,19 @@ class PatientAccessNoticeContent extends StatelessWidget {
             width: double.infinity,
             child: Column(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: AleraColors.primarySoft,
-                    shape: BoxShape.circle,
+                if (iconAsset != null)
+                  AleraSvgIcon(assetPath: iconAsset!, width: 56, height: 56)
+                else
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: AleraColors.primarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, size: 28, color: AleraColors.primary),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, size: 28, color: AleraColors.primary),
-                ),
                 const SizedBox(height: 16),
                 Text(
                   title,

@@ -25,7 +25,7 @@ Future<bool?> showAleraConfirmationDialog(
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => Dialog(
-      backgroundColor: AleraColors.surfaceTint,
+      backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

@@ -15,6 +15,7 @@ import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../../../design_system/widgets/alera_section_card.dart';
+import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
@@ -1503,16 +1504,12 @@ class _AddPatientPageState extends State<AddPatientPage>
   Widget createdView() => frame(
     children: [
       const SizedBox(height: 8),
-      Center(
-        child: Container(
+      const Center(
+        child: AleraSvgIcon(
+          assetPath: 'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
           width: 64,
           height: 64,
-          decoration: const BoxDecoration(
-            color: AleraColors.primarySoft,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: const Icon(Icons.check, size: 32, color: AleraColors.primary),
+          semanticLabel: 'Patient added',
         ),
       ),
       const SizedBox(height: 20),
@@ -1628,7 +1625,7 @@ class _AddPatientPageState extends State<AddPatientPage>
             ),
             const SizedBox(height: 18),
             const _CreatedRow(
-              icon: Icons.watch_outlined,
+              iconAsset: 'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
               title: 'Smartwatch',
               trailing: DeviceStatusChip(
                 PatientDeviceConnectionStatus.notConnected,
@@ -1672,7 +1669,8 @@ class _AddPatientPageState extends State<AddPatientPage>
     final expired = _accessExpired;
     final Widget content = connected
         ? PatientAccessNoticeContent(
-            icon: Icons.check,
+            iconAsset:
+                'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
             title: '${created!.fullName}’s patient access is connected',
             message: 'The patient can now sign in with their Alera account.',
           )
@@ -1843,13 +1841,18 @@ class _ConnectionRow extends StatelessWidget {
 }
 
 class _CreatedRow extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+
+  /// A branded SVG (e.g. the devices icons), used instead of [icon] when
+  /// set. Takes priority over [icon].
+  final String? iconAsset;
   final String title;
   final String? subtitle;
   final Widget trailing;
 
   const _CreatedRow({
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.title,
     required this.trailing,
     this.subtitle,
@@ -1867,7 +1870,9 @@ class _CreatedRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: AleraColors.textPrimary),
+          child: iconAsset != null
+              ? AleraSvgIcon(assetPath: iconAsset!, width: 18, height: 18)
+              : Icon(icon, size: 18, color: AleraColors.textPrimary),
         ),
         const SizedBox(width: 12),
         Expanded(
