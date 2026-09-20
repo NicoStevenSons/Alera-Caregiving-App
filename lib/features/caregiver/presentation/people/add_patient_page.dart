@@ -14,7 +14,6 @@ import '../../../../design_system/status/adapters/patient_access_status_chip.dar
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
-import '../../../../design_system/widgets/alera_section_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
@@ -645,6 +644,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
+        toolbarHeight: 44,
         leadingWidth: 56,
         leading: IconButton(
           tooltip: 'Back',
@@ -675,7 +675,10 @@ class _AddPatientPageState extends State<AddPatientPage>
   Widget frame({required List<Widget> children, Widget? bottom}) => Column(
     children: [
       Expanded(
-        child: ListView(padding: const EdgeInsets.all(24), children: children),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          children: children,
+        ),
       ),
       if (bottom != null)
         Padding(
@@ -728,35 +731,32 @@ class _AddPatientPageState extends State<AddPatientPage>
             'Create a profile, configure monitoring, and optionally connect patient access.',
         bottomSpacing: 24,
       ),
-      AleraCard(
-        padding: const EdgeInsets.all(20),
-        child: const Column(
-          children: [
-            _IntroRow(
-              icon: Icons.person_outline,
-              title: 'Personal information',
-              subtitle: 'Name, phone number, address and birthdate.',
-            ),
-            SizedBox(height: 20),
-            _IntroRow(
-              icon: Icons.description_outlined,
-              title: 'Care information',
-              subtitle: 'Emergency contact, conditions and medications.',
-            ),
-            SizedBox(height: 20),
-            _IntroRow(
-              icon: Icons.monitor_heart_outlined,
-              title: 'Monitoring settings',
-              subtitle: 'Use Alera defaults or set custom ranges.',
-            ),
-            SizedBox(height: 20),
-            _IntroRow(
-              icon: Icons.people_outline,
-              title: 'Patient access',
-              subtitle: 'Connect the patient after their profile is created.',
-            ),
-          ],
-        ),
+      const Column(
+        children: [
+          _IntroRow(
+            icon: Icons.person_outline,
+            title: 'Personal information',
+            subtitle: 'Name, phone number, address and birthdate.',
+          ),
+          SizedBox(height: 20),
+          _IntroRow(
+            icon: Icons.description_outlined,
+            title: 'Care information',
+            subtitle: 'Emergency contact, conditions and medications.',
+          ),
+          SizedBox(height: 20),
+          _IntroRow(
+            icon: Icons.monitor_heart_outlined,
+            title: 'Monitoring settings',
+            subtitle: 'Use Alera defaults or set custom ranges.',
+          ),
+          SizedBox(height: 20),
+          _IntroRow(
+            icon: Icons.people_outline,
+            title: 'Patient access',
+            subtitle: 'Connect the patient after their profile is created.',
+          ),
+        ],
       ),
     ],
     bottom: bottomBar([primaryButton('Start setup', () => go(_Step.personal))]),
@@ -1299,20 +1299,44 @@ class _AddPatientPageState extends State<AddPatientPage>
     return 'HR ${hrMin.text.trim()}–${hrMax.text.trim()} bpm  ·  $spo2Text';
   }
 
-  /// [AleraSectionCard] with a smaller heading, used only on the Review
-  /// step: four stacked section cards read better with a compact title
-  /// than the app's usual 20px section heading.
+  /// A section heading + content block for the Review step, sitting
+  /// directly on the page background (no card) with a compact title
+  /// rather than the app's usual 20px section heading.
   Widget reviewSectionCard({
     required String title,
     required Widget child,
     String? actionLabel,
     VoidCallback? onActionPressed,
-  }) => AleraSectionCard(
-    title: title,
-    actionLabel: actionLabel,
-    onActionPressed: onActionPressed,
-    titleStyle: AleraTypography.sectionTitle.copyWith(fontSize: 16),
-    child: child,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+            ),
+          ),
+          if (actionLabel != null)
+            TextButton(
+              onPressed: onActionPressed,
+              style: TextButton.styleFrom(
+                foregroundColor: AleraColors.primary,
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: Size.zero,
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(actionLabel, style: const TextStyle(fontSize: 11)),
+            ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      child,
+    ],
   );
 
   Widget review() => frame(
@@ -1390,7 +1414,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           ],
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 24),
       reviewSectionCard(
         title: 'Care Information',
         actionLabel: 'Edit',
@@ -1428,7 +1452,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                 ),
               ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 24),
       reviewSectionCard(
         title: 'Monitoring Settings',
         actionLabel: 'Edit',
@@ -1452,7 +1476,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           ],
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 24),
       reviewSectionCard(
         title: 'Connection',
         child: Column(
@@ -1568,63 +1592,54 @@ class _AddPatientPageState extends State<AddPatientPage>
         ),
         const SizedBox(height: 16),
       ],
-      AleraCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _CreatedRow(
-              icon: Icons.description_outlined,
-              title: 'Profile',
-              trailing: const Text(
-                'Created',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AleraColors.textSecondary,
-                ),
-              ),
+      Column(
+        children: [
+          _CreatedRow(
+            icon: Icons.description_outlined,
+            title: 'Profile',
+            trailing: const Text(
+              'Created',
+              style: TextStyle(fontSize: 13, color: AleraColors.textSecondary),
             ),
-            const SizedBox(height: 18),
-            _CreatedRow(
-              icon: Icons.monitor_heart_outlined,
-              title: 'Monitoring',
-              subtitle: monitoringRangeSummary.replaceAll('  ·  ', ' • '),
-              trailing: settingsFailed
-                  ? const Text(
-                      'Not saved',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AleraColors.critical,
-                      ),
-                    )
-                  : Text(
-                      custom ? 'Custom' : 'Defaults',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AleraColors.textSecondary,
-                      ),
+          ),
+          const SizedBox(height: 18),
+          _CreatedRow(
+            icon: Icons.monitor_heart_outlined,
+            title: 'Monitoring',
+            subtitle: monitoringRangeSummary.replaceAll('  ·  ', ' • '),
+            trailing: settingsFailed
+                ? const Text(
+                    'Not saved',
+                    style: TextStyle(fontSize: 13, color: AleraColors.critical),
+                  )
+                : Text(
+                    custom ? 'Custom' : 'Defaults',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AleraColors.textSecondary,
                     ),
+                  ),
+          ),
+          const SizedBox(height: 18),
+          const _CreatedRow(
+            icon: Icons.people_outline,
+            title: 'Patient access',
+            trailing: PatientAccessStatusChip(
+              PatientAccessState.notConnected,
+              size: AleraStatusChipSize.small,
             ),
-            const SizedBox(height: 18),
-            const _CreatedRow(
-              icon: Icons.people_outline,
-              title: 'Patient access',
-              trailing: PatientAccessStatusChip(
-                PatientAccessState.notConnected,
-                size: AleraStatusChipSize.small,
-              ),
+          ),
+          const SizedBox(height: 18),
+          const _CreatedRow(
+            iconAsset:
+                'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
+            title: 'Smartwatch',
+            trailing: DeviceStatusChip(
+              PatientDeviceConnectionStatus.notConnected,
+              size: AleraStatusChipSize.small,
             ),
-            const SizedBox(height: 18),
-            const _CreatedRow(
-              iconAsset:
-                  'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
-              title: 'Smartwatch',
-              trailing: DeviceStatusChip(
-                PatientDeviceConnectionStatus.notConnected,
-                size: AleraStatusChipSize.small,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     ],
     bottom: bottomBar([

@@ -100,89 +100,81 @@ class PatientAccessCodeContent extends StatelessWidget {
               'Share this code with the patient so they can scan or enter it to connect their Alera account.',
           bottomSpacing: 16,
         ),
-        AleraCard(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'PATIENT ACCESS CODE',
-                style: AleraTypography.label.copyWith(
-                  fontSize: 11,
-                  letterSpacing: 1.1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: SelectableText(
-                      accessCode,
-                      key: const Key('issued-access-code'),
-                      style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 22,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _CopyChip(onTap: () => _copy(context)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Expires $expiry',
-                style: AleraTypography.body.copyWith(fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AleraColors.surfaceTint,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: QrImageView(
-                    key: const Key('access-code-qr'),
-                    data: buildPatientAccessQrPayload(accessCode: accessCode),
-                    size: 150,
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  'Scan this QR code or enter the code manually.',
-                  textAlign: TextAlign.center,
-                  style: AleraTypography.body.copyWith(fontSize: 12),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _ValidityStrip(expiry: expiry),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionTile(
-                      icon: Icons.content_copy_outlined,
-                      label: 'Copy code',
-                      onTap: () => _copy(context),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionTile(
-                      icon: Icons.share_outlined,
-                      label: 'Share',
-                      onTap: onShare,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        Text(
+          'PATIENT ACCESS CODE',
+          style: AleraTypography.label.copyWith(
+            fontSize: 11,
+            letterSpacing: 1.1,
           ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: SelectableText(
+                accessCode,
+                key: const Key('issued-access-code'),
+                style: AleraTypography.sectionTitle.copyWith(
+                  fontSize: 22,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _CopyChip(onTap: () => _copy(context)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Expires $expiry',
+          style: AleraTypography.body.copyWith(fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AleraColors.surfaceTint,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: QrImageView(
+              key: const Key('access-code-qr'),
+              data: buildPatientAccessQrPayload(accessCode: accessCode),
+              size: 150,
+              padding: EdgeInsets.zero,
+              backgroundColor: Colors.transparent,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Center(
+          child: Text(
+            'Scan this QR code or enter the code manually.',
+            textAlign: TextAlign.center,
+            style: AleraTypography.body.copyWith(fontSize: 12),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _ValidityStrip(expiry: expiry),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionTile(
+                icon: Icons.content_copy_outlined,
+                label: 'Copy code',
+                onTap: () => _copy(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _ActionTile(
+                icon: Icons.share_outlined,
+                label: 'Share',
+                onTap: onShare,
+              ),
+            ),
+          ],
         ),
       ],
     );

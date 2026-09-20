@@ -203,7 +203,8 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     if (_connected) {
       content = [
         PatientAccessNoticeContent(
-          iconAsset: 'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          iconAsset:
+              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
           title: '${widget.patientName}’s Alera access is connected',
           message: 'The patient can now sign in with their Alera account.',
         ),
@@ -215,7 +216,8 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       // code" action) rather than becoming connected during this session.
       content = [
         PatientAccessNoticeContent(
-          iconAsset: 'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          iconAsset:
+              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
           title: '${widget.patientName}’s Alera access is connected',
           message:
               'Generate a new one-time code if the patient needs to sign in again.',
@@ -286,6 +288,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
+        toolbarHeight: 44,
         leadingWidth: 56,
         leading: IconButton(
           tooltip: 'Back',
@@ -299,7 +302,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
                 children: content,
               ),
             ),
