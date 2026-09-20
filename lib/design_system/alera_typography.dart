@@ -5,19 +5,19 @@ import 'alera_colors.dart';
 abstract final class AleraTypography {
   static const TextStyle pageTitle = TextStyle(
     color: AleraColors.textPrimary,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: FontWeight.w700,
   );
 
   static const TextStyle sectionTitle = TextStyle(
     color: AleraColors.textPrimary,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: FontWeight.w700,
   );
 
   static const TextStyle body = TextStyle(
     color: AleraColors.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: FontWeight.w400,
   );
 

@@ -297,7 +297,7 @@ class _InfoRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 20, color: AleraColors.textPrimary),
+          child: Icon(icon, size: 20, color: AleraColors.primary),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -434,7 +434,7 @@ class _StripItem extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 16, color: AleraColors.textPrimary),
+          child: Icon(icon, size: 16, color: AleraColors.primary),
         ),
         const SizedBox(width: 8),
         Expanded(
