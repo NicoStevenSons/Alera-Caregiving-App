@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../design_system/alera_colors.dart';
+import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import 'widgets/patient_access_views.dart';
+import 'widgets/patient_setup_widgets.dart';
 
 export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
@@ -202,8 +204,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     if (_connected) {
       content = [
         PatientAccessNoticeContent(
-          iconAsset:
-              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          icon: Icons.check,
           title: '${widget.patientName}’s Alera access is connected',
           message: 'The patient can now sign in with their Alera account.',
         ),
@@ -215,8 +216,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       // code" action) rather than becoming connected during this session.
       content = [
         PatientAccessNoticeContent(
-          iconAsset:
-              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          icon: Icons.check,
           title: '${widget.patientName}’s Alera access is connected',
           message:
               'Generate a new one-time code if the patient needs to sign in again.',
@@ -279,29 +279,18 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 44,
-        leadingWidth: 56,
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
-          onPressed: () => Navigator.maybePop(context),
-        ),
+        title: Text('Patient access', style: AleraTypography.pageTitle),
       ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                padding: const EdgeInsets.all(24),
                 children: content,
               ),
             ),

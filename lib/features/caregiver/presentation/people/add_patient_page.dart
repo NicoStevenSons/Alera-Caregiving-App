@@ -1,20 +1,28 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/status/alera_status_chip.dart';
+import '../../../../design_system/status/adapters/device_status_chip.dart';
+import '../../../../design_system/status/adapters/patient_access_status_chip.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../../../design_system/widgets/alera_section_card.dart';
+import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import 'patient_access_setup_page.dart';
+import 'widgets/patient_access_views.dart';
+import 'widgets/patient_setup_widgets.dart';
+
+export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
 enum _Step { intro, personal, care, monitoring, review, created, pairing, code }
 
@@ -58,6 +66,9 @@ class _AddPatientPageState extends State<AddPatientPage>
   final name = TextEditingController(),
       phone = TextEditingController(),
       address = TextEditingController(),
+      birthDay = TextEditingController(),
+      birthMonth = TextEditingController(),
+      birthYear = TextEditingController(),
       emergencyName = TextEditingController(),
       emergencyPhone = TextEditingController(),
       conditions = TextEditingController(),
@@ -71,7 +82,6 @@ class _AddPatientPageState extends State<AddPatientPage>
       spo2Max = TextEditingController();
   _Step step = _Step.intro;
   _Step? returnTo;
-  DateTime? birthdate;
   String? sex, error;
   Uint8List? _profilePhotoBytes;
   String? _profilePhotoFilename;
@@ -91,6 +101,32 @@ class _AddPatientPageState extends State<AddPatientPage>
   bool _accessExpired = false;
   bool _foreground = true;
 
+  /// Birthdate assembled from the DD / MM / YYYY boxes, or null when the
+  /// boxes are empty or don't form a real, past date.
+  DateTime? get birthdate {
+    final d = int.tryParse(birthDay.text.trim());
+    final mo = int.tryParse(birthMonth.text.trim());
+    final y = int.tryParse(birthYear.text.trim());
+    if (d == null || mo == null || y == null) return null;
+    if (y < 1900 || mo < 1 || mo > 12 || d < 1) return null;
+    final date = DateTime(y, mo, d);
+    if (date.year != y || date.month != mo || date.day != d) return null;
+    if (date.isAfter(DateTime.now())) return null;
+    return date;
+  }
+
+  String? birthdateError() {
+    final parts = [
+      birthDay,
+      birthMonth,
+      birthYear,
+    ].map((e) => e.text.trim()).toList();
+    if (parts.every((e) => e.isEmpty)) return null;
+    if (parts.any((e) => e.isEmpty)) return 'Enter the day, month and year.';
+    if (parts[2].length < 4) return 'Enter a 4-digit year.';
+    return birthdate == null ? 'Enter a valid birthdate.' : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +141,9 @@ class _AddPatientPageState extends State<AddPatientPage>
       name,
       phone,
       address,
+      birthDay,
+      birthMonth,
+      birthYear,
       emergencyName,
       emergencyPhone,
       conditions,
@@ -190,6 +229,7 @@ class _AddPatientPageState extends State<AddPatientPage>
 
   void go(_Step x) {
     if (step == _Step.code && x != _Step.code) _stopPolling();
+    if (x == _Step.review) returnTo = null;
     setState(() {
       error = null;
       step = x;
@@ -495,7 +535,12 @@ class _AddPatientPageState extends State<AddPatientPage>
         created!.patientId,
         settings,
       );
-      if (mounted) setState(() => settingsFailed = false);
+      if (mounted) {
+        setState(() {
+          settingsFailed = false;
+          error = null;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() => error = msg(e, 'Custom settings were not saved.'));
@@ -553,50 +598,36 @@ class _AddPatientPageState extends State<AddPatientPage>
   }
 
   Future<void> finish() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (x) => AlertDialog(
-        title: const Text('Finish setup for now?'),
-        content: const Text(
+    final ok = await showAleraConfirmationDialog(
+      context,
+      icon: Icons.watch_later_outlined,
+      title: 'Finish setup for now?',
+      message:
           'The patient remains saved but cannot send readings until connected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(x),
-            child: const Text('Continue setup'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(x, true),
-            child: const Text('Finish for now'),
-          ),
-        ],
-      ),
+      cancelLabel: 'Continue setup',
+      confirmLabel: 'Finish for now',
     );
     if (ok == true && mounted) Navigator.pop(context);
   }
 
   Future<void> confirm() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (x) => AlertDialog(
-        title: Text('Create ${name.text.trim()}’s profile?'),
-        content: const Text(
+    final ok = await showAleraConfirmationDialog(
+      context,
+      icon: Icons.person_add_alt_outlined,
+      title: 'Create ${name.text.trim()}’s profile?',
+      message:
           'The patient will be added using the reviewed information and connection can happen afterward.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(x),
-            child: const Text('Review again'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(x, true),
-            child: const Text('Create patient'),
-          ),
-        ],
-      ),
+      cancelLabel: 'Review again',
+      confirmLabel: 'Create patient',
     );
     if (ok == true) await create();
   }
+
+  void edit(_Step x) => setState(() {
+    returnTo = _Step.review;
+    error = null;
+    step = x;
+  });
 
   @override
   Widget build(BuildContext context) => PopScope(
@@ -606,7 +637,10 @@ class _AddPatientPageState extends State<AddPatientPage>
     },
     child: Scaffold(
       appBar: AppBar(
-        title: const Text('Add Patient'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: Text('Add Patient', style: AleraTypography.pageTitle),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
@@ -627,438 +661,1031 @@ class _AddPatientPageState extends State<AddPatientPage>
       ),
     ),
   );
-  Widget list(List<Widget> x) =>
-      ListView(padding: const EdgeInsets.all(AleraSpacing.medium), children: x);
-  Widget intro() => list([
-    Text('Add someone to your care', style: AleraTypography.pageTitle),
-    const SizedBox(height: 12),
-    Text(
-      'Create a profile, configure monitoring, and optionally connect patient access.',
-      style: AleraTypography.body,
-    ),
-    const SizedBox(height: 24),
-    AleraButton(label: 'Start setup', onPressed: () => go(_Step.personal)),
-  ]);
+
+  // ---------------------------------------------------------------------
+  // Frame helpers
+  // ---------------------------------------------------------------------
+
+  Widget frame({required List<Widget> children, Widget? bottom}) => Column(
+    children: [
+      Expanded(
+        child: ListView(padding: const EdgeInsets.all(24), children: children),
+      ),
+      if (bottom != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: bottom,
+        ),
+    ],
+  );
+
+  Widget bottomBar(List<Widget> actions, {bool showError = true}) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (showError && error != null)
+        Padding(padding: const EdgeInsets.only(bottom: 12), child: err),
+      ...actions,
+    ],
+  );
+
+  Widget get err => Text(
+    error!,
+    key: const Key('patient-error'),
+    style: const TextStyle(fontSize: 12, color: AleraColors.critical),
+  );
+
+  Widget primaryButton(String label, VoidCallback? onPressed) => AleraButton(
+    label: label,
+    variant: AleraButtonVariant.pill,
+    height: 44,
+    onPressed: onPressed,
+  );
+
+  Widget secondaryButton(String label, VoidCallback? onPressed) => AleraButton(
+    label: label,
+    variant: AleraButtonVariant.lightPill,
+    height: 44,
+    onPressed: onPressed,
+  );
+
+  // ---------------------------------------------------------------------
+  // Intro (no Figma frame: built from the same info-row motif as the
+  // Patient access explainer)
+  // ---------------------------------------------------------------------
+
+  Widget intro() => frame(
+    children: [
+      const SetupHeader(
+        title: 'Add someone to your care',
+        subtitle:
+            'Create a profile, configure monitoring, and optionally connect patient access.',
+        bottomSpacing: 24,
+      ),
+      AleraCard(
+        elevation: 0,
+        color: AleraColors.surfaceTint,
+        borderColor: AleraColors.divider,
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          children: [
+            _IntroRow(
+              icon: Icons.person_outline,
+              title: 'Personal information',
+              subtitle: 'Name, phone number, address and birthdate.',
+            ),
+            SizedBox(height: 20),
+            _IntroRow(
+              icon: Icons.description_outlined,
+              title: 'Care information',
+              subtitle: 'Emergency contact, conditions and medications.',
+            ),
+            SizedBox(height: 20),
+            _IntroRow(
+              icon: Icons.monitor_heart_outlined,
+              title: 'Monitoring settings',
+              subtitle: 'Use Alera defaults or set custom ranges.',
+            ),
+            SizedBox(height: 20),
+            _IntroRow(
+              icon: Icons.people_outline,
+              title: 'Patient access',
+              subtitle: 'Connect the patient after their profile is created.',
+            ),
+          ],
+        ),
+      ),
+    ],
+    bottom: bottomBar([primaryButton('Start setup', () => go(_Step.personal))]),
+  );
+
+  // ---------------------------------------------------------------------
+  // Personal Information (Figma wireframe 1)
+  // ---------------------------------------------------------------------
+
   Widget personal() => Form(
     key: p,
-    child: list([
-      Text('Personal Information', style: AleraTypography.pageTitle),
-      const SizedBox(height: 12),
-      Center(
-        child: Column(
-          children: [
-            CircleAvatar(
-              key: const Key('patient-profile-photo-preview'),
-              radius: 46,
-              backgroundColor: AleraColors.primarySoft,
-              backgroundImage: _profilePhotoBytes == null
-                  ? null
-                  : MemoryImage(_profilePhotoBytes!),
-              child: _profilePhotoBytes == null
-                  ? const Icon(Icons.person_outline, size: 42)
-                  : null,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 8,
-              children: [
-                TextButton.icon(
-                  key: const Key('choose-patient-photo'),
-                  onPressed: pickProfilePhoto,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: Text(
-                    _profilePhotoBytes == null
-                        ? 'Choose photo'
-                        : 'Change photo',
+    child: frame(
+      children: [
+        const SetupHeader(
+          title: 'Personal Information',
+          subtitle: 'Fill in information about your patient.',
+          bottomSpacing: 20,
+        ),
+        Center(
+          child: Column(
+            children: [
+              CircleAvatar(
+                key: const Key('patient-profile-photo-preview'),
+                radius: 46,
+                backgroundColor: AleraColors.primarySoft,
+                backgroundImage: _profilePhotoBytes == null
+                    ? null
+                    : MemoryImage(_profilePhotoBytes!),
+                child: _profilePhotoBytes == null
+                    ? const Icon(
+                        Icons.person_outline,
+                        size: 42,
+                        color: AleraColors.textPrimary,
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    key: const Key('choose-patient-photo'),
+                    onPressed: pickProfilePhoto,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AleraColors.primary,
+                    ),
+                    icon: const Icon(Icons.photo_library_outlined, size: 18),
+                    label: Text(
+                      _profilePhotoBytes == null
+                          ? 'Choose photo'
+                          : 'Change photo',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (_profilePhotoBytes != null)
+                    TextButton(
+                      key: const Key('remove-patient-photo'),
+                      onPressed: removeProfilePhoto,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AleraColors.textSecondary,
+                      ),
+                      child: const Text(
+                        'Remove',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (_profilePhotoError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _profilePhotoError!,
+                    key: const Key('patient-photo-error'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AleraColors.critical,
+                    ),
                   ),
                 ),
-                if (_profilePhotoBytes != null)
-                  TextButton(
-                    key: const Key('remove-patient-photo'),
-                    onPressed: removeProfilePhoto,
-                    child: const Text('Remove'),
-                  ),
-              ],
-            ),
-            if (_profilePhotoError != null)
-              Text(
-                _profilePhotoError!,
-                key: const Key('patient-photo-error'),
-                style: const TextStyle(color: AleraColors.critical),
-                textAlign: TextAlign.center,
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-      field(
-        name,
-        'Full name *',
-        key: const Key('patient-name-field'),
-        v: (x) => x == null || x.trim().isEmpty
-            ? 'Enter the patient’s full name.'
-            : x.trim().length > 150
-            ? 'Use 150 characters or fewer.'
-            : null,
-      ),
-      field(
-        phone,
-        'Phone number',
-        phone: true,
-        v: (x) => (x?.length ?? 0) > 11 ? 'Use 11 characters or fewer.' : null,
-      ),
-      field(address, 'Address or room'),
-      ListTile(
-        key: const Key('birthdate-field'),
-        title: Text(birthdate == null ? 'Birthdate' : date(birthdate!)),
-        onTap: pick,
-      ),
-      DropdownButtonFormField<String>(
-        key: const Key('sex-field'),
-        initialValue: sex,
-        items: const [
-          DropdownMenuItem(value: 'MALE', child: Text('Male')),
-          DropdownMenuItem(value: 'FEMALE', child: Text('Female')),
-          DropdownMenuItem(value: 'OTHER', child: Text('Other')),
-        ],
-        onChanged: (x) => setState(() => sex = x),
-      ),
-      buttons(() => back(), () {
-        if (p.currentState!.validate()) go(returnTo ?? _Step.care);
-      }),
-    ]),
-  );
-  Widget care() => Form(
-    key: c,
-    child: list([
-      Text('Care Information', style: AleraTypography.pageTitle),
-      const Text(
-        'Baseline readings are reference values and do not control alert thresholds.',
-      ),
-      field(
-        emergencyName,
-        'Emergency contact name',
-        v: (x) =>
-            (x?.length ?? 0) > 150 ? 'Use 150 characters or fewer.' : null,
-      ),
-      field(
-        emergencyPhone,
-        'Emergency contact phone',
-        v: (x) => (x?.length ?? 0) > 30 ? 'Use 30 characters or fewer.' : null,
-      ),
-      field(conditions, 'Known conditions'),
-      field(medications, 'Medications'),
-      field(
-        hr,
-        'Baseline heart rate',
-        key: const Key('heart-rate-field'),
-        v: (x) => number(x, 0, null, true, 'heart rate'),
-      ),
-      field(
-        spo2,
-        'Baseline SpO₂',
-        key: const Key('spo2-field'),
-        v: (x) => number(x, 0, 100, false, 'SpO₂'),
-      ),
-      field(notes, 'Monitoring notes'),
-      buttons(
-        back,
-        () {
-          if (c.currentState!.validate()) go(returnTo ?? _Step.monitoring);
-        },
-        skip: () {
-          if (c.currentState!.validate()) go(returnTo ?? _Step.monitoring);
-        },
-      ),
-    ]),
-  );
-  Widget monitoring() => Form(
-    key: m,
-    child: list([
-      Text('Monitoring Settings', style: AleraTypography.pageTitle),
-      RadioGroup<bool>(
-        groupValue: custom,
-        onChanged: (value) {
-          if (value == null) return;
-          setState(() => custom = value);
-        },
-        child: Column(
-          children: [
-            RadioListTile<bool>(
-              key: const Key('default-monitoring-option'),
-              value: false,
-              title: const Text(
-                'Alera defaults: HR 60–100, minimum SpO₂ 95',
-              ),
-            ),
-            RadioListTile<bool>(
-              key: const Key('custom-monitoring-option'),
-              value: true,
-              title: const Text('Custom monitoring ranges'),
-            ),
-          ],
-        ),
-      ),
-      if (custom) ...[
+        const SizedBox(height: 20),
         field(
-          hrMin,
-          'HR minimum',
-          key: const Key('hr-min-field'),
-          v: (x) => integer(x, 1, 999, 'HR minimum'),
+          name,
+          'Full name',
+          'Enter patient’s full name',
+          key: const Key('patient-name-field'),
+          required: true,
+          v: (x) => x == null || x.trim().isEmpty
+              ? 'Enter the patient’s full name.'
+              : x.trim().length > 150
+              ? 'Use 150 characters or fewer.'
+              : null,
         ),
         field(
-          hrMax,
-          'HR maximum',
-          key: const Key('hr-max-field'),
-          v: (x) => integer(x, 1, 999, 'HR maximum'),
+          phone,
+          'Phone number',
+          'Enter patient’s phone number',
+          phone: true,
+          v: (x) =>
+              (x?.length ?? 0) > 11 ? 'Use 11 characters or fewer.' : null,
         ),
-        field(
-          spo2Min,
-          'SpO₂ minimum',
-          key: const Key('spo2-min-field'),
-          v: (x) => integer(x, 0, 100, 'SpO₂ minimum'),
-        ),
-        field(
-          spo2Max,
-          'SpO₂ maximum (optional)',
-          key: const Key('spo2-max-field'),
-          v: (x) => integer(x, 0, 100, 'SpO₂ maximum'),
-        ),
-        const Text('Alera’s Critical safety overrides still apply.'),
+        field(address, 'Address', 'Enter patient’s address or room'),
+        birthdateField(),
+        sexField(),
       ],
-      buttons(back, () {
-        if (m.currentState!.validate() &&
-            (!custom ||
-                (int.parse(hrMin.text) <= int.parse(hrMax.text) &&
-                    (spo2Max.text.isEmpty ||
-                        int.parse(spo2Min.text) <= int.parse(spo2Max.text))))) {
-          go(returnTo ?? _Step.review);
-        }
-      }),
-    ]),
-  );
-  Widget review() => list([
-    Text('Review', style: AleraTypography.pageTitle),
-    if (_profilePhotoBytes != null) ...[
-      const SizedBox(height: 8),
-      Center(
-        child: CircleAvatar(
-          key: const Key('review-patient-photo'),
-          radius: 42,
-          backgroundImage: MemoryImage(_profilePhotoBytes!),
+      bottom: bottomBar([
+        SetupButtonRow(
+          onBack: back,
+          onNext: () {
+            if (p.currentState!.validate()) go(returnTo ?? _Step.care);
+          },
         ),
-      ),
-      const SizedBox(height: 8),
-    ],
-    summary('Personal', name.text, () => edit(_Step.personal)),
-    summary(
-      'Care',
-      conditions.text.isEmpty ? 'No care information' : conditions.text,
-      () => edit(_Step.care),
+      ]),
     ),
-    summary(
-      'Monitoring',
-      custom ? 'Custom' : 'Alera defaults',
-      () => edit(_Step.monitoring),
-    ),
-    const AleraSectionCard(
-      title: 'Connection',
+  );
+
+  Widget birthdateField() => FormField<String>(
+    key: const Key('birthdate-field'),
+    validator: (_) => birthdateError(),
+    builder: (state) => Padding(
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Patient access: Not connected'),
-          Text('Smartwatch: Not connected'),
-        ],
-      ),
-    ),
-    if (error != null) err,
-    AleraButton(
-      label: busy ? 'Creating…' : 'Create patient',
-      onPressed: busy ? null : confirm,
-    ),
-  ]);
-  void edit(_Step x) => setState(() {
-    returnTo = _Step.review;
-    step = x;
-  });
-  Widget summary(String a, String b, VoidCallback e) => AleraSectionCard(
-    title: a,
-    child: Row(
-      children: [
-        Expanded(child: Text(b)),
-        TextButton(onPressed: e, child: const Text('Edit')),
-      ],
-    ),
-  );
-  Widget createdView() => list([
-    Text(
-      '${created!.fullName} has been added',
-      style: AleraTypography.pageTitle,
-    ),
-    const Text('Profile: Created'),
-    Text('Monitoring: ${custom ? 'Custom' : 'Alera defaults'}'),
-    const Text('Patient access: Not connected'),
-    const Text('Smartwatch: Not connected'),
-    if (photoUploadFailed) ...[
-      if (_profilePhotoError != null)
-        Text(
-          _profilePhotoError!,
-          key: const Key('patient-photo-upload-error'),
-          style: const TextStyle(color: AleraColors.critical),
-        ),
-      AleraButton(
-        label: busy ? 'Uploading…' : 'Retry photo upload',
-        onPressed: busy ? null : retryPhotoUpload,
-      ),
-    ],
-    if (settingsFailed) ...[
-      err,
-      AleraButton(
-        label: 'Retry settings',
-        onPressed: busy ? null : retrySettings,
-      ),
-      AleraButton(
-        label: 'Use Alera defaults',
-        onPressed: () => setState(() => settingsFailed = false),
-      ),
-    ],
-    AleraButton(
-      label: 'Connect patient access',
-      onPressed: widget.loadPatientDetail == null
-          ? () => go(_Step.pairing)
-          : openPatientAccess,
-    ),
-    AleraButton(
-      label: 'Finish for now',
-      variant: AleraButtonVariant.secondary,
-      onPressed: finish,
-    ),
-  ]);
-  Widget pairing() => list([
-    Text('Connect patient access', style: AleraTypography.pageTitle),
-    const Text(
-      'Generate a one-time code for the patient to scan or enter. The code expires after 24 hours.',
-    ),
-    if (error != null) err,
-    AleraButton(
-      label: issuing ? 'Generating…' : 'Generate access code',
-      onPressed: issuing ? null : issue,
-    ),
-    AleraButton(
-      label: 'Do this later',
-      variant: AleraButtonVariant.secondary,
-      onPressed: finish,
-    ),
-  ]);
-  Widget code() => list([
-    Text('Patient access', style: AleraTypography.pageTitle),
-    if (_accessConnected) ...[
-      Text('${created!.fullName}’s patient access is connected'),
-      AleraButton(
-        label: 'Done',
-        variant: AleraButtonVariant.secondary,
-        onPressed: () => Navigator.pop(context),
-      ),
-    ] else if (_accessExpired) ...[
-      const Text('The invitation expired.'),
-      AleraButton(
-        label: 'Done',
-        variant: AleraButtonVariant.secondary,
-        onPressed: () => Navigator.pop(context),
-      ),
-    ] else ...[
-      const Text('Valid for 24 hours and usable only once.'),
-      SelectableText(
-        issued!.accessCode,
-        key: const Key('issued-access-code'),
-        style: AleraTypography.pageTitle,
-      ),
-      Text('Expires ${dateTime(issued!.expiresAt)}'),
-      QrImageView(
-        key: const Key('access-code-qr'),
-        data: buildPatientAccessQrPayload(accessCode: issued!.accessCode),
-        size: 220,
-      ),
-      AleraButton(
-        label: 'Copy',
-        onPressed: () =>
-            Clipboard.setData(ClipboardData(text: issued!.accessCode)),
-      ),
-      AleraButton(
-        label: 'Share',
-        onPressed: () => SharePlus.instance.share(
-          ShareParams(
-            text:
-                '${created!.fullName}\nAccess code: ${issued!.accessCode}\nExpires ${dateTime(issued!.expiresAt)}',
-          ),
-        ),
-      ),
-      AleraButton(
-        label: 'Done',
-        variant: AleraButtonVariant.secondary,
-        onPressed: () => Navigator.pop(context),
-      ),
-    ],
-  ]);
-  Widget buttons(VoidCallback b, VoidCallback n, {VoidCallback? skip}) =>
-      Column(
-        children: [
-          if (error != null) err,
+          const AleraFieldLabel('Birthdate'),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
-                child: AleraButton(
-                  label: 'Back',
-                  variant: AleraButtonVariant.secondary,
-                  onPressed: b,
+                child: birthBox(
+                  birthDay,
+                  'DD',
+                  2,
+                  state,
+                  key: const Key('birth-day-field'),
+                  next: true,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: AleraButton(label: 'Continue', onPressed: n),
+                child: birthBox(
+                  birthMonth,
+                  'MM',
+                  2,
+                  state,
+                  key: const Key('birth-month-field'),
+                  next: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: birthBox(
+                  birthYear,
+                  'YYYY',
+                  4,
+                  state,
+                  key: const Key('birth-year-field'),
+                ),
               ),
             ],
           ),
-          if (skip != null)
-            AleraButton(
-              label: 'Skip for now',
-              variant: AleraButtonVariant.secondary,
-              onPressed: skip,
+          if (state.hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                state.errorText!,
+                key: const Key('birthdate-error'),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AleraColors.critical,
+                ),
+              ),
             ),
         ],
-      );
-  Widget field(
-    TextEditingController x,
-    String label, {
-    Key? key,
-    bool phone = false,
-    String? Function(String?)? v,
-  }) => Padding(
-    padding: const EdgeInsets.only(top: 12),
-    child: TextFormField(
-      key: key,
-      controller: x,
-      keyboardType: phone ? TextInputType.phone : null,
-      inputFormatters: phone ? [LengthLimitingTextInputFormatter(11)] : null,
-      validator: v,
-      decoration: InputDecoration(labelText: label),
+      ),
     ),
   );
-  Widget get err => Text(
-    error!,
-    key: const Key('patient-error'),
-    style: const TextStyle(color: AleraColors.critical),
+
+  Widget birthBox(
+    TextEditingController controller,
+    String hint,
+    int length,
+    FormFieldState<String> state, {
+    required Key key,
+    bool next = false,
+  }) => TextField(
+    key: key,
+    controller: controller,
+    keyboardType: TextInputType.number,
+    inputFormatters: [
+      FilteringTextInputFormatter.digitsOnly,
+      LengthLimitingTextInputFormatter(length),
+    ],
+    style: const TextStyle(fontSize: 13, color: AleraColors.textPrimary),
+    cursorColor: AleraColors.primary,
+    decoration: aleraInputDecoration(hint: hint),
+    onChanged: (value) {
+      if (state.hasError) state.validate();
+      if (next && value.length == length) FocusScope.of(context).nextFocus();
+    },
   );
-  Future<void> pick() async {
-    final now = DateTime.now();
-    final x = await showDatePicker(
-      context: context,
-      firstDate: DateTime(1900),
-      lastDate: now,
-      initialDate: birthdate ?? DateTime(now.year - 65),
-    );
-    if (x != null && mounted) setState(() => birthdate = x);
+
+  Widget sexField() => Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AleraFieldLabel('Sex'),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          key: const Key('sex-field'),
+          initialValue: sex,
+          isExpanded: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 20,
+            color: AleraColors.fieldHint,
+          ),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          style: const TextStyle(fontSize: 13, color: AleraColors.textPrimary),
+          decoration: aleraInputDecoration(hint: 'Select patient’s sex'),
+          items: const [
+            DropdownMenuItem(value: 'MALE', child: Text('Male')),
+            DropdownMenuItem(value: 'FEMALE', child: Text('Female')),
+            DropdownMenuItem(value: 'OTHER', child: Text('Other')),
+          ],
+          onChanged: (x) => setState(() => sex = x),
+        ),
+      ],
+    ),
+  );
+
+  // ---------------------------------------------------------------------
+  // Care Information (Figma wireframe 2)
+  // ---------------------------------------------------------------------
+
+  Widget care() => Form(
+    key: c,
+    child: frame(
+      children: [
+        const SetupHeader(
+          title: 'Care Information',
+          subtitle:
+              'Baseline readings are reference values and do not control alert thresholds.',
+          bottomSpacing: 20,
+        ),
+        field(
+          emergencyName,
+          'Emergency contact name',
+          'Enter emergency contact’s full name',
+          v: (x) =>
+              (x?.length ?? 0) > 150 ? 'Use 150 characters or fewer.' : null,
+        ),
+        field(
+          emergencyPhone,
+          'Emergency contact phone',
+          'Enter emergency contact’s phone number',
+          keyboard: TextInputType.phone,
+          v: (x) =>
+              (x?.length ?? 0) > 30 ? 'Use 30 characters or fewer.' : null,
+        ),
+        field(
+          conditions,
+          'Known conditions (Separate with comma)',
+          'e.g. Hypertension, Diabetes',
+        ),
+        field(medications, 'Medications', 'Enter patient’s medications'),
+        field(
+          hr,
+          'Baseline heart rate',
+          'Enter baseline heart rate',
+          key: const Key('heart-rate-field'),
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+          suffix: 'bpm',
+          v: (x) => number(x, 0, null, true, 'heart rate'),
+        ),
+        field(
+          spo2,
+          'Baseline SpO₂',
+          'Enter baseline SpO₂',
+          key: const Key('spo2-field'),
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+          suffix: '%',
+          v: (x) => number(x, 0, 100, false, 'SpO₂'),
+        ),
+        field(
+          notes,
+          'Monitoring notes',
+          'Add any notes for monitoring',
+          maxLines: 3,
+        ),
+        Center(
+          child: TextButton(
+            onPressed: () {
+              if (c.currentState!.validate()) go(returnTo ?? _Step.monitoring);
+            },
+            style: TextButton.styleFrom(foregroundColor: AleraColors.primary),
+            child: const Text(
+              'Skip for now',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ],
+      bottom: bottomBar([
+        SetupButtonRow(
+          onBack: back,
+          onNext: () {
+            if (c.currentState!.validate()) go(returnTo ?? _Step.monitoring);
+          },
+        ),
+      ]),
+    ),
+  );
+
+  // ---------------------------------------------------------------------
+  // Monitoring Settings (Figma frame 3)
+  // ---------------------------------------------------------------------
+
+  void continueFromMonitoring() {
+    if (!m.currentState!.validate()) return;
+    if (custom) {
+      if (int.parse(hrMin.text) > int.parse(hrMax.text)) {
+        setState(
+          () => error = 'Heart rate minimum must not be above the maximum.',
+        );
+        return;
+      }
+      if (spo2Max.text.trim().isNotEmpty &&
+          int.parse(spo2Min.text) > int.parse(spo2Max.text)) {
+        setState(() => error = 'SpO₂ minimum must not be above the maximum.');
+        return;
+      }
+    }
+    go(returnTo ?? _Step.review);
   }
+
+  Widget monitoring() => Form(
+    key: m,
+    child: frame(
+      children: [
+        const SetupHeader(
+          title: 'Monitoring Settings',
+          subtitle:
+              'Choose how Alera should determine when this patient’s readings need attention.',
+        ),
+        SetupOptionCard(
+          key: const Key('default-monitoring-option'),
+          selected: !custom,
+          title: 'Use Alera defaults',
+          lines: const ['Heart rate: 60–100 bpm', 'SpO₂: minimum 95%'],
+          onTap: () => setState(() => custom = false),
+        ),
+        const SizedBox(height: 12),
+        SetupOptionCard(
+          key: const Key('custom-monitoring-option'),
+          selected: custom,
+          title: 'Set custom ranges',
+          lines: const ['Define monitoring limits for this patient.'],
+          onTap: () => setState(() => custom = true),
+        ),
+        if (custom) ...[
+          const SizedBox(height: 24),
+          rangeSection('Heart rate (bpm)', [
+            rangeField(
+              hrMin,
+              'Minimum',
+              '60',
+              'bpm',
+              const Key('hr-min-field'),
+              (x) => requiredInteger(x, 1, 999, 'a minimum heart rate'),
+            ),
+            rangeField(
+              hrMax,
+              'Maximum',
+              '100',
+              'bpm',
+              const Key('hr-max-field'),
+              (x) => requiredInteger(x, 1, 999, 'a maximum heart rate'),
+            ),
+          ]),
+          const SizedBox(height: 20),
+          rangeSection('Blood oxygen (SpO₂)', [
+            rangeField(
+              spo2Min,
+              'Minimum',
+              '95',
+              '%',
+              const Key('spo2-min-field'),
+              (x) => requiredInteger(x, 0, 100, 'a minimum SpO₂'),
+            ),
+            rangeField(
+              spo2Max,
+              'Maximum (optional)',
+              'Enter value',
+              '%',
+              const Key('spo2-max-field'),
+              (x) => integer(x, 0, 100, 'SpO₂ maximum'),
+            ),
+          ]),
+          const SizedBox(height: 20),
+          AleraCard(
+            elevation: 0,
+            borderColor: AleraColors.divider,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  size: 22,
+                  color: AleraColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Critical safety limits',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AleraColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Alera’s built-in critical safety overrides still apply even when custom monitoring ranges are used.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: AleraColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+      bottom: bottomBar([
+        SetupButtonRow(onBack: back, onNext: continueFromMonitoring),
+      ]),
+    ),
+  );
+
+  Widget rangeSection(String title, List<Widget> fields) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: AleraColors.textPrimary,
+        ),
+      ),
+      const SizedBox(height: 10),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: fields[0]),
+          const SizedBox(width: 12),
+          Expanded(child: fields[1]),
+        ],
+      ),
+    ],
+  );
+
+  Widget rangeField(
+    TextEditingController controller,
+    String label,
+    String hint,
+    String suffix,
+    Key key,
+    String? Function(String?) validator,
+  ) => AleraTextField(
+    controller: controller,
+    label: label,
+    hint: hint,
+    fieldKey: key,
+    suffixText: suffix,
+    keyboardType: TextInputType.number,
+    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+    validator: validator,
+    bottomSpacing: 0,
+  );
+
+  // ---------------------------------------------------------------------
+  // Review (Figma frame 4) + confirmation dialog (Figma frame 5)
+  // ---------------------------------------------------------------------
+
+  bool get hasCareInformation => [
+    emergencyName,
+    emergencyPhone,
+    conditions,
+    medications,
+    hr,
+    spo2,
+    notes,
+  ].any((x) => x.text.trim().isNotEmpty);
+
+  String get monitoringRangeSummary {
+    if (!custom) return 'HR 60–100 bpm  ·  SpO₂ ≥ 95%';
+    final spo2Upper = spo2Max.text.trim();
+    final spo2Text = spo2Upper.isEmpty
+        ? 'SpO₂ ≥ ${spo2Min.text.trim()}%'
+        : 'SpO₂ ${spo2Min.text.trim()}–$spo2Upper%';
+    return 'HR ${hrMin.text.trim()}–${hrMax.text.trim()} bpm  ·  $spo2Text';
+  }
+
+  Widget review() => frame(
+    children: [
+      const SetupHeader(
+        title: 'Review',
+        subtitle:
+            'Make sure everything looks right before creating this patient.',
+      ),
+      if (_profilePhotoBytes != null) ...[
+        Center(
+          child: CircleAvatar(
+            key: const Key('review-patient-photo'),
+            radius: 42,
+            backgroundImage: MemoryImage(_profilePhotoBytes!),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+      AleraSectionCard(
+        title: 'Personal Information',
+        actionLabel: 'Edit',
+        onActionPressed: () => edit(_Step.personal),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SetupLabeledValue(label: 'Full name', value: name.text),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: SetupLabeledValue(
+                    label: 'Birthdate',
+                    value: birthdate == null
+                        ? null
+                        : formatBirthdate(birthdate!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SetupLabeledValue(
+                    label: 'Phone number',
+                    value: phone.text,
+                  ),
+                ),
+              ],
+            ),
+            if (address.text.trim().isNotEmpty || sex != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: SetupLabeledValue(
+                      label: 'Address',
+                      value: address.text,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SetupLabeledValue(
+                      label: 'Sex',
+                      value: switch (sex) {
+                        'MALE' => 'Male',
+                        'FEMALE' => 'Female',
+                        'OTHER' => 'Other',
+                        _ => null,
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      AleraSectionCard(
+        title: 'Care Information',
+        actionLabel: 'Edit',
+        onActionPressed: () => edit(_Step.care),
+        child: hasCareInformation
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (emergencyName.text.trim().isNotEmpty ||
+                      emergencyPhone.text.trim().isNotEmpty)
+                    careLine(
+                      'Emergency contact',
+                      [
+                        emergencyName.text.trim(),
+                        emergencyPhone.text.trim(),
+                      ].where((e) => e.isNotEmpty).join(' · '),
+                    ),
+                  if (conditions.text.trim().isNotEmpty)
+                    careLine('Known conditions', conditions.text.trim()),
+                  if (medications.text.trim().isNotEmpty)
+                    careLine('Medications', medications.text.trim()),
+                  if (hr.text.trim().isNotEmpty)
+                    careLine('Baseline heart rate', '${hr.text.trim()} bpm'),
+                  if (spo2.text.trim().isNotEmpty)
+                    careLine('Baseline SpO₂', '${spo2.text.trim()}%'),
+                  if (notes.text.trim().isNotEmpty)
+                    careLine('Monitoring notes', notes.text.trim()),
+                ],
+              )
+            : const Text(
+                'No care information added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+      ),
+      const SizedBox(height: 12),
+      AleraSectionCard(
+        title: 'Monitoring Settings',
+        actionLabel: 'Edit',
+        onActionPressed: () => edit(_Step.monitoring),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              custom ? 'Custom ranges' : 'Alera defaults',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AleraColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              monitoringRangeSummary,
+              style: AleraTypography.body.copyWith(fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      AleraSectionCard(
+        title: 'Connection',
+        child: Column(
+          children: const [
+            _ConnectionRow(
+              label: 'Patient access',
+              chip: PatientAccessStatusChip(PatientAccessState.notConnected),
+            ),
+            SizedBox(height: 12),
+            _ConnectionRow(
+              label: 'Smartwatch',
+              chip: DeviceStatusChip(
+                PatientDeviceConnectionStatus.notConnected,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+    bottom: bottomBar([
+      SetupButtonRow(
+        onBack: back,
+        onNext: busy ? null : confirm,
+        nextLabel: busy ? 'Creating…' : 'Create patient',
+      ),
+    ]),
+  );
+
+  Widget careLine(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: SetupLabeledValue(label: label, value: value),
+  );
+
+  // ---------------------------------------------------------------------
+  // Created (Figma frame 6)
+  // ---------------------------------------------------------------------
+
+  Widget createdView() => frame(
+    children: [
+      const SizedBox(height: 8),
+      Center(
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: const BoxDecoration(
+            color: AleraColors.primarySoft,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.check, size: 32, color: AleraColors.primary),
+        ),
+      ),
+      const SizedBox(height: 20),
+      SetupHeader(
+        title: '${created!.fullName} has been added',
+        subtitle:
+            'The patient profile is ready. You can connect patient access now or do this later.',
+        centered: true,
+      ),
+      if (photoUploadFailed) ...[
+        AleraCard(
+          elevation: 0,
+          borderColor: AleraColors.critical.withValues(alpha: 0.5),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_profilePhotoError != null)
+                Text(
+                  _profilePhotoError!,
+                  key: const Key('patient-photo-upload-error'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AleraColors.critical,
+                  ),
+                ),
+              const SizedBox(height: 12),
+              AleraButton(
+                label: busy ? 'Uploading…' : 'Retry photo upload',
+                variant: AleraButtonVariant.pill,
+                height: 40,
+                onPressed: busy ? null : retryPhotoUpload,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+      if (settingsFailed) ...[
+        AleraCard(
+          elevation: 0,
+          borderColor: AleraColors.critical.withValues(alpha: 0.5),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (error != null) err,
+              if (error != null) const SizedBox(height: 12),
+              AleraButton(
+                label: 'Retry settings',
+                variant: AleraButtonVariant.pill,
+                height: 40,
+                onPressed: busy ? null : retrySettings,
+              ),
+              const SizedBox(height: 8),
+              AleraButton(
+                label: 'Use Alera defaults',
+                variant: AleraButtonVariant.lightPill,
+                height: 40,
+                onPressed: () => setState(() {
+                  settingsFailed = false;
+                  custom = false;
+                  error = null;
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+      AleraCard(
+        elevation: 0,
+        borderColor: AleraColors.divider,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _CreatedRow(
+              icon: Icons.description_outlined,
+              title: 'Profile',
+              trailing: const Text(
+                'Created',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            _CreatedRow(
+              icon: Icons.monitor_heart_outlined,
+              title: 'Monitoring',
+              subtitle: monitoringRangeSummary.replaceAll('  ·  ', ' • '),
+              trailing: settingsFailed
+                  ? const Text(
+                      'Not saved',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AleraColors.critical,
+                      ),
+                    )
+                  : Text(
+                      custom ? 'Custom' : 'Defaults',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AleraColors.textSecondary,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 18),
+            const _CreatedRow(
+              icon: Icons.people_outline,
+              title: 'Patient access',
+              trailing: PatientAccessStatusChip(
+                PatientAccessState.notConnected,
+                size: AleraStatusChipSize.small,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const _CreatedRow(
+              icon: Icons.watch_outlined,
+              title: 'Smartwatch',
+              trailing: DeviceStatusChip(
+                PatientDeviceConnectionStatus.notConnected,
+                size: AleraStatusChipSize.small,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+    bottom: bottomBar([
+      primaryButton(
+        'Connect patient access',
+        widget.loadPatientDetail == null
+            ? () => go(_Step.pairing)
+            : openPatientAccess,
+      ),
+      const SizedBox(height: 12),
+      secondaryButton('Finish for now', finish),
+    ], showError: false),
+  );
+
+  // ---------------------------------------------------------------------
+  // Patient access (Figma frames 7 + 8)
+  // ---------------------------------------------------------------------
+
+  Widget pairing() => frame(
+    children: const [PatientAccessIntroContent()],
+    bottom: bottomBar([
+      primaryButton(
+        issuing ? 'Generating…' : 'Generate access code',
+        issuing ? null : issue,
+      ),
+      const SizedBox(height: 12),
+      secondaryButton('Do this later', finish),
+    ]),
+  );
+
+  Widget code() {
+    final connected = _accessConnected;
+    final expired = _accessExpired;
+    final Widget content = connected
+        ? PatientAccessNoticeContent(
+            icon: Icons.check,
+            title: '${created!.fullName}’s patient access is connected',
+            message: 'The patient can now sign in with their Alera account.',
+          )
+        : expired
+        ? const PatientAccessNoticeContent(
+            icon: Icons.timer_off_outlined,
+            title: 'The invitation expired.',
+            message:
+                'You can generate a new code later from the patient’s profile.',
+          )
+        : PatientAccessCodeContent(
+            accessCode: issued!.accessCode,
+            expiresAt: issued!.expiresAt,
+            onShare: () => SharePlus.instance.share(
+              ShareParams(
+                text:
+                    '${created!.fullName}\nAccess code: ${issued!.accessCode}\n'
+                    'Expires ${formatAccessExpiry(issued!.expiresAt)}',
+              ),
+            ),
+          );
+    return frame(
+      children: [content],
+      bottom: bottomBar([primaryButton('Done', () => Navigator.pop(context))]),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Field helpers + validators
+  // ---------------------------------------------------------------------
+
+  Widget field(
+    TextEditingController x,
+    String label,
+    String hint, {
+    Key? key,
+    bool required = false,
+    bool phone = false,
+    TextInputType? keyboard,
+    String? suffix,
+    int maxLines = 1,
+    String? Function(String?)? v,
+  }) => AleraTextField(
+    controller: x,
+    label: label,
+    hint: hint,
+    fieldKey: key,
+    required: required,
+    suffixText: suffix,
+    keyboardType: phone ? TextInputType.phone : keyboard,
+    inputFormatters: phone ? [LengthLimitingTextInputFormatter(11)] : null,
+    validator: v,
+    maxLines: maxLines,
+  );
 
   String? number(String? x, double min, double? max, bool ex, String l) {
     if (x == null || x.isEmpty) return null;
@@ -1077,19 +1704,154 @@ class _AddPatientPageState extends State<AddPatientPage>
     if (x == null || x.isEmpty) return null;
     final n = int.tryParse(x);
     return n == null
-        ? 'Enter an integer $l.'
+        ? 'Enter $l as a whole number.'
         : n < min || n > max
-        ? 'Enter a $l from $min to $max.'
+        ? 'Enter $l from $min to $max.'
         : null;
+  }
+
+  /// Like [integer] but the value may not be left empty. Used for the four
+  /// custom-range fields: leaving one blank used to pass validation and then
+  /// crash on `int.parse` when Continue was pressed.
+  String? requiredInteger(String? x, int min, int max, String l) =>
+      x == null || x.trim().isEmpty
+      ? 'Enter $l.'
+      : integer(x.trim(), min, max, l);
+}
+
+class _IntroRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _IntroRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: AleraColors.primarySoft,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 20, color: AleraColors.textPrimary),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AleraColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AleraTypography.body.copyWith(
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
-String date(DateTime x) =>
-    '${x.year.toString().padLeft(4, '0')}-${x.month.toString().padLeft(2, '0')}-${x.day.toString().padLeft(2, '0')}';
-String dateTime(DateTime x) =>
-    '${date(x.toLocal())} ${x.toLocal().hour.toString().padLeft(2, '0')}:${x.toLocal().minute.toString().padLeft(2, '0')}';
-String buildPatientAccessQrPayload({required String accessCode}) => jsonEncode({
-  'type': 'alera_patient_access',
-  'version': 2,
-  'access_code': accessCode,
-});
+class _ConnectionRow extends StatelessWidget {
+  final String label;
+  final Widget chip;
+  const _ConnectionRow({required this.label, required this.chip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AleraColors.textSecondary,
+            ),
+          ),
+        ),
+        chip,
+      ],
+    );
+  }
+}
+
+class _CreatedRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget trailing;
+
+  const _CreatedRow({
+    required this.icon,
+    required this.title,
+    required this.trailing,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: const BoxDecoration(
+            color: AleraColors.primarySoft,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: AleraColors.textPrimary),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AleraColors.textPrimary,
+                ),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle!,
+                  style: AleraTypography.body.copyWith(fontSize: 12),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        trailing,
+      ],
+    );
+  }
+}

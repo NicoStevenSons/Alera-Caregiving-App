@@ -5,6 +5,7 @@ library;
 export '../widgets/alera_patient_avatar.dart';
 export 'adapters/alert_severity_chip.dart';
 export 'adapters/device_status_chip.dart';
+export 'adapters/patient_access_status_chip.dart';
 export 'adapters/patient_status_chip.dart';
 export 'adapters/reminder_status_chip.dart';
 export 'adapters/vital_trend_chip.dart';

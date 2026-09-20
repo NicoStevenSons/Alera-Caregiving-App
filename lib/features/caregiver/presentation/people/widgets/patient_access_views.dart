@@ -7,7 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
-import '../../../../../design_system/widgets/alera_svg_icon.dart';
+import 'patient_setup_widgets.dart';
 
 /// Payload encoded in the patient access QR code. The patient app decodes
 /// this (see patient_access.dart), so the shape must stay `version: 2`.
@@ -34,27 +34,33 @@ class PatientAccessIntroContent extends StatelessWidget {
               'Generate a one-time code for the patient to scan or enter to connect their Alera account.',
           bottomSpacing: 24,
         ),
-        const Column(
-          children: [
-            _InfoRow(
-              icon: Icons.schedule_outlined,
-              title: 'Valid for 24 hours',
-              subtitle: 'The code will expire after 24 hours.',
-            ),
-            SizedBox(height: 20),
-            _InfoRow(
-              icon: Icons.verified_user_outlined,
-              title: 'One-time use only',
-              subtitle: 'This code can only be used once.',
-            ),
-            SizedBox(height: 20),
-            _InfoRow(
-              icon: Icons.people_outline,
-              title: 'For the patient',
-              subtitle:
-                  'Have the patient scan the QR code or enter the code on their device.',
-            ),
-          ],
+        AleraCard(
+          elevation: 0,
+          color: AleraColors.surfaceTint,
+          borderColor: AleraColors.divider,
+          padding: const EdgeInsets.all(20),
+          child: const Column(
+            children: [
+              _InfoRow(
+                icon: Icons.schedule_outlined,
+                title: 'Valid for 24 hours',
+                subtitle: 'The code will expire after 24 hours.',
+              ),
+              SizedBox(height: 20),
+              _InfoRow(
+                icon: Icons.verified_user_outlined,
+                title: 'One-time use only',
+                subtitle: 'This code can only be used once.',
+              ),
+              SizedBox(height: 20),
+              _InfoRow(
+                icon: Icons.people_outline,
+                title: 'For the patient',
+                subtitle:
+                    'Have the patient scan the QR code or enter the code on their device.',
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -99,81 +105,92 @@ class PatientAccessCodeContent extends StatelessWidget {
               'Share this code with the patient so they can scan or enter it to connect their Alera account.',
           bottomSpacing: 16,
         ),
-        Text(
-          'PATIENT ACCESS CODE',
-          style: AleraTypography.label.copyWith(
-            fontSize: 11,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: SelectableText(
-                accessCode,
-                key: const Key('issued-access-code'),
-                style: AleraTypography.sectionTitle.copyWith(
-                  fontSize: 22,
-                  letterSpacing: 0.4,
+        AleraCard(
+          elevation: 0,
+          borderColor: AleraColors.divider,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PATIENT ACCESS CODE',
+                style: AleraTypography.label.copyWith(
+                  fontSize: 11,
+                  letterSpacing: 1.1,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            _CopyChip(onTap: () => _copy(context)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Expires $expiry',
-          style: AleraTypography.body.copyWith(fontSize: 13),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AleraColors.surfaceTint,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: QrImageView(
-              key: const Key('access-code-qr'),
-              data: buildPatientAccessQrPayload(accessCode: accessCode),
-              size: 150,
-              padding: EdgeInsets.zero,
-              backgroundColor: Colors.transparent,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Center(
-          child: Text(
-            'Scan this QR code or enter the code manually.',
-            textAlign: TextAlign.center,
-            style: AleraTypography.body.copyWith(fontSize: 12),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _ValidityStrip(expiry: expiry),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _ActionTile(
-                icon: Icons.content_copy_outlined,
-                label: 'Copy code',
-                onTap: () => _copy(context),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      accessCode,
+                      key: const Key('issued-access-code'),
+                      style: AleraTypography.sectionTitle.copyWith(
+                        fontSize: 22,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _CopyChip(onTap: () => _copy(context)),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _ActionTile(
-                icon: Icons.share_outlined,
-                label: 'Share',
-                onTap: onShare,
+              const SizedBox(height: 4),
+              Text(
+                'Expires $expiry',
+                style: AleraTypography.body.copyWith(fontSize: 13),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AleraColors.divider),
+                  ),
+                  child: QrImageView(
+                    key: const Key('access-code-qr'),
+                    data: buildPatientAccessQrPayload(accessCode: accessCode),
+                    size: 150,
+                    padding: EdgeInsets.zero,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: Text(
+                  'Scan this QR code or enter the code manually.',
+                  textAlign: TextAlign.center,
+                  style: AleraTypography.body.copyWith(fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _ValidityStrip(expiry: expiry),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionTile(
+                      icon: Icons.content_copy_outlined,
+                      label: 'Copy code',
+                      onTap: () => _copy(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionTile(
+                      icon: Icons.share_outlined,
+                      label: 'Share',
+                      onTap: onShare,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -183,19 +200,14 @@ class PatientAccessCodeContent extends StatelessWidget {
 /// Status card for states with no code on screen: connected, expired,
 /// invitation pending, unavailable.
 class PatientAccessNoticeContent extends StatelessWidget {
-  final IconData? icon;
-
-  /// A branded SVG (e.g. the shared "success" checkmark used in Active
-  /// Alerts' empty state), used instead of [icon] when set.
-  final String? iconAsset;
+  final IconData icon;
   final String title;
   final String message;
   final String? detail;
 
   const PatientAccessNoticeContent({
     super.key,
-    this.icon,
-    this.iconAsset,
+    required this.icon,
     required this.title,
     required this.message,
     this.detail,
@@ -208,24 +220,23 @@ class PatientAccessNoticeContent extends StatelessWidget {
       children: [
         const SetupHeader(title: 'Patient access', bottomSpacing: 16),
         AleraCard(
+          elevation: 0,
+          borderColor: AleraColors.divider,
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: SizedBox(
             width: double.infinity,
             child: Column(
               children: [
-                if (iconAsset != null)
-                  AleraSvgIcon(assetPath: iconAsset!, width: 56, height: 56)
-                else
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: const BoxDecoration(
-                      color: AleraColors.primarySoft,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(icon, size: 28, color: AleraColors.primary),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AleraColors.primarySoft,
+                    shape: BoxShape.circle,
                   ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 28, color: AleraColors.primary),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   title,
@@ -285,7 +296,7 @@ class _InfoRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 20, color: AleraColors.primary),
+          child: Icon(icon, size: 20, color: AleraColors.textPrimary),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -369,6 +380,7 @@ class _ValidityStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AleraColors.surfaceTint,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AleraColors.divider),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -422,7 +434,7 @@ class _StripItem extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 16, color: AleraColors.primary),
+          child: Icon(icon, size: 16, color: AleraColors.textPrimary),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -464,6 +476,9 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return AleraCard(
       onTap: onTap,
+      elevation: 0,
+      color: AleraColors.surfaceTint,
+      borderColor: AleraColors.divider,
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -482,73 +497,4 @@ class _ActionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-class SetupHeader extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final bool centered;
-  final double bottomSpacing;
-
-  const SetupHeader({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.centered = false,
-    this.bottomSpacing = 20,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final alignment = centered ? TextAlign.center : TextAlign.start;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomSpacing),
-      child: Column(
-        crossAxisAlignment: centered
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            textAlign: alignment,
-            style: AleraTypography.sectionTitle.copyWith(fontSize: 18),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle!,
-              textAlign: alignment,
-              style: AleraTypography.body.copyWith(fontSize: 13, height: 1.35),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-const List<String> _accessMonths = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-String formatAccessExpiry(DateTime value) {
-  final local = value.toLocal();
-  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-  final minute = local.minute.toString().padLeft(2, '0');
-  final suffix = local.hour >= 12 ? 'PM' : 'AM';
-
-  return '${_accessMonths[local.month - 1]} '
-      '${local.day} at $hour:$minute $suffix';
 }

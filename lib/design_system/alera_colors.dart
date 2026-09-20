@@ -15,6 +15,13 @@ abstract final class AleraColors {
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
 
-  // Light tinted surface used by setup and QR presentation.
+  // Form + setup-flow tokens (sampled from the Add Patient Figma frames).
+  // Kept to three additions on top of the existing palette: everywhere else
+  // a card fill, border, heading or body colour was needed, an existing
+  // token (background/divider/primarySoft/textPrimary/textSecondary) was
+  // close enough in the source frames to reuse instead of forking a
+  // near-duplicate.
+  static const Color fieldHint = Color(0xFFAFA6D6);
   static const Color surfaceTint = Color(0xFFF8F5FE);
+  static const Color primaryBorder = Color(0xFFCDBEF3);
 }
