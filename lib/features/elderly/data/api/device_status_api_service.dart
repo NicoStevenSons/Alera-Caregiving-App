@@ -40,6 +40,7 @@ class DeviceStatusApiService {
       'device_name': data.deviceName,
       'device_model': data.deviceModel,
       'battery_percent': data.batteryPercent,
+      'is_worn': data.isWorn,
       'connection_status': connectionStatus,
       'reported_at': reportedAt.toIso8601String(),
     });

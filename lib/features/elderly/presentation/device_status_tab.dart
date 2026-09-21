@@ -12,6 +12,7 @@ class DeviceStatusTab extends StatelessWidget {
     final bool? connected = deviceStatusData.connectedToPhone;
     final bool? charging = deviceStatusData.isCharging;
     final int? battery = deviceStatusData.batteryPercent;
+    final bool? isWorn = deviceStatusData.isWorn;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -19,6 +20,12 @@ class DeviceStatusTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _DeviceHeroCard(data: deviceStatusData, connected: connected),
+
+              if (isWorn == false) ...[
+                const SizedBox(height: 16),
+                const _WatchNotWornCard(),
+              ],
+
           const SizedBox(height: 16),
           Row(
             children: [
@@ -45,6 +52,24 @@ class DeviceStatusTab extends StatelessWidget {
                       : 'Waiting for watch',
                 ),
               ),
+              const SizedBox(height: 12),
+
+            Expanded(
+              child: _StatusTile(
+                icon: isWorn == true
+                  ? Icons.watch_rounded
+                  : isWorn == false
+                  ? Icons.watch_off_rounded
+                  : Icons.help_outline_rounded,
+              label: 'Wear status',
+              value: deviceStatusData.displayedWearStatus,
+              supportingText: isWorn == true
+                  ? 'Watch is being worn'
+                  : isWorn == false
+                  ? 'Watch is currently off wrist'
+                  : 'Waiting for wear status',
+                ),
+                  ),
             ],
           ),
           const SizedBox(height: 16),
@@ -197,6 +222,71 @@ class _StatusTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WatchNotWornCard extends StatelessWidget {
+  const _WatchNotWornCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.orange.shade200,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.orange.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.watch_off_rounded,
+              color: Colors.orange.shade800,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Watch not worn',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.orange.shade900,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Put the watch back on to keep '
+                  'activity monitoring accurate.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(
+                        color: Colors.orange.shade900,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

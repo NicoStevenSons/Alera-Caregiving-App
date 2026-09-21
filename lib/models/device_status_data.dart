@@ -6,6 +6,7 @@ class DeviceStatusData {
   final String? connectedPhoneName;
   final bool? isCharging;
   final String? measuredAt;
+  final bool? isWorn;
 
   const DeviceStatusData({
     required this.batteryPercent,
@@ -15,6 +16,7 @@ class DeviceStatusData {
     required this.connectedPhoneName,
     required this.isCharging,
     required this.measuredAt,
+    required this.isWorn,
   });
 
   factory DeviceStatusData.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class DeviceStatusData {
       connectedPhoneName: json['connected_phone_name'] as String?,
       isCharging: parsedCharging,
       measuredAt: json['measured_at'] as String?,
+      isWorn: json['is_worn'] as bool?,
     );
   }
 
@@ -59,6 +62,7 @@ class DeviceStatusData {
       connectedPhoneName: null,
       isCharging: null,
       measuredAt: null,
+      isWorn: null,
     );
   }
 
@@ -69,6 +73,7 @@ class DeviceStatusData {
     bool? connectedToPhone,
     String? connectedPhoneName,
     bool? isCharging,
+    bool? isWorn,
     String? measuredAt,
   }) {
     return DeviceStatusData(
@@ -78,9 +83,20 @@ class DeviceStatusData {
       connectedToPhone: connectedToPhone ?? this.connectedToPhone,
       connectedPhoneName: connectedPhoneName ?? this.connectedPhoneName,
       isCharging: isCharging ?? this.isCharging,
+      isWorn: isWorn ?? this.isWorn,
       measuredAt: measuredAt ?? this.measuredAt,
     );
   }
+
+  String get displayedWearStatus {
+  if (isWorn == null) {
+    return 'Unknown';
+  }
+
+  return isWorn == true
+      ? 'On wrist'
+      : 'Not worn';
+}
 
   String get displayedBattery {
     if (batteryPercent == null) {

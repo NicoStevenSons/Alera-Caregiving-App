@@ -160,7 +160,8 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           'model=${data.deviceModel}, '
           'connected=${data.connectedToPhone}, '
           'phone=${data.connectedPhoneName}, '
-          'charging=${data.isCharging}',
+          'charging=${data.isCharging}, '
+          'worn=${data.isWorn}',
         );
 
         setState(() {
@@ -171,6 +172,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             connectedToPhone: data.connectedToPhone,
             connectedPhoneName: data.connectedPhoneName,
             isCharging: data.isCharging,
+            isWorn: data.isWorn,
             measuredAt: data.measuredAt,
           );
         });
@@ -188,11 +190,9 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     _loadReminders();
 
-    unawaited(
-      watchPayloadService.requestWatchStatus(),
-    );
-
     watchListenerController.start();
+
+    unawaited(watchPayloadService.requestWatchStatus(),);
 
     phoneHeartbeatService.start();
 

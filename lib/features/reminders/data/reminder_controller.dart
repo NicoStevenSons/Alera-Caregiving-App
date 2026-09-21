@@ -4,8 +4,7 @@ import '../domain/reminder_models.dart';
 import 'reminder_api_data_source.dart';
 
 class ReminderController extends ChangeNotifier {
-  ReminderController({required ReminderDataSource dataSource})
-    : _dataSource = dataSource;
+  ReminderController({required this._dataSource});
 
   final ReminderDataSource _dataSource;
   List<ReminderOccurrence> _occurrences = const [];
