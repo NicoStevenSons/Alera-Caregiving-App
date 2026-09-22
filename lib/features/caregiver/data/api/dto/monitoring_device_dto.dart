@@ -11,6 +11,8 @@ class MonitoringDeviceDto {
   final String? deviceName;
   final String? deviceModel;
   final int? batteryPercent;
+  final bool? isWorn;
+  final DateTime? notWornSince;
 
   final DeviceConnectionStatusDto connectionStatus;
   final String connectionStatusValue;
@@ -36,6 +38,8 @@ class MonitoringDeviceDto {
     required this.statusChangedAt,
     required this.createdAt,
     required this.updatedAt,
+    required this.isWorn,
+    required this.notWornSince,
   });
 
   factory MonitoringDeviceDto.fromJson(Map<String, dynamic> json) {
@@ -60,6 +64,8 @@ class MonitoringDeviceDto {
       deviceName: json['device_name'] as String?,
       deviceModel: json['device_model'] as String?,
       batteryPercent: json['battery_percent'] as int?,
+      isWorn: json['is_worn'] as bool?,
+      notWornSince: _utcOrNull(json['not_worn_since']),
 
       connectionStatus: switch (connectionStatus) {
         'CONNECTED' => DeviceConnectionStatusDto.connected,

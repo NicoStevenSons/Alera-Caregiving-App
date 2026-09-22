@@ -55,25 +55,56 @@ class _DeviceRow extends StatelessWidget {
   });
 
   String get _statusLabel {
-    if (device == null) return 'Unavailable';
+  if (device == null) return 'Unavailable';
 
-    return switch (device!.connectionStatus) {
-      MonitoringDeviceConnectionStatus.connected => 'Connected',
-      MonitoringDeviceConnectionStatus.disconnected => 'Disconnected',
-      MonitoringDeviceConnectionStatus.unknown => 'Unknown',
-    };
+  final isWatch = name.toLowerCase() == 'watch';
+
+  switch (device!.connectionStatus) {
+    case MonitoringDeviceConnectionStatus.disconnected:
+      return 'Disconnected';
+
+    case MonitoringDeviceConnectionStatus.unknown:
+      return 'Unknown';
+
+    case MonitoringDeviceConnectionStatus.connected:
+      if (!isWatch) {
+        return 'Connected';
+      }
+
+      if (device!.isWorn == false) {
+        return 'Not worn';
+      }
+
+      if (device!.isWorn == true) {
+        return 'Connected • On wrist';
+      }
+
+      return 'Connected';
   }
+}
 
   Color get _statusColor {
-    if (device == null) return AleraColors.textSecondary;
-
-    return switch (device!.connectionStatus) {
-      MonitoringDeviceConnectionStatus.connected => AleraColors.success,
-      MonitoringDeviceConnectionStatus.disconnected =>
-        AleraColors.textSecondary,
-      MonitoringDeviceConnectionStatus.unknown => AleraColors.textSecondary,
-    };
+  if (device == null) {
+    return AleraColors.textSecondary;
   }
+
+  final isWatch = name.toLowerCase() == 'watch';
+
+  switch (device!.connectionStatus) {
+    case MonitoringDeviceConnectionStatus.disconnected:
+      return AleraColors.critical;
+
+    case MonitoringDeviceConnectionStatus.unknown:
+      return AleraColors.textSecondary;
+
+    case MonitoringDeviceConnectionStatus.connected:
+      if (isWatch && device!.isWorn == false) {
+        return AleraColors.warning;
+      }
+
+      return AleraColors.success;
+  }
+}
 
   String get _batteryLabel {
     final battery = device?.batteryPercent;

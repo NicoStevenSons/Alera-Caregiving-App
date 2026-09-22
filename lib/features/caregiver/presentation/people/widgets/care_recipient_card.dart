@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/models/health_snapshot.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
@@ -74,20 +75,24 @@ class CareRecipientCard extends StatelessWidget {
                   label: '${careRecipient.reminderCount} Reminders',
                 ),
                 const SizedBox(height: 4),
-                const Wrap(
-                  spacing: 14,
-                  runSpacing: 2,
-                  children: [
-                    _DeviceAvailability(
-                      assetPath:
-                          'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
-                    ),
-                    _DeviceAvailability(
-                      assetPath:
+                Wrap(
+                    spacing: 14,
+                    runSpacing: 2,
+                    children: [
+                      _DeviceAvailability(
+                        assetPath:
+                        'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
+                            device: careRecipient.healthSnapshot.devices.phone,
+                            isWatch: false,
+                              ),
+                      _DeviceAvailability(
+                          assetPath:
                           'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
-                    ),
-                  ],
-                ),
+                          device: careRecipient.healthSnapshot.devices.watch,
+                          isWatch: true,
+                            ),
+                          ],
+                        ),
               ],
             ),
           ),
@@ -174,19 +179,76 @@ class _StatusRow extends StatelessWidget {
 
 class _DeviceAvailability extends StatelessWidget {
   final String assetPath;
+  final MonitoringDevice? device;
+  final bool isWatch;
 
-  const _DeviceAvailability({required this.assetPath});
+  const _DeviceAvailability({
+    required this.assetPath,
+    required this.device,
+    required this.isWatch,
+  });
+
+  String get _label {
+    if (device == null) {
+      return 'Unavailable';
+    }
+
+    switch (device!.connectionStatus) {
+      case MonitoringDeviceConnectionStatus.disconnected:
+        return 'Disconnected';
+
+      case MonitoringDeviceConnectionStatus.unknown:
+        return 'Unknown';
+
+      case MonitoringDeviceConnectionStatus.connected:
+        if (isWatch && device!.isWorn == false) {
+          return 'Not worn';
+        }
+
+        return 'Connected';
+    }
+  }
+
+  Color get _color {
+    if (device == null) {
+      return AleraColors.textSecondary;
+    }
+
+    switch (device!.connectionStatus) {
+      case MonitoringDeviceConnectionStatus.disconnected:
+        return AleraColors.critical;
+
+      case MonitoringDeviceConnectionStatus.unknown:
+        return AleraColors.textSecondary;
+
+      case MonitoringDeviceConnectionStatus.connected:
+        if (isWatch && device!.isWorn == false) {
+          return AleraColors.warning;
+        }
+
+        return AleraColors.success;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AleraSvgIcon(assetPath: assetPath, width: 17, height: 17),
+        AleraSvgIcon(
+          assetPath: assetPath,
+          width: 17,
+          height: 17,
+        ),
         const SizedBox(width: AleraSpacing.xSmall),
         Text(
-          'Unavailable',
-          style: AleraTypography.body.copyWith(fontSize: 14, height: 1),
+          _label,
+          style: AleraTypography.body.copyWith(
+            fontSize: 14,
+            height: 1,
+            color: _color,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );

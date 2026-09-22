@@ -23,6 +23,9 @@ class CaregiverPatientController extends ChangeNotifier {
   CaregiverPatientFailureKind? failureKind;
   bool isRefreshing = false;
 
+  final Map<String, List<MonitoringDeviceDto>>
+    _monitoringDevicesByPatient = {};
+
   CaregiverPatientController({
     required this.dataSource,
     this.demoPatients = const [],
@@ -38,12 +41,49 @@ class CaregiverPatientController extends ChangeNotifier {
     }
     try {
       final page = await dataSource.fetchPatients();
-      patients = page.items;
-      errorMessage = null;
-      failureKind = null;
-      state = patients.isEmpty
-          ? CaregiverPatientListState.empty
-          : CaregiverPatientListState.success;
+
+patients = page.items;
+
+final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
+    await Future.wait<MapEntry<String, List<MonitoringDeviceDto>>>(
+      patients.map<Future<MapEntry<String, List<MonitoringDeviceDto>>>>(
+        (patient) async {
+          try {
+            final devices = await dataSource.fetchMonitoringDevices(
+              patient.patientId,
+            );
+
+            return MapEntry<String, List<MonitoringDeviceDto>>(
+              patient.patientId,
+              devices,
+            );
+          } on CaregiverPatientApiFailure catch (failure) {
+            if (failure.kind ==
+                    CaregiverPatientFailureKind.unauthorized ||
+                failure.kind ==
+                    CaregiverPatientFailureKind.forbidden) {
+              rethrow;
+            }
+
+            return MapEntry<String, List<MonitoringDeviceDto>>(
+              patient.patientId,
+              const <MonitoringDeviceDto>[],
+            );
+          }
+        },
+      ),
+    );
+    
+  _monitoringDevicesByPatient
+    ..clear()
+    ..addEntries(deviceEntries);
+
+  errorMessage = null;
+  failureKind = null;
+
+  state = patients.isEmpty
+    ? CaregiverPatientListState.empty
+    : CaregiverPatientListState.success;
     } on CaregiverPatientApiFailure catch (failure) {
       errorMessage = failure.message;
       failureKind = failure.kind;
@@ -80,10 +120,26 @@ class CaregiverPatientController extends ChangeNotifier {
   Future<List<MonitoringDeviceDto>> loadMonitoringDevices(String patientId) =>
       dataSource.fetchMonitoringDevices(patientId);
 
-  List<CareRecipient> get visiblePatients =>
-      state == CaregiverPatientListState.demoFallback
-      ? demoPatients
-      : patients.map(patientListItemToCareRecipient).toList(growable: false);
+  List<CareRecipient> get visiblePatients {
+  if (state == CaregiverPatientListState.demoFallback) {
+    return demoPatients;
+  }
+
+  return patients.map((patient) {
+    final deviceDtos =
+        _monitoringDevicesByPatient[patient.patientId] ??
+        const <MonitoringDeviceDto>[];
+
+      final devices = deviceDtos
+          .map(monitoringDeviceDtoToDomain)
+          .toList(growable: false);
+
+      return patientListItemToCareRecipient(
+        patient,
+        devices: devices,
+      );
+    }).toList(growable: false);
+  }
 }
 
 CareRecipient patientListItemToCareRecipient(
@@ -189,5 +245,7 @@ MonitoringDevice monitoringDeviceDtoToDomain(MonitoringDeviceDto device) {
     name: name,
     batteryPercent: device.batteryPercent,
     connectionStatus: connectionStatus,
+    isWorn: device.isWorn,
+    notWornSince: device.notWornSince,
   );
 }

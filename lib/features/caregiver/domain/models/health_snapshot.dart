@@ -4,11 +4,15 @@ class MonitoringDevice {
   final String name;
   final int? batteryPercent;
   final MonitoringDeviceConnectionStatus connectionStatus;
+  final bool? isWorn;
+  final DateTime? notWornSince;
 
   const MonitoringDevice({
     required this.name,
     required this.batteryPercent,
     required this.connectionStatus,
+    this.isWorn,
+    this.notWornSince,
   });
 
   bool get isConnected =>
