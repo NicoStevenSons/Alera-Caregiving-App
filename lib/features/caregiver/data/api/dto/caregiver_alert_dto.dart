@@ -4,6 +4,7 @@ class CaregiverAlertDto {
   final String alertId;
   final String patientId;
   final String? patientDisplayName;
+  final String? conditionKey;
   final String title;
   final String? evaluationReason;
   final String severity;
@@ -21,6 +22,7 @@ class CaregiverAlertDto {
     required this.alertId,
     required this.patientId,
     required this.patientDisplayName,
+    this.conditionKey,
     required this.title,
     required this.evaluationReason,
     required this.severity,
@@ -42,6 +44,7 @@ class CaregiverAlertDto {
       alertId: _requiredString(json, 'alert_id'),
       patientId: _requiredString(json, 'patient_id'),
       patientDisplayName: _optionalString(json['patient_display_name']),
+      conditionKey: conditionKey,
       title: _optionalString(json['title']) ?? 'Health alert',
       evaluationReason: _optionalString(json['evaluation_reason']),
       severity: _requiredString(json, 'severity'),
@@ -62,6 +65,7 @@ class CaregiverAlertDto {
       id: alertId,
       careRecipientId: patientId,
       patientDisplayName: patientDisplayName,
+      conditionKey: conditionKey,
       title: title,
       description: evaluationReason ?? '',
       severity: switch (severity) {
@@ -72,7 +76,11 @@ class CaregiverAlertDto {
       metric: switch (metricType) {
         'HEART_RATE' => CaregiverAlertMetric.heartRate,
         'SPO2' => CaregiverAlertMetric.spo2,
-        _ => throw FormatException('Unsupported alert metric: $metricType'),
+        'BATTERY_LEVEL' => CaregiverAlertMetric.watchBattery,
+        'INACTIVITY' || 'ACTIVITY' => CaregiverAlertMetric.activity,
+        'SLEEP' => CaregiverAlertMetric.sleep,
+        'CONNECTION_STATUS' || 'SYNC_STATUS' => CaregiverAlertMetric.system,
+        _ => CaregiverAlertMetric.system,
       },
       status: switch (status) {
         'ACTIVE' => CaregiverAlertStatus.active,
@@ -82,6 +90,7 @@ class CaregiverAlertDto {
         'ARCHIVED' => CaregiverAlertStatus.resolved,
         _ => throw FormatException('Unsupported alert status: $status'),
       },
+      hasReading: readingValue != null,
       reading: readingValue ?? 0,
       threshold: thresholdValue,
       unit: readingUnit ?? '',
@@ -262,6 +271,9 @@ String _metricFromCondition(String? conditionKey) {
   return switch (conditionKey) {
     'HR_HIGH' || 'HR_LOW' => 'HEART_RATE',
     'SPO2_LOW' => 'SPO2',
-    _ => throw const FormatException('Missing or invalid "metric_type".'),
+    'PHONE_BATTERY_LOW' || 'WATCH_BATTERY_LOW' => 'BATTERY_LEVEL',
+    'PHONE_DISCONNECTED' || 'WATCH_DISCONNECTED' => 'CONNECTION_STATUS',
+    'INACTIVITY' => 'INACTIVITY',
+    _ => 'SYSTEM',
   };
 }

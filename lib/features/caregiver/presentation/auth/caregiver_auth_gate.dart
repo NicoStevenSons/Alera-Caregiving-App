@@ -19,6 +19,7 @@ import '../../data/auth/caregiver_auth_api.dart';
 import '../../data/auth/caregiver_session_controller.dart';
 import '../../data/auth/caregiver_token_store.dart';
 import '../../domain/repositories/caregiver_repository.dart';
+import '../../../startup/presentation/alera_startup_screen.dart';
 
 class HouseholdCodeInput extends StatefulWidget {
   final TextEditingController controller;
@@ -260,9 +261,7 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
   @override
   Widget build(BuildContext context) {
     final Widget page = switch (_session.status) {
-      CaregiverSessionStatus.restoring => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      CaregiverSessionStatus.restoring => const AleraStartupScreen(),
       CaregiverSessionStatus.unauthenticated => Theme(
         data: AleraTheme.caregiver(Theme.of(context)),
         child: HouseholdAuthFlow(sessionController: _session),
@@ -329,6 +328,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
   bool _submitting = false;
   bool _goingBack = false;
   bool _obscurePassword = true;
+  String? _lastAutoSubmittedPatientCode;
   String? _error;
   String? _householdName;
 
@@ -351,6 +351,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
       _error = null;
       _password.clear();
       _accessCode.clear();
+      _lastAutoSubmittedPatientCode = null;
     });
   }
 
@@ -732,6 +733,19 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                         )
                         ? null
                         : 'Enter a valid patient code.',
+                    onChanged: (value) {
+                      final normalized = normalizePatientAccessCode(value);
+                      final isComplete = isValidPatientAccessCode(normalized);
+                      if (!isComplete) {
+                        _lastAutoSubmittedPatientCode = null;
+                        return;
+                      }
+                      if (!_submitting &&
+                          _lastAutoSubmittedPatientCode != normalized) {
+                        _lastAutoSubmittedPatientCode = normalized;
+                        _submit();
+                      }
+                    },
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
                       hintText: 'XXXX - XXXX - XXXX',

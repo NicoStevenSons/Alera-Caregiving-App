@@ -15,8 +15,8 @@ void main() {
           patientId: 'patient-1',
           patientName: 'Maria',
           patientAccess: PatientAccessStatus(
-            status: PatientAccessState.connected,
-            statusValue: 'CONNECTED',
+            status: PatientAccessState.notConnected,
+            statusValue: 'NOT_CONNECTED',
             pendingAccessCodeId: null,
             pendingExpiresAt: null,
             connectedAt: DateTime.utc(2026, 9, 1),
@@ -27,11 +27,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Generate new login code'), findsOneWidget);
-    await tester.tap(find.text('Generate new login code'));
     await tester.pumpAndSettle();
-    expect(find.text('Generate a new login code?'), findsOneWidget);
-    await tester.tap(find.text('Generate code'));
+    final buttonFinder = find.text('Generate access code');
+    await tester.ensureVisible(buttonFinder);
+    expect(buttonFinder, findsOneWidget);
+    await tester.tap(buttonFinder);
     await tester.pump();
     await tester.pump();
 
@@ -55,8 +55,8 @@ class _AccessSource implements CaregiverPatientDataSource {
       patientId: patientId,
       accessCode: 'RELOGIN-CODE',
       createdByUserId: 'caregiver-1',
-      createdAt: DateTime.utc(2026, 9, 17),
-      expiresAt: DateTime.utc(2026, 9, 18),
+      createdAt: DateTime.utc(2026, 9, 19),
+      expiresAt: DateTime.utc(2026, 9, 20),
       status: 'ACTIVE',
     );
   }
@@ -70,4 +70,12 @@ class _AccessSource implements CaregiverPatientDataSource {
     String patientId,
     UpdateMonitoringSettingsRequest request,
   ) => throw UnimplementedError();
+
+  @override
+  Future<PatientProfilePhotoResponse> uploadProfilePhoto(
+    String patientId, {
+    required List<int> bytes,
+    required String filename,
+    required String contentType,
+  }) => throw UnimplementedError();
 }

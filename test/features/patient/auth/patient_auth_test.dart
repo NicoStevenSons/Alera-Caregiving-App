@@ -238,7 +238,10 @@ void main() {
       store,
       client: MockClient((request) async {
         expect(jsonDecode(request.body), {'access_code': '7K3M-9Q2D-R8TX'});
-        return http.Response('{"access_token":"patient-token"}', 200);
+        return http.Response(
+          '{"access_token":"patient-token","token_type":"bearer"}',
+          200,
+        );
       }),
     );
     await tester.pumpWidget(
@@ -256,13 +259,15 @@ void main() {
     expect(find.byKey(const Key('household-code-field')), findsNothing);
     await tester.tap(find.text('I’m a Patient'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Enter Patient Code'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enter code manually'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('patient-access-code-field')),
       '7k3m 9q2d r8tx',
     );
-    await tester.tap(find.text('Sign in'));
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.byType(ElderlyInterface), findsOneWidget);
     expect(find.text('Vitals'), findsOneWidget);
@@ -307,6 +312,8 @@ void main() {
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('I’m a Caregiver'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('household-code-field')),
@@ -355,13 +362,15 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('I’m a Patient'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Enter Patient Code'));
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Enter code manually'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('patient-access-code-field')),
         '7K3M-9Q2D-R8TX',
       );
-      await tester.tap(find.text('Sign in'));
+      await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       expect(
         find.text(

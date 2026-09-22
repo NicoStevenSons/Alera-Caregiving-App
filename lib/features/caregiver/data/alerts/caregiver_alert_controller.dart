@@ -51,6 +51,10 @@ class CaregiverAlertController extends ChangeNotifier {
     } on CaregiverAlertsRequestFailure {
       _alerts = _fallback;
       _showingFallback = true;
+    } on CaregiverAlertsParseFailure catch (failure) {
+      debugPrint('Failed to parse caregiver alerts: $failure');
+      _alerts = _fallback;
+      _showingFallback = true;
     } on CaregiverAlertsHttpFailure catch (failure) {
       if (failure.statusCode >= 500) {
         _alerts = _fallback;
@@ -59,7 +63,8 @@ class CaregiverAlertController extends ChangeNotifier {
         _alerts = const [];
         _showingFallback = false;
       }
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Unexpected caregiver alert load failure: $error');
       _alerts = const [];
       _showingFallback = false;
     } finally {
@@ -81,8 +86,11 @@ class CaregiverAlertController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<CaregiverAlert> acknowledge(String alertId, {String? note}) =>
-      _run(alertId, (actions) => actions.acknowledge(alertId, note: note));
+  Future<CaregiverAlert> acknowledge(String alertId, {String? note}) => _run(
+    alertId,
+    (actions) => actions.acknowledge(alertId, note: note),
+    optimisticStatus: CaregiverAlertStatus.acknowledged,
+  );
 
   Future<CaregiverAlert> resolve(String alertId, {String? note}) =>
       _run(alertId, (actions) => actions.resolve(alertId, note: note));
@@ -101,15 +109,27 @@ class CaregiverAlertController extends ChangeNotifier {
 
   Future<CaregiverAlert> _run(
     String alertId,
-    Future<CaregiverAlert> Function(CaregiverAlertActionDataSource) operation,
-  ) async {
+    Future<CaregiverAlert> Function(CaregiverAlertActionDataSource) operation, {
+    CaregiverAlertStatus? optimisticStatus,
+  }) async {
     final actionSource = actions;
     if (actionSource == null || !_busyAlertIds.add(alertId)) {
       throw const CaregiverAlertActionFailure();
     }
+
+    final previousIndex = _alerts.indexWhere((item) => item.id == alertId);
+    final previous = previousIndex < 0 ? null : _alerts[previousIndex];
+    if (optimisticStatus != null && previous != null) {
+      final optimistic = [..._alerts];
+      optimistic[previousIndex] = previous.copyWith(status: optimisticStatus);
+      _alerts = optimistic;
+    }
     notifyListeners();
+
+    var actionCompleted = false;
     try {
       final updated = await operation(actionSource);
+      actionCompleted = true;
       final existingIndex = _alerts.indexWhere((item) => item.id == alertId);
       final existing = existingIndex < 0 ? null : _alerts[existingIndex];
       var hydrated = existing == null
@@ -125,12 +145,28 @@ class CaregiverAlertController extends ChangeNotifier {
             );
       final source = timelineSource;
       if (source != null) {
-        hydrated = hydrated.copyWith(
-          timeline: await source.fetchTimeline(alertId),
-        );
+        try {
+          hydrated = hydrated.copyWith(
+            timeline: await source.fetchTimeline(alertId),
+          );
+        } catch (_) {
+          // Timeline hydration is secondary to a successful lifecycle action.
+        }
       }
       upsert(hydrated);
       return hydrated;
+    } catch (_) {
+      if (!actionCompleted && previous != null && optimisticStatus != null) {
+        final currentIndex = _alerts.indexWhere((item) => item.id == alertId);
+        if (currentIndex >= 0 &&
+            _alerts[currentIndex].status == optimisticStatus) {
+          final rolledBack = [..._alerts];
+          rolledBack[currentIndex] = previous;
+          _alerts = rolledBack;
+          notifyListeners();
+        }
+      }
+      rethrow;
     } finally {
       _busyAlertIds.remove(alertId);
       notifyListeners();

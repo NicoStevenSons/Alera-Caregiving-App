@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'alera_colors.dart';
+import 'status/alera_status_tone.dart';
 
 abstract final class AleraTheme {
   static ThemeData caregiver(ThemeData parent) {
@@ -15,6 +16,12 @@ abstract final class AleraTheme {
 
     return parent.copyWith(
       colorScheme: colorScheme,
+      extensions: parent.extensions.values.toList()
+        ..add(
+          parent.brightness == Brightness.dark
+              ? AleraStatusColors.dark()
+              : AleraStatusColors.light(),
+        ),
       scaffoldBackgroundColor: AleraColors.background,
       dividerColor: AleraColors.divider,
       navigationBarTheme: NavigationBarThemeData(

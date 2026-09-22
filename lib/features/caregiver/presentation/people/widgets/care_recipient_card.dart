@@ -5,6 +5,7 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
 
@@ -28,7 +29,11 @@ class CareRecipientCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InitialAvatar(name: careRecipient.name),
+          AleraPatientAvatar(
+            name: careRecipient.name,
+            photoUrl: careRecipient.profilePhotoUrl,
+            radius: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -105,48 +110,6 @@ class CareRecipientCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> words = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .toList();
-
-    final String initials = words
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-
-    const List<Color> colors = [
-      AleraColors.primary,
-      AleraColors.information,
-      AleraColors.critical,
-    ];
-
-    final int colorIndex =
-        name.codeUnits.fold(0, (sum, value) => sum + value) % colors.length;
-
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: colors[colorIndex],
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

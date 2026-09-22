@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../design_system/alera_spacing.dart';
 import '../../design_system/alera_theme.dart';
+import '../../design_system/status/status.dart';
 
 import '../../design_system/alera_typography.dart';
 import 'domain/repositories/caregiver_repository.dart';
@@ -30,6 +33,7 @@ import '../../services/alert_notification.dart';
 import '../reminders/data/reminder_api_data_source.dart';
 import '../reminders/data/reminder_controller.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
+import '../startup/presentation/alera_startup_screen.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -40,8 +44,10 @@ class CaregiverShell extends StatefulWidget {
   final VoidCallback? onSignOut;
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
+  final AlertNotificationArrivalBus? alertArrivalBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
   final ReminderDataSource? reminderDataSource;
+  final Duration patientPollingInterval;
 
   const CaregiverShell({
     super.key,
@@ -53,18 +59,22 @@ class CaregiverShell extends StatefulWidget {
     this.onSignOut,
     this.loadNotificationAlert,
     this.notificationTapBus,
+    this.alertArrivalBus,
     this.nudgeDataSource,
     this.reminderDataSource,
+    this.patientPollingInterval = const Duration(seconds: 15),
   });
 
   @override
   State<CaregiverShell> createState() => _CaregiverShellState();
 }
 
-class _CaregiverShellState extends State<CaregiverShell> {
+class _CaregiverShellState extends State<CaregiverShell>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   String? _selectedPatientId;
   void Function()? _unsubscribeNotifications;
+  void Function()? _unsubscribeAlertArrivals;
   int _notificationRevision = 0;
   late final CareRecipient _homeCareRecipient;
   late final List<CareRecipient> _careRecipients;
@@ -72,11 +82,21 @@ class _CaregiverShellState extends State<CaregiverShell> {
   CaregiverPatientController? _patientController;
   bool _ownsPatientController = false;
   bool _sendingNudge = false;
+  bool _patientRefreshInFlight = false;
+  bool _appResumed = true;
+  Timer? _patientPollTimer;
   late final ReminderController _reminderController;
+
+  void _patientsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _careRecipients = widget.repository.getCareRecipients().toList();
     _homeCareRecipient = _careRecipients.first;
     final CaregiverAlertDataSource alertLoader =
@@ -95,6 +115,11 @@ class _CaregiverShellState extends State<CaregiverShell> {
       dataSource: widget.reminderDataSource ?? ReminderApiDataSource(),
     );
     _alertController.load();
+    if (widget.loadNotificationAlert != null) {
+      _unsubscribeAlertArrivals =
+          (widget.alertArrivalBus ?? AlertNotificationArrivalBus.instance)
+              .subscribe(_receiveAlertNotification);
+    }
     _patientController = widget.patientController;
     final source = widget.patientDataSource;
     if (_patientController == null &&
@@ -105,6 +130,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
         demoPatients: _careRecipients,
       )..load();
     }
+    _patientController?.addListener(_patientsChanged);
+    _syncPatientPolling();
     // AuthGate supplies this loader only for an active caregiver session.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || widget.loadNotificationAlert == null) return;
@@ -117,11 +144,18 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopPatientPolling();
     _unsubscribeNotifications?.call();
+    _unsubscribeAlertArrivals?.call();
     _alertController
       ..removeListener(_alertsChanged)
       ..dispose();
-    if (_ownsPatientController) _patientController?.dispose();
+    _patientController?.removeListener(_patientsChanged);
+
+    if (_ownsPatientController) {
+      _patientController?.dispose();
+    }
     _reminderController.dispose();
     super.dispose();
   }
@@ -130,12 +164,93 @@ class _CaregiverShellState extends State<CaregiverShell> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _refreshPatientsForLiveDashboard() async {
+    final controller = _patientController;
+    if (controller == null || _patientRefreshInFlight) return;
+
+    _patientRefreshInFlight = true;
+    try {
+      await controller.load(refresh: true);
+    } finally {
+      _patientRefreshInFlight = false;
+    }
+  }
+
+  void _startPatientPolling() {
+    if (_patientPollTimer != null ||
+        widget.patientPollingInterval <= Duration.zero) {
+      return;
+    }
+    _patientPollTimer = Timer.periodic(widget.patientPollingInterval, (_) {
+      unawaited(_refreshPatientsForLiveDashboard());
+    });
+  }
+
+  void _stopPatientPolling() {
+    _patientPollTimer?.cancel();
+    _patientPollTimer = null;
+  }
+
+  void _syncPatientPolling() {
+    final shouldPoll =
+        _appResumed && _selectedIndex == 0 && _patientController != null;
+    if (shouldPoll) {
+      _startPatientPolling();
+    } else {
+      _stopPatientPolling();
+    }
+  }
+
+  void _selectDestination(int index) {
+    if (_selectedIndex == index) return;
+
+    final enteringHome = index == 0;
+    final enteringAlerts = index == 2;
+    setState(() => _selectedIndex = index);
+    _syncPatientPolling();
+
+    if (enteringHome) {
+      unawaited(_refreshPatientsForLiveDashboard());
+    }
+    if (enteringAlerts) {
+      _alertController.load();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appResumed = state == AppLifecycleState.resumed;
+    if (_appResumed) {
+      _alertController.load();
+      unawaited(_refreshPatientsForLiveDashboard());
+      _reminderController.refresh();
+    }
+    _syncPatientPolling();
+  }
+
+  Future<void> _receiveAlertNotification(AlertNotification event) async {
+    final loader = widget.loadNotificationAlert;
+    if (loader == null) return;
+
+    try {
+      final alert = await loader(event.alertId);
+      if (!mounted) return;
+      _alertController.upsert(alert);
+      unawaited(_refreshPatientsForLiveDashboard());
+    } on CaregiverAlertsAuthFailure catch (failure) {
+      if (failure.statusCode == 401) return;
+    } catch (_) {
+      // Resume, Alerts-tab entry, or periodic Home polling will retry.
+    }
+  }
+
   Future<void> _openNotificationAlert(AlertNotification event) async {
     final revision = ++_notificationRevision;
     try {
       final alert = await widget.loadNotificationAlert!(event.alertId);
       if (!mounted || revision != _notificationRevision) return;
       _alertController.upsert(alert);
+      unawaited(_refreshPatientsForLiveDashboard());
       if (alert.id.toLowerCase() != event.alertId ||
           alert.status == CaregiverAlertStatus.resolved ||
           alert.status == CaregiverAlertStatus.falseAlarm) {
@@ -143,7 +258,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
         return;
       }
       Navigator.of(context).popUntil((route) => route.isFirst);
-      setState(() => _selectedIndex = 2);
+      _selectDestination(2);
       _openAlertDetail(context, alert);
     } catch (error) {
       if (!mounted || revision != _notificationRevision) return;
@@ -157,7 +272,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   void _notificationUnavailable() {
     Navigator.of(context).popUntil((route) => route.isFirst);
-    setState(() => _selectedIndex = 2);
+    _selectDestination(2);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('This alert is no longer available.')),
     );
@@ -185,11 +300,11 @@ class _CaregiverShellState extends State<CaregiverShell> {
                 .toList(),
             onViewAllAlerts: () {
               Navigator.pop(context);
-              setState(() => _selectedIndex = 2);
+              _selectDestination(2);
             },
             onViewAllReminders: () {
               Navigator.pop(context);
-              setState(() => _selectedIndex = 3);
+              _selectDestination(3);
             },
             onAlertTap: (alert) => _openAlertDetail(context, alert),
             onMarkAsSeen: _markAsSeen,
@@ -214,11 +329,11 @@ class _CaregiverShellState extends State<CaregiverShell> {
               .toList(),
           onViewAllAlerts: () {
             Navigator.pop(context);
-            setState(() => _selectedIndex = 2);
+            _selectDestination(2);
           },
           onViewAllReminders: () {
             Navigator.pop(context);
-            setState(() => _selectedIndex = 3);
+            _selectDestination(3);
           },
           onAlertTap: (alert) => _openAlertDetail(context, alert),
           onMarkAsSeen: _markAsSeen,
@@ -256,6 +371,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
           id: patient.patientId,
           name: patient.fullName,
           relationshipLabel: 'Under your care',
+          profilePhotoUrl: patient.profilePhotoUrl,
           status: CareStatus.stable,
           alertCount: 0,
           reminderCount: 0,
@@ -311,6 +427,12 @@ class _CaregiverShellState extends State<CaregiverShell> {
 
   @override
   Widget build(BuildContext context) {
+    final patientController = _patientController;
+
+    if (patientController != null &&
+        patientController.state == CaregiverPatientListState.initialLoading) {
+      return const AleraStartupScreen();
+    }
     final SystemUiOverlayStyle systemBarStyle = _selectedIndex == 0
         ? const SystemUiOverlayStyle(
             statusBarColor: Color(0xFFC3A7F5),
@@ -378,11 +500,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
                       0, // Removes M3's default tint elevation so your custom shadow handles depth
                   height: 68,
                   selectedIndex: _selectedIndex,
-                  onDestinationSelected: (index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  },
+                  onDestinationSelected: _selectDestination,
                   destinations: const [
                     NavigationDestination(
                       icon: Icon(Icons.grid_view_outlined),
@@ -442,6 +560,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
       alerts: widget.repository.getAlerts(),
       careRecipients: patients,
       controller: _alertController,
+      isActive: _selectedIndex == 2,
       onAlertTap: (alert) => _openAlertDetail(context, alert),
     );
 
@@ -563,8 +682,8 @@ class _CaregiverShellState extends State<CaregiverShell> {
         .getReminders()
         .where((reminder) => reminder.careRecipientId == patient.id)
         .toList(),
-    onViewAllAlerts: () => setState(() => _selectedIndex = 2),
-    onViewAllReminders: () => setState(() => _selectedIndex = 3),
+    onViewAllAlerts: () => _selectDestination(2),
+    onViewAllReminders: () => _selectDestination(3),
     onAlertTap: (alert) => _openAlertDetail(context, alert),
     onMarkAsSeen: _markAsSeen,
     onSelectPatient: onSelectPatient,
@@ -634,8 +753,14 @@ class _CaregiverShellState extends State<CaregiverShell> {
                 ListTile(
                   key: ValueKey<String>('patient-switch-${patient.id}'),
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    child: Text(_patientInitials(patient.name)),
+                  leading: AleraBadgedAvatar(
+                    name: patient.name,
+                    photoUrl: patient.profilePhotoUrl,
+                    radius: 20,
+                    status: PatientStatusChip.describe(
+                      patient.status,
+                      sheetContext,
+                    ),
                   ),
                   title: Text(patient.name),
                   subtitle: Text(patient.relationshipLabel),
@@ -659,14 +784,6 @@ class _CaregiverShellState extends State<CaregiverShell> {
     );
   }
 
-  String _patientInitials(String name) => name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .take(2)
-      .map((part) => part.characters.first.toUpperCase())
-      .join();
-
   void _openVitalTrend(
     BuildContext context,
     CareRecipient patient,
@@ -674,7 +791,7 @@ class _CaregiverShellState extends State<CaregiverShell> {
   ) {
     final trendMetric = switch (metric) {
       'Heart Rate' => VitalTrendMetric.heartRate,
-      'SpO2' => VitalTrendMetric.spo2,
+      'SpO2' || 'SpO₂' => VitalTrendMetric.spo2,
       _ => null,
     };
 

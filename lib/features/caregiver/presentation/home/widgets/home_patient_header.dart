@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
 class HomePatientHeader extends StatelessWidget {
@@ -47,7 +48,11 @@ class HomePatientHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      _InitialAvatar(name: careRecipient.name),
+                      AleraPatientAvatar(
+                        name: careRecipient.name,
+                        photoUrl: careRecipient.profilePhotoUrl,
+                        radius: 25,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -132,42 +137,5 @@ class HomePatientHeader extends StatelessWidget {
 
     return '$hour:${value.minute.toString().padLeft(2, '0')} '
         '${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
-}
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final String initials = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-
-    final int seed = name.codeUnits.fold(0, (sum, value) => sum + value);
-
-    const List<Color> colors = [
-      Color(0xFF8165C7),
-      Color(0xFF4D91A8),
-      Color(0xFFB36B8D),
-    ];
-
-    return CircleAvatar(
-      radius: 25,
-      backgroundColor: colors[seed % colors.length],
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
   }
 }

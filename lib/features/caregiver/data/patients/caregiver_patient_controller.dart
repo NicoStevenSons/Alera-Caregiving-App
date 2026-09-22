@@ -22,6 +22,7 @@ class CaregiverPatientController extends ChangeNotifier {
   String? errorMessage;
   CaregiverPatientFailureKind? failureKind;
   bool isRefreshing = false;
+  int _loadRevision = 0;
 
   final Map<String, List<MonitoringDeviceDto>>
     _monitoringDevicesByPatient = {};
@@ -32,6 +33,8 @@ class CaregiverPatientController extends ChangeNotifier {
   });
 
   Future<void> load({bool refresh = false}) async {
+    final hadPatients = patients.isNotEmpty;
+    final revision = ++_loadRevision;
     if (refresh) {
       isRefreshing = true;
       notifyListeners();
@@ -85,11 +88,17 @@ final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
     ? CaregiverPatientListState.empty
     : CaregiverPatientListState.success;
     } on CaregiverPatientApiFailure catch (failure) {
+      if (revision != _loadRevision) return;
       errorMessage = failure.message;
       failureKind = failure.kind;
-      if ((failure.kind == CaregiverPatientFailureKind.connectivity ||
-              failure.kind == CaregiverPatientFailureKind.server) &&
-          demoPatients.isNotEmpty) {
+      final transientFailure =
+          failure.kind == CaregiverPatientFailureKind.connectivity ||
+          failure.kind == CaregiverPatientFailureKind.server;
+      if (refresh && hadPatients && transientFailure) {
+        // Background/periodic refreshes keep the last known-good dashboard
+        // instead of replacing it with demo/error data after one timeout.
+        state = CaregiverPatientListState.success;
+      } else if (transientFailure && demoPatients.isNotEmpty) {
         patients = const [];
         state = CaregiverPatientListState.demoFallback;
       } else {
@@ -97,8 +106,10 @@ final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
         state = CaregiverPatientListState.error;
       }
     } finally {
-      isRefreshing = false;
-      notifyListeners();
+      if (revision == _loadRevision) {
+        isRefreshing = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -169,6 +180,7 @@ CareRecipient patientListItemToCareRecipient(
     relationshipLabel: 'Under your care',
     addressOrRoom: patient.addressOrRoom,
     phoneNumber: patient.phoneNumber,
+    profilePhotoUrl: patient.profilePhotoUrl,
     monitoringStatusLabel: switch (summary.monitoringStatus) {
       PatientMonitoringStatus.noData => 'No data',
       PatientMonitoringStatus.unknown => summary.monitoringStatusValue,

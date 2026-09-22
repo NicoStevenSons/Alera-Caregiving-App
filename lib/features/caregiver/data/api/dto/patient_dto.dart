@@ -74,6 +74,26 @@ String? _trimmedOrNull(String? value) {
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
+class PatientProfilePhotoResponse {
+  final String patientId;
+  final String profilePhotoUrl;
+
+  const PatientProfilePhotoResponse({
+    required this.patientId,
+    required this.profilePhotoUrl,
+  });
+
+  factory PatientProfilePhotoResponse.fromJson(Map<String, dynamic> json) {
+    return PatientProfilePhotoResponse(
+      patientId: _requiredString(json['patient_id'], 'patient_id'),
+      profilePhotoUrl: _requiredString(
+        json['profile_photo_url'],
+        'profile_photo_url',
+      ),
+    );
+  }
+}
+
 class PatientCreatedResponse {
   final String patientId;
   final String userId;
@@ -85,6 +105,7 @@ class PatientCreatedResponse {
   final String? sex;
   final String? phoneNumber;
   final String? addressOrRoom;
+  final String? profilePhotoUrl;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? knownConditions;
@@ -105,6 +126,7 @@ class PatientCreatedResponse {
     required this.sex,
     required this.phoneNumber,
     required this.addressOrRoom,
+    this.profilePhotoUrl,
     required this.emergencyContactName,
     required this.emergencyContactPhone,
     required this.knownConditions,
@@ -127,6 +149,7 @@ class PatientCreatedResponse {
       sex: json['sex'] as String?,
       phoneNumber: json['phone_number'] as String?,
       addressOrRoom: json['address_or_room'] as String?,
+      profilePhotoUrl: json['profile_photo_url'] as String?,
       emergencyContactName: json['emergency_contact_name'] as String?,
       emergencyContactPhone: json['emergency_contact_phone'] as String?,
       knownConditions: json['known_conditions'] as String?,
@@ -296,6 +319,7 @@ class PatientListItemDto {
   final String? sex;
   final String? phoneNumber;
   final String? addressOrRoom;
+  final String? profilePhotoUrl;
   final String accountStatus;
   final DateTime createdAt;
   final CurrentHealthSummaryDto currentSummary;
@@ -309,6 +333,7 @@ class PatientListItemDto {
     required this.sex,
     required this.phoneNumber,
     required this.addressOrRoom,
+    this.profilePhotoUrl,
     required this.accountStatus,
     required this.createdAt,
     required this.currentSummary,
@@ -324,6 +349,7 @@ class PatientListItemDto {
         sex: json['sex'] as String?,
         phoneNumber: json['phone_number'] as String?,
         addressOrRoom: json['address_or_room'] as String?,
+        profilePhotoUrl: json['profile_photo_url'] as String?,
         accountStatus: _requiredString(
           json['account_status'],
           'account_status',
@@ -391,6 +417,7 @@ class PatientDetailDto extends PatientListItemDto {
     required super.sex,
     required super.phoneNumber,
     required super.addressOrRoom,
+    super.profilePhotoUrl,
     required super.accountStatus,
     required super.createdAt,
     required super.currentSummary,
@@ -431,6 +458,7 @@ class PatientDetailDto extends PatientListItemDto {
       sex: base.sex,
       phoneNumber: base.phoneNumber,
       addressOrRoom: base.addressOrRoom,
+      profilePhotoUrl: base.profilePhotoUrl,
       accountStatus: base.accountStatus,
       createdAt: base.createdAt,
       currentSummary: base.currentSummary,

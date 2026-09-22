@@ -13,4 +13,5 @@ abstract final class AleraColors {
   static const Color warning = Color(0xFFFFBE18);
   static const Color critical = Color(0xFFFF6474);
   static const Color information = Color(0xFF55A5FF);
+  static const Color battery = Color(0xFFA684FF);
 }

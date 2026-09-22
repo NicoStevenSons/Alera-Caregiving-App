@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../../../config/app_config.dart';
 import '../auth/caregiver_session_controller.dart';
@@ -10,6 +11,12 @@ import 'dto/monitoring_device_dto.dart';
 
 abstract interface class CaregiverPatientDataSource {
   Future<PatientCreatedResponse> createPatient(CreatePatientRequest request);
+  Future<PatientProfilePhotoResponse> uploadProfilePhoto(
+    String patientId, {
+    required List<int> bytes,
+    required String filename,
+    required String contentType,
+  });
   Future<PatientAccessCodeResponse> createAccessCode(String patientId);
   Future<MonitoringSettingsResponse> updateMonitoringSettings(
     String patientId,
@@ -91,6 +98,94 @@ class CaregiverPatientApiDataSource
   ) async {
     final response = await _post('/api/v1/patients', request.toJson());
     return PatientCreatedResponse.fromJson(_jsonObject(response));
+  }
+
+  @override
+  Future<PatientProfilePhotoResponse> uploadProfilePhoto(
+    String patientId, {
+    required List<int> bytes,
+    required String filename,
+    required String contentType,
+  }) async {
+    final token = _session.accessToken;
+    if (token == null || token.isEmpty) {
+      throw const CaregiverPatientApiFailure('Please sign in again.');
+    }
+
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.backendBaseUrl}/api/v1/patients/'
+        '${Uri.encodeComponent(patientId)}/profile-photo',
+      );
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['authorization'] = 'Bearer $token'
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            'file',
+            bytes,
+            filename: filename,
+            contentType: MediaType.parse(contentType),
+          ),
+        );
+
+      final streamed = await _client.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(streamed);
+
+      await _throwForAuth(response);
+
+      if (response.statusCode == 404) {
+        throw const CaregiverPatientApiFailure(
+          'Patient not found.',
+          kind: CaregiverPatientFailureKind.notFound,
+          statusCode: 404,
+        );
+      }
+      if (response.statusCode == 413) {
+        throw const CaregiverPatientApiFailure(
+          'Profile photo must be 5 MB or smaller.',
+          statusCode: 413,
+        );
+      }
+      if (response.statusCode == 415) {
+        throw const CaregiverPatientApiFailure(
+          'Profile photo must be JPEG, PNG, or WebP.',
+          statusCode: 415,
+        );
+      }
+      if (response.statusCode >= 500) {
+        throw CaregiverPatientApiFailure(
+          'Profile photo storage is temporarily unavailable.',
+          kind: CaregiverPatientFailureKind.server,
+          statusCode: response.statusCode,
+        );
+      }
+      if (response.statusCode != 200) {
+        throw CaregiverPatientApiFailure(
+          _safeMessage(response),
+          statusCode: response.statusCode,
+        );
+      }
+
+      return _parse(
+        () => PatientProfilePhotoResponse.fromJson(_jsonObject(response)),
+      );
+    } on TimeoutException {
+      throw const CaregiverPatientApiFailure(
+        'The photo upload timed out. Please try again.',
+        kind: CaregiverPatientFailureKind.connectivity,
+      );
+    } on http.ClientException {
+      throw const CaregiverPatientApiFailure(
+        'Unable to upload the photo. Please check your connection.',
+        kind: CaregiverPatientFailureKind.connectivity,
+      );
+    } on FormatException {
+      throw const CaregiverPatientApiFailure(
+        'The selected image could not be uploaded.',
+      );
+    } on CaregiverPatientApiFailure {
+      rethrow;
+    }
   }
 
   @override

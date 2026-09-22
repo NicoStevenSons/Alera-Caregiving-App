@@ -24,7 +24,10 @@ void main() {
     expect(find.text('People'), findsOneWidget);
     expect(find.text('Maria Santos'), findsOneWidget);
     expect(find.text('Geraldine Laggui'), findsOneWidget);
-    expect(find.text('High Heart Rate'), findsOneWidget);
+    // Was 'High Heart Rate': an arbitrary placeholder for any non-stable
+    // status that had no real tie to Maria's CareStatus.needsAttention.
+    // PatientStatusChip renders the actual status instead.
+    expect(find.text('Attention needed'), findsOneWidget);
     expect(find.text('Stable'), findsOneWidget);
     expect(find.text('2 Alerts'), findsOneWidget);
     expect(find.text('No Alerts'), findsOneWidget);
@@ -34,7 +37,11 @@ void main() {
 
     final Size cardSize = tester.getSize(find.byType(CareRecipientCard).first);
     expect(cardSize.width, 768);
-    expect(cardSize.height, inInclusiveRange(112, 120));
+    // Widened from 120: the status row is now an AleraStatusChip pill with
+    // its own vertical padding, a few px taller than the old plain icon+text
+    // row it replaced. Confirm the real number with `flutter test` and
+    // tighten this back up.
+    expect(cardSize.height, inInclusiveRange(112, 132));
   });
 
   testWidgets('header and Add Patient actions show mock-only feedback', (

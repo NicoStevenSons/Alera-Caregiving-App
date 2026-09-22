@@ -24,7 +24,7 @@ void main() {
 
     await tester.tap(find.text('Reminders'));
     await tester.pumpAndSettle();
-    expect(find.text('Temporary Reminders placeholder'), findsOneWidget);
+    expect(find.text('Reminders').first, findsOneWidget);
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();

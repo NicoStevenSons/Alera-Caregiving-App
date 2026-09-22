@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/widgets/alera_section_card.dart';
+import '../../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/alera_typography.dart';
 import '../../../domain/models/caregiver_alert.dart';
 import '../../widgets/caregiver_alert_card.dart';
 
@@ -35,12 +37,22 @@ class _HomeAlertsPreviewState extends State<HomeAlertsPreview> {
   Widget build(BuildContext context) {
     final visibleAlerts = widget.alerts.take(2).toList();
     return AleraSectionCard(
-      title: 'Alerts (${widget.alerts.length} active)',
+      title: 'Alerts',
+      titleTrailing: Text(
+        '(${widget.alerts.length} active)',
+        style: AleraTypography.label.copyWith(
+          color: AleraColors.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
       actionLabel: 'View All Alerts',
       onActionPressed: widget.onViewAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 10),
+
           if (visibleAlerts.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 26),

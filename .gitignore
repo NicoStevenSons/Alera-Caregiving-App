@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local Android/Gradle state
+**/.gradle/
+**/local.properties
+
 # Symbolication related
 app.*.symbols
 

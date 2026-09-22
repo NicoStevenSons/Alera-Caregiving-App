@@ -107,13 +107,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       final detail = await widget.loadPatientDetail(widget.patientId);
       if (!mounted) return;
       _status = detail.patientAccessStatus;
-      final issued = _issued;
-      final replacementRedeemed =
-          issued != null &&
-          _status.connectedAt != null &&
-          _status.connectedAt!.isAfter(issued.createdAt);
-      if (_status.status == PatientAccessState.connected &&
-          (issued == null || replacementRedeemed)) {
+      if (_status.status == PatientAccessState.connected) {
         _stopPolling();
         setState(() => _connected = true);
       } else if (_pendingExpired) {
@@ -134,7 +128,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
   }
 
   Future<void> _issue({required bool replacing}) async {
-    if (_issuing) return;
+    if (_issuing || _connected) return;
     if (replacing) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -157,11 +151,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                _status.status == PatientAccessState.connected
-                    ? 'Generate code'
-                    : 'Replace invitation',
-              ),
+              child: const Text('Replace invitation'),
             ),
           ],
         ),
@@ -182,7 +172,6 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
           connectedAt: null,
         );
         _expired = false;
-        _connected = false;
       });
       _startPolling();
     } finally {
@@ -207,16 +196,6 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
           Text('Connect patient access', style: AleraTypography.pageTitle),
           if (_connected) ...[
             Text('${widget.patientName}’s Alera access is connected'),
-          ] else if (_status.status == PatientAccessState.connected &&
-              _issued == null) ...[
-            Text('${widget.patientName}’s Alera access is connected'),
-            const Text(
-              'Generate a new one-time code if the patient needs to sign in again.',
-            ),
-            AleraButton(
-              label: _issuing ? 'Generating…' : 'Generate new login code',
-              onPressed: _issuing ? null : () => _issue(replacing: true),
-            ),
           ] else if (_expired) ...[
             const Text('The invitation expired.'),
             AleraButton(

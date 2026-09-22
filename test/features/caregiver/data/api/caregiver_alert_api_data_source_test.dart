@@ -185,9 +185,11 @@ void main() {
     expect(alert.id, 'hr-alert');
     expect(alert.careRecipientId, 'patient-1');
     expect(alert.patientDisplayName, 'Nana');
+    expect(alert.conditionKey, 'HR_HIGH');
     expect(alert.metric, CaregiverAlertMetric.heartRate);
     expect(alert.severity, CaregiverAlertSeverity.warning);
     expect(alert.status, CaregiverAlertStatus.active);
+    expect(alert.hasReading, isTrue);
     expect(alert.reading, 121);
     expect(alert.threshold, 100);
     expect(alert.unit, 'BPM');
@@ -242,6 +244,7 @@ void main() {
     expect(alert.patientDisplayName, isNull);
     expect(alert.title, 'Health alert');
     expect(alert.description, '');
+    expect(alert.hasReading, isFalse);
     expect(alert.reading, 0);
     expect(alert.threshold, isNull);
     expect(alert.unit, '');

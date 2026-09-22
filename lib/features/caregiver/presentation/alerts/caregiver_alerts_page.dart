@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/status/adapters/alert_severity_chip.dart';
+import '../../../../design_system/status/alera_badged_avatar.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
+import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../../data/alerts/caregiver_alert_controller.dart';
 import '../widgets/caregiver_alert_card.dart';
+import '../widgets/caregiver_alert_presentation.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 
 enum AlertFilter {
@@ -30,6 +35,7 @@ class CaregiverAlertsPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert>? onAlertTap;
   final CaregiverAlertDataSource? alertDataSource;
   final CaregiverAlertController? controller;
+  final bool isActive;
 
   const CaregiverAlertsPage({
     super.key,
@@ -38,6 +44,7 @@ class CaregiverAlertsPage extends StatefulWidget {
     this.onAlertTap,
     this.alertDataSource,
     this.controller,
+    this.isActive = true,
   });
 
   @override
@@ -86,6 +93,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   @override
   void didUpdateWidget(covariant CaregiverAlertsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive && !widget.isActive) {
+      _expandedAlertIds.clear();
+    }
     final patientFilterId = _patientFilterId;
     if (patientFilterId != null &&
         !widget.careRecipients.any(
@@ -216,6 +226,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   }
 
   void _handleAlertTap(BuildContext context, CaregiverAlert alert) {
+    if (_expandedAlertIds.isNotEmpty) {
+      setState(_expandedAlertIds.clear);
+    }
     if (widget.onAlertTap != null) {
       widget.onAlertTap!(alert);
       return;
@@ -228,6 +241,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         alert.status != CaregiverAlertStatus.active) {
       return;
     }
+    setState(() => _expandedAlertIds.remove(alert.id));
     try {
       await _controller.acknowledge(alert.id);
     } catch (_) {
@@ -285,6 +299,9 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
               children: [
                 _PatientFilterChip(
                   label: _patientFilterLabel,
+                  photoUrl: _patientFilterId == null
+                      ? null
+                      : _recipientFor(_patientFilterId!)?.profilePhotoUrl,
                   selected: _patientFilterId != null,
                   onTap: _openFilterDrawer,
                 ),
@@ -380,12 +397,16 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                                             bottom: 8,
                                           ),
                                           child: CaregiverAlertCard(
+                                            key: ValueKey(alert.id),
                                             alert: alert,
                                             patientName:
                                                 alert.patientDisplayName ??
                                                 _recipientFor(
                                                   alert.careRecipientId,
                                                 )?.name,
+                                            patientPhotoUrl: _recipientFor(
+                                              alert.careRecipientId,
+                                            )?.profilePhotoUrl,
                                             showPatientName: true,
                                             unread:
                                                 alert.status ==
@@ -439,11 +460,13 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
 
 class _PatientFilterChip extends StatelessWidget {
   final String label;
+  final String? photoUrl;
   final bool selected;
   final VoidCallback onTap;
 
   const _PatientFilterChip({
     required this.label,
+    this.photoUrl,
     required this.selected,
     required this.onTap,
   });
@@ -454,7 +477,9 @@ class _PatientFilterChip extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8),
       child: AleraPill(
         label: label,
-        leading: const Icon(Icons.people_outline, size: 20),
+        leading: selected
+            ? AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 10)
+            : const Icon(Icons.people_outline, size: 20),
         selected: selected,
         variant: AleraPillVariant.filter,
         onTap: onTap,
@@ -532,6 +557,7 @@ class _AlertFilterDrawer extends StatelessWidget {
                         'alerts-patient-filter-${patient.id}',
                       ),
                       label: patient.name,
+                      photoUrl: patient.profilePhotoUrl,
                       selected: selectedPatientId == patient.id,
                       onTap: () => onPatientSelected(patient.id),
                     ),
@@ -613,12 +639,14 @@ class _FilterSectionTitle extends StatelessWidget {
 
 class _PatientFilterOption extends StatelessWidget {
   final String label;
+  final String? photoUrl;
   final bool selected;
   final VoidCallback onTap;
 
   const _PatientFilterOption({
     super.key,
     required this.label,
+    this.photoUrl,
     required this.selected,
     required this.onTap,
   });
@@ -627,6 +655,7 @@ class _PatientFilterOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      leading: AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
       title: Text(label),
       trailing: selected
           ? const Icon(Icons.check, semanticLabel: 'Selected')
@@ -727,7 +756,6 @@ class _AlertCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color placeholder = Color(0xFFE5DCF5);
     return Container(
       height: compact ? 64 : 76,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -744,48 +772,20 @@ class _AlertCardSkeleton extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: placeholder,
-              shape: BoxShape.circle,
-            ),
-          ),
+          const AleraSkeletonCircle(size: 44),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SkeletonBar(widthFactor: .72),
+                AleraSkeletonBar(widthFactor: .72),
                 SizedBox(height: 8),
-                _SkeletonBar(widthFactor: .45, height: 9),
+                AleraSkeletonBar(widthFactor: .45, height: 9),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SkeletonBar extends StatelessWidget {
-  final double widthFactor;
-  final double height;
-
-  const _SkeletonBar({required this.widthFactor, this.height = 12});
-
-  @override
-  Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: const Color(0xFFE5DCF5),
-          borderRadius: BorderRadius.circular(height / 2),
-        ),
       ),
     );
   }
@@ -858,7 +858,8 @@ class _EmptyActiveAlerts extends StatelessWidget {
         child: Column(
           children: [
             AleraSvgIcon(
-              assetPath: 'alera-figma-assets/assets/icons/status/stable.svg',
+              assetPath:
+                  'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
               width: 48,
               height: 48,
               semanticLabel: 'No active alerts',
@@ -902,7 +903,7 @@ class _EmptyHistory extends StatelessWidget {
   }
 }
 
-class _GroupedHistory extends StatelessWidget {
+class _GroupedHistory extends StatefulWidget {
   final List<CaregiverAlert> alerts;
   final CareRecipient? Function(String id) recipientFor;
   final ValueChanged<CaregiverAlert> onAlertTap;
@@ -920,53 +921,161 @@ class _GroupedHistory extends StatelessWidget {
   });
 
   @override
+  State<_GroupedHistory> createState() => _GroupedHistoryState();
+}
+
+class _GroupedHistoryState extends State<_GroupedHistory> {
+  static const int _collapsedLimit = 5;
+
+  final Set<String> _expandedGroups = <String>{};
+
+  void _toggleGroup(String label) {
+    setState(() {
+      if (!_expandedGroups.add(label)) {
+        _expandedGroups.remove(label);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Map<String, List<CaregiverAlert>> groups =
         <String, List<CaregiverAlert>>{};
+
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
-    for (final CaregiverAlert alert in alerts) {
+
+    for (final CaregiverAlert alert in widget.alerts) {
       final DateTime local = alert.detectedAt.toLocal();
+
       final DateTime alertDate = DateTime(local.year, local.month, local.day);
+
       final int days = today.difference(alertDate).inDays;
-      final String label = days <= 0
-          ? 'Today'
-          : days == 1
-          ? 'Yesterday'
-          : 'Earlier';
+
+      final String label = switch (days) {
+        <= 0 => 'Today',
+        1 => 'Yesterday',
+        >= 2 && <= 6 => 'Last 7 days',
+        _ => 'Earlier',
+      };
+
       groups.putIfAbsent(label, () => <CaregiverAlert>[]).add(alert);
     }
-    const order = ['Today', 'Yesterday', 'Earlier'];
+
+    const List<String> order = ['Today', 'Yesterday', 'Last 7 days', 'Earlier'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final String label in order)
-          if (groups[label] != null) ...[
-            Text(
-              label,
-              style: const TextStyle(
-                color: AleraColors.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+          if (groups[label] case final List<CaregiverAlert> group) ...[
+            _HistoryGroup(
+              label: label,
+              alerts: group,
+              expanded: _expandedGroups.contains(label),
+              collapsedLimit: _collapsedLimit,
+              recipientFor: widget.recipientFor,
+              expandedAlertIds: widget.expandedAlertIds,
+              onToggleExpanded: widget.onToggleExpanded,
+              onAlertTap: widget.onAlertTap,
+              onMarkAsSeen: widget.onMarkAsSeen,
+              onToggleGroup: () => _toggleGroup(label),
+            ),
+          ],
+      ],
+    );
+  }
+}
+
+class _HistoryGroup extends StatelessWidget {
+  final String label;
+  final List<CaregiverAlert> alerts;
+  final bool expanded;
+  final int collapsedLimit;
+  final CareRecipient? Function(String id) recipientFor;
+  final Set<String> expandedAlertIds;
+  final ValueChanged<String> onToggleExpanded;
+  final ValueChanged<CaregiverAlert> onAlertTap;
+  final VoidCallback? onMarkAsSeen;
+  final VoidCallback onToggleGroup;
+
+  const _HistoryGroup({
+    required this.label,
+    required this.alerts,
+    required this.expanded,
+    required this.collapsedLimit,
+    required this.recipientFor,
+    required this.expandedAlertIds,
+    required this.onToggleExpanded,
+    required this.onAlertTap,
+    required this.onMarkAsSeen,
+    required this.onToggleGroup,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool canExpand = alerts.length > collapsedLimit;
+
+    final List<CaregiverAlert> visibleAlerts = expanded
+        ? alerts
+        : alerts.take(collapsedLimit).toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
               ),
             ),
-            const SizedBox(height: 7),
-            for (final CaregiverAlert alert in groups[label]!) ...[
-              CaregiverAlertCard(
-                alert: alert,
-                patientName:
-                    alert.patientDisplayName ??
-                    recipientFor(alert.careRecipientId)?.name,
-                showPatientName: true,
-                unread: alert.status == CaregiverAlertStatus.active,
-                expanded: expandedAlertIds.contains(alert.id),
-                onToggleExpanded: () => onToggleExpanded(alert.id),
-                onViewMore: () => onAlertTap(alert),
-                onMarkAsSeen: onMarkAsSeen,
+            if (canExpand)
+              TextButton(
+                onPressed: onToggleGroup,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(
+                  expanded
+                      ? 'Show less'
+                      : 'See more (${alerts.length - collapsedLimit})',
+                  style: AleraTypography.label.copyWith(
+                    color: AleraColors.primary,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-            ],
           ],
+        ),
+
+        const SizedBox(height: 7),
+
+        for (final CaregiverAlert alert in visibleAlerts) ...[
+          CaregiverAlertCard(
+            key: ValueKey(alert.id),
+            alert: alert,
+            patientName:
+                alert.patientDisplayName ??
+                recipientFor(alert.careRecipientId)?.name,
+            patientPhotoUrl: recipientFor(
+              alert.careRecipientId,
+            )?.profilePhotoUrl,
+            showPatientName: true,
+            unread: alert.status == CaregiverAlertStatus.active,
+            expanded: expandedAlertIds.contains(alert.id),
+            onToggleExpanded: () => onToggleExpanded(alert.id),
+            onViewMore: () => onAlertTap(alert),
+            onMarkAsSeen: onMarkAsSeen,
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        const SizedBox(height: 4),
       ],
     );
   }
@@ -986,16 +1095,10 @@ class AlertListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool heartRate = alert.metric == CaregiverAlertMetric.heartRate;
-    final bool spo2 = alert.metric == CaregiverAlertMetric.spo2;
-    final Color stripe = alert.severity == CaregiverAlertSeverity.critical
-        ? AleraColors.critical
-        : AleraColors.warning;
-    final String iconPath = heartRate
-        ? 'alera-figma-assets/assets/icons/mini_status/heart_rate.svg'
-        : spo2
-        ? 'alera-figma-assets/assets/icons/mini_status/spo2.svg'
-        : 'alera-figma-assets/assets/icons/mini_status/info.svg';
+    final Color stripe = CaregiverAlertPresentation.accentColor(alert);
+    final String iconPath = CaregiverAlertPresentation.badgeAssetPath(
+      alert.metric,
+    );
     final String identity = recipient?.name ?? 'Unknown patient';
     return Material(
       color: const Color(0xFFFCFBFF),
@@ -1011,7 +1114,12 @@ class AlertListCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _InitialAvatar(name: identity),
+              AleraBadgedAvatar(
+                name: identity,
+                photoUrl: recipient?.profilePhotoUrl,
+                radius: 20,
+                status: AlertSeverityChip.describe(alert.severity, context),
+              ),
               const SizedBox(width: 8),
               AleraSvgIcon(assetPath: iconPath, width: 28, height: 28),
               const SizedBox(width: 8),
@@ -1048,37 +1156,30 @@ class AlertListCard extends StatelessWidget {
   }
 
   String _relativeTime(DateTime dateTime) {
-    final int minutes = DateTime.now().difference(dateTime).inMinutes;
+    final Duration elapsed = DateTime.now().difference(dateTime);
+    if (elapsed.isNegative) return 'just now';
+
+    final int minutes = elapsed.inMinutes;
     if (minutes <= 1) return 'just now';
     if (minutes < 60) return '$minutes mins ago';
-    final int hours = minutes ~/ 60;
-    return '$hours hr${hours == 1 ? '' : 's'} ago';
-  }
-}
 
-class _InitialAvatar extends StatelessWidget {
-  final String name;
+    final int hours = elapsed.inHours;
+    if (hours < 24) return '$hours hr${hours == 1 ? '' : 's'} ago';
 
-  const _InitialAvatar({required this.name});
+    final int days = elapsed.inDays;
+    if (days < 7) return '$days day${days == 1 ? '' : 's'} ago';
 
-  @override
-  Widget build(BuildContext context) {
-    final String initials = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-    const colors = [Color(0xFF8165C7), Color(0xFF4D91A8), Color(0xFFB36B8D)];
-    final int seed = name.codeUnits.fold(0, (sum, value) => sum + value);
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: colors[seed % colors.length],
-      child: Text(
-        initials,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-    );
+    if (days < 30) {
+      final int weeks = days ~/ 7;
+      return '$weeks week${weeks == 1 ? '' : 's'} ago';
+    }
+
+    if (days < 365) {
+      final int months = days ~/ 30;
+      return '$months month${months == 1 ? '' : 's'} ago';
+    }
+
+    final int years = days ~/ 365;
+    return '$years year${years == 1 ? '' : 's'} ago';
   }
 }

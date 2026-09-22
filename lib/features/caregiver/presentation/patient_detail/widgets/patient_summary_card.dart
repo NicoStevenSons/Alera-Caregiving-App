@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
 class PatientDetailSummaryCard extends StatelessWidget {
@@ -23,7 +24,11 @@ class PatientDetailSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _InitialAvatar(name: careRecipient.name),
+              AleraPatientAvatar(
+                name: careRecipient.name,
+                photoUrl: careRecipient.profilePhotoUrl,
+                radius: 24,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -136,40 +141,6 @@ class _QuickAction extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InitialAvatar extends StatelessWidget {
-  final String name;
-
-  const _InitialAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> words = name.trim().split(RegExp(r'\s+'));
-    final String initials = words
-        .where((word) => word.isNotEmpty)
-        .take(2)
-        .map((word) => word.characters.first.toUpperCase())
-        .join();
-    final int colorSeed = name.codeUnits.fold(0, (sum, value) => sum + value);
-    const List<Color> colors = [
-      Color(0xFF8165C7),
-      Color(0xFF4D91A8),
-      Color(0xFFB36B8D),
-    ];
-
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: colors[colorSeed % colors.length],
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );

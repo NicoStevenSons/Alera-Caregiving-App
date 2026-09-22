@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   http: ^1.6.0
+  http_parser: ^4.1.2
+  image_picker: ^1.1.2
   sqflite: ^2.4.3
   path: ^1.9.1
   workmanager: ^0.10.9
@@ -29,6 +31,7 @@ dependencies:
   fl_chart: ^1.2.0
   alera_toast:
     path: packages/alera_toast
+  image_cropper: ^12.2.1
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +55,7 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
+    - assets/icons/
     - alera-figma-assets/assets/icons/status/
     - alera-figma-assets/assets/icons/mini_status/
     - alera-figma-assets/assets/icons/vitals/

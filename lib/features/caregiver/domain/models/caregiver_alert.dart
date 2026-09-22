@@ -1,6 +1,13 @@
 enum CaregiverAlertSeverity { warning, critical }
 
-enum CaregiverAlertMetric { heartRate, spo2, watchBattery }
+enum CaregiverAlertMetric {
+  heartRate,
+  spo2,
+  activity,
+  sleep,
+  watchBattery,
+  system,
+}
 
 enum CaregiverAlertStatus { active, acknowledged, resolved, falseAlarm }
 
@@ -20,11 +27,13 @@ class CaregiverAlert {
   final String id;
   final String careRecipientId;
   final String? patientDisplayName;
+  final String? conditionKey;
   final String title;
   final String description;
   final CaregiverAlertSeverity severity;
   final CaregiverAlertMetric metric;
   final CaregiverAlertStatus status;
+  final bool hasReading;
   final double reading;
   final double? threshold;
   final String unit;
@@ -40,11 +49,13 @@ class CaregiverAlert {
     required this.id,
     required this.careRecipientId,
     this.patientDisplayName,
+    this.conditionKey,
     required this.title,
     required this.description,
     required this.severity,
     required this.metric,
     required this.status,
+    this.hasReading = true,
     required this.reading,
     required this.threshold,
     required this.unit,
@@ -68,11 +79,13 @@ class CaregiverAlert {
       id: id,
       careRecipientId: careRecipientId,
       patientDisplayName: patientDisplayName,
+      conditionKey: conditionKey,
       title: title,
       description: description,
       severity: severity ?? this.severity,
       metric: metric,
       status: status ?? this.status,
+      hasReading: hasReading,
       reading: reading,
       threshold: threshold,
       unit: unit,
