@@ -15,8 +15,8 @@ void main() {
           patientId: 'patient-1',
           patientName: 'Maria',
           patientAccess: PatientAccessStatus(
-            status: PatientAccessState.notConnected,
-            statusValue: 'NOT_CONNECTED',
+            status: PatientAccessState.connected,
+            statusValue: 'CONNECTED',
             pendingAccessCodeId: null,
             pendingExpiresAt: null,
             connectedAt: DateTime.utc(2026, 9, 1),
@@ -28,10 +28,18 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    final buttonFinder = find.text('Generate access code');
+    expect(find.text('Maria’s Alera access is connected'), findsOneWidget);
+
+    final buttonFinder = find.text('Generate new login code');
     await tester.ensureVisible(buttonFinder);
     expect(buttonFinder, findsOneWidget);
     await tester.tap(buttonFinder);
+    await tester.pump();
+
+    expect(find.text('Generate a new login code?'), findsOneWidget);
+    expect(source.issueCalls, 0);
+
+    await tester.tap(find.text('Generate code'));
     await tester.pump();
     await tester.pump();
 
