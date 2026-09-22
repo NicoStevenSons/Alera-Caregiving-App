@@ -32,9 +32,9 @@ class MainActivity : FlutterFragmentActivity() {
             "com.alera.payloadextraction/health_refresh"   
     }
 
-    private lateinit var healthConnectClient:HealthConnectClient
-    private lateinit var stepsDataReader: StepsDataReader
-    private lateinit var sleepDataReader: SleepDataReader
+    private var healthConnectClient: HealthConnectClient? = null
+    private var stepsDataReader: StepsDataReader? = null
+    private var sleepDataReader: SleepDataReader? = null
     private val healthPermissions = setOf(HealthPermission.getReadPermission(StepsRecord::class),HealthPermission.getReadPermission(SleepSessionRecord::class))
 
     private val healthPermissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()
@@ -111,16 +111,48 @@ class MainActivity : FlutterFragmentActivity() {
     savedInstanceState: Bundle?
 ) {
     super.onCreate(savedInstanceState)
-    healthConnectClient = HealthConnectClient.getOrCreate(this)
-    stepsDataReader = StepsDataReader(this)
-    sleepDataReader = SleepDataReader(this)
-    requestHealthPermissions()
+
+    val sdkStatus = HealthConnectClient.getSdkStatus(this)
+
+    if (sdkStatus == HealthConnectClient.SDK_AVAILABLE) {
+        healthConnectClient =
+            HealthConnectClient.getOrCreate(this)
+
+        stepsDataReader =
+            StepsDataReader(this)
+
+        sleepDataReader =
+            SleepDataReader(this)
+
+        requestHealthPermissions()
+
+        Log.d(
+            "AleraHealthConnect",
+            "Health Connect available and initialized"
+        )
+    } else {
+        Log.w(
+            "AleraHealthConnect",
+            "Health Connect unavailable. Continuing without health extraction."
+        )
+    }
 }
 
     private fun requestHealthPermissions() {
+
+    val client = healthConnectClient ?: run {
+        Log.w(
+            "AleraHealthConnect",
+            "Skipping permission request because Health Connect is unavailable"
+        )
+        return
+    }
+
     lifecycleScope.launch {
+        
+
         val grantedPermissions =
-            healthConnectClient
+            client
                 .permissionController
                 .getGrantedPermissions()
 
@@ -165,9 +197,16 @@ class MainActivity : FlutterFragmentActivity() {
 }
 
     private suspend fun readAndSendTodaySteps() {
+        val reader = stepsDataReader ?: run {
+        Log.w(
+            "AleraHealthConnect",
+            "Steps unavailable because Health Connect is not initialized"
+        )
+        return
+    }
     try {
         val sessions =
-            stepsDataReader.readAllStepSessions()
+            reader.readAllStepSessions()
 
         Log.d(
             "AleraHealthConnect",
@@ -228,9 +267,16 @@ class MainActivity : FlutterFragmentActivity() {
 }
 
     private suspend fun readAndSendRecentSleep() {
+        val reader = sleepDataReader ?: run {
+        Log.w(
+            "AleraHealthConnect",
+            "Sleep unavailable because Health Connect is not initialized"
+        )
+        return
+    }
     try {
         val sessions =
-            sleepDataReader.readRecentSleepSessions()
+            reader.readRecentSleepSessions()
 
         Log.d(
             "AleraHealthConnect",
@@ -332,8 +378,19 @@ override fun configureFlutterEngine(
                 PayloadEventBridge.attachSink(events)
 
                 lifecycleScope.launch {
+
+                         val client = healthConnectClient
+
+                        if (client == null) {
+                            Log.d(
+                                "AleraHealthConnect",
+                                "Health Connect unavailable; skipping initial health refresh"
+                                )
+                    return@launch
+                    }
+
                     val grantedPermissions =
-                        healthConnectClient
+                            client
                             .permissionController
                             .getGrantedPermissions()
 
@@ -436,8 +493,18 @@ override fun configureFlutterEngine(
         "refreshSteps" -> {
             lifecycleScope.launch {
                 try {
+                     val client = healthConnectClient
+
+                            if (client == null) {
+                                result.error(
+                                "HEALTH_CONNECT_UNAVAILABLE",
+                                "Health Connect is not available on this device.",
+                                null
+                            )
+                        return@launch
+                     }
                     val grantedPermissions =
-                        healthConnectClient
+                        client
                             .permissionController
                             .getGrantedPermissions()
 
@@ -489,8 +556,19 @@ override fun configureFlutterEngine(
         "refreshSleep" -> {
             lifecycleScope.launch {
                 try {
+
+                    val client = healthConnectClient
+
+                        if (client == null) {
+                            result.error(
+                            "HEALTH_CONNECT_UNAVAILABLE",
+                            "Health Connect is not available on this device.",
+                                null
+                            )
+                        return@launch
+                        }
                     val grantedPermissions =
-                        healthConnectClient
+                        client
                             .permissionController
                             .getGrantedPermissions()
 
