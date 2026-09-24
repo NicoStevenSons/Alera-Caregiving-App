@@ -136,7 +136,7 @@ class CaregiverSessionController extends ChangeNotifier
         FcmNotificationService.instance.register(this);
       });
 
-  Future<void> logout() async {
+  Future<void> _clearLocalSession() async {
     ++_revision;
     final unregister = FcmNotificationService.instance.unregister(this);
 
@@ -151,6 +151,18 @@ class CaregiverSessionController extends ChangeNotifier
     await _serialize(_tokenStore.clearSession);
   }
 
+  Future<void> logout() async {
+    final session = _session;
+
+    if (session?.type == SessionType.elderlyPatient) {
+      await _patientAuthApi.logout(
+        accessToken: session!.token,
+      );
+    }
+
+    await _clearLocalSession();
+  }
+
   @override
-  Future<void> clearInvalidSession() => logout();
+  Future<void> clearInvalidSession() => _clearLocalSession();
 }
