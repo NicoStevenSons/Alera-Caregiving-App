@@ -53,9 +53,45 @@ class PatientAuthApi {
       );
     }
   }
+
+  Future<void> logout({
+    required String accessToken,
+  }) async {
+    try {
+      final response = await _client
+          .post(
+            Uri.parse(
+              '${AppConfig.backendBaseUrl}/api/v1/device-status/logout',
+            ),
+            headers: {
+              'authorization': 'Bearer $accessToken',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw const PatientLogoutFailure(
+          'Unable to sign out right now. Check your connection and try again.',
+        );
+      }
+    } on TimeoutException {
+      throw const PatientLogoutFailure(
+        'Unable to sign out right now. Check your connection and try again.',
+      );
+    } on http.ClientException {
+      throw const PatientLogoutFailure(
+        'Unable to sign out right now. Check your connection and try again.',
+      );
+    }
+  }
 }
 
 class PatientAccessFailure implements Exception {
   final String message;
   const PatientAccessFailure(this.message);
+}
+
+class PatientLogoutFailure implements Exception {
+  final String message;
+  const PatientLogoutFailure(this.message);
 }
