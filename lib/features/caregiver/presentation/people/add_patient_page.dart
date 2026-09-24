@@ -776,19 +776,28 @@ class _AddPatientPageState extends State<AddPatientPage>
     key: m,
     child: list([
       Text('Monitoring Settings', style: AleraTypography.pageTitle),
-      RadioListTile<bool>(
-        key: const Key('default-monitoring-option'),
-        value: false,
+      RadioGroup<bool>(
         groupValue: custom,
-        onChanged: (x) => setState(() => custom = x!),
-        title: const Text('Alera defaults: HR 60–100, minimum SpO₂ 95'),
-      ),
-      RadioListTile<bool>(
-        key: const Key('custom-monitoring-option'),
-        value: true,
-        groupValue: custom,
-        onChanged: (x) => setState(() => custom = x!),
-        title: const Text('Custom monitoring ranges'),
+        onChanged: (value) {
+          if (value == null) return;
+          setState(() => custom = value);
+        },
+        child: Column(
+          children: [
+            RadioListTile<bool>(
+              key: const Key('default-monitoring-option'),
+              value: false,
+              title: const Text(
+                'Alera defaults: HR 60–100, minimum SpO₂ 95',
+              ),
+            ),
+            RadioListTile<bool>(
+              key: const Key('custom-monitoring-option'),
+              value: true,
+              title: const Text('Custom monitoring ranges'),
+            ),
+          ],
+        ),
       ),
       if (custom) ...[
         field(
