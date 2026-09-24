@@ -21,7 +21,7 @@ void main() {
     'starts setup, validates personal information, and preserves draft on Back',
     (t) async {
       final s = _Source();
-      await pump(t, s);
+      await _pump(t, s);
       await startSetup(t);
 
       final continueButton = find.text('Continue');
@@ -71,7 +71,7 @@ void main() {
       final s = _Source();
       var callbacks = 0;
 
-      await pump(
+      await _pump(
         t,
         s,
         onCreated: (_) async {
@@ -103,7 +103,7 @@ void main() {
     (t) async {
       final s = _Source(patchFails: true);
 
-      await pump(t, s);
+      await _pump(t, s);
       await reachMonitoring(t);
 
       await t.tap(find.byKey(const Key('custom-monitoring-option')));
@@ -138,7 +138,7 @@ void main() {
       final s = _Source();
       PatientCreatedResponse? callbackPatient;
 
-      await pump(
+      await _pump(
         t,
         s,
         onCreated: (patient) async {
@@ -187,7 +187,7 @@ void main() {
       final s = _Source(photoUploadFailsOnce: true);
       var callbacks = 0;
 
-      await pump(
+      await _pump(
         t,
         s,
         onCreated: (_) async {
@@ -235,7 +235,7 @@ void main() {
     (t) async {
       final s = _Source();
 
-      await pump(t, s);
+      await _pump(t, s);
       await create(t);
 
       expect(s.issueCalls, 0);
@@ -264,7 +264,7 @@ void main() {
   );
 }
 
-Future<void> pump(
+Future<void> _pump(
   WidgetTester t,
   _Source s, {
   Future<void> Function(PatientCreatedResponse)? onCreated,
