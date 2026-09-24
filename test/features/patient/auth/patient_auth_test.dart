@@ -118,6 +118,53 @@ void main() {
     }
   });
 
+  test('patient logout API sends bearer token and no body', () async {
+    final api = PatientAuthApi(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/device-status/logout');
+        expect(request.headers['authorization'], 'Bearer patient-token');
+        expect(request.body, isEmpty);
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await api.logout(accessToken: 'patient-token');
+  });
+
+  test('failed patient logout keeps the patient session', () async {
+    final store = SecureCaregiverTokenStore();
+    final session = controller(
+      store,
+      client: MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/patient/access') {
+          return http.Response(
+            '{"access_token":"patient-token","token_type":"bearer"}',
+            200,
+          );
+        }
+
+        if (request.url.path == '/api/v1/device-status/logout') {
+          return http.Response('{}', 503);
+        }
+
+        return http.Response('{}', 404);
+      }),
+    );
+
+    await session.accessPatient(accessCode: 'code');
+
+    await expectLater(
+      session.logout(),
+      throwsA(isA<PatientLogoutFailure>()),
+    );
+
+    expect(session.status, CaregiverSessionStatus.authenticated);
+    expect(session.sessionType, SessionType.elderlyPatient);
+    expect(session.accessToken, 'patient-token');
+    expect((await store.readSession())?.token, 'patient-token');
+  });
+
   for (final type in SessionType.values) {
     test('secure storage restores and clears $type', () async {
       final store = SecureCaregiverTokenStore();
@@ -237,6 +284,14 @@ void main() {
     final session = controller(
       store,
       client: MockClient((request) async {
+        if (request.url.path == '/api/v1/device-status/logout') {
+          expect(request.method, 'POST');
+          expect(request.headers['authorization'], 'Bearer patient-token');
+          expect(request.body, isEmpty);
+          return http.Response('{}', 200);
+        }
+
+        expect(request.url.path, '/api/v1/auth/patient/access');
         expect(jsonDecode(request.body), {'access_code': '7K3M-9Q2D-R8TX'});
         return http.Response(
           '{"access_token":"patient-token","token_type":"bearer"}',
