@@ -32,8 +32,8 @@ class VitalTrendChart extends StatelessWidget {
 
     if (hasNormalRange) {
       values
-        ..add(normalMin!)
-        ..add(normalMax!);
+        ..add(normalMin)
+        ..add(normalMax);
     }
 
     double minY = values.reduce((a, b) => a < b ? a : b);
@@ -54,171 +54,176 @@ class VitalTrendChart extends StatelessWidget {
         SizedBox(
           height: 240,
           child: LineChart(
-        LineChartData(
-          minX: 0,
-          maxX: _xFor(trend.toAt),
-          minY: minY,
-          maxY: maxY,
+            LineChartData(
+              minX: 0,
+              maxX: _xFor(trend.toAt),
+              minY: minY,
+              maxY: maxY,
 
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: metric == VitalTrendMetric.heartRate ? 20 : 2,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: Colors.black.withValues(alpha: 0.06),
-              strokeWidth: 1,
-            ),
-          ),
-
-          borderData: FlBorderData(show: false),
-
-          rangeAnnotations: hasNormalRange
-              ? RangeAnnotations(
-                  horizontalRangeAnnotations: [
-                    HorizontalRangeAnnotation(
-                      y1: normalMin!,
-                      y2: normalMax!,
-                      color: const Color(0xFF55B982).withValues(alpha: 0.10),
-                    ),
-                  ],
-                )
-              : const RangeAnnotations(),
-
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 38,
-                getTitlesWidget: (value, meta) {
-                  return SideTitleWidget(
-                    meta: meta,
-                    space: 6,
-                    child: Text(
-                      value.toStringAsFixed(0),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF8E8895),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 32,
-                interval: _bottomInterval(),
-                getTitlesWidget: (value, meta) {
-                  final time = trend.fromAt.add(
-                    Duration(milliseconds: (value * 1000).round()),
-                  );
-
-                  return SideTitleWidget(
-                    meta: meta,
-                    space: 8,
-                    child: Text(
-                      _axisLabel(time),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF8E8895),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          lineTouchData: LineTouchData(
-            enabled: true,
-            handleBuiltInTouches: true,
-            touchTooltipData: LineTouchTooltipData(
-              fitInsideHorizontally: true,
-              fitInsideVertically: true,
-              getTooltipItems: (spots) {
-                return spots.map((spot) {
-                  final recordedAt = trend.fromAt.add(
-                    Duration(milliseconds: (spot.x * 1000).round()),
-                  );
-
-                  final value = spot.y % 1 == 0
-                      ? spot.y.toStringAsFixed(0)
-                      : spot.y.toStringAsFixed(1);
-
-                  return LineTooltipItem(
-                    '$value ${trend.unit}\n${_tooltipTime(recordedAt)}',
-                    const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  );
-                }).toList();
-              },
-            ),
-          ),
-
-          lineBarsData: [
-            for (final segment in segments)
-              LineChartBarData(
-                spots: segment
-                    .map(
-                      (point) => FlSpot(_xFor(point.recordedAt), point.value),
-                    )
-                    .toList(),
-                isCurved: true,
-                preventCurveOverShooting: true,
-                color: lineColor,
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  checkToShowDot: (spot, _) {
-                    final point = segment.firstWhere(
-                      (candidate) => _xFor(candidate.recordedAt) == spot.x,
-                    );
-                    return point.severity != VitalTrendSeverity.info ||
-                        segment.length == 1;
-                  },
-                  getDotPainter: (spot, percent, barData, index) {
-                    final point = segment[index];
-                    final color = _severityColor(point.severity, lineColor);
-                    final radius = switch (point.severity) {
-                      VitalTrendSeverity.warning => 4.0,
-                      VitalTrendSeverity.critical => 4.5,
-                      VitalTrendSeverity.info ||
-                      VitalTrendSeverity.unknown => 3.0,
-                    };
-
-                    return FlDotCirclePainter(
-                      radius: radius,
-                      color: color,
-                      strokeWidth: 2,
-                      strokeColor: Colors.white,
-                    );
-                  },
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: metric == VitalTrendMetric.heartRate
+                    ? 20
+                    : 2,
+                getDrawingHorizontalLine: (_) => FlLine(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  strokeWidth: 1,
                 ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      lineColor.withValues(alpha: 0.20),
-                      lineColor.withValues(alpha: 0.01),
-                    ],
+              ),
+
+              borderData: FlBorderData(show: false),
+
+              rangeAnnotations: hasNormalRange
+                  ? RangeAnnotations(
+                      horizontalRangeAnnotations: [
+                        HorizontalRangeAnnotation(
+                          y1: normalMin,
+                          y2: normalMax,
+                          color: const Color(
+                            0xFF55B982,
+                          ).withValues(alpha: 0.10),
+                        ),
+                      ],
+                    )
+                  : const RangeAnnotations(),
+
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 38,
+                    getTitlesWidget: (value, meta) {
+                      return SideTitleWidget(
+                        meta: meta,
+                        space: 6,
+                        child: Text(
+                          value.toStringAsFixed(0),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF8E8895),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 32,
+                    interval: _bottomInterval(),
+                    getTitlesWidget: (value, meta) {
+                      final time = trend.fromAt.add(
+                        Duration(milliseconds: (value * 1000).round()),
+                      );
+
+                      return SideTitleWidget(
+                        meta: meta,
+                        space: 8,
+                        child: Text(
+                          _axisLabel(time),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF8E8895),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
-          ],
-        ),
+
+              lineTouchData: LineTouchData(
+                enabled: true,
+                handleBuiltInTouches: true,
+                touchTooltipData: LineTouchTooltipData(
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  getTooltipItems: (spots) {
+                    return spots.map((spot) {
+                      final recordedAt = trend.fromAt.add(
+                        Duration(milliseconds: (spot.x * 1000).round()),
+                      );
+
+                      final value = spot.y % 1 == 0
+                          ? spot.y.toStringAsFixed(0)
+                          : spot.y.toStringAsFixed(1);
+
+                      return LineTooltipItem(
+                        '$value ${trend.unit}\n${_tooltipTime(recordedAt)}',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+
+              lineBarsData: [
+                for (final segment in segments)
+                  LineChartBarData(
+                    spots: segment
+                        .map(
+                          (point) =>
+                              FlSpot(_xFor(point.recordedAt), point.value),
+                        )
+                        .toList(),
+                    isCurved: true,
+                    preventCurveOverShooting: true,
+                    color: lineColor,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      checkToShowDot: (spot, _) {
+                        final point = segment.firstWhere(
+                          (candidate) => _xFor(candidate.recordedAt) == spot.x,
+                        );
+                        return point.severity != VitalTrendSeverity.info ||
+                            segment.length == 1;
+                      },
+                      getDotPainter: (spot, percent, barData, index) {
+                        final point = segment[index];
+                        final color = _severityColor(point.severity, lineColor);
+                        final radius = switch (point.severity) {
+                          VitalTrendSeverity.warning => 4.0,
+                          VitalTrendSeverity.critical => 4.5,
+                          VitalTrendSeverity.info ||
+                          VitalTrendSeverity.unknown => 3.0,
+                        };
+
+                        return FlDotCirclePainter(
+                          radius: radius,
+                          color: color,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          lineColor.withValues(alpha: 0.20),
+                          lineColor.withValues(alpha: 0.01),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -234,14 +239,8 @@ class VitalTrendChart extends StatelessWidget {
                 isRange: true,
               ),
             _TrendLegendItem(color: lineColor, label: 'Normal'),
-            const _TrendLegendItem(
-              color: Color(0xFFFFB900),
-              label: 'Warning',
-            ),
-            const _TrendLegendItem(
-              color: Color(0xFFFF6467),
-              label: 'Critical',
-            ),
+            const _TrendLegendItem(color: Color(0xFFFFB900), label: 'Warning'),
+            const _TrendLegendItem(color: Color(0xFFFF6467), label: 'Critical'),
           ],
         ),
       ],
@@ -336,7 +335,6 @@ class VitalTrendChart extends StatelessWidget {
   }
 }
 
-
 class _TrendLegendItem extends StatelessWidget {
   final Color color;
   final String label;
@@ -364,10 +362,7 @@ class _TrendLegendItem extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Color(0xFF6B6385),
-          ),
+          style: const TextStyle(fontSize: 10, color: Color(0xFF6B6385)),
         ),
       ],
     );
