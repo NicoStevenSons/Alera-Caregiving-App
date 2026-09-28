@@ -32,8 +32,8 @@ class VitalTrendChart extends StatelessWidget {
 
     if (hasNormalRange) {
       values
-        ..add(normalMin)
-        ..add(normalMax);
+        ..add(normalMin!)
+        ..add(normalMax!);
     }
 
     double minY = values.reduce((a, b) => a < b ? a : b);
@@ -76,8 +76,8 @@ class VitalTrendChart extends StatelessWidget {
               ? RangeAnnotations(
                   horizontalRangeAnnotations: [
                     HorizontalRangeAnnotation(
-                      y1: normalMin,
-                      y2: normalMax,
+                      y1: normalMin!,
+                      y2: normalMax!,
                       color: const Color(0xFF55B982).withValues(alpha: 0.10),
                     ),
                   ],
