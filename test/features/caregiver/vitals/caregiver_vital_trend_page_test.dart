@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows loading while the trend request is pending', (tester) async {
+  testWidgets('shows loading while the trend request is pending', (
+    tester,
+  ) async {
     final completer = Completer<VitalTrendDto>();
     final source = _FakeVitalTrendSource(pending: completer);
 
@@ -61,7 +63,9 @@ void main() {
     expect(source.ranges, [VitalTrendRange.day, VitalTrendRange.week]);
   });
 
-  testWidgets('renders summary and deterministic period values', (tester) async {
+  testWidgets('renders summary and deterministic period values', (
+    tester,
+  ) async {
     final source = _FakeVitalTrendSource(result: _trend());
 
     await _pumpPage(tester, source);
@@ -108,7 +112,7 @@ void main() {
     final tooltipItems = data.lineTouchData.touchTooltipData.getTooltipItems([
       LineBarSpot(firstBar, 0, firstBar.spots.last),
     ]);
-    final tooltip = tooltipItems.single.text;
+    final tooltip = tooltipItems.single!.text;
 
     expect(tooltip, contains('Average: 105 bpm'));
     expect(tooltip, contains('Low: 95'));
@@ -134,10 +138,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final chart = tester.widget<LineChart>(find.byType(LineChart));
-    expect(
-      chart.data.rangeAnnotations.horizontalRangeAnnotations,
-      isEmpty,
-    );
+    expect(chart.data.rangeAnnotations.horizontalRangeAnnotations, isEmpty);
     expect(find.text('Patient range not configured.'), findsOneWidget);
   });
 }
@@ -194,12 +195,7 @@ VitalTrendDto _trend({
   final trendPoints =
       points ??
       [
-        _point(
-          DateTime.utc(2026, 9, 1),
-          80,
-          minimum: 75,
-          maximum: 85,
-        ),
+        _point(DateTime.utc(2026, 9, 1), 80, minimum: 75, maximum: 85),
         _point(
           DateTime.utc(2026, 9, 1, 1),
           105,

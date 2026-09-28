@@ -94,7 +94,10 @@ VitalTrendDto _trend({
       average: 90,
       minimum: 55,
       maximum: 130,
-      readingCount: points.fold(0, (total, point) => total + point.readingCount),
+      readingCount: points.fold(
+        0,
+        (total, point) => total + point.readingCount,
+      ),
     ),
     thresholds: thresholds,
     points: points,
