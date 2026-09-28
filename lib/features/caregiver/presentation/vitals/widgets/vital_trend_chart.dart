@@ -148,20 +148,21 @@ class VitalTrendChart extends StatelessWidget {
                   fitInsideVertically: true,
                   getTooltipItems: (spots) {
                     return spots.map((spot) {
-                      final recordedAt = trend.fromAt.add(
-                        Duration(milliseconds: (spot.x * 1000).round()),
-                      );
-
-                      final value = spot.y % 1 == 0
-                          ? spot.y.toStringAsFixed(0)
-                          : spot.y.toStringAsFixed(1);
+                      final point =
+                          segments[spot.barIndex][spot.spotIndex];
 
                       return LineTooltipItem(
-                        '$value ${trend.unit}\n${_tooltipTime(recordedAt)}',
+                        'Average: ${_formatValue(point.value)} ${trend.unit}\n'
+                        'Low: ${_formatValue(point.minimum)}  '
+                        'High: ${_formatValue(point.maximum)}\n'
+                        'Readings: ${point.readingCount}\n'
+                        'Highest severity: ${_severityLabel(point.severity)}\n'
+                        '${_tooltipPeriod(point.recordedAt)}',
                         const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                          fontSize: 11,
+                          height: 1.35,
                         ),
                       );
                     }).toList();
@@ -280,18 +281,38 @@ class VitalTrendChart extends StatelessWidget {
     };
   }
 
-  String _tooltipTime(DateTime value) {
+  String _formatValue(double value) {
+    return value % 1 == 0
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
+  }
+
+  String _severityLabel(VitalTrendSeverity severity) {
+    return switch (severity) {
+      VitalTrendSeverity.info => 'Normal',
+      VitalTrendSeverity.warning => 'Warning',
+      VitalTrendSeverity.critical => 'Critical',
+      VitalTrendSeverity.unknown => 'Unknown',
+    };
+  }
+
+  String _tooltipPeriod(DateTime value) {
     final local = value.toLocal();
 
-    if (trend.range == '24h') {
-      final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-      final period = local.hour >= 12 ? 'PM' : 'AM';
-
-      return '${hour.toString()}:'
-          '${local.minute.toString().padLeft(2, '0')} $period';
+    if (trend.resolution == '1h') {
+      final end = local.add(const Duration(hours: 1));
+      return '${local.month}/${local.day}/${local.year} • '
+          '${_clockTime(local)}–${_clockTime(end)}';
     }
 
     return '${local.month}/${local.day}/${local.year}';
+  }
+
+  String _clockTime(DateTime value) {
+    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    final period = value.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:${value.minute.toString().padLeft(2, '0')} $period';
   }
 
   List<List<VitalTrendPointDto>> _segments() {
