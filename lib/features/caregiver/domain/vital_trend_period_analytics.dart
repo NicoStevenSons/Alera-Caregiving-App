@@ -30,8 +30,7 @@ class VitalTrendPeriodAnalytics {
         ? trend.points
               .where(
                 (point) =>
-                    point.minimum < normalMin ||
-                    point.maximum > normalMax,
+                    point.minimum < normalMin || point.maximum > normalMax,
               )
               .length
         : null;

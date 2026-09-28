@@ -147,13 +147,9 @@ class VitalTrendChart extends StatelessWidget {
                   return spotIndexes.map((spotIndex) {
                     final spot = barData.spots[spotIndex];
                     final point = trend.points.firstWhere(
-                      (candidate) =>
-                          _xFor(candidate.recordedAt) == spot.x,
+                      (candidate) => _xFor(candidate.recordedAt) == spot.x,
                     );
-                    final color = _severityColor(
-                      point.severity,
-                      lineColor,
-                    );
+                    final color = _severityColor(point.severity, lineColor);
 
                     return TouchedSpotIndicatorData(
                       FlLine(
@@ -161,8 +157,7 @@ class VitalTrendChart extends StatelessWidget {
                         strokeWidth: 1,
                       ),
                       FlDotData(
-                        getDotPainter: (_, _, _, _) =>
-                            FlDotCirclePainter(
+                        getDotPainter: (_, _, _, _) => FlDotCirclePainter(
                           radius: 6,
                           color: color,
                           strokeWidth: 2,
@@ -177,8 +172,7 @@ class VitalTrendChart extends StatelessWidget {
                   fitInsideVertically: true,
                   getTooltipItems: (spots) {
                     return spots.map((spot) {
-                      final point =
-                          segments[spot.barIndex][spot.spotIndex];
+                      final point = segments[spot.barIndex][spot.spotIndex];
 
                       return LineTooltipItem(
                         'Average: ${_formatValue(point.value)} ${trend.unit}\n'
@@ -311,9 +305,7 @@ class VitalTrendChart extends StatelessWidget {
   }
 
   String _formatValue(double value) {
-    return value % 1 == 0
-        ? value.toStringAsFixed(0)
-        : value.toStringAsFixed(1);
+    return value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
   }
 
   String _severityLabel(VitalTrendSeverity severity) {
