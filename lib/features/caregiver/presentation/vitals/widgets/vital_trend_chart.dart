@@ -21,10 +21,20 @@ class VitalTrendChart extends StatelessWidget {
     };
 
     final segments = _segments();
+    final normalMin = trend.thresholds.normalMin;
+    final normalMax = trend.thresholds.normalMax;
+    final hasNormalRange =
+        normalMin != null && normalMax != null && normalMin <= normalMax;
 
     final values = trend.points
         .expand((point) => [point.minimum, point.maximum])
         .toList();
+
+    if (hasNormalRange) {
+      values
+        ..add(normalMin)
+        ..add(normalMax);
+    }
 
     double minY = values.reduce((a, b) => a < b ? a : b);
     double maxY = values.reduce((a, b) => a > b ? a : b);
@@ -39,9 +49,11 @@ class VitalTrendChart extends StatelessWidget {
       maxY = maxY.clamp(0, 100).toDouble();
     }
 
-    return SizedBox(
-      height: 240,
-      child: LineChart(
+    return Column(
+      children: [
+        SizedBox(
+          height: 240,
+          child: LineChart(
         LineChartData(
           minX: 0,
           maxX: _xFor(trend.toAt),
@@ -59,6 +71,18 @@ class VitalTrendChart extends StatelessWidget {
           ),
 
           borderData: FlBorderData(show: false),
+
+          rangeAnnotations: hasNormalRange
+              ? RangeAnnotations(
+                  horizontalRangeAnnotations: [
+                    HorizontalRangeAnnotation(
+                      y1: normalMin,
+                      y2: normalMax,
+                      color: const Color(0xFF55B982).withValues(alpha: 0.10),
+                    ),
+                  ],
+                )
+              : const RangeAnnotations(),
 
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(
@@ -154,7 +178,33 @@ class VitalTrendChart extends StatelessWidget {
                 color: lineColor,
                 barWidth: 3,
                 isStrokeCapRound: true,
-                dotData: FlDotData(show: segment.length == 1),
+                dotData: FlDotData(
+                  show: true,
+                  checkToShowDot: (spot, _) {
+                    final point = segment.firstWhere(
+                      (candidate) => _xFor(candidate.recordedAt) == spot.x,
+                    );
+                    return point.severity != VitalTrendSeverity.info ||
+                        segment.length == 1;
+                  },
+                  getDotPainter: (spot, percent, barData, index) {
+                    final point = segment[index];
+                    final color = _severityColor(point.severity, lineColor);
+                    final radius = switch (point.severity) {
+                      VitalTrendSeverity.warning => 4.0,
+                      VitalTrendSeverity.critical => 4.5,
+                      VitalTrendSeverity.info ||
+                      VitalTrendSeverity.unknown => 3.0,
+                    };
+
+                    return FlDotCirclePainter(
+                      radius: radius,
+                      color: color,
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    );
+                  },
+                ),
                 belowBarData: BarAreaData(
                   show: true,
                   gradient: LinearGradient(
@@ -169,8 +219,41 @@ class VitalTrendChart extends StatelessWidget {
               ),
           ],
         ),
-      ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 14,
+          runSpacing: 6,
+          children: [
+            if (hasNormalRange)
+              const _TrendLegendItem(
+                color: Color(0xFF55B982),
+                label: 'Configured normal range',
+                isRange: true,
+              ),
+            _TrendLegendItem(color: lineColor, label: 'Normal'),
+            const _TrendLegendItem(
+              color: Color(0xFFFFB900),
+              label: 'Warning',
+            ),
+            const _TrendLegendItem(
+              color: Color(0xFFFF6467),
+              label: 'Critical',
+            ),
+          ],
+        ),
+      ],
     );
+  }
+
+  Color _severityColor(VitalTrendSeverity severity, Color normalColor) {
+    return switch (severity) {
+      VitalTrendSeverity.warning => const Color(0xFFFFB900),
+      VitalTrendSeverity.critical => const Color(0xFFFF6467),
+      VitalTrendSeverity.info || VitalTrendSeverity.unknown => normalColor,
+    };
   }
 
   double _xFor(DateTime time) {
@@ -250,5 +333,43 @@ class VitalTrendChart extends StatelessWidget {
     segments.add(current);
 
     return segments;
+  }
+}
+
+
+class _TrendLegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final bool isRange;
+
+  const _TrendLegendItem({
+    required this.color,
+    required this.label,
+    this.isRange = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: isRange ? 16 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isRange ? 0.18 : 1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF6B6385),
+          ),
+        ),
+      ],
+    );
   }
 }
