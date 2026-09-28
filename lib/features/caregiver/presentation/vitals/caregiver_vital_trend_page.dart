@@ -381,9 +381,22 @@ class _PeriodOverviewCard extends StatelessWidget {
             const SizedBox(height: 10),
             _PeriodOverviewRow(
               label: 'Outside configured range',
-              value: outsideRange?.toString() ?? 'Not configured',
+              value: outsideRange?.toString() ?? '—',
               color: AleraColors.textPrimary,
             ),
+            if (outsideRange == null) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Text(
+                  'Patient range not configured.',
+                  style: AleraTypography.body.copyWith(
+                    color: AleraColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
