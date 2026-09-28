@@ -143,6 +143,35 @@ class VitalTrendChart extends StatelessWidget {
               lineTouchData: LineTouchData(
                 enabled: true,
                 handleBuiltInTouches: true,
+                getTouchedSpotIndicator: (barData, spotIndexes) {
+                  return spotIndexes.map((spotIndex) {
+                    final spot = barData.spots[spotIndex];
+                    final point = trend.points.firstWhere(
+                      (candidate) =>
+                          _xFor(candidate.recordedAt) == spot.x,
+                    );
+                    final color = _severityColor(
+                      point.severity,
+                      lineColor,
+                    );
+
+                    return TouchedSpotIndicatorData(
+                      FlLine(
+                        color: color.withValues(alpha: 0.45),
+                        strokeWidth: 1,
+                      ),
+                      FlDotData(
+                        getDotPainter: (_, _, _, _) =>
+                            FlDotCirclePainter(
+                          radius: 6,
+                          color: color,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
                 touchTooltipData: LineTouchTooltipData(
                   fitInsideHorizontally: true,
                   fitInsideVertically: true,
