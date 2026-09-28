@@ -5,6 +5,7 @@ import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
+import '../../domain/vital_trend_period_analytics.dart';
 import 'widgets/vital_trend_chart.dart';
 
 class CaregiverVitalTrendPage extends StatefulWidget {
@@ -278,6 +279,13 @@ class _TrendContent extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
+
+        _PeriodOverviewCard(
+          analytics: VitalTrendPeriodAnalytics.fromTrend(trend),
+          periodLabel: trend.resolution == '1h' ? 'hourly' : 'daily',
+        ),
+
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -320,6 +328,101 @@ class _SummaryCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PeriodOverviewCard extends StatelessWidget {
+  final VitalTrendPeriodAnalytics analytics;
+  final String periodLabel;
+
+  const _PeriodOverviewCard({
+    required this.analytics,
+    required this.periodLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final outsideRange = analytics.outsideConfiguredRangeCount;
+
+    return AleraCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Period overview', style: AleraTypography.sectionTitle),
+            const SizedBox(height: 4),
+            Text(
+              'Based on aggregated $periodLabel periods. '
+              'These counts describe stored data and are not a diagnosis.',
+              style: AleraTypography.body.copyWith(
+                color: AleraColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            _PeriodOverviewRow(
+              label: 'Warning periods',
+              value: '${analytics.warningPeriodCount}',
+              color: const Color(0xFFFFB900),
+            ),
+            const SizedBox(height: 10),
+            _PeriodOverviewRow(
+              label: 'Critical periods',
+              value: '${analytics.criticalPeriodCount}',
+              color: const Color(0xFFFF6467),
+            ),
+            const SizedBox(height: 10),
+            _PeriodOverviewRow(
+              label: 'Abnormal periods',
+              value: '${analytics.abnormalPeriodCount}',
+              color: AleraColors.textPrimary,
+            ),
+            const SizedBox(height: 10),
+            _PeriodOverviewRow(
+              label: 'Outside configured range',
+              value: outsideRange?.toString() ?? 'Not configured',
+              color: AleraColors.textPrimary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PeriodOverviewRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _PeriodOverviewRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: AleraTypography.body.copyWith(
+              color: AleraColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(value, style: AleraTypography.sectionTitle),
+      ],
     );
   }
 }
