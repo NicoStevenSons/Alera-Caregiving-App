@@ -2,11 +2,14 @@ package com.alera.payloadextraction
 
 import android.os.Bundle
 import android.util.Log
+
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.permission.HealthPermission
-
+import androidx.health.connect.client.records.StepsRecord
 import androidx.lifecycle.lifecycleScope
+
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -14,10 +17,9 @@ import io.flutter.plugin.common.MethodChannel
 
 import kotlinx.coroutines.launch
 
-import androidx.health.connect.client.records.StepsRecord
 import com.alera.payloadextraction.health.StepsDataReader
-import androidx.health.connect.client.records.SleepSessionRecord
 import com.alera.payloadextraction.health.SleepDataReader
+
 
 class MainActivity : FlutterFragmentActivity() {
 
@@ -30,6 +32,9 @@ class MainActivity : FlutterFragmentActivity() {
 
         private const val HEALTH_REFRESH_CHANNEL =
             "com.alera.payloadextraction/health_refresh"   
+
+        private const val MONITORING_CHANNEL =
+            "com.alera.payloadextraction/monitoring"
     }
 
     private var healthConnectClient: HealthConnectClient? = null
@@ -623,5 +628,34 @@ override fun configureFlutterEngine(
     }
 }
     
+MethodChannel(
+    flutterEngine.dartExecutor.binaryMessenger,
+    MONITORING_CHANNEL
+).setMethodCallHandler { call, result ->
+
+    when (call.method) {
+
+        "startMonitoring" -> {
+            MonitoringServiceBridge.start(
+                applicationContext
+            )
+
+            result.success(true)
+        }
+
+        "stopMonitoring" -> {
+            MonitoringServiceBridge.stop(
+                applicationContext
+            )
+
+            result.success(true)
+        }
+
+        else -> {
+            result.notImplemented()
+        }
+    }
+}
+
 }
 }
