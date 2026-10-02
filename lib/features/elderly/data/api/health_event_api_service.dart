@@ -10,7 +10,7 @@ class HealthEventApiService {
 
   const HealthEventApiService({required this.baseUrl, required this.patientId});
 
-  Future<http.Response> sendHealthEvent(Map<String, dynamic> payload) async {
+ Future<http.Response> sendHealthEvent(Map<String, dynamic> payload, {required String accessToken,}) async {
     final Uri endpoint = Uri.parse('$baseUrl/api/v1/health-events');
 
     debugPrint(
@@ -21,7 +21,7 @@ class HealthEventApiService {
     final http.Response response = await http
         .post(
           endpoint,
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'authorization': 'Bearer $accessToken', 'content-type': 'application/json',},
           body: jsonEncode(payload),
         )
         .timeout(const Duration(seconds: 15));

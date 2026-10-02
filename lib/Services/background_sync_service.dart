@@ -1,9 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../config/app_config.dart';
-import 'fifo_upload_service.dart';
+import '../features/caregiver/data/auth/caregiver_token_store.dart';
 import '../features/elderly/data/api/health_event_api_service.dart';
+import 'fifo_upload_service.dart';
 import 'upload_queue_service.dart';
 
 const String aleraBackgroundSyncTask = 'aleraBackgroundSyncTask';
@@ -14,23 +15,36 @@ void callbackDispatcher() {
     String task,
     Map<String, dynamic>? inputData,
   ) async {
-    debugPrint('Alera background task started: $task');
+    WidgetsFlutterBinding.ensureInitialized();
 
     if (task != aleraBackgroundSyncTask) {
       return true;
     }
 
     try {
-      final UploadQueueService uploadQueueService = UploadQueueService();
+      final tokenStore = SecureCaregiverTokenStore();
+      final session = await tokenStore.readSession();
 
-      final HealthEventApiService healthEventApiService = HealthEventApiService(
+      if (session == null ||
+          session.type != SessionType.elderlyPatient ||
+          session.patientId == null) {
+        debugPrint('Background sync skipped: no valid patient session.');
+        return true;
+      }
+
+      final patientId = session.patientId!;
+
+      final uploadQueueService = UploadQueueService();
+
+      final healthEventApiService = HealthEventApiService(
         baseUrl: AppConfig.backendBaseUrl,
-        patientId: AppConfig.testPatientId,
+        patientId: patientId,
       );
 
-      final FifoUploadService fifoUploadService = FifoUploadService(
+      final fifoUploadService = FifoUploadService(
         uploadQueueService: uploadQueueService,
         healthEventApiService: healthEventApiService,
+        expectedPatientId: patientId,
       );
 
       await fifoUploadService.processQueue();
@@ -40,7 +54,6 @@ void callbackDispatcher() {
       return true;
     } catch (error) {
       debugPrint('Alera background sync error: $error');
-
       return false;
     }
   });

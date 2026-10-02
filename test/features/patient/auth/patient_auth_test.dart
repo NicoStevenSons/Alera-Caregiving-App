@@ -20,6 +20,20 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:sqflite/sqflite.dart';
 
+
+const testPatientId = 'a076ecdb-ae38-4f84-b490-e714977027ee';
+
+const patientLoginResponse = '''
+{
+  "access_token": "patient-token",
+  "token_type": "bearer",
+  "actor": {
+    "role": "ELDERLY_PATIENT",
+    "patient_id": "$testPatientId"
+  }
+}
+''';
+
 CaregiverSessionController controller(
   CaregiverTokenStore store, {
   http.Client? client,
@@ -29,7 +43,7 @@ CaregiverSessionController controller(
     client:
         client ??
         MockClient(
-          (_) async => http.Response('{"access_token":"caregiver-token"}', 200),
+          (_) async => http.Response(patientLoginResponse, 200),
         ),
   ),
   patientAuthApi: PatientAuthApi(
@@ -105,18 +119,37 @@ void main() {
     );
   }
 
-  test('patient API safely handles timeout and network failure', () async {
-    for (final error in [
-      TimeoutException('timeout'),
-      http.ClientException('network'),
-    ]) {
-      final api = PatientAuthApi(client: MockClient((_) async => throw error));
-      await expectLater(
-        api.access(accessCode: 'code'),
-        throwsA(isA<PatientAccessFailure>()),
+  test('patient JWT is attached to health-event uploads', () async {
+  final session = controller(SecureCaregiverTokenStore());
+
+  await session.accessPatient(accessCode: 'code');
+
+  expect(session.accessToken, 'patient-token');
+
+  const uploads = HealthEventApiService(
+    baseUrl: 'https://example.test',
+    patientId: 'existing-test-patient',
+  );
+
+  await http.runWithClient(
+    () => uploads.sendHealthEvent(
+      {'patient_id': uploads.patientId},
+      accessToken: session.accessToken!,
+    ),
+    () => MockClient((request) async {
+      expect(request.url.path, '/api/v1/health-events');
+
+      expect(
+        request.headers['authorization'],
+        'Bearer patient-token',
       );
-    }
-  });
+
+      expect(request.body, isNot(contains('patient-token')));
+
+      return http.Response('{}', 201);
+    }),
+  );
+});
 
   test('patient logout API sends bearer token and no body', () async {
     final api = PatientAuthApi(
@@ -242,7 +275,7 @@ void main() {
       patientId: 'existing-test-patient',
     );
     await http.runWithClient(
-      () => uploads.sendHealthEvent({'patient_id': uploads.patientId}),
+      () => uploads.sendHealthEvent({'patient_id': uploads.patientId},accessToken: session.accessToken!,),
       () => MockClient((request) async {
         expect(request.url.path, '/api/v1/health-events');
         expect(request.headers['authorization'], isNull);

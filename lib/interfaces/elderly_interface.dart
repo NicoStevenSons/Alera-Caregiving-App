@@ -35,9 +35,10 @@ import '../Services/health_connect_refresh_service.dart';
 import '../features/elderly/data/api/activity_data_api_service.dart';
 
 class ElderlyInterface extends StatefulWidget {
+  final String patientId;
   final VoidCallback? onSignOut;
 
-  const ElderlyInterface({super.key, this.onSignOut});
+  const ElderlyInterface({super.key, required this.patientId, this.onSignOut});
 
   @override
   State<ElderlyInterface> createState() => _ElderlyInterfaceState();
@@ -45,20 +46,18 @@ class ElderlyInterface extends StatefulWidget {
 
 class _ElderlyInterfaceState extends State<ElderlyInterface>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-      
   final WatchPayloadService watchPayloadService = WatchPayloadService();
 
-  final HealthEventApiService healthEventApiService = HealthEventApiService(baseUrl: AppConfig.backendBaseUrl, patientId: AppConfig.testPatientId, );
+  late final HealthEventApiService healthEventApiService;
 
-  final ActivityDataApiService activityDataApiService = ActivityDataApiService(baseUrl:AppConfig.backendBaseUrl, patientId:AppConfig.testPatientId,);
+  late final ActivityDataApiService activityDataApiService;
 
   final UploadQueueService uploadQueueService = UploadQueueService();
 
   final ReminderApiDataSource reminderService = ReminderApiDataSource();
 
-  final HealthConnectRefreshService healthConnectRefreshService = HealthConnectRefreshService();
-
-
+  final HealthConnectRefreshService healthConnectRefreshService =
+      HealthConnectRefreshService();
 
   Timer? _stepsRefreshTimer;
 
@@ -96,6 +95,16 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   void initState() {
     super.initState();
 
+    healthEventApiService = HealthEventApiService(
+      baseUrl: AppConfig.backendBaseUrl,
+      patientId: widget.patientId,
+    );
+
+    activityDataApiService = ActivityDataApiService(
+      baseUrl: AppConfig.backendBaseUrl,
+      patientId: widget.patientId,
+    );
+
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
 
@@ -109,7 +118,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     deviceStatusApiService = DeviceStatusApiService(
       baseUrl: AppConfig.backendBaseUrl,
-      patientId: AppConfig.testPatientId,
+      patientId: widget.patientId,
     );
 
     phoneHeartbeatService = PhoneHeartbeatService(
@@ -119,6 +128,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     fifoUploadService = FifoUploadService(
       uploadQueueService: uploadQueueService,
       healthEventApiService: healthEventApiService,
+      expectedPatientId: widget.patientId,
     );
 
     watchListenerController = WatchListenerController(
@@ -192,13 +202,13 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     watchListenerController.start();
 
-    unawaited(watchPayloadService.requestWatchStatus(),);
+    unawaited(watchPayloadService.requestWatchStatus());
 
     phoneHeartbeatService.start();
 
     _startStepsRefreshTimer();
 
-      _processPendingQueue();
+    _processPendingQueue();
   }
 
   Future<void> _processPendingQueue() async {
@@ -209,48 +219,36 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     await fifoUploadService.processQueue();
   }
 
-@override
-void didChangeAppLifecycleState(
-  AppLifecycleState state,
-) {
-  if (state == AppLifecycleState.resumed) {
-    debugPrint(
-      'App resumed. Refreshing Health Connect '
-      'data and processing pending queue.',
-    );
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint(
+        'App resumed. Refreshing Health Connect '
+        'data and processing pending queue.',
+      );
 
-    unawaited(
-      healthConnectRefreshService
-          .refreshSteps(),
-    );
+      unawaited(healthConnectRefreshService.refreshSteps());
 
-    unawaited(
-      healthConnectRefreshService
-          .refreshSleep(),
-    );
+      unawaited(healthConnectRefreshService.refreshSleep());
 
-    unawaited(
-      _processPendingQueue(),
-    );
+      unawaited(_processPendingQueue());
 
-    _startStepsRefreshTimer();
+      _startStepsRefreshTimer();
 
-    return;
+      return;
+    }
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      debugPrint(
+        'App left foreground. '
+        'Stopping foreground steps timer.',
+      );
+
+      _stepsRefreshTimer?.cancel();
+      _stepsRefreshTimer = null;
+    }
   }
-
-  if (
-      state == AppLifecycleState.paused ||
-      state == AppLifecycleState.detached
-  ) {
-    debugPrint(
-      'App left foreground. '
-      'Stopping foreground steps timer.',
-    );
-
-    _stepsRefreshTimer?.cancel();
-    _stepsRefreshTimer = null;
-  }
-}
 
   Future<void> _loadReminders() async {
     try {
@@ -284,7 +282,7 @@ void didChangeAppLifecycleState(
     _unsubscribeDueReminders?.call();
 
     phoneHeartbeatService.stop();
-    
+
     _tabController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
@@ -305,28 +303,22 @@ void didChangeAppLifecycleState(
   }
 
   void _startStepsRefreshTimer() {
-  _stepsRefreshTimer?.cancel();
+    _stepsRefreshTimer?.cancel();
 
-  debugPrint(
-    'Starting 15-minute Health Connect '
-    'steps refresh timer.',
-  );
+    debugPrint(
+      'Starting 15-minute Health Connect '
+      'steps refresh timer.',
+    );
 
-  _stepsRefreshTimer = Timer.periodic(
-    const Duration(minutes: 15),
-    (_) {
+    _stepsRefreshTimer = Timer.periodic(const Duration(minutes: 15), (_) {
       debugPrint(
         '15-minute Health Connect '
         'steps refresh triggered.',
       );
 
-      unawaited(
-        healthConnectRefreshService
-            .refreshSteps(),
-      );
-    },
-  );
-}
+      unawaited(healthConnectRefreshService.refreshSteps());
+    });
+  }
 
   Future<void> _openDueReminder(ReminderDueNotification event) async {
     if (!mounted) return;
@@ -511,5 +503,4 @@ void didChangeAppLifecycleState(
       ),
     );
   }
-
 }
