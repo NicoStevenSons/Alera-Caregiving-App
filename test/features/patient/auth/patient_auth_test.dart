@@ -246,7 +246,7 @@ void main() {
       );
       final login = session.accessPatient(accessCode: 'code');
       await session.logout();
-      reply.complete(http.Response('{"access_token":"late-token"}', 200));
+      reply.complete(http.Response(patientLoginResponse, 200));
       await login;
       expect(session.status, CaregiverSessionStatus.unauthenticated);
       expect(await store.readSession(), isNull);
