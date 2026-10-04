@@ -12,6 +12,7 @@ import '../Services/watch_payload_service.dart';
 
 import '../config/app_config.dart';
 
+import '../features/elderly/domain/elderly_home_view_state.dart';
 import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/presentation/elderly_home_page.dart';
 import '../features/elderly/presentation/elderly_more_page.dart';
@@ -61,6 +62,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   List<ElderlyReminder> reminders = [];
 
   bool remindersLoading = true;
+  String? remindersError;
 
   final Set<String> _busyReminderIds = <String>{};
 
@@ -247,6 +249,13 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   }
 
   Future<void> _loadReminders() async {
+    if (mounted) {
+      setState(() {
+        remindersLoading = true;
+        remindersError = null;
+      });
+    }
+
     try {
       final result = await reminderService.fetchOccurrences();
 
@@ -257,6 +266,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             .map(ElderlyReminder.fromOccurrence)
             .toList(growable: false);
         remindersLoading = false;
+        remindersError = null;
       });
     } catch (error) {
       debugPrint('Failed to load reminders: $error');
@@ -265,6 +275,9 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
       setState(() {
         remindersLoading = false;
+        remindersError = error is ReminderApiFailure
+            ? error.message
+            : 'Unable to load reminders. Please try again.';
       });
     }
   }
@@ -427,11 +440,19 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           TickerMode(
             enabled: _selectedIndex == 0,
             child: ElderlyHomePage(
-              heartRateData: heartRateData,
-              spo2Data: spo2Data,
-              stepsData: stepsData,
-              sleepData: sleepData,
+              state: ElderlyHomeViewState(
+                heartRate: heartRateData,
+                spo2: spo2Data,
+                steps: stepsData,
+                sleep: sleepData,
+                deviceStatus: deviceStatusData,
+                reminders: reminders,
+                remindersLoading: remindersLoading,
+                remindersError: remindersError,
+              ),
               uploadQueueService: uploadQueueService,
+              onReminderTap: _showReminderDetails,
+              onRetryReminders: _loadReminders,
             ),
           ),
           TickerMode(
