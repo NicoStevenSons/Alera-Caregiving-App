@@ -23,6 +23,7 @@ class HomeReminderController extends ChangeNotifier {
   String? _patientId;
   DateTime? _dayStart;
   bool _loading = false;
+  bool _hasLoaded = false;
   bool _disposed = false;
   String? _errorMessage;
   int _revision = 0;
@@ -30,6 +31,7 @@ class HomeReminderController extends ChangeNotifier {
   List<ReminderOccurrence> get occurrences => List.unmodifiable(_occurrences);
   String? get patientId => _patientId;
   bool get loading => _loading;
+  bool get hasLoaded => _hasLoaded;
   String? get errorMessage => _errorMessage;
 
   Future<void> ensureLoaded(String patientId) async {
@@ -44,9 +46,13 @@ class HomeReminderController extends ChangeNotifier {
     final revision = ++_revision;
     final start = manilaDayStartUtc(_now());
     final end = start.add(const Duration(days: 1));
+    final sameContext = _patientId == patientId && _dayStart == start;
+    if (!sameContext) {
+      _occurrences = const [];
+      _hasLoaded = false;
+    }
     _patientId = patientId;
     _dayStart = start;
-    _occurrences = const [];
     _loading = true;
     _errorMessage = null;
     notifyListeners();
@@ -105,6 +111,7 @@ class HomeReminderController extends ChangeNotifier {
     } finally {
       if (!_disposed && revision == _revision) {
         _loading = false;
+        _hasLoaded = true;
         notifyListeners();
       }
     }
@@ -120,6 +127,7 @@ class HomeReminderController extends ChangeNotifier {
     ++_revision;
     _patientId = null;
     _dayStart = null;
+    _hasLoaded = false;
     _occurrences = const [];
     _loading = false;
     _errorMessage = null;

@@ -170,9 +170,44 @@ class _CaregiverShellState extends State<CaregiverShell>
     );
   }
 
+  bool _patientSelectionRestored = false;
+
+  CareRecipient? get _selectedDashboardPatient {
+    final controller = _patientController;
+    if (controller != null &&
+        controller.state != CaregiverPatientListState.success) {
+      return null;
+    }
+    final patients = _selectionPatients;
+    if (patients.isEmpty) return null;
+    return patients.firstWhere(
+      (patient) => patient.id == _selectedPatientId,
+      orElse: () => patients.first,
+    );
+  }
+
+  void _prepareHomeReminders() {
+    if (!_patientSelectionRestored) return;
+    final patient = _selectedDashboardPatient;
+    final controller = _homeReminderController;
+    if (patient == null || !patient.backendBacked || controller == null) return;
+    unawaited(controller.ensureLoaded(patient.id));
+  }
+
+  bool get _dashboardNeedsInitialData {
+    final patient = _selectedDashboardPatient;
+    if (patient == null || !patient.backendBacked) return false;
+    if (!_patientSelectionRestored || !_alertController.hasLoaded) return true;
+    final reminders = _homeReminderController;
+    return reminders != null &&
+        (reminders.patientId != patient.id ||
+            (reminders.loading && !reminders.hasLoaded));
+  }
+
   Future<void> _restorePatientSelection() async {
     await _patientSelection.restore();
     if (!mounted) return;
+    _patientSelectionRestored = true;
     _patientsChanged();
   }
 
@@ -182,6 +217,7 @@ class _CaregiverShellState extends State<CaregiverShell>
         .map((patient) => patient.id)
         .toList();
     if (_patientSelection.select(patientId, ids) && mounted) {
+      _prepareHomeReminders();
       setState(() {});
     }
   }
@@ -189,6 +225,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   void _patientsChanged() {
     if (!mounted) return;
     _reconcilePatientSelection();
+    _prepareHomeReminders();
     setState(() {});
   }
 
@@ -558,8 +595,10 @@ class _CaregiverShellState extends State<CaregiverShell>
   Widget build(BuildContext context) {
     final patientController = _patientController;
 
-    if (patientController != null &&
-        patientController.state == CaregiverPatientListState.initialLoading) {
+    if ((patientController != null &&
+            patientController.state ==
+                CaregiverPatientListState.initialLoading) ||
+        _dashboardNeedsInitialData) {
       return const AleraStartupScreen();
     }
     final SystemUiOverlayStyle systemBarStyle = _selectedIndex == 0
@@ -795,17 +834,6 @@ class _CaregiverShellState extends State<CaregiverShell>
     VoidCallback? onSelectPatient,
   }) {
     final reminderController = _homeReminderController;
-    if (patient.backendBacked && reminderController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final patients = _selectionPatients;
-        final currentId =
-            _selectedPatientId ?? (patients.isEmpty ? null : patients.first.id);
-        if (currentId == patient.id) {
-          unawaited(reminderController.ensureLoaded(patient.id));
-        }
-      });
-    }
     return CaregiverHomePage(
       careRecipient: patient,
       showDemoBanner: showDemo,
@@ -817,11 +845,7 @@ class _CaregiverShellState extends State<CaregiverShell>
           )
           .toList(),
       reminders: _homeReminderItems(patient),
-      remindersLoading:
-          patient.backendBacked &&
-          reminderController != null &&
-          (reminderController.patientId != patient.id ||
-              reminderController.loading),
+      remindersLoading: false,
       remindersError: !patient.backendBacked
           ? null
           : reminderController == null

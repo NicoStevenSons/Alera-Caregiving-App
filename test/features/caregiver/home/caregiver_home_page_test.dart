@@ -86,7 +86,7 @@ void main() {
   ) async {
     final source = _HomePatientSource([_patient('Backend Ada')]);
     final controller = CaregiverPatientController(dataSource: source);
-    await _pumpControlledHome(tester, controller);
+    await _pumpControlledHome(tester, controller, settle: false);
     expect(find.byType(AleraStartupScreen), findsOneWidget);
 
     await controller.load();
@@ -126,6 +126,7 @@ void main() {
       ),
     );
 
+    await tester.pumpAndSettle();
     await tester.tap(find.text('First Patient'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Second Patient').last);
@@ -215,7 +216,7 @@ void main() {
 
     source.items = [_patient('Updated Patient')];
     await controller.load(refresh: true);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Updated Patient'), findsOneWidget);
     expect(source.listCalls, 2);
   });
@@ -223,15 +224,19 @@ void main() {
 
 Future<void> _pumpControlledHome(
   WidgetTester tester,
-  CaregiverPatientController controller,
-) => tester.pumpWidget(
-  MaterialApp(
-    home: CaregiverShell(
-      repository: const MockCaregiverRepository(),
-      patientController: controller,
+  CaregiverPatientController controller, {
+  bool settle = true,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: CaregiverShell(
+        repository: const MockCaregiverRepository(),
+        patientController: controller,
+      ),
     ),
-  ),
-);
+  );
+  if (settle) await tester.pumpAndSettle();
+}
 
 class _HomePatientSource implements CaregiverPatientReadDataSource {
   List<PatientListItemDto> items;
