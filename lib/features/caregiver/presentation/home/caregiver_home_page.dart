@@ -9,6 +9,7 @@ import '../../domain/models/caregiver_nudge.dart';
 import '../../../../services/patient_contact_actions.dart';
 import 'widgets/home_alerts_preview.dart';
 import 'widgets/home_health_summary.dart';
+import 'widgets/home_loading_skeleton.dart';
 import 'widgets/home_insights_card.dart';
 import 'widgets/home_patient_header.dart';
 import 'widgets/home_reminders_preview.dart';
@@ -17,6 +18,7 @@ class CaregiverHomePage extends StatelessWidget {
   final CareRecipient careRecipient;
   final List<CaregiverAlert> alerts;
   final List<CaregiverReminder> reminders;
+  final bool dataLoading;
   final bool remindersLoading;
   final String? remindersError;
   final VoidCallback? onRetryReminders;
@@ -35,6 +37,7 @@ class CaregiverHomePage extends StatelessWidget {
     required this.careRecipient,
     required this.alerts,
     required this.reminders,
+    this.dataLoading = false,
     this.remindersLoading = false,
     this.remindersError,
     this.onRetryReminders,
@@ -109,45 +112,51 @@ class CaregiverHomePage extends StatelessWidget {
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          child: Column(
-            children: [
-              HomeHealthSummary(
-                careRecipient: careRecipient,
-                onMetricTap: (metric) {
-                  if (onMetricTap != null) {
-                    onMetricTap!(metric);
-                    return;
-                  }
+        if (dataLoading)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: HomeLoadingSkeleton(),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: Column(
+              children: [
+                HomeHealthSummary(
+                  careRecipient: careRecipient,
+                  onMetricTap: (metric) {
+                    if (onMetricTap != null) {
+                      onMetricTap!(metric);
+                      return;
+                    }
 
-                  _mock(context, '$metric history');
-                },
-              ),
-              const SizedBox(height: 12),
-              HomeAlertsPreview(
-                alerts: alerts,
-                onViewAll: onViewAllAlerts,
-                onAlertTap: onAlertTap,
-                onMarkAsSeen: onMarkAsSeen,
-              ),
-              const SizedBox(height: 12),
-              HomeInsightsCard(
-                snapshot: careRecipient.healthSnapshot,
-                backendBacked: careRecipient.backendBacked,
-              ),
-              const SizedBox(height: 12),
-              HomeRemindersPreview(
-                reminders: reminders,
-                onViewAll: onViewAllReminders,
-                loading: remindersLoading,
-                errorMessage: remindersError,
-                onRetry: onRetryReminders,
-                onAction: (_) => onViewAllReminders(),
-              ),
-            ],
+                    _mock(context, '$metric history');
+                  },
+                ),
+                const SizedBox(height: 12),
+                HomeAlertsPreview(
+                  alerts: alerts,
+                  onViewAll: onViewAllAlerts,
+                  onAlertTap: onAlertTap,
+                  onMarkAsSeen: onMarkAsSeen,
+                ),
+                const SizedBox(height: 12),
+                HomeInsightsCard(
+                  snapshot: careRecipient.healthSnapshot,
+                  backendBacked: careRecipient.backendBacked,
+                ),
+                const SizedBox(height: 12),
+                HomeRemindersPreview(
+                  reminders: reminders,
+                  onViewAll: onViewAllReminders,
+                  loading: remindersLoading,
+                  errorMessage: remindersError,
+                  onRetry: onRetryReminders,
+                  onAction: (_) => onViewAllReminders(),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

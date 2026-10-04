@@ -1,3 +1,4 @@
+import 'presentation/home/widgets/home_loading_skeleton.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -170,6 +171,7 @@ class _CaregiverShellState extends State<CaregiverShell>
     );
   }
 
+  bool _dashboardStartupComplete = false;
   bool _patientSelectionRestored = false;
 
   CareRecipient? get _selectedDashboardPatient {
@@ -595,12 +597,15 @@ class _CaregiverShellState extends State<CaregiverShell>
   Widget build(BuildContext context) {
     final patientController = _patientController;
 
-    if ((patientController != null &&
-            patientController.state ==
-                CaregiverPatientListState.initialLoading) ||
-        _dashboardNeedsInitialData) {
+    if (!_dashboardStartupComplete &&
+        ((patientController != null &&
+                patientController.state ==
+                    CaregiverPatientListState.initialLoading) ||
+            _dashboardNeedsInitialData)) {
       return const AleraStartupScreen();
     }
+    _dashboardStartupComplete = true;
+
     final SystemUiOverlayStyle systemBarStyle = _selectedIndex == 0
         ? const SystemUiOverlayStyle(
             statusBarColor: Color(0xFFC3A7F5),
@@ -777,10 +782,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       animation: controller,
       builder: (context, _) {
         if (controller.state == CaregiverPatientListState.initialLoading) {
-          return const Center(
-            key: Key('home-patient-loading'),
-            child: CircularProgressIndicator(),
-          );
+          return const HomeLoadingSkeleton();
         }
         if (controller.state == CaregiverPatientListState.empty) {
           return const _HomePatientState(
@@ -836,6 +838,7 @@ class _CaregiverShellState extends State<CaregiverShell>
     final reminderController = _homeReminderController;
     return CaregiverHomePage(
       careRecipient: patient,
+      dataLoading: _dashboardNeedsInitialData,
       showDemoBanner: showDemo,
       alerts: _alertController.alerts
           .where(

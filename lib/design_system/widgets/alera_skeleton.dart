@@ -16,13 +16,15 @@ class AleraSkeletonBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: AleraSkeletonColors.placeholder,
-          borderRadius: BorderRadius.circular(height / 2),
+    return _SkeletonPulse(
+      child: FractionallySizedBox(
+        widthFactor: widthFactor,
+        child: Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: AleraSkeletonColors.placeholder,
+            borderRadius: BorderRadius.circular(height / 2),
+          ),
         ),
       ),
     );
@@ -36,12 +38,14 @@ class AleraSkeletonCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: AleraSkeletonColors.placeholder,
-        shape: BoxShape.circle,
+    return _SkeletonPulse(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: AleraSkeletonColors.placeholder,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
@@ -61,13 +65,70 @@ class AleraSkeletonBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AleraSkeletonColors.placeholder,
-        borderRadius: BorderRadius.circular(borderRadius),
+    return _SkeletonPulse(
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AleraSkeletonColors.placeholder,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
       ),
     );
+  }
+}
+
+class _SkeletonPulse extends StatefulWidget {
+  final Widget child;
+
+  const _SkeletonPulse({required this.child});
+
+  @override
+  State<_SkeletonPulse> createState() => _SkeletonPulseState();
+}
+
+class _SkeletonPulseState extends State<_SkeletonPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  bool _reduceMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _opacity = _controller.drive(
+      Tween<double>(
+        begin: 1,
+        end: 0.45,
+      ).chain(CurveTween(curve: Curves.easeInOut)),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (_reduceMotion) {
+      _controller.stop();
+      _controller.value = 0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_reduceMotion) return widget.child;
+    return FadeTransition(opacity: _opacity, child: widget.child);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
