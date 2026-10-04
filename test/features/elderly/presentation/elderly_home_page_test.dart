@@ -24,6 +24,46 @@ void main() {
     );
   });
 
+  testWidgets('disconnected monitoring card opens device status', (
+    tester,
+  ) async {
+    var opened = false;
+
+    await _pumpHome(
+      tester,
+      _state(deviceStatus: _device(connected: false)),
+      onOpenDeviceStatus: () => opened = true,
+    );
+
+    expect(find.text('Smartwatch disconnected'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('elderly-monitoring-status')));
+    await tester.pump();
+
+    expect(opened, isTrue);
+  });
+
+  testWidgets('connected monitoring card remains informational', (
+    tester,
+  ) async {
+    var opened = false;
+
+    await _pumpHome(
+      tester,
+      _state(deviceStatus: _device(connected: true, isWorn: true)),
+      onOpenDeviceStatus: () => opened = true,
+    );
+
+    expect(find.text('Monitoring active'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
+
+    await tester.tap(find.byKey(const Key('elderly-monitoring-status')));
+    await tester.pump();
+
+    expect(opened, isFalse);
+  });
+
   testWidgets('shows reminder error separately and retries', (tester) async {
     var retries = 0;
 
@@ -70,6 +110,7 @@ Future<void> _pumpHome(
   ElderlyHomeViewState state, {
   VoidCallback? onRetry,
   ValueChanged<ElderlyReminder>? onReminderTap,
+  VoidCallback? onOpenDeviceStatus,
 }) async {
   tester.view.physicalSize = const Size(800, 1600);
   tester.view.devicePixelRatio = 1;
@@ -84,6 +125,7 @@ Future<void> _pumpHome(
           uploadQueueService: UploadQueueService(),
           onRetryReminders: onRetry,
           onReminderTap: onReminderTap,
+          onOpenDeviceStatus: onOpenDeviceStatus,
         ),
       ),
     ),
@@ -94,16 +136,30 @@ Future<void> _pumpHome(
 ElderlyHomeViewState _state({
   List<ElderlyReminder> reminders = const [],
   String? remindersError,
+  DeviceStatusData? deviceStatus,
 }) {
   return ElderlyHomeViewState(
     heartRate: const HeartRateData(bpm: null, status: null, measuredAt: null),
     spo2: SpO2Data.empty(),
     steps: StepsData.empty(),
     sleep: SleepData.empty(),
-    deviceStatus: DeviceStatusData.empty(),
+    deviceStatus: deviceStatus ?? DeviceStatusData.empty(),
     reminders: reminders,
     remindersLoading: false,
     remindersError: remindersError,
+  );
+}
+
+DeviceStatusData _device({bool? connected, bool? isWorn}) {
+  return DeviceStatusData(
+    batteryPercent: null,
+    deviceName: null,
+    deviceModel: null,
+    connectedToPhone: connected,
+    connectedPhoneName: null,
+    isCharging: null,
+    measuredAt: null,
+    isWorn: isWorn,
   );
 }
 

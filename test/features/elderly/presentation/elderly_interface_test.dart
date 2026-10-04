@@ -27,6 +27,19 @@ void main() {
     );
     expect(helpButton.onPressed, isNull);
 
+    await tester.tap(find.byKey(const Key('elderly-monitoring-status')));
+    await tester.pump();
+
+    navigation = tester.widget(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 2);
+    expect(find.byKey(const Key('elderly-sign-out')), findsOneWidget);
+
+    await tester.tap(find.text('Home'));
+    await tester.pump();
+
+    navigation = tester.widget(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 0);
+
     await tester.tap(find.text('Reminders'));
     await tester.pump();
 

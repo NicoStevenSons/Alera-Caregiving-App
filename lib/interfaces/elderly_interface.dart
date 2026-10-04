@@ -453,6 +453,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
               uploadQueueService: uploadQueueService,
               onReminderTap: _showReminderDetails,
               onRetryReminders: _loadReminders,
+              onOpenDeviceStatus: () {
+                if (_selectedIndex == 2) return;
+                setState(() => _selectedIndex = 2);
+              },
             ),
           ),
           TickerMode(

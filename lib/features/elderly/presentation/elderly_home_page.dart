@@ -16,6 +16,7 @@ class ElderlyHomePage extends StatelessWidget {
     this.onRequestHelp,
     this.onReminderTap,
     this.onRetryReminders,
+    this.onOpenDeviceStatus,
   });
 
   final ElderlyHomeViewState state;
@@ -23,6 +24,7 @@ class ElderlyHomePage extends StatelessWidget {
   final VoidCallback? onRequestHelp;
   final ValueChanged<ElderlyReminder>? onReminderTap;
   final VoidCallback? onRetryReminders;
+  final VoidCallback? onOpenDeviceStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,10 @@ class ElderlyHomePage extends StatelessWidget {
       key: const PageStorageKey<String>('elderly-home'),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
-        _MonitoringStatusCard(state: state.monitoringState),
+        _MonitoringStatusCard(
+          state: state.monitoringState,
+          onOpenDeviceStatus: onOpenDeviceStatus,
+        ),
         const SizedBox(height: 16),
         Semantics(
           label: 'Request help from your caregiver',
@@ -90,9 +95,13 @@ class ElderlyHomePage extends StatelessWidget {
 }
 
 class _MonitoringStatusCard extends StatelessWidget {
-  const _MonitoringStatusCard({required this.state});
+  const _MonitoringStatusCard({
+    required this.state,
+    required this.onOpenDeviceStatus,
+  });
 
   final ElderlyMonitoringState state;
+  final VoidCallback? onOpenDeviceStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -119,12 +128,17 @@ class _MonitoringStatusCard extends StatelessWidget {
       ),
     };
 
+    final actionable =
+        state != ElderlyMonitoringState.connected && onOpenDeviceStatus != null;
+
     return Card(
       key: const Key('elderly-monitoring-status'),
       child: ListTile(
+        onTap: actionable ? onOpenDeviceStatus : null,
         leading: Icon(icon),
         title: Text(title),
         subtitle: Text(message),
+        trailing: actionable ? const Icon(Icons.chevron_right_rounded) : null,
       ),
     );
   }
