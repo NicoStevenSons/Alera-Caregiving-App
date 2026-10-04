@@ -1,16 +1,16 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../../design_system/alera_spacing.dart';
-import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
+import 'widgets/patient_access_views.dart';
+
+export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
 enum PatientAccessSetupResult { unchanged, changed }
 
@@ -45,6 +45,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
   bool _foreground = true;
   bool _expired = false;
   bool _connected = false;
+  String? _error;
 
   @override
   void initState() {
@@ -128,41 +129,28 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
   }
 
   Future<void> _issue({required bool replacing}) async {
-    if (_issuing) return;
+    if (_issuing || _connected) return;
     if (replacing) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            _status.status == PatientAccessState.connected
-                ? 'Generate a new login code?'
-                : 'Replace invitation?',
-          ),
-          content: Text(
-            _status.status == PatientAccessState.connected
-                ? 'Use this when ${widget.patientName} needs to sign in on a '
-                      'new or reset phone. Any older unused code will stop working.'
-                : 'The previous unused code will stop working.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                _status.status == PatientAccessState.connected
-                    ? 'Generate code'
-                    : 'Replace invitation',
-              ),
-            ),
-          ],
-        ),
+      final alreadyConnected = _status.status == PatientAccessState.connected;
+      final confirmed = await showAleraConfirmationDialog(
+        context,
+        icon: Icons.autorenew,
+        title: alreadyConnected
+            ? 'Generate a new login code?'
+            : 'Replace invitation?',
+        message: alreadyConnected
+            ? 'Use this when ${widget.patientName} needs to sign in on a '
+                  'new or reset phone. Any older unused code will stop working.'
+            : 'The previous unused code will stop working.',
+        cancelLabel: 'Cancel',
+        confirmLabel: alreadyConnected ? 'Generate code' : 'Replace invitation',
       );
       if (confirmed != true || !mounted) return;
     }
-    setState(() => _issuing = true);
+    setState(() {
+      _issuing = true;
+      _error = null;
+    });
     try {
       final issued = await widget.dataSource.createAccessCode(widget.patientId);
       if (!mounted) return;
@@ -178,6 +166,14 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         _expired = false;
       });
       _startPolling();
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _error = e is CaregiverPatientApiFailure
+              ? e.message
+              : 'Unable to issue an access code. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _issuing = false);
     }
@@ -190,94 +186,165 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         : PatientAccessSetupResult.unchanged,
   );
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Patient access')),
-    body: SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(AleraSpacing.medium),
-        children: [
-          Text('Connect patient access', style: AleraTypography.pageTitle),
-          if (_issued != null) ...[
-            const Text('Valid for 24 hours and usable only once.'),
-            SelectableText(
-              _issued!.accessCode,
-              key: const Key('issued-access-code'),
-              style: AleraTypography.pageTitle,
-            ),
-            Text('Expires ${_format(_issued!.expiresAt)}'),
-            QrImageView(
-              key: const Key('access-code-qr'),
-              data: buildPatientAccessQrPayload(
-                accessCode: _issued!.accessCode,
-              ),
-              size: 220,
-            ),
-            AleraButton(
-              label: 'Copy',
-              onPressed: () =>
-                  Clipboard.setData(ClipboardData(text: _issued!.accessCode)),
-            ),
-            AleraButton(
-              label: 'Share',
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(
-                  text:
-                      '${widget.patientName}\nAccess code: ${_issued!.accessCode}',
-                ),
-              ),
-            ),
-          ] else if (_connected ||
-              _status.status == PatientAccessState.connected) ...[
-            Text('${widget.patientName}’s Alera access is connected'),
-            AleraButton(
-              label: _issuing ? 'Generating…' : 'Generate new login code',
-              onPressed: _issuing ? null : () => _issue(replacing: true),
-            ),
-          ] else if (_expired) ...[
-            const Text('The invitation expired.'),
-            AleraButton(
-              label: _issuing ? 'Generating…' : 'Generate access code',
-              onPressed: _issuing ? null : () => _issue(replacing: false),
-            ),
-          ] else if (_status.status == PatientAccessState.invitePending) ...[
-            const Text('Invitation pending'),
-            if (_status.pendingExpiresAt != null)
-              Text('Invitation expires ${_format(_status.pendingExpiresAt!)}'),
-            AleraButton(
-              label: _issuing ? 'Replacing…' : 'Replace invitation',
-              onPressed: _issuing ? null : () => _issue(replacing: true),
-            ),
-          ] else ...[
-            const Text(
-              'Generate a one-time code for the patient to scan or enter.',
-            ),
-            if (_status.status == PatientAccessState.notConnected)
-              AleraButton(
-                label: _issuing ? 'Generating…' : 'Generate access code',
-                onPressed: _issuing ? null : () => _issue(replacing: false),
-              )
-            else
-              const Text('Patient access status is unavailable.'),
-          ],
-          AleraButton(
-            label: 'Done',
-            variant: AleraButtonVariant.secondary,
-            onPressed: _done,
-          ),
-        ],
-      ),
+  void _share(PatientAccessCodeResponse issued) => SharePlus.instance.share(
+    ShareParams(
+      text:
+          '${widget.patientName}\nAccess code: ${issued.accessCode}\n'
+          'Expires ${formatAccessExpiry(issued.expiresAt)}',
     ),
   );
-}
 
-String _format(DateTime value) {
-  final local = value.toLocal();
-  return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-}
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> content;
+    Widget? action;
 
-String buildPatientAccessQrPayload({required String accessCode}) => jsonEncode({
-  'type': 'alera_patient_access',
-  'version': 2,
-  'access_code': accessCode,
-});
+    if (_connected) {
+      content = [
+        PatientAccessNoticeContent(
+          iconAsset:
+              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          title: '${widget.patientName}’s Alera access is connected',
+          message: 'The patient can now sign in with their Alera account.',
+        ),
+      ];
+    } else if (_status.status == PatientAccessState.connected &&
+        _issued == null) {
+      // Reachable when this page opens for a patient who is already
+      // connected (e.g. from the patient detail page's "Generate login
+      // code" action) rather than becoming connected during this session.
+      content = [
+        PatientAccessNoticeContent(
+          iconAsset:
+              'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+          title: '${widget.patientName}’s Alera access is connected',
+          message:
+              'Generate a new one-time code if the patient needs to sign in again.',
+        ),
+      ];
+      action = _primaryAction(
+        _issuing ? 'Generating…' : 'Generate new login code',
+        _issuing ? null : () => _issue(replacing: true),
+      );
+    } else if (_expired) {
+      content = const [
+        PatientAccessNoticeContent(
+          icon: Icons.timer_off_outlined,
+          title: 'The invitation expired.',
+          message: 'Generate a new code so the patient can connect.',
+        ),
+      ];
+      action = _primaryAction(
+        _issuing ? 'Generating…' : 'Generate access code',
+        _issuing ? null : () => _issue(replacing: false),
+      );
+    } else if (_issued != null) {
+      final issued = _issued!;
+      content = [
+        PatientAccessCodeContent(
+          accessCode: issued.accessCode,
+          expiresAt: issued.expiresAt,
+          onShare: () => _share(issued),
+        ),
+      ];
+    } else if (_status.status == PatientAccessState.invitePending) {
+      content = [
+        PatientAccessNoticeContent(
+          icon: Icons.schedule_outlined,
+          title: 'Invitation pending',
+          message: 'Waiting for the patient to use their access code.',
+          detail: _status.pendingExpiresAt == null
+              ? null
+              : 'Invitation expires ${formatAccessExpiry(_status.pendingExpiresAt!)}',
+        ),
+      ];
+      action = _primaryAction(
+        _issuing ? 'Replacing…' : 'Replace invitation',
+        _issuing ? null : () => _issue(replacing: true),
+      );
+    } else if (_status.status == PatientAccessState.notConnected) {
+      content = const [PatientAccessIntroContent()];
+      action = _primaryAction(
+        _issuing ? 'Generating…' : 'Generate access code',
+        _issuing ? null : () => _issue(replacing: false),
+      );
+    } else {
+      content = const [
+        PatientAccessNoticeContent(
+          icon: Icons.help_outline,
+          title: 'Patient access status is unavailable.',
+          message: 'Try again in a moment.',
+        ),
+      ];
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 44,
+        leadingWidth: 56,
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                children: content,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        _error!,
+                        key: const Key('patient-access-error'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AleraColors.critical,
+                        ),
+                      ),
+                    ),
+                  if (action != null) ...[action, const SizedBox(height: 12)],
+                  AleraButton(
+                    label: 'Done',
+                    variant: action == null
+                        ? AleraButtonVariant.pill
+                        : AleraButtonVariant.lightPill,
+                    height: 44,
+                    onPressed: _done,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _primaryAction(String label, VoidCallback? onPressed) => AleraButton(
+    label: label,
+    variant: AleraButtonVariant.pill,
+    height: 44,
+    onPressed: onPressed,
+  );
+}

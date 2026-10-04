@@ -14,4 +14,7 @@ abstract final class AleraColors {
   static const Color critical = Color(0xFFFF6474);
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
+
+  // Light tinted surface used by setup and QR presentation.
+  static const Color surfaceTint = Color(0xFFF8F5FE);
 }

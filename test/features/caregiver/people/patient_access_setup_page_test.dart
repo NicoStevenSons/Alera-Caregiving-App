@@ -40,8 +40,7 @@ void main() {
     expect(source.issueCalls, 0);
 
     await tester.tap(find.text('Generate code'));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(source.issueCalls, 1);
     expect(find.byKey(const Key('issued-access-code')), findsOneWidget);
@@ -63,8 +62,8 @@ class _AccessSource implements CaregiverPatientDataSource {
       patientId: patientId,
       accessCode: 'RELOGIN-CODE',
       createdByUserId: 'caregiver-1',
-      createdAt: DateTime.utc(2026, 9, 19),
-      expiresAt: DateTime.utc(2026, 9, 20),
+      createdAt: DateTime.now().toUtc(),
+      expiresAt: DateTime.now().toUtc().add(const Duration(hours: 24)),
       status: 'ACTIVE',
     );
   }
