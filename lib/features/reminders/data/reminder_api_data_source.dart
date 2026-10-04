@@ -54,7 +54,18 @@ abstract interface class ReminderDataSource {
   });
 }
 
-class ReminderApiDataSource implements ReminderDataSource {
+abstract interface class ReminderDateRangeDataSource {
+  Future<ReminderPage<ReminderOccurrence>> fetchOccurrencesInRange({
+    required String patientId,
+    required DateTime fromAt,
+    required DateTime beforeAt,
+    int limit = 100,
+    int offset = 0,
+  });
+}
+
+class ReminderApiDataSource
+    implements ReminderDataSource, ReminderDateRangeDataSource {
   ReminderApiDataSource({
     http.Client? client,
     CaregiverSession? session,
@@ -68,6 +79,31 @@ class ReminderApiDataSource implements ReminderDataSource {
   final CaregiverSession _session;
   final Random _random;
   final Duration timeout;
+
+  @override
+  Future<ReminderPage<ReminderOccurrence>> fetchOccurrencesInRange({
+    required String patientId,
+    required DateTime fromAt,
+    required DateTime beforeAt,
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final decoded = await _request(
+      'GET',
+      '/api/v1/reminders',
+      query: {
+        'patient_id': patientId,
+        'from_at': fromAt.toUtc().toIso8601String(),
+        'before_at': beforeAt.toUtc().toIso8601String(),
+        'limit': '$limit',
+        'offset': '$offset',
+      },
+    );
+    return parseReminderPage(
+      decoded,
+      (json) => ReminderOccurrenceDto.fromJson(json).value,
+    );
+  }
 
   Future<ReminderOccurrence> fetchOccurrence(String occurrenceId) async {
     final decoded = await _request(

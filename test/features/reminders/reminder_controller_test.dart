@@ -1,9 +1,73 @@
+import 'dart:async';
 import 'package:alera/features/reminders/data/reminder_api_data_source.dart';
 import 'package:alera/features/reminders/data/reminder_controller.dart';
 import 'package:alera/features/reminders/domain/reminder_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('switch clears old reminders before the new request finishes', () async {
+    final source = _DelayedSource();
+    final controller = ReminderController(dataSource: source);
+    addTearDown(controller.dispose);
+    await controller.loadForPatient('patient-a');
+    source.pending['patient-b'] = Completer<ReminderPage<ReminderOccurrence>>();
+
+    final loading = controller.loadForPatient('patient-b');
+    expect(controller.loading, isTrue);
+    expect(controller.occurrences, isEmpty);
+    expect(controller.templates, isEmpty);
+
+    source.pending['patient-b']!.completeError(const FormatException());
+    await loading;
+    expect(controller.loading, isFalse);
+    expect(controller.occurrences, isEmpty);
+    expect(controller.templates, isEmpty);
+    expect(controller.errorMessage, isNotNull);
+  });
+
+  test('late reminder load cannot replace the newer patient data', () async {
+    final source = _DelayedSource();
+    final controller = ReminderController(dataSource: source);
+    addTearDown(controller.dispose);
+    source.pending['patient-a'] = Completer<ReminderPage<ReminderOccurrence>>();
+
+    final oldLoad = controller.loadForPatient('patient-a');
+    await controller.loadForPatient('patient-b');
+    source.pending['patient-a']!.complete(
+      ReminderPage(items: [_occurrence()], total: 1, limit: 100, offset: 0),
+    );
+    await oldLoad;
+
+    expect(controller.occurrences, isEmpty);
+    expect(controller.templates, isEmpty);
+    expect(controller.loading, isFalse);
+    expect(controller.errorMessage, isNull);
+  });
+
+  test('old action is ignored after switching away and back', () async {
+    final source = _DelayedSource();
+    final controller = ReminderController(dataSource: source);
+    addTearDown(controller.dispose);
+    await controller.loadForPatient('patient-a');
+    source.action = Completer<ReminderActionResult>();
+
+    final completing = controller.complete('occurrence-id');
+    expect(controller.isBusy('occurrence-id'), isTrue);
+    await controller.loadForPatient('patient-b');
+    await controller.loadForPatient('patient-a');
+
+    source.action!.complete(
+      ReminderActionResult(
+        reminder: _occurrence(status: ReminderOccurrenceStatus.completed),
+        idempotent: false,
+      ),
+    );
+    await completing;
+
+    expect(controller.occurrences.single.status, ReminderOccurrenceStatus.due);
+    expect(controller.isBusy('occurrence-id'), isFalse);
+  });
+
   test('loads templates and occurrences for the selected patient', () async {
     final source = _Source();
     final controller = ReminderController(dataSource: source);
@@ -195,3 +259,64 @@ ReminderTemplateDraft _draft() => const ReminderTemplateDraft(
   startDate: '2026-09-18',
   startTime: '08:00:00',
 );
+
+class _DelayedSource extends _Source {
+  final pending = <String, Completer<ReminderPage<ReminderOccurrence>>>{};
+  Completer<ReminderActionResult>? action;
+
+  @override
+  Future<ReminderPage<ReminderOccurrence>> fetchOccurrences({
+    String? patientId,
+    List<ReminderOccurrenceStatus> statuses = const [],
+    int limit = 100,
+    int offset = 0,
+  }) {
+    final delayed = pending[patientId];
+    if (delayed != null) return delayed.future;
+    if (patientId == 'patient-b') {
+      return Future.value(
+        ReminderPage(
+          items: const <ReminderOccurrence>[],
+          total: 0,
+          limit: limit,
+          offset: offset,
+        ),
+      );
+    }
+    return super.fetchOccurrences(
+      patientId: patientId,
+      statuses: statuses,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Future<ReminderPage<ReminderTemplate>> fetchTemplates(
+    String patientId, {
+    List<ReminderTemplateStatus> statuses = const [],
+    int limit = 100,
+    int offset = 0,
+  }) {
+    if (patientId == 'patient-b') {
+      return Future.value(
+        ReminderPage(
+          items: const <ReminderTemplate>[],
+          total: 0,
+          limit: limit,
+          offset: offset,
+        ),
+      );
+    }
+    return super.fetchTemplates(
+      patientId,
+      statuses: statuses,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Future<ReminderActionResult> complete(String occurrenceId, {String? note}) =>
+      action?.future ?? super.complete(occurrenceId, note: note);
+}

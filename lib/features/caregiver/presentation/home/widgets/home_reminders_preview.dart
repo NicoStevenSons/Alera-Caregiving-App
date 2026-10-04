@@ -10,12 +10,18 @@ class HomeRemindersPreview extends StatelessWidget {
   final List<CaregiverReminder> reminders;
   final VoidCallback onViewAll;
   final ValueChanged<String> onAction;
+  final bool loading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   const HomeRemindersPreview({
     super.key,
     required this.reminders,
     required this.onViewAll,
     required this.onAction,
+    this.loading = false,
+    this.errorMessage,
+    this.onRetry,
   });
 
   @override
@@ -26,7 +32,22 @@ class HomeRemindersPreview extends StatelessWidget {
       onActionPressed: onViewAll,
       child: Column(
         children: [
-          if (reminders.isEmpty)
+          if (loading)
+            const Padding(
+              key: Key('home-reminders-loading'),
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: LinearProgressIndicator(),
+            )
+          else if (errorMessage != null)
+            Column(
+              key: const Key('home-reminders-error'),
+              children: [
+                Text(errorMessage!, textAlign: TextAlign.center),
+                if (onRetry != null)
+                  TextButton(onPressed: onRetry, child: const Text('Retry')),
+              ],
+            )
+          else if (reminders.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Text('No reminders today'),
@@ -72,7 +93,11 @@ class _Reminder extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${missed ? 'Missed' : 'Upcoming'} ${_time(reminder.scheduledAt)}',
+            '${reminder.statusLabel ?? switch (reminder.status) {
+                  CaregiverReminderStatus.missed => 'Missed',
+                  CaregiverReminderStatus.upcoming => 'Upcoming',
+                  CaregiverReminderStatus.completed => 'Completed',
+                }} ${_time(reminder.scheduledAt)}',
             style: TextStyle(color: accent, fontWeight: FontWeight.w700),
           ),
           Text(
@@ -90,14 +115,9 @@ class _Reminder extends StatelessWidget {
             spacing: 7,
             runSpacing: 6,
             children: [
-              if (missed) ...[
-                _Button(label: 'Call', onTap: () => onAction('Call')),
-                _Button(label: 'Resolve', onTap: () => onAction('Resolve')),
-              ] else
-                _Button(label: 'Remind', onTap: () => onAction('Remind')),
               _Button(
-                label: 'View Details',
-                onTap: () => onAction('Reminder details'),
+                label: 'Open Reminders',
+                onTap: () => onAction('Open Reminders'),
               ),
             ],
           ),
@@ -107,7 +127,11 @@ class _Reminder extends StatelessWidget {
   }
 
   String _time(DateTime value) {
-    final int hour = value.hour > 12 ? value.hour - 12 : value.hour;
+    final int hour = value.hour == 0
+        ? 12
+        : value.hour > 12
+        ? value.hour - 12
+        : value.hour;
     return '$hour:${value.minute.toString().padLeft(2, '0')}${value.hour >= 12 ? 'PM' : 'AM'}';
   }
 }

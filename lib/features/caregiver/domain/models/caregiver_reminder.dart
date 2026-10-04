@@ -7,6 +7,7 @@ class CaregiverReminder {
   final String description;
   final DateTime scheduledAt;
   final CaregiverReminderStatus status;
+  final String? statusLabel;
 
   const CaregiverReminder({
     required this.id,
@@ -15,5 +16,6 @@ class CaregiverReminder {
     required this.description,
     required this.scheduledAt,
     required this.status,
+    this.statusLabel,
   });
 }

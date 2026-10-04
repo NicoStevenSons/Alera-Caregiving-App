@@ -17,6 +17,9 @@ class CaregiverHomePage extends StatelessWidget {
   final CareRecipient careRecipient;
   final List<CaregiverAlert> alerts;
   final List<CaregiverReminder> reminders;
+  final bool remindersLoading;
+  final String? remindersError;
+  final VoidCallback? onRetryReminders;
   final VoidCallback onViewAllAlerts;
   final VoidCallback onViewAllReminders;
   final ValueChanged<CaregiverAlert> onAlertTap;
@@ -32,6 +35,9 @@ class CaregiverHomePage extends StatelessWidget {
     required this.careRecipient,
     required this.alerts,
     required this.reminders,
+    this.remindersLoading = false,
+    this.remindersError,
+    this.onRetryReminders,
     required this.onViewAllAlerts,
     required this.onViewAllReminders,
     required this.onAlertTap,
@@ -134,7 +140,10 @@ class CaregiverHomePage extends StatelessWidget {
               HomeRemindersPreview(
                 reminders: reminders,
                 onViewAll: onViewAllReminders,
-                onAction: (action) => _mock(context, action),
+                loading: remindersLoading,
+                errorMessage: remindersError,
+                onRetry: onRetryReminders,
+                onAction: (_) => onViewAllReminders(),
               ),
             ],
           ),

@@ -9,6 +9,8 @@ void main() {
   testWidgets('newly created patient appears in People after Done', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         home: CaregiverShell(

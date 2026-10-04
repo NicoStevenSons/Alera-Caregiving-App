@@ -19,7 +19,12 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Alerts'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Alerts'),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.keyboard_arrow_down).first);
     await tester.pumpAndSettle();
@@ -54,7 +59,12 @@ void main() {
         home: CaregiverShell(repository: MockCaregiverRepository()),
       ),
     );
-    await tester.tap(find.text('Alerts'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Alerts'),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.keyboard_arrow_down).first);
     await tester.pumpAndSettle();

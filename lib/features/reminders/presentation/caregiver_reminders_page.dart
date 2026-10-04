@@ -43,7 +43,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     } else if (widget.initialPatientId != null &&
         widget.initialPatientId != oldWidget.initialPatientId &&
         ids.contains(widget.initialPatientId)) {
-      _selectPatient(widget.initialPatientId!);
+      _selectPatient(widget.initialPatientId!, notifySelection: false);
     }
   }
 
@@ -57,14 +57,16 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         : widget.patients.first.id;
     _patientId = selected;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.controller.loadForPatient(selected);
+      if (mounted && _patientId == selected) {
+        widget.controller.loadForPatient(selected);
+      }
     });
   }
 
-  void _selectPatient(String patientId) {
+  void _selectPatient(String patientId, {bool notifySelection = true}) {
     if (_patientId == patientId) return;
     setState(() => _patientId = patientId);
-    widget.onPatientSelected?.call(patientId);
+    if (notifySelection) widget.onPatientSelected?.call(patientId);
     widget.controller.loadForPatient(patientId);
   }
 
@@ -109,6 +111,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
                   ),
                   children: [
                     _PatientPicker(
+                      key: ValueKey(patientId),
                       patients: widget.patients,
                       patientId: patientId!,
                       onChanged: _selectPatient,
@@ -347,6 +350,7 @@ class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
 
 class _PatientPicker extends StatelessWidget {
   const _PatientPicker({
+    super.key,
     required this.patients,
     required this.patientId,
     required this.onChanged,

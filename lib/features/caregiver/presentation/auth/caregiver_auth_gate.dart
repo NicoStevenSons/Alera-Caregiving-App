@@ -1,3 +1,5 @@
+import '../../../reminders/data/reminder_api_data_source.dart';
+import '../../data/patients/caregiver_patient_selection_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -279,7 +281,9 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
                   session: _session,
                 ),
                 nudgeDataSource: CaregiverNudgeApiDataSource(session: _session),
+                reminderDataSource: ReminderApiDataSource(session: _session),
                 householdCode: _session.householdCode,
+                caregiverId: caregiverSelectionScope(_session.accessToken),
                 onSignOut: _signOut,
               ),
     };

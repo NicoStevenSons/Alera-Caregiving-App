@@ -1,3 +1,4 @@
+import '../../../../../design_system/status/status.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/health_snapshot.dart';
@@ -5,7 +6,6 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
-import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
 
@@ -62,9 +62,10 @@ class CareRecipientCard extends StatelessWidget {
                       : 'alera-figma-assets/assets/icons/status/warning.svg',
                   label: careRecipient.backendBacked
                       ? careRecipient.monitoringStatusLabel
-                      : isStable
-                      ? 'Stable'
-                      : 'High Heart Rate',
+                      : PatientStatusChip.describe(
+                          careRecipient.status,
+                          context,
+                        ).label,
                 ),
                 const SizedBox(height: 2),
                 _StatusRow(
@@ -81,23 +82,23 @@ class CareRecipientCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Wrap(
-                    spacing: 14,
-                    runSpacing: 2,
-                    children: [
-                      _DeviceAvailability(
-                        assetPath:
-                        'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
-                            device: careRecipient.healthSnapshot.devices.phone,
-                            isWatch: false,
-                              ),
-                      _DeviceAvailability(
-                          assetPath:
+                  spacing: 14,
+                  runSpacing: 2,
+                  children: [
+                    _DeviceAvailability(
+                      assetPath:
+                          'alera-figma-assets/assets/icons/devices/phone-monitoring.svg',
+                      device: careRecipient.healthSnapshot.devices.phone,
+                      isWatch: false,
+                    ),
+                    _DeviceAvailability(
+                      assetPath:
                           'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
-                          device: careRecipient.healthSnapshot.devices.watch,
-                          isWatch: true,
-                            ),
-                          ],
-                        ),
+                      device: careRecipient.healthSnapshot.devices.watch,
+                      isWatch: true,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -198,11 +199,7 @@ class _DeviceAvailability extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AleraSvgIcon(
-          assetPath: assetPath,
-          width: 17,
-          height: 17,
-        ),
+        AleraSvgIcon(assetPath: assetPath, width: 17, height: 17),
         const SizedBox(width: AleraSpacing.xSmall),
         Text(
           _label,

@@ -24,8 +24,7 @@ class CaregiverPatientController extends ChangeNotifier {
   bool isRefreshing = false;
   int _loadRevision = 0;
 
-  final Map<String, List<MonitoringDeviceDto>>
-    _monitoringDevicesByPatient = {};
+  final Map<String, List<MonitoringDeviceDto>> _monitoringDevicesByPatient = {};
 
   CaregiverPatientController({
     required this.dataSource,
@@ -45,48 +44,50 @@ class CaregiverPatientController extends ChangeNotifier {
     try {
       final page = await dataSource.fetchPatients();
 
-patients = page.items;
+      if (revision != _loadRevision) return;
 
-final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
-    await Future.wait<MapEntry<String, List<MonitoringDeviceDto>>>(
-      patients.map<Future<MapEntry<String, List<MonitoringDeviceDto>>>>(
-        (patient) async {
-          try {
-            final devices = await dataSource.fetchMonitoringDevices(
-              patient.patientId,
-            );
+      final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
+          await Future.wait<MapEntry<String, List<MonitoringDeviceDto>>>(
+            page.items.map<Future<MapEntry<String, List<MonitoringDeviceDto>>>>(
+              (patient) async {
+                try {
+                  final devices = await dataSource.fetchMonitoringDevices(
+                    patient.patientId,
+                  );
 
-            return MapEntry<String, List<MonitoringDeviceDto>>(
-              patient.patientId,
-              devices,
-            );
-          } on CaregiverPatientApiFailure catch (failure) {
-            if (failure.kind ==
-                    CaregiverPatientFailureKind.unauthorized ||
-                failure.kind ==
-                    CaregiverPatientFailureKind.forbidden) {
-              rethrow;
-            }
+                  return MapEntry<String, List<MonitoringDeviceDto>>(
+                    patient.patientId,
+                    devices,
+                  );
+                } on CaregiverPatientApiFailure catch (failure) {
+                  if (failure.kind ==
+                          CaregiverPatientFailureKind.unauthorized ||
+                      failure.kind == CaregiverPatientFailureKind.forbidden) {
+                    rethrow;
+                  }
 
-            return MapEntry<String, List<MonitoringDeviceDto>>(
-              patient.patientId,
-              const <MonitoringDeviceDto>[],
-            );
-          }
-        },
-      ),
-    );
-    
-  _monitoringDevicesByPatient
-    ..clear()
-    ..addEntries(deviceEntries);
+                  return MapEntry<String, List<MonitoringDeviceDto>>(
+                    patient.patientId,
+                    const <MonitoringDeviceDto>[],
+                  );
+                }
+              },
+            ),
+          );
 
-  errorMessage = null;
-  failureKind = null;
+      if (revision != _loadRevision) return;
+      patients = List.unmodifiable(page.items);
 
-  state = patients.isEmpty
-    ? CaregiverPatientListState.empty
-    : CaregiverPatientListState.success;
+      _monitoringDevicesByPatient
+        ..clear()
+        ..addEntries(deviceEntries);
+
+      errorMessage = null;
+      failureKind = null;
+
+      state = patients.isEmpty
+          ? CaregiverPatientListState.empty
+          : CaregiverPatientListState.success;
     } on CaregiverPatientApiFailure catch (failure) {
       if (revision != _loadRevision) return;
       errorMessage = failure.message;
@@ -113,6 +114,12 @@ final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
     }
   }
 
+  @override
+  void dispose() {
+    ++_loadRevision;
+    super.dispose();
+  }
+
   Future<void> refreshAfterCreate(String patientId) async {
     await load(refresh: true);
     // The backend list is authoritative; reconciliation is identity-based.
@@ -132,24 +139,23 @@ final List<MapEntry<String, List<MonitoringDeviceDto>>> deviceEntries =
       dataSource.fetchMonitoringDevices(patientId);
 
   List<CareRecipient> get visiblePatients {
-  if (state == CaregiverPatientListState.demoFallback) {
-    return demoPatients;
-  }
+    if (state == CaregiverPatientListState.demoFallback) {
+      return demoPatients;
+    }
 
-  return patients.map((patient) {
-    final deviceDtos =
-        _monitoringDevicesByPatient[patient.patientId] ??
-        const <MonitoringDeviceDto>[];
+    return patients
+        .map((patient) {
+          final deviceDtos =
+              _monitoringDevicesByPatient[patient.patientId] ??
+              const <MonitoringDeviceDto>[];
 
-      final devices = deviceDtos
-          .map(monitoringDeviceDtoToDomain)
-          .toList(growable: false);
+          final devices = deviceDtos
+              .map(monitoringDeviceDtoToDomain)
+              .toList(growable: false);
 
-      return patientListItemToCareRecipient(
-        patient,
-        devices: devices,
-      );
-    }).toList(growable: false);
+          return patientListItemToCareRecipient(patient, devices: devices);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -206,9 +212,7 @@ CareRecipient patientListItemToCareRecipient(
 
       stressLabel: 'No data',
 
-      sleepDuration: Duration(
-        seconds: summary.latestSleepDurationSeconds ?? 0,
-      ),
+      sleepDuration: Duration(seconds: summary.latestSleepDurationSeconds ?? 0),
       sleepDate: summary.latestSleepDate,
 
       careRiskScore: 0,

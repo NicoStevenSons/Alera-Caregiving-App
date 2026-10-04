@@ -1,3 +1,5 @@
+import 'package:alera/features/startup/presentation/alera_startup_screen.dart';
+import 'package:alera/features/caregiver/presentation/home/widgets/home_alerts_preview.dart';
 import 'package:alera/features/caregiver/caregiver_shell.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
@@ -22,7 +24,15 @@ void main() {
     expect(find.text('Maria Santos'), findsOneWidget);
     expect(find.text('Needs Attention'), findsOneWidget);
     expect(find.text('Low Stress'), findsOneWidget);
-    expect(find.text('Alerts (1 active)'), findsOneWidget);
+    final alertPreview = find.byType(HomeAlertsPreview);
+    expect(
+      find.descendant(of: alertPreview, matching: find.text('Alerts')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: alertPreview, matching: find.text('(1 active)')),
+      findsOneWidget,
+    );
     expect(find.byType(NavigationBar), findsOneWidget);
 
     await tester.scrollUntilVisible(
@@ -77,7 +87,7 @@ void main() {
     final source = _HomePatientSource([_patient('Backend Ada')]);
     final controller = CaregiverPatientController(dataSource: source);
     await _pumpControlledHome(tester, controller);
-    expect(find.byKey(const Key('home-patient-loading')), findsOneWidget);
+    expect(find.byType(AleraStartupScreen), findsOneWidget);
 
     await controller.load();
     await tester.pump();
@@ -276,29 +286,29 @@ PatientListItemDto _patient(String name) => PatientListItemDto(
   accountStatus: 'ACTIVE',
   createdAt: DateTime.utc(2026, 9, 6),
   currentSummary: CurrentHealthSummaryDto(
-  latestHeartRate: LatestMetricReadingDto(
-    value: 81,
-    unit: 'bpm',
-    recordedAt: DateTime.utc(2026, 9, 6, 10, 1),
-  ),
-  latestSpo2: LatestMetricReadingDto(
-    value: 97,
-    unit: '%',
-    recordedAt: DateTime.utc(2026, 9, 6, 10, 2),
-  ),
+    latestHeartRate: LatestMetricReadingDto(
+      value: 81,
+      unit: 'bpm',
+      recordedAt: DateTime.utc(2026, 9, 6, 10, 1),
+    ),
+    latestSpo2: LatestMetricReadingDto(
+      value: 97,
+      unit: '%',
+      recordedAt: DateTime.utc(2026, 9, 6, 10, 2),
+    ),
 
-  todaySteps: 90,
-  stepsUpdatedAt: DateTime.utc(2026, 9, 6, 10, 3),
-  latestSleepDurationSeconds: 24120,
-  latestSleepDate: DateTime(2026, 9, 5),
+    todaySteps: 90,
+    stepsUpdatedAt: DateTime.utc(2026, 9, 6, 10, 3),
+    latestSleepDurationSeconds: 24120,
+    latestSleepDate: DateTime(2026, 9, 5),
 
-  lastCheckIn: DateTime.utc(2026, 9, 6, 10, 2),
-  activeAlertCount: 2,
-  highestActiveAlertSeverity: 'WARNING',
-  monitoringStatus: PatientMonitoringStatus.warning,
-  monitoringStatusValue: 'WARNING',
-  deviceConnectionStatus: PatientDeviceConnectionStatus.connected,
-  deviceConnectionStatusValue: 'CONNECTED',
-  lastDeviceSyncAt: DateTime.utc(2026, 9, 6, 10),
-),
+    lastCheckIn: DateTime.utc(2026, 9, 6, 10, 2),
+    activeAlertCount: 2,
+    highestActiveAlertSeverity: 'WARNING',
+    monitoringStatus: PatientMonitoringStatus.warning,
+    monitoringStatusValue: 'WARNING',
+    deviceConnectionStatus: PatientDeviceConnectionStatus.connected,
+    deviceConnectionStatusValue: 'CONNECTED',
+    lastDeviceSyncAt: DateTime.utc(2026, 9, 6, 10),
+  ),
 );

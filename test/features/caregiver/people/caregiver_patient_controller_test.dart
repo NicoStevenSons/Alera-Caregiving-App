@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
@@ -6,6 +7,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:alera/features/caregiver/data/api/dto/monitoring_device_dto.dart';
 
 void main() {
+  test('late device lookup cannot publish an older patient list', () async {
+    final source = _DelayedPatientSource();
+    final controller = CaregiverPatientController(dataSource: source);
+    addTearDown(controller.dispose);
+
+    final oldLoad = controller.load();
+    await source.oldDeviceLookupStarted.future;
+    await controller.load();
+    expect(controller.patients.single.patientId, 'new');
+
+    source.oldDevices.complete(const <MonitoringDeviceDto>[]);
+    await oldLoad;
+    expect(controller.patients.single.patientId, 'new');
+    expect(controller.visiblePatients.single.id, 'new');
+    expect(controller.state, CaregiverPatientListState.success);
+  });
+
   test(
     'loading transitions to success and refresh reconciles patient_id',
     () async {
@@ -126,3 +144,32 @@ PatientListItemDto _item(String id) => PatientListItemDto(
     lastDeviceSyncAt: null,
   ),
 );
+
+class _DelayedPatientSource extends _ReadSource {
+  _DelayedPatientSource() : super(const []);
+  final oldDeviceLookupStarted = Completer<void>();
+  final oldDevices = Completer<List<MonitoringDeviceDto>>();
+
+  @override
+  Future<PaginatedPatientListDto> fetchPatients({
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final id = ++calls == 1 ? 'old' : 'new';
+    return PaginatedPatientListDto(
+      items: [_item(id)],
+      total: 1,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Future<List<MonitoringDeviceDto>> fetchMonitoringDevices(String patientId) {
+    if (patientId == 'old') {
+      oldDeviceLookupStarted.complete();
+      return oldDevices.future;
+    }
+    return Future.value(const <MonitoringDeviceDto>[]);
+  }
+}
