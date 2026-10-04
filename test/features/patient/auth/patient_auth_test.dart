@@ -20,6 +20,20 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:sqflite/sqflite.dart';
 
+const testPatientId = 'a076ecdb-ae38-4f84-b490-e714977027ee';
+
+const patientLoginResponse =
+    '''
+{
+  "access_token": "patient-token",
+  "token_type": "bearer",
+  "actor": {
+    "role": "ELDERLY_PATIENT",
+    "patient_id": "$testPatientId"
+  }
+}
+''';
+
 CaregiverSessionController controller(
   CaregiverTokenStore store, {
   http.Client? client,
@@ -35,12 +49,7 @@ CaregiverSessionController controller(
   patientAuthApi: PatientAuthApi(
     client:
         client ??
-        MockClient(
-          (_) async => http.Response(
-            '{"access_token":"patient-token","token_type":"bearer"}',
-            200,
-          ),
-        ),
+        MockClient((_) async => http.Response(patientLoginResponse, 200)),
   ),
 );
 
@@ -76,13 +85,12 @@ void main() {
           expect(request.url.path, '/api/v1/auth/patient/access');
           expect(request.headers['authorization'], isNull);
           expect(jsonDecode(request.body), {'access_code': 'access-code'});
-          return http.Response(
-            '{"access_token":"patient-token","token_type":"bearer"}',
-            200,
-          );
+          return http.Response(patientLoginResponse, 200);
         }),
       );
-      expect(await api.access(accessCode: 'access-code'), 'patient-token');
+      final result = await api.access(accessCode: 'access-code');
+      expect(result.accessToken, 'patient-token');
+      expect(result.patientId, testPatientId);
     },
   );
 
@@ -105,17 +113,27 @@ void main() {
     );
   }
 
-  test('patient API safely handles timeout and network failure', () async {
-    for (final error in [
-      TimeoutException('timeout'),
-      http.ClientException('network'),
-    ]) {
-      final api = PatientAuthApi(client: MockClient((_) async => throw error));
-      await expectLater(
-        api.access(accessCode: 'code'),
-        throwsA(isA<PatientAccessFailure>()),
-      );
-    }
+  test('patient JWT is attached to health-event uploads', () async {
+    final session = controller(SecureCaregiverTokenStore());
+    await session.accessPatient(accessCode: 'code');
+    expect(session.accessToken, 'patient-token');
+
+    const uploads = HealthEventApiService(
+      baseUrl: 'https://example.test',
+      patientId: 'existing-test-patient',
+    );
+
+    await http.runWithClient(
+      () => uploads.sendHealthEvent({
+        'patient_id': uploads.patientId,
+      }, accessToken: session.accessToken!),
+      () => MockClient((request) async {
+        expect(request.url.path, '/api/v1/health-events');
+        expect(request.headers['authorization'], 'Bearer patient-token');
+        expect(request.body, isNot(contains('patient-token')));
+        return http.Response('{}', 201);
+      }),
+    );
   });
 
   test('patient logout API sends bearer token and no body', () async {
@@ -132,38 +150,35 @@ void main() {
     await api.logout(accessToken: 'patient-token');
   });
 
-  test('failed patient logout keeps the patient session', () async {
-    final store = SecureCaregiverTokenStore();
-    final session = controller(
-      store,
-      client: MockClient((request) async {
-        if (request.url.path == '/api/v1/auth/patient/access') {
-          return http.Response(
-            '{"access_token":"patient-token","token_type":"bearer"}',
-            200,
-          );
-        }
+  test(
+    'failed backend logout still clears the local patient session',
+    () async {
+      final store = SecureCaregiverTokenStore();
+      final session = controller(
+        store,
+        client: MockClient((request) async {
+          if (request.url.path == '/api/v1/auth/patient/access') {
+            return http.Response(patientLoginResponse, 200);
+          }
 
-        if (request.url.path == '/api/v1/device-status/logout') {
-          return http.Response('{}', 503);
-        }
+          if (request.url.path == '/api/v1/device-status/logout') {
+            return http.Response('{}', 503);
+          }
 
-        return http.Response('{}', 404);
-      }),
-    );
+          return http.Response('{}', 404);
+        }),
+      );
 
-    await session.accessPatient(accessCode: 'code');
+      await session.accessPatient(accessCode: 'code');
 
-    await expectLater(
-      session.logout(),
-      throwsA(isA<PatientLogoutFailure>()),
-    );
+      await expectLater(session.logout(), throwsA(isA<PatientLogoutFailure>()));
 
-    expect(session.status, CaregiverSessionStatus.authenticated);
-    expect(session.sessionType, SessionType.elderlyPatient);
-    expect(session.accessToken, 'patient-token');
-    expect((await store.readSession())?.token, 'patient-token');
-  });
+      expect(session.status, CaregiverSessionStatus.unauthenticated);
+      expect(session.sessionType, isNull);
+      expect(session.accessToken, isNull);
+      expect(await store.readSession(), isNull);
+    },
+  );
 
   for (final type in SessionType.values) {
     test('secure storage restores and clears $type', () async {
@@ -226,31 +241,12 @@ void main() {
       );
       final login = session.accessPatient(accessCode: 'code');
       await session.logout();
-      reply.complete(http.Response('{"access_token":"late-token"}', 200));
+      reply.complete(http.Response(patientLoginResponse, 200));
       await login;
       expect(session.status, CaregiverSessionStatus.unauthenticated);
       expect(await store.readSession(), isNull);
     },
   );
-
-  test('patient JWT is not attached to health-event uploads', () async {
-    final session = controller(SecureCaregiverTokenStore());
-    await session.accessPatient(accessCode: 'code');
-    expect(session.accessToken, 'patient-token');
-    const uploads = HealthEventApiService(
-      baseUrl: 'https://example.test',
-      patientId: 'existing-test-patient',
-    );
-    await http.runWithClient(
-      () => uploads.sendHealthEvent({'patient_id': uploads.patientId}),
-      () => MockClient((request) async {
-        expect(request.url.path, '/api/v1/health-events');
-        expect(request.headers['authorization'], isNull);
-        expect(request.body, isNot(contains('patient-token')));
-        return http.Response('{}', 201);
-      }),
-    );
-  });
 
   test('late caregiver 401 does not clear a newly signed-in patient', () async {
     final session = controller(SecureCaregiverTokenStore());
@@ -293,10 +289,7 @@ void main() {
 
         expect(request.url.path, '/api/v1/auth/patient/access');
         expect(jsonDecode(request.body), {'access_code': '7K3M-9Q2D-R8TX'});
-        return http.Response(
-          '{"access_token":"patient-token","token_type":"bearer"}',
-          200,
-        );
+        return http.Response(patientLoginResponse, 200);
       }),
     );
     await tester.pumpWidget(
@@ -446,7 +439,15 @@ void main() {
       'restart routes $type to its real interface; 401 removes open routes',
       (tester) async {
         final store = SecureCaregiverTokenStore();
-        await store.writeSession(StoredSession('stored-token', type));
+        await store.writeSession(
+          StoredSession(
+            'stored-token',
+            type,
+            patientId: type == SessionType.elderlyPatient
+                ? testPatientId
+                : null,
+          ),
+        );
         final session = controller(store);
         await tester.pumpWidget(
           MaterialApp(

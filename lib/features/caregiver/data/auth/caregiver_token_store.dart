@@ -8,7 +8,14 @@ class StoredSession {
   final String token;
   final SessionType type;
   final String? householdCode;
-  const StoredSession(this.token, this.type, {this.householdCode});
+  final String? patientId;
+
+  const StoredSession(
+    this.token,
+    this.type, {
+    this.householdCode,
+    this.patientId,
+  });
 }
 
 abstract interface class CaregiverTokenStore {
@@ -29,7 +36,6 @@ class SecureCaregiverTokenStore implements CaregiverTokenStore {
   Future<StoredSession?> readSession() async {
     final raw = await _storage.read(key: _sessionKey);
     if (raw == null) {
-      // Previous app versions only persisted caregiver tokens.
       final legacy = await _storage.read(key: _legacyTokenKey);
       if (legacy == null || legacy.trim().isEmpty) {
         await clearSession();
@@ -51,12 +57,27 @@ class SecureCaregiverTokenStore implements CaregiverTokenStore {
       if (token is! String || token.trim().isEmpty || type == null) {
         throw const FormatException();
       }
+
       final householdCode = value['household_code'];
+      final patientId = value['patient_id'];
+
+      if (type == SessionType.elderlyPatient) {
+        if (patientId is! String ||
+            !RegExp(
+              r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+            ).hasMatch(patientId)) {
+          throw const FormatException();
+        }
+      }
+
       return StoredSession(
         token,
         type,
         householdCode: householdCode is String && householdCode.isNotEmpty
             ? householdCode
+            : null,
+        patientId: type == SessionType.elderlyPatient
+            ? (patientId as String).toLowerCase()
             : null,
       );
     } on FormatException {
@@ -67,7 +88,19 @@ class SecureCaregiverTokenStore implements CaregiverTokenStore {
 
   @override
   Future<void> writeSession(StoredSession session) async {
-    // A single secure value prevents token/type mismatches on interrupted writes.
+    //validation
+    if (session.type == SessionType.elderlyPatient) {
+      final id = session.patientId;
+
+      if (id == null ||
+          !RegExp(
+            r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+          ).hasMatch(id)) {
+        throw const FormatException(
+          'An elderly patient session requires a valid patient ID.',
+        );
+      }
+    }
     await _storage.write(
       key: _sessionKey,
       value: jsonEncode({
@@ -77,6 +110,7 @@ class SecureCaregiverTokenStore implements CaregiverTokenStore {
             : 'elderly_patient',
         if (session.householdCode != null)
           'household_code': session.householdCode,
+        if (session.patientId != null) 'patient_id': session.patientId,
       }),
     );
     await _storage.delete(key: _legacyTokenKey);

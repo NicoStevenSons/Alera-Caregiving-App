@@ -5,18 +5,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../features/caregiver/data/auth/caregiver_token_store.dart';
 import '../features/elderly/data/api/health_event_api_service.dart';
 import 'upload_queue_service.dart';
 
 class FifoUploadService {
   final UploadQueueService uploadQueueService;
   final HealthEventApiService healthEventApiService;
+  final String expectedPatientId;
 
   bool _isProcessing = false;
 
   FifoUploadService({
     required this.uploadQueueService,
     required this.healthEventApiService,
+    required this.expectedPatientId,
   });
 
   Future<void> processQueue() async {
@@ -28,6 +31,18 @@ class FifoUploadService {
     _isProcessing = true;
 
     try {
+      final tokenStore = SecureCaregiverTokenStore();
+      final initialSession = await tokenStore.readSession();
+
+      if (initialSession == null ||
+          initialSession.type != SessionType.elderlyPatient ||
+          initialSession.patientId != expectedPatientId) {
+        debugPrint('FIFO stopped: invalid patient session.');
+        return;
+      }
+
+      final expectedToken = initialSession.token;
+
       while (true) {
         final Map<String, dynamic>? row = await uploadQueueService
             .getOldestPending();
@@ -47,11 +62,31 @@ class FifoUploadService {
           jsonDecode(payloadJson),
         );
 
+        final queuedPatientId = payload['patient_id'];
+
+        if (queuedPatientId is! String ||
+            queuedPatientId.toLowerCase() != expectedPatientId.toLowerCase()) {
+          debugPrint('Queue ID $id blocked: patient identity mismatch.');
+
+          //preserve the record, never upload another patients data
+          break;
+        }
+
+        final currentSession = await tokenStore.readSession();
+
+        if (currentSession == null ||
+            currentSession.type != SessionType.elderlyPatient ||
+            currentSession.patientId != expectedPatientId ||
+            currentSession.token != expectedToken) {
+          debugPrint('FIFO stopped: patient session changed or ended.');
+          break;
+        }
+
         debugPrint('Uploading Queue ID: $id');
 
         try {
           final http.Response response = await healthEventApiService
-              .sendHealthEvent(payload);
+              .sendHealthEvent(payload, accessToken: currentSession.token);
 
           final int statusCode = response.statusCode;
 

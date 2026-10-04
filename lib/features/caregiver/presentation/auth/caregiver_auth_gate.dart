@@ -270,7 +270,10 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
       ),
       CaregiverSessionStatus.authenticated =>
         _session.sessionType == SessionType.elderlyPatient
-            ? ElderlyInterface(onSignOut: _signOut)
+            ? ElderlyInterface(
+                patientId: _session.patientId!,
+                onSignOut: _signOut,
+              )
             : CaregiverShell(
                 repository: widget.repository,
                 alertDataSource: CaregiverAlertApiDataSource(session: _session),

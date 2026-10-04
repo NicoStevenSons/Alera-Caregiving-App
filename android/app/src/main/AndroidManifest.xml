@@ -1,16 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
-<uses-permission
-    android:name="android.permission.health.READ_STEPS" />
-
-<uses-permission
-    android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
 
     <application
         android:label="Alera"
@@ -64,7 +63,7 @@
         <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
         <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
     </intent-filter>
-    
+
         </activity-alias>
 
         <activity
@@ -91,6 +90,11 @@
         </activity>
 
         <service
+        android:name=".AleraMonitoringService"
+        android:exported="false"
+        android:foregroundServiceType="connectedDevice" />
+
+        <service
         android:name=".PhonePayloadReceiverService"
         android:exported="true">
 
@@ -104,7 +108,7 @@
                 android:pathPrefix="/alera/" />
         </intent-filter>
     </service>
-    
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

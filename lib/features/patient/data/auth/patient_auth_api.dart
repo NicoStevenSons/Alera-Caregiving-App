@@ -5,6 +5,13 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/app_config.dart';
 
+class PatientAuthResult {
+  final String accessToken;
+  final String patientId;
+
+  const PatientAuthResult({required this.accessToken, required this.patientId});
+}
+
 class PatientAuthApi {
   final http.Client _client;
   final Duration timeout;
@@ -14,7 +21,7 @@ class PatientAuthApi {
     this.timeout = const Duration(seconds: 15),
   }) : _client = client ?? http.Client();
 
-  Future<String> access({required String accessCode}) async {
+  Future<PatientAuthResult> access({required String accessCode}) async {
     try {
       final response = await _client
           .post(
@@ -38,7 +45,30 @@ class PatientAuthApi {
               (type is! String || type.toLowerCase() != 'bearer'))) {
         throw const FormatException();
       }
-      return token;
+
+      final actor = decoded['actor'];
+
+      if (actor is! Map<String, dynamic>) {
+        throw const FormatException();
+      }
+
+      if (actor['role'] != 'ELDERLY_PATIENT') {
+        throw const FormatException();
+      }
+
+      final patientId = actor['patient_id'];
+
+      if (patientId is! String ||
+          !RegExp(
+            r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+          ).hasMatch(patientId)) {
+        throw const FormatException();
+      }
+
+      return PatientAuthResult(
+        accessToken: token,
+        patientId: patientId.toLowerCase(),
+      );
     } on TimeoutException {
       throw const PatientAccessFailure(
         'We couldn’t connect to Alera. Check your internet connection and try again.',
@@ -54,18 +84,14 @@ class PatientAuthApi {
     }
   }
 
-  Future<void> logout({
-    required String accessToken,
-  }) async {
+  Future<void> logout({required String accessToken}) async {
     try {
       final response = await _client
           .post(
             Uri.parse(
               '${AppConfig.backendBaseUrl}/api/v1/device-status/logout',
             ),
-            headers: {
-              'authorization': 'Bearer $accessToken',
-            },
+            headers: {'authorization': 'Bearer $accessToken'},
           )
           .timeout(timeout);
 

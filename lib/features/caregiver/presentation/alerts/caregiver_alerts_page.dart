@@ -80,7 +80,11 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         );
     _controller.addListener(_syncController);
     _displayedAlerts = const [];
-    _loadAlerts();
+    // Avoid notifying CaregiverShell while this page is still being built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadAlerts();
+    });
   }
 
   @override
