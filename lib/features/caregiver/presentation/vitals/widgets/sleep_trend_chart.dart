@@ -81,7 +81,9 @@ class SleepTrendChart extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       final index = value.round();
 
-                      if (index < 0 || index >= dates.length) {
+                      if (index < 0 ||
+                          index >= dates.length ||
+                          !_showBottomLabel(index, dates.length)) {
                         return const SizedBox.shrink();
                       }
 
@@ -204,6 +206,15 @@ class SleepTrendChart extends StatelessWidget {
     return '${date.year}-'
         '${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  bool _showBottomLabel(int index, int totalDates) {
+    if (totalDates <= 7) {
+      return true;
+    }
+
+    // Keep the first and last dates, with roughly weekly labels between them.
+    return index == 0 || index == totalDates - 1 || index % 6 == 0;
   }
 
   String _axisDate(DateTime date) => '${date.month}/${date.day}';
