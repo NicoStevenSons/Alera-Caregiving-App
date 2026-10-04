@@ -7,19 +7,23 @@ class ElderlyRemindersPage extends StatelessWidget {
   const ElderlyRemindersPage({
     super.key,
     required this.isLoading,
+    required this.errorMessage,
     required this.reminders,
     required this.busyOccurrenceIds,
     required this.onOpen,
     required this.onComplete,
     required this.onSnooze,
+    required this.onRetry,
   });
 
   final bool isLoading;
+  final String? errorMessage;
   final List<ElderlyReminder> reminders;
   final Set<String> busyOccurrenceIds;
   final ValueChanged<ElderlyReminder> onOpen;
   final Future<void> Function(ElderlyReminder reminder) onComplete;
   final Future<void> Function(ElderlyReminder reminder) onSnooze;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +33,13 @@ class ElderlyRemindersPage extends StatelessWidget {
       children: [
         ElderlyRemindersList(
           isLoading: isLoading,
+          errorMessage: errorMessage,
           reminders: reminders,
           busyOccurrenceIds: busyOccurrenceIds,
           onTap: onOpen,
           onComplete: onComplete,
           onSnooze: onSnooze,
+          onRetry: onRetry,
         ),
       ],
     );

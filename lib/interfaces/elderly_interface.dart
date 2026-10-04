@@ -459,11 +459,13 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
             enabled: _selectedIndex == 1,
             child: ElderlyRemindersPage(
               isLoading: remindersLoading,
+              errorMessage: remindersError,
               reminders: reminders,
               busyOccurrenceIds: _busyReminderIds,
               onOpen: _showReminderDetails,
               onComplete: _completeReminder,
               onSnooze: _snoozeReminder,
+              onRetry: _loadReminders,
             ),
           ),
           TickerMode(
