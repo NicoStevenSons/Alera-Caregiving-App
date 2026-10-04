@@ -17,8 +17,10 @@ import 'data/api/caregiver_patient_api_data_source.dart';
 import 'data/api/caregiver_nudge_api_data_source.dart';
 import 'data/api/dto/patient_dto.dart';
 import 'data/patients/caregiver_patient_controller.dart';
+import 'data/api/caregiver_activity_trend_api_data_source.dart';
 import 'data/api/caregiver_vital_trend_api_data_source.dart';
 import 'data/api/dto/vital_trend_dto.dart';
+import 'presentation/vitals/caregiver_activity_trend_page.dart';
 import 'presentation/vitals/caregiver_vital_trend_page.dart';
 import 'domain/models/health_snapshot.dart';
 import 'domain/models/caregiver_nudge.dart';
@@ -795,7 +797,9 @@ class _CaregiverShellState extends State<CaregiverShell>
       _ => null,
     };
 
-    if (trendMetric == null) {
+    final isActivity = metric == 'Activity';
+
+    if (trendMetric == null && !isActivity) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -817,13 +821,27 @@ class _CaregiverShellState extends State<CaregiverShell>
       return;
     }
 
+    if (isActivity) {
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => CaregiverActivityTrendPage(
+            patientId: patient.id,
+            patientName: patient.name,
+            dataSource: CaregiverActivityTrendApiDataSource(),
+          ),
+        ),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute<void>(
         builder: (_) => CaregiverVitalTrendPage(
           patientId: patient.id,
           patientName: patient.name,
-          metric: trendMetric,
+          metric: trendMetric!,
           dataSource: CaregiverVitalTrendApiDataSource(),
         ),
       ),
