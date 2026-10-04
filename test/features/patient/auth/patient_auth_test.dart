@@ -318,10 +318,18 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.byType(ElderlyInterface), findsOneWidget);
-    expect(find.text('Vitals'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.byKey(const Key('elderly-request-help')), findsOneWidget);
     expect(session.sessionType, SessionType.elderlyPatient);
     expect((await store.readSession())?.token, 'patient-token');
-    await tester.tap(find.text('Sign out'));
+
+    await tester.tap(find.text('More'));
+    // More may show an indeterminate battery indicator before watch data arrives.
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const Key('elderly-sign-out')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('elderly-sign-out')));
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Alera'), findsOneWidget);
     expect(await store.readSession(), isNull);

@@ -13,13 +13,10 @@ import '../Services/watch_payload_service.dart';
 import '../config/app_config.dart';
 
 import '../features/elderly/domain/models/elderly_reminder.dart';
-import '../features/elderly/presentation/device_status_tab.dart';
+import '../features/elderly/presentation/elderly_home_page.dart';
+import '../features/elderly/presentation/elderly_more_page.dart';
+import '../features/elderly/presentation/elderly_reminders_page.dart';
 import '../features/elderly/presentation/patient_reminder_detail_page.dart';
-import '../features/elderly/presentation/widgets/elderly_reminders_list.dart';
-import '../features/elderly/presentation/widgets/heart_rate_display.dart';
-import '../features/elderly/presentation/widgets/sleep_display.dart';
-import '../features/elderly/presentation/widgets/spo2_display.dart';
-import '../features/elderly/presentation/widgets/steps_display.dart';
 import '../features/elderly/services/reminder_notification_service.dart';
 import '../features/reminders/data/reminder_api_data_source.dart';
 
@@ -45,7 +42,7 @@ class ElderlyInterface extends StatefulWidget {
 }
 
 class _ElderlyInterfaceState extends State<ElderlyInterface>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver {
   final WatchPayloadService watchPayloadService = WatchPayloadService();
 
   late final HealthEventApiService healthEventApiService;
@@ -67,7 +64,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   final Set<String> _busyReminderIds = <String>{};
 
-  late final TabController _tabController;
+  int _selectedIndex = 0;
 
   void Function()? _unsubscribeNudges;
   void Function()? _unsubscribeDueReminders;
@@ -106,7 +103,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     );
 
     WidgetsBinding.instance.addObserver(this);
-    _tabController = TabController(length: 3, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -283,8 +279,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     phoneHeartbeatService.stop();
 
-    _tabController.dispose();
-
     WidgetsBinding.instance.removeObserver(this);
 
     watchPayloadService.dispose();
@@ -426,80 +420,73 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.purple,
-        title: const Text('Alera'),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Vitals'),
-            Tab(text: 'Reminders'),
-            Tab(text: 'Devices'),
-          ],
-        ),
-        actions: [
-          if (widget.onSignOut != null)
-            TextButton(
-              onPressed: widget.onSignOut,
-              child: const Text(
-                'Sign out',
-                style: TextStyle(color: Colors.white),
-              ),
+      appBar: AppBar(title: const Text('Alera')),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          TickerMode(
+            enabled: _selectedIndex == 0,
+            child: ElderlyHomePage(
+              heartRateData: heartRateData,
+              spo2Data: spo2Data,
+              stepsData: stepsData,
+              sleepData: sleepData,
+              uploadQueueService: uploadQueueService,
             ),
-          const SizedBox(width: 12),
+          ),
+          TickerMode(
+            enabled: _selectedIndex == 1,
+            child: ElderlyRemindersPage(
+              isLoading: remindersLoading,
+              reminders: reminders,
+              busyOccurrenceIds: _busyReminderIds,
+              onOpen: _showReminderDetails,
+              onComplete: _completeReminder,
+              onSnooze: _snoozeReminder,
+            ),
+          ),
+          TickerMode(
+            enabled: _selectedIndex == 2,
+            child: ElderlyMorePage(
+              deviceStatusData: deviceStatusData,
+              onSignOut: widget.onSignOut,
+            ),
+          ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: HeartRateDisplay(
-                        heartRateData: heartRateData,
-                        uploadQueueService: uploadQueueService,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SpO2Display(
-                        spo2Data: spo2Data,
-                        uploadQueueService: uploadQueueService,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                StepsDisplay(stepsData: stepsData),
-                const SizedBox(height: 16),
-                SleepDisplay(sleepData: sleepData),
-                const SizedBox(height: 16),
-              ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 5,
+              offset: const Offset(0, -3),
             ),
-          ),
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                ElderlyRemindersList(
-                  isLoading: remindersLoading,
-                  reminders: reminders,
-                  busyOccurrenceIds: _busyReminderIds,
-                  onTap: _showReminderDetails,
-                  onComplete: _completeReminder,
-                  onSnooze: _snoozeReminder,
-                ),
-              ],
+          ],
+        ),
+        child: NavigationBar(
+          elevation: 0,
+          height: 68,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            if (_selectedIndex == index) return;
+            setState(() => _selectedIndex = index);
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.grid_view_outlined),
+              selectedIcon: Icon(Icons.grid_view_rounded),
+              label: 'Home',
             ),
-          ),
-          DeviceStatusTab(deviceStatusData: deviceStatusData),
-        ],
+            NavigationDestination(
+              icon: Icon(Icons.schedule_outlined),
+              selectedIcon: Icon(Icons.schedule),
+              label: 'Reminders',
+            ),
+            NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
+          ],
+        ),
       ),
     );
   }
