@@ -10,6 +10,9 @@ import 'widgets/activity_trend_chart.dart';
 import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
+import 'widgets/vital_trend_metric_pills.dart';
+import 'widgets/vital_trend_navigation.dart';
+import 'widgets/vital_trend_range_header.dart';
 
 class CaregiverActivityTrendPage extends StatefulWidget {
   final String patientId;
@@ -117,8 +120,20 @@ class _CaregiverActivityTrendPageState
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
             Text('Activity', style: AleraTypography.sectionTitle),
-            const SizedBox(height: 16),
-            _ActivityRangeSelector(selected: _range, onSelected: _selectRange),
+            const SizedBox(height: 12),
+
+            VitalTrendMetricPills(
+              selected: 'Activity',
+              onSelected: (metric) => switchVitalTrendPage(
+                context,
+                metric: metric,
+                patientId: widget.patientId,
+                patientName: widget.patientName,
+              ),
+              onUnavailable: (metric) =>
+                  showVitalTrendUnavailable(context, metric),
+            ),
+
             const SizedBox(height: 16),
             if (_loading)
               const Padding(
@@ -129,7 +144,16 @@ class _CaregiverActivityTrendPageState
             else if (_error != null)
               _ActivityTrendError(error: _error!, onRetry: _load)
             else if (_trend != null)
-              _ActivityTrendContent(trend: _trend!),
+              _ActivityTrendContent(
+                trend: _trend!,
+                range: _range,
+                onRangeSelected: (label) {
+                  final range = ActivityTrendRange.values.firstWhere(
+                    (candidate) => candidate.label == label,
+                  );
+                  _selectRange(range);
+                },
+              ),
           ],
         ),
       ),
@@ -137,42 +161,16 @@ class _CaregiverActivityTrendPageState
   }
 }
 
-class _ActivityRangeSelector extends StatelessWidget {
-  final ActivityTrendRange selected;
-  final ValueChanged<ActivityTrendRange> onSelected;
-
-  const _ActivityRangeSelector({
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final range in ActivityTrendRange.values)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: ChoiceChip(
-                label: SizedBox(
-                  width: double.infinity,
-                  child: Text(range.label, textAlign: TextAlign.center),
-                ),
-                selected: selected == range,
-                onSelected: (_) => onSelected(range),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _ActivityTrendContent extends StatelessWidget {
   final ActivityTrendDto trend;
+  final ActivityTrendRange range;
+  final ValueChanged<String> onRangeSelected;
 
-  const _ActivityTrendContent({required this.trend});
+  const _ActivityTrendContent({
+    required this.trend,
+    required this.range,
+    required this.onRangeSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -228,26 +226,28 @@ class _ActivityTrendContent extends StatelessWidget {
               label: 'Highest',
               value: _formatPoint(summary.highestDay),
               subtitle: _formatDate(summary.highestDay?.activityDate),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_upward_rounded,
-                color: AleraColors.critical,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_high.svg',
               ),
             ),
             VitalStatTile(
               label: 'Lowest',
               value: _formatPoint(summary.lowestDay),
               subtitle: _formatDate(summary.lowestDay?.activityDate),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_downward_rounded,
-                color: AleraColors.information,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/stat_low.svg',
               ),
             ),
             VitalStatTile(
               label: 'Days with data',
               value: '${summary.daysWithData}',
-              icon: const VitalStatIconBadge(
-                icon: Icons.event_available_rounded,
-                color: AleraColors.primary,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_average.svg',
               ),
             ),
           ],
@@ -255,8 +255,25 @@ class _ActivityTrendContent extends StatelessWidget {
         const SizedBox(height: 12),
         AleraCard(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 18, 14, 12),
-            child: ActivityTrendChart(trend: trend),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                VitalTrendRangeHeader(
+                  title: 'Activity Trend',
+                  fromDate: trend.fromDate,
+                  toDate: trend.toDate,
+                  selectedLabel: range.label,
+                  rangeLabels: [
+                    for (final value in ActivityTrendRange.values)
+                      value.label,
+                  ],
+                  onRangeSelected: onRangeSelected,
+                ),
+                const SizedBox(height: 10),
+                ActivityTrendChart(trend: trend),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),

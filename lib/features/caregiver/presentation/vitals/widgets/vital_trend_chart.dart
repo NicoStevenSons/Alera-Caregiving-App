@@ -253,13 +253,16 @@ class VitalTrendChart extends StatelessWidget {
         const SizedBox(height: 10),
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: 14,
+          runAlignment: WrapAlignment.center,
+          spacing: 10,
           runSpacing: 6,
           children: [
             if (hasNormalRange)
-              const _TrendLegendItem(
-                color: Color(0xFF55B982),
-                label: 'Configured normal range',
+              _TrendLegendItem(
+                color: const Color(0xFF55B982),
+                label:
+                    'Normal range (${_formatValue(normalMin)}–'
+                    '${_formatValue(normalMax)} ${trend.unit})',
                 isRange: true,
               ),
             _TrendLegendItem(color: lineColor, label: 'Normal'),

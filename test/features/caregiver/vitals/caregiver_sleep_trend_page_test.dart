@@ -64,7 +64,9 @@ void main() {
 
     expect(source.ranges, [SleepTrendRange.week]);
 
-    await tester.tap(find.text('30D'));
+    await tester.tap(find.byKey(const Key('trend-range-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('30D').last);
     await tester.pumpAndSettle();
 
     expect(source.ranges, [SleepTrendRange.week, SleepTrendRange.month]);

@@ -11,6 +11,9 @@ import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
 import 'widgets/vital_trend_chart.dart';
+import 'widgets/vital_trend_metric_pills.dart';
+import 'widgets/vital_trend_navigation.dart';
+import 'widgets/vital_trend_range_header.dart';
 
 class CaregiverVitalTrendPage extends StatefulWidget {
   final String patientId;
@@ -119,9 +122,19 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
             Text(widget.metric.label, style: AleraTypography.sectionTitle),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            _RangeSelector(selected: _range, onSelected: _selectRange),
+            VitalTrendMetricPills(
+              selected: widget.metric.label,
+              onSelected: (metric) => switchVitalTrendPage(
+                context,
+                metric: metric,
+                patientId: widget.patientId,
+                patientName: widget.patientName,
+              ),
+              onUnavailable: (metric) =>
+                  showVitalTrendUnavailable(context, metric),
+            ),
 
             const SizedBox(height: 16),
 
@@ -133,7 +146,17 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
             else if (_error != null)
               _TrendError(error: _error!, onRetry: _load)
             else if (_trend != null)
-              _TrendContent(trend: _trend!, metric: widget.metric),
+              _TrendContent(
+                trend: _trend!,
+                metric: widget.metric,
+                range: _range,
+                onRangeSelected: (label) {
+                  final range = VitalTrendRange.values.firstWhere(
+                    (candidate) => candidate.label == label,
+                  );
+                  _selectRange(range);
+                },
+              ),
           ],
         ),
       ),
@@ -141,41 +164,18 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
   }
 }
 
-class _RangeSelector extends StatelessWidget {
-  final VitalTrendRange selected;
-  final ValueChanged<VitalTrendRange> onSelected;
-
-  const _RangeSelector({required this.selected, required this.onSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final range in VitalTrendRange.values) ...[
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: ChoiceChip(
-                label: SizedBox(
-                  width: double.infinity,
-                  child: Text(range.label, textAlign: TextAlign.center),
-                ),
-                selected: selected == range,
-                onSelected: (_) => onSelected(range),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 class _TrendContent extends StatelessWidget {
   final VitalTrendDto trend;
   final VitalTrendMetric metric;
+  final VitalTrendRange range;
+  final ValueChanged<String> onRangeSelected;
 
-  const _TrendContent({required this.trend, required this.metric});
+  const _TrendContent({
+    required this.trend,
+    required this.metric,
+    required this.range,
+    required this.onRangeSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -227,25 +227,27 @@ class _TrendContent extends StatelessWidget {
             VitalStatTile(
               label: 'Average',
               value: _value(summary.average, trend.unit),
-              icon: const VitalStatIconBadge(
-                icon: Icons.bar_chart_rounded,
-                color: AleraColors.primary,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_average.svg',
               ),
             ),
             VitalStatTile(
               label: 'High',
               value: _value(summary.maximum, trend.unit),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_upward_rounded,
-                color: AleraColors.critical,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_high.svg',
               ),
             ),
             VitalStatTile(
               label: 'Low',
               value: _value(summary.minimum, trend.unit),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_downward_rounded,
-                color: AleraColors.information,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/stat_low.svg',
               ),
             ),
           ],
@@ -254,8 +256,24 @@ class _TrendContent extends StatelessWidget {
         const SizedBox(height: 12),
         AleraCard(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 18, 14, 8),
-            child: VitalTrendChart(trend: trend, metric: metric),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                VitalTrendRangeHeader(
+                  title: '${metric.label} Trend',
+                  fromDate: trend.fromAt,
+                  toDate: trend.toAt,
+                  selectedLabel: range.label,
+                  rangeLabels: [
+                    for (final value in VitalTrendRange.values) value.label,
+                  ],
+                  onRangeSelected: onRangeSelected,
+                ),
+                const SizedBox(height: 10),
+                VitalTrendChart(trend: trend, metric: metric),
+              ],
+            ),
           ),
         ),
 

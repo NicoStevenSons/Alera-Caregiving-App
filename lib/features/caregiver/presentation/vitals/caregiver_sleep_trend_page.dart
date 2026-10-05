@@ -10,6 +10,9 @@ import 'widgets/sleep_trend_chart.dart';
 import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
+import 'widgets/vital_trend_metric_pills.dart';
+import 'widgets/vital_trend_navigation.dart';
+import 'widgets/vital_trend_range_header.dart';
 
 class CaregiverSleepTrendPage extends StatefulWidget {
   final String patientId;
@@ -116,8 +119,20 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
             Text('Sleep', style: AleraTypography.sectionTitle),
-            const SizedBox(height: 16),
-            _SleepRangeSelector(selected: _range, onSelected: _selectRange),
+            const SizedBox(height: 12),
+
+            VitalTrendMetricPills(
+              selected: 'Sleep',
+              onSelected: (metric) => switchVitalTrendPage(
+                context,
+                metric: metric,
+                patientId: widget.patientId,
+                patientName: widget.patientName,
+              ),
+              onUnavailable: (metric) =>
+                  showVitalTrendUnavailable(context, metric),
+            ),
+
             const SizedBox(height: 16),
             if (_loading)
               const Padding(
@@ -128,7 +143,16 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
             else if (_error != null)
               _SleepTrendError(error: _error!, onRetry: _load)
             else if (_trend != null)
-              _SleepTrendContent(trend: _trend!),
+              _SleepTrendContent(
+                trend: _trend!,
+                range: _range,
+                onRangeSelected: (label) {
+                  final range = SleepTrendRange.values.firstWhere(
+                    (candidate) => candidate.label == label,
+                  );
+                  _selectRange(range);
+                },
+              ),
           ],
         ),
       ),
@@ -136,39 +160,16 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
   }
 }
 
-class _SleepRangeSelector extends StatelessWidget {
-  final SleepTrendRange selected;
-  final ValueChanged<SleepTrendRange> onSelected;
-
-  const _SleepRangeSelector({required this.selected, required this.onSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final range in SleepTrendRange.values)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: ChoiceChip(
-                label: SizedBox(
-                  width: double.infinity,
-                  child: Text(range.label, textAlign: TextAlign.center),
-                ),
-                selected: selected == range,
-                onSelected: (_) => onSelected(range),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _SleepTrendContent extends StatelessWidget {
   final SleepTrendDto trend;
+  final SleepTrendRange range;
+  final ValueChanged<String> onRangeSelected;
 
-  const _SleepTrendContent({required this.trend});
+  const _SleepTrendContent({
+    required this.trend,
+    required this.range,
+    required this.onRangeSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -227,18 +228,20 @@ class _SleepTrendContent extends StatelessWidget {
               label: 'Average',
               value: _formatSeconds(summary.averageDurationSeconds),
               subtitle: 'per night',
-              icon: const VitalStatIconBadge(
-                icon: Icons.bar_chart_rounded,
-                color: AleraColors.primary,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_average.svg',
               ),
             ),
             VitalStatTile(
               label: 'Longest',
               value: _formatPoint(summary.longestNight),
               subtitle: _formatDateOrEmpty(summary.longestNight?.activityDate),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_upward_rounded,
-                color: AleraColors.critical,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/'
+                    'stat_high.svg',
               ),
             ),
             VitalStatTile(
@@ -247,9 +250,9 @@ class _SleepTrendContent extends StatelessWidget {
               subtitle: _formatDateOrEmpty(
                 summary.shortestNight?.activityDate,
               ),
-              icon: const VitalStatIconBadge(
-                icon: Icons.arrow_downward_rounded,
-                color: AleraColors.information,
+              icon: const VitalStatAssetIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/stat_low.svg',
               ),
             ),
           ],
@@ -257,8 +260,24 @@ class _SleepTrendContent extends StatelessWidget {
         const SizedBox(height: 12),
         AleraCard(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 18, 14, 12),
-            child: SleepTrendChart(trend: trend),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                VitalTrendRangeHeader(
+                  title: 'Sleep Trend',
+                  fromDate: trend.fromDate,
+                  toDate: trend.toDate,
+                  selectedLabel: range.label,
+                  rangeLabels: [
+                    for (final value in SleepTrendRange.values) value.label,
+                  ],
+                  onRangeSelected: onRangeSelected,
+                ),
+                const SizedBox(height: 10),
+                SleepTrendChart(trend: trend),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),

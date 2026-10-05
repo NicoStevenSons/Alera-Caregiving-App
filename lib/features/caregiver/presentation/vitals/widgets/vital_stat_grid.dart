@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
 
-/// One tile in a [VitalStatGrid] - a colored icon badge plus a label/value
-/// pair (e.g. "Average" / "97.4 bpm"). [icon] is a fully-built widget so
-/// callers can pass either a self-contained branded SVG (already has its
-/// own circular background) or a Material [Icon] wrapped in a colored
-/// circle - see [VitalStatIconBadge].
+/// One tile in a [VitalStatGrid] - an icon plus a label/value pair (e.g.
+/// "Average" / "97.4 bpm"). [icon] is a fully-built widget, normally a
+/// [VitalStatAssetIcon].
 class VitalStatTile {
   final String label;
   final String value;
@@ -28,30 +27,21 @@ class VitalStatTile {
   });
 }
 
-/// A plain Material-icon badge in a tinted circle, for stats that don't have
-/// a branded SVG of their own (Average/High/Low/count tiles).
-class VitalStatIconBadge extends StatelessWidget {
-  final IconData icon;
-  final Color color;
+/// A stat tile icon built from one of Alera's own figma asset SVGs rather
+/// than a hand-picked Material icon. Pass a real `mini_status/` asset path
+/// where one exists (e.g. the metric's own icon for a "Latest" tile); for
+/// a concept that doesn't have a dedicated icon yet (Average/High/Low),
+/// pass one of the `mini_status/stat_*.svg` placeholders - each file is a
+/// stand-in copy of an existing approved asset, so swapping in the real
+/// icon later is just replacing that file's contents, no code changes.
+class VitalStatAssetIcon extends StatelessWidget {
+  final String assetPath;
 
-  const VitalStatIconBadge({
-    super.key,
-    required this.icon,
-    required this.color,
-  });
+  const VitalStatAssetIcon({super.key, required this.assetPath});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Icon(icon, size: 18, color: color),
-    );
+    return AleraSvgIcon(assetPath: assetPath, width: 36, height: 36);
   }
 }
 

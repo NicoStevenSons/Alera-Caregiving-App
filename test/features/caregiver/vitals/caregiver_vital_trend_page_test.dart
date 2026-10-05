@@ -57,7 +57,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(source.ranges, [VitalTrendRange.day]);
 
-    await tester.tap(find.text('7D'));
+    await tester.tap(find.byKey(const Key('trend-range-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('7D').last);
     await tester.pumpAndSettle();
 
     expect(source.ranges, [VitalTrendRange.day, VitalTrendRange.week]);
