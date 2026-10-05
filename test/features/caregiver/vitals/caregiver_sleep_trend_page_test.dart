@@ -79,12 +79,29 @@ void main() {
     expect(find.byKey(const Key('sleep-latest-duration')), findsOneWidget);
     expect(find.text('8h'), findsWidgets);
     expect(find.text('7h 10m'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
     expect(find.text('6h'), findsOneWidget);
+    expect(find.text('Latest'), findsOneWidget);
     expect(find.text('Average'), findsOneWidget);
-    expect(find.text('Nights with data'), findsOneWidget);
     expect(find.text('Longest'), findsOneWidget);
     expect(find.text('Shortest'), findsOneWidget);
+  });
+
+  testWidgets('renders a rule-based trend summary from the period stats', (
+    tester,
+  ) async {
+    final source = _FakeSleepTrendSource(result: _trend());
+
+    await _pumpPage(tester, source);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('trend-summary-card')), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Averaged 7h 10m of sleep per night over 3 recorded nights, with '
+        'the longest at 8h on Oct 7.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('chart preserves calendar gaps and exposes tooltips', (

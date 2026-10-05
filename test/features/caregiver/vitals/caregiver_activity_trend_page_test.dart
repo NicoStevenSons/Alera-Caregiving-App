@@ -83,6 +83,24 @@ void main() {
     expect(find.text('3'), findsOneWidget);
   });
 
+  testWidgets('renders a rule-based trend summary from the period stats', (
+    tester,
+  ) async {
+    final source = _FakeActivityTrendSource(result: _trend());
+
+    await _pumpPage(tester, source);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('trend-summary-card')), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Averaged 2,667 steps per day over 3 recorded days, with a high of '
+        '7,000 steps on Oct 7.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('chart keeps calendar gaps and recorded zero distinct', (
     tester,
   ) async {

@@ -63,7 +63,7 @@ void main() {
     expect(source.ranges, [VitalTrendRange.day, VitalTrendRange.week]);
   });
 
-  testWidgets('renders summary and deterministic period values', (
+  testWidgets('renders the stat grid with deterministic period values', (
     tester,
   ) async {
     final source = _FakeVitalTrendSource(result: _trend());
@@ -73,13 +73,29 @@ void main() {
 
     expect(find.text('80 bpm'), findsOneWidget);
     expect(find.text('90 bpm'), findsOneWidget);
-    expect(find.text('55 bpm'), findsOneWidget);
     expect(find.text('130 bpm'), findsOneWidget);
-    expect(find.text('6'), findsOneWidget);
-    expect(find.text('Warning periods'), findsOneWidget);
-    expect(find.text('Critical periods'), findsOneWidget);
-    expect(find.text('Abnormal periods'), findsOneWidget);
-    expect(find.text('Outside configured range'), findsOneWidget);
+    expect(find.text('55 bpm'), findsOneWidget);
+    expect(find.text('Latest'), findsOneWidget);
+    expect(find.text('Average'), findsOneWidget);
+    expect(find.text('High'), findsOneWidget);
+    expect(find.text('Low'), findsOneWidget);
+  });
+
+  testWidgets('renders a rule-based trend summary from the period stats', (
+    tester,
+  ) async {
+    final source = _FakeVitalTrendSource(result: _trend());
+
+    await _pumpPage(tester, source);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('trend-summary-card')), findsOneWidget);
+    expect(
+      find.textContaining('stayed within the normal range for'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('critical period'), findsOneWidget);
+    expect(find.textContaining('High was 105 bpm on Sep 1.'), findsOneWidget);
   });
 
   testWidgets('chart exposes thresholds, severity, tooltip details, and gaps', (
@@ -139,7 +155,12 @@ void main() {
 
     final chart = tester.widget<LineChart>(find.byType(LineChart));
     expect(chart.data.rangeAnnotations.horizontalRangeAnnotations, isEmpty);
-    expect(find.text('Patient range not configured.'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'No custom monitoring range is configured for this patient.',
+      ),
+      findsOneWidget,
+    );
   });
 }
 

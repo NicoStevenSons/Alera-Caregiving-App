@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_sleep_trend_api_data_source.dart';
 import '../../data/api/dto/sleep_trend_dto.dart';
 import 'widgets/sleep_trend_chart.dart';
+import 'widgets/trend_date_format.dart';
+import 'widgets/trend_summary_card.dart';
+import 'widgets/vital_stat_grid.dart';
 
 class CaregiverSleepTrendPage extends StatefulWidget {
   final String patientId;
@@ -92,23 +96,26 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
-        title: Text('Sleep Trends', style: AleraTypography.pageTitle),
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 44,
+        leadingWidth: 56,
+        leading: IconButton(
+          tooltip: 'Back',
+          onPressed: () => Navigator.maybePop(context),
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text(widget.patientName, style: AleraTypography.sectionTitle),
-            const SizedBox(height: 4),
-            Text(
-              'View recorded sleep duration over time.',
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
+            Text('Sleep', style: AleraTypography.sectionTitle),
             const SizedBox(height: 16),
             _SleepRangeSelector(selected: _range, onSelected: _selectRange),
             const SizedBox(height: 16),
@@ -177,7 +184,7 @@ class _SleepTrendContent extends StatelessWidget {
               const Icon(
                 Icons.bedtime_outlined,
                 size: 38,
-                color: AleraColors.textSecondary,
+                color: AleraColors.primary,
               ),
               const SizedBox(height: 10),
               Text(
@@ -200,36 +207,52 @@ class _SleepTrendContent extends StatelessWidget {
 
     return Column(
       children: [
-        AleraCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  _formatPoint(summary.latestNight),
-                  key: const Key('sleep-latest-duration'),
-                  style: AleraTypography.pageTitle.copyWith(fontSize: 32),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Latest recorded sleep',
-                  style: AleraTypography.body.copyWith(
-                    color: AleraColors.textSecondary,
-                  ),
-                ),
-                if (summary.latestNight != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatDate(summary.latestNight!.activityDate),
-                    style: AleraTypography.body.copyWith(
-                      color: AleraColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ],
+        VitalStatGrid(
+          tiles: [
+            VitalStatTile(
+              label: 'Latest',
+              value: _formatPoint(summary.latestNight),
+              valueKey: const Key('sleep-latest-duration'),
+              subtitle: summary.latestNight == null
+                  ? null
+                  : _formatDate(summary.latestNight!.activityDate),
+              icon: const AleraSvgIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/sleep.svg',
+                width: 36,
+                height: 36,
+              ),
             ),
-          ),
+            VitalStatTile(
+              label: 'Average',
+              value: _formatSeconds(summary.averageDurationSeconds),
+              subtitle: 'per night',
+              icon: const VitalStatIconBadge(
+                icon: Icons.bar_chart_rounded,
+                color: AleraColors.primary,
+              ),
+            ),
+            VitalStatTile(
+              label: 'Longest',
+              value: _formatPoint(summary.longestNight),
+              subtitle: _formatDateOrEmpty(summary.longestNight?.activityDate),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_upward_rounded,
+                color: AleraColors.critical,
+              ),
+            ),
+            VitalStatTile(
+              label: 'Shortest',
+              value: _formatPoint(summary.shortestNight),
+              subtitle: _formatDateOrEmpty(
+                summary.shortestNight?.activityDate,
+              ),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_downward_rounded,
+                color: AleraColors.information,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         AleraCard(
@@ -239,49 +262,7 @@ class _SleepTrendContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _SleepSummaryCard(
-                label: 'Average',
-                value: _formatSeconds(summary.averageDurationSeconds),
-                subtitle: 'Per recorded night',
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _SleepSummaryCard(
-                label: 'Nights with data',
-                value: '${summary.nightsWithData}',
-                subtitle: 'Missing nights excluded',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _SleepSummaryCard(
-                label: 'Longest',
-                value: _formatPoint(summary.longestNight),
-                subtitle: _formatDateOrEmpty(
-                  summary.longestNight?.activityDate,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _SleepSummaryCard(
-                label: 'Shortest',
-                value: _formatPoint(summary.shortestNight),
-                subtitle: _formatDateOrEmpty(
-                  summary.shortestNight?.activityDate,
-                ),
-              ),
-            ),
-          ],
-        ),
+        TrendSummaryCard(text: _trendSummaryText(trend)),
         const SizedBox(height: 12),
       ],
     );
@@ -326,49 +307,35 @@ class _SleepTrendContent extends StatelessWidget {
   String _formatDate(DateTime date) {
     return '${date.month}/${date.day}/${date.year}';
   }
-}
 
-class _SleepSummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String subtitle;
+  /// Computed locally from the same period stats shown in the grid above -
+  /// not model-generated. Swap this for a real AI-written summary once a
+  /// backend endpoint for it exists; nothing else on the page needs to
+  /// change.
+  String _trendSummaryText(SleepTrendDto trend) {
+    final summary = trend.summary;
+    if (trend.points.isEmpty) {
+      return 'No sleep data recorded for this period yet.';
+    }
 
-  const _SleepSummaryCard({
-    required this.label,
-    required this.value,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(value, style: AleraTypography.sectionTitle),
-            if (subtitle.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    final nights = summary.nightsWithData;
+    final buffer = StringBuffer(
+      'Averaged ${_formatSeconds(summary.averageDurationSeconds)} of sleep '
+      'per night over $nights recorded night${nights == 1 ? '' : 's'}',
     );
+
+    final longest = summary.longestNight;
+    if (longest != null) {
+      buffer.write(
+        ', with the longest at '
+        '${_formatSeconds(longest.durationSeconds.toDouble())} on '
+        '${formatTrendShortDate(longest.activityDate)}.',
+      );
+    } else {
+      buffer.write('.');
+    }
+
+    return buffer.toString();
   }
 }
 

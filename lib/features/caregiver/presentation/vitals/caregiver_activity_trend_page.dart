@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_activity_trend_api_data_source.dart';
 import '../../data/api/dto/activity_trend_dto.dart';
 import 'widgets/activity_trend_chart.dart';
+import 'widgets/trend_date_format.dart';
+import 'widgets/trend_summary_card.dart';
+import 'widgets/vital_stat_grid.dart';
 
 class CaregiverActivityTrendPage extends StatefulWidget {
   final String patientId;
@@ -93,23 +97,26 @@ class _CaregiverActivityTrendPageState
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
-        title: Text('Activity Trends', style: AleraTypography.pageTitle),
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 44,
+        leadingWidth: 56,
+        leading: IconButton(
+          tooltip: 'Back',
+          onPressed: () => Navigator.maybePop(context),
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text(widget.patientName, style: AleraTypography.sectionTitle),
-            const SizedBox(height: 4),
-            Text(
-              'View daily step totals over time.',
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
+            Text('Activity', style: AleraTypography.sectionTitle),
             const SizedBox(height: 16),
             _ActivityRangeSelector(selected: _range, onSelected: _selectRange),
             const SizedBox(height: 16),
@@ -181,7 +188,7 @@ class _ActivityTrendContent extends StatelessWidget {
               const Icon(
                 Icons.directions_walk_outlined,
                 size: 38,
-                color: AleraColors.textSecondary,
+                color: AleraColors.primary,
               ),
               const SizedBox(height: 10),
               Text(
@@ -204,27 +211,46 @@ class _ActivityTrendContent extends StatelessWidget {
 
     return Column(
       children: [
-        AleraCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  _formatAverage(summary.averageStepsPerDay),
-                  key: const Key('activity-average-steps'),
-                  style: AleraTypography.pageTitle.copyWith(fontSize: 32),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Average steps per recorded day',
-                  textAlign: TextAlign.center,
-                  style: AleraTypography.body.copyWith(
-                    color: AleraColors.textSecondary,
-                  ),
-                ),
-              ],
+        VitalStatGrid(
+          tiles: [
+            VitalStatTile(
+              label: 'Average',
+              value: _formatAverage(summary.averageStepsPerDay),
+              subtitle: 'per day',
+              icon: const AleraSvgIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/mini_status/activity.svg',
+                width: 36,
+                height: 36,
+              ),
             ),
-          ),
+            VitalStatTile(
+              label: 'Highest',
+              value: _formatPoint(summary.highestDay),
+              subtitle: _formatDate(summary.highestDay?.activityDate),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_upward_rounded,
+                color: AleraColors.critical,
+              ),
+            ),
+            VitalStatTile(
+              label: 'Lowest',
+              value: _formatPoint(summary.lowestDay),
+              subtitle: _formatDate(summary.lowestDay?.activityDate),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_downward_rounded,
+                color: AleraColors.information,
+              ),
+            ),
+            VitalStatTile(
+              label: 'Days with data',
+              value: '${summary.daysWithData}',
+              icon: const VitalStatIconBadge(
+                icon: Icons.event_available_rounded,
+                color: AleraColors.primary,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         AleraCard(
@@ -234,31 +260,7 @@ class _ActivityTrendContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _ActivitySummaryCard(
-                label: 'Highest day',
-                value: _formatPoint(summary.highestDay),
-                subtitle: _formatDate(summary.highestDay?.activityDate),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActivitySummaryCard(
-                label: 'Lowest day',
-                value: _formatPoint(summary.lowestDay),
-                subtitle: _formatDate(summary.lowestDay?.activityDate),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _ActivitySummaryCard(
-          label: 'Days with data',
-          value: '${summary.daysWithData}',
-          subtitle: 'Missing days are not counted as zero.',
-        ),
+        TrendSummaryCard(text: _trendSummaryText(trend)),
         const SizedBox(height: 12),
       ],
     );
@@ -295,49 +297,40 @@ class _ActivityTrendContent extends StatelessWidget {
       (_) => ',',
     );
   }
-}
 
-class _ActivitySummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String subtitle;
+  /// Computed locally from the same period stats shown in the grid above -
+  /// not model-generated. Swap this for a real AI-written summary once a
+  /// backend endpoint for it exists; nothing else on the page needs to
+  /// change.
+  String _trendSummaryText(ActivityTrendDto trend) {
+    final summary = trend.summary;
+    if (trend.points.isEmpty) {
+      return 'No step data recorded for this period yet.';
+    }
 
-  const _ActivitySummaryCard({
-    required this.label,
-    required this.value,
-    required this.subtitle,
-  });
+    final days = summary.daysWithData;
+    final buffer = StringBuffer();
 
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(value, style: AleraTypography.sectionTitle),
-            if (subtitle.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    if (summary.averageStepsPerDay != null) {
+      buffer.write(
+        'Averaged ${_withThousands(summary.averageStepsPerDay!.round())} '
+        'steps per day over $days recorded day${days == 1 ? '' : 's'}',
+      );
+    } else {
+      buffer.write('$days recorded day${days == 1 ? '' : 's'} with step data');
+    }
+
+    final high = summary.highestDay;
+    if (high != null) {
+      buffer.write(
+        ', with a high of ${_withThousands(high.totalSteps)} steps on '
+        '${formatTrendShortDate(high.activityDate)}.',
+      );
+    } else {
+      buffer.write('.');
+    }
+
+    return buffer.toString();
   }
 }
 

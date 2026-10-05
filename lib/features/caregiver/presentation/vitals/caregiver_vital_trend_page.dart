@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
 import '../../domain/vital_trend_period_analytics.dart';
+import 'widgets/trend_date_format.dart';
+import 'widgets/trend_summary_card.dart';
+import 'widgets/vital_stat_grid.dart';
 import 'widgets/vital_trend_chart.dart';
 
 class CaregiverVitalTrendPage extends StatefulWidget {
@@ -96,25 +100,25 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          '${widget.metric.label} Trends',
-          style: AleraTypography.pageTitle,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 44,
+        leadingWidth: 56,
+        leading: IconButton(
+          tooltip: 'Back',
+          onPressed: () => Navigator.maybePop(context),
+          icon: const Icon(Icons.chevron_left, size: 28),
+          color: const Color(0xFFB4AEC2),
         ),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text(widget.patientName, style: AleraTypography.sectionTitle),
-            const SizedBox(height: 4),
-            Text(
-              'View ${widget.metric.label.toLowerCase()} changes over time.',
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
+            Text(widget.metric.label, style: AleraTypography.sectionTitle),
             const SizedBox(height: 16),
 
             _RangeSelector(selected: _range, onSelected: _selectRange),
@@ -186,7 +190,7 @@ class _TrendContent extends StatelessWidget {
               const Icon(
                 Icons.show_chart,
                 size: 38,
-                color: AleraColors.textSecondary,
+                color: AleraColors.primary,
               ),
               const SizedBox(height: 10),
               Text(
@@ -209,25 +213,42 @@ class _TrendContent extends StatelessWidget {
 
     return Column(
       children: [
-        AleraCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  _value(summary.latest, trend.unit),
-                  style: AleraTypography.pageTitle.copyWith(fontSize: 32),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Latest reading',
-                  style: AleraTypography.body.copyWith(
-                    color: AleraColors.textSecondary,
-                  ),
-                ),
-              ],
+        VitalStatGrid(
+          tiles: [
+            VitalStatTile(
+              label: 'Latest',
+              value: _value(summary.latest, trend.unit),
+              icon: AleraSvgIcon(
+                assetPath: _metricIconAsset(metric),
+                width: 36,
+                height: 36,
+              ),
             ),
-          ),
+            VitalStatTile(
+              label: 'Average',
+              value: _value(summary.average, trend.unit),
+              icon: const VitalStatIconBadge(
+                icon: Icons.bar_chart_rounded,
+                color: AleraColors.primary,
+              ),
+            ),
+            VitalStatTile(
+              label: 'High',
+              value: _value(summary.maximum, trend.unit),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_upward_rounded,
+                color: AleraColors.critical,
+              ),
+            ),
+            VitalStatTile(
+              label: 'Low',
+              value: _value(summary.minimum, trend.unit),
+              icon: const VitalStatIconBadge(
+                icon: Icons.arrow_downward_rounded,
+                color: AleraColors.information,
+              ),
+            ),
+          ],
         ),
 
         const SizedBox(height: 12),
@@ -239,51 +260,7 @@ class _TrendContent extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: _SummaryCard(
-                label: 'Average',
-                value: _value(summary.average, trend.unit),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _SummaryCard(
-                label: 'Low',
-                value: _value(summary.minimum, trend.unit),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-
-        Row(
-          children: [
-            Expanded(
-              child: _SummaryCard(
-                label: 'High',
-                value: _value(summary.maximum, trend.unit),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _SummaryCard(
-                label: 'Readings',
-                value: '${summary.readingCount}',
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        _PeriodOverviewCard(
-          analytics: VitalTrendPeriodAnalytics.fromTrend(trend),
-          periodLabel: trend.resolution == '1h' ? 'hourly' : 'daily',
-        ),
+        TrendSummaryCard(text: _trendSummaryText(trend)),
 
         const SizedBox(height: 12),
       ],
@@ -301,142 +278,56 @@ class _TrendContent extends StatelessWidget {
 
     return '$formatted $unit';
   }
-}
 
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
+  String _metricIconAsset(VitalTrendMetric metric) => switch (metric) {
+    VitalTrendMetric.heartRate =>
+      'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
+    VitalTrendMetric.spo2 =>
+      'alera-figma-assets/assets/icons/mini_status/spo2.svg',
+  };
 
-  const _SummaryCard({required this.label, required this.value});
+  /// Computed locally from the same period stats shown in the grid above -
+  /// not model-generated. Swap this for a real AI-written summary once a
+  /// backend endpoint for it exists; nothing else on the page needs to
+  /// change.
+  String _trendSummaryText(VitalTrendDto trend) {
+    final points = trend.points;
+    if (points.isEmpty) {
+      return 'No readings recorded for this period yet.';
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(value, style: AleraTypography.sectionTitle),
-          ],
-        ),
-      ),
+    final analytics = VitalTrendPeriodAnalytics.fromTrend(trend);
+    final total = points.length;
+    final normal = total - analytics.abnormalPeriodCount;
+    final metricLabel = trend.metricType == 'SPO2' ? 'SpO₂' : 'Heart rate';
+
+    final peak = points.reduce((a, b) => a.value > b.value ? a : b);
+
+    final buffer = StringBuffer(
+      '$metricLabel stayed within the normal range for $normal of $total '
+      'periods',
     );
-  }
-}
 
-class _PeriodOverviewCard extends StatelessWidget {
-  final VitalTrendPeriodAnalytics analytics;
-  final String periodLabel;
+    if (analytics.criticalPeriodCount > 0) {
+      final count = analytics.criticalPeriodCount;
+      buffer.write(', with $count critical period${count == 1 ? '' : 's'}');
+    } else if (analytics.warningPeriodCount > 0) {
+      final count = analytics.warningPeriodCount;
+      buffer.write(', with $count elevated period${count == 1 ? '' : 's'}');
+    }
 
-  const _PeriodOverviewCard({
-    required this.analytics,
-    required this.periodLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final outsideRange = analytics.outsideConfiguredRangeCount;
-
-    return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Period overview', style: AleraTypography.sectionTitle),
-            const SizedBox(height: 4),
-            Text(
-              'Based on aggregated $periodLabel periods. '
-              'These counts describe stored data and are not a diagnosis.',
-              style: AleraTypography.body.copyWith(
-                color: AleraColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            _PeriodOverviewRow(
-              label: 'Warning periods',
-              value: '${analytics.warningPeriodCount}',
-              color: const Color(0xFFFFB900),
-            ),
-            const SizedBox(height: 10),
-            _PeriodOverviewRow(
-              label: 'Critical periods',
-              value: '${analytics.criticalPeriodCount}',
-              color: const Color(0xFFFF6467),
-            ),
-            const SizedBox(height: 10),
-            _PeriodOverviewRow(
-              label: 'Abnormal periods',
-              value: '${analytics.abnormalPeriodCount}',
-              color: AleraColors.textPrimary,
-            ),
-            const SizedBox(height: 10),
-            _PeriodOverviewRow(
-              label: 'Outside configured range',
-              value: outsideRange?.toString() ?? '—',
-              color: AleraColors.textPrimary,
-            ),
-            if (outsideRange == null) ...[
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Text(
-                  'Patient range not configured.',
-                  style: AleraTypography.body.copyWith(
-                    color: AleraColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    buffer.write(
+      '. High was ${_value(peak.value, trend.unit)} on '
+      '${formatTrendShortDate(peak.recordedAt)}.',
     );
-  }
-}
 
-class _PeriodOverviewRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
+    if (analytics.outsideConfiguredRangeCount == null) {
+      buffer.write(
+        ' No custom monitoring range is configured for this patient.',
+      );
+    }
 
-  const _PeriodOverviewRow({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: AleraTypography.body.copyWith(
-              color: AleraColors.textSecondary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(value, style: AleraTypography.sectionTitle),
-      ],
-    );
+    return buffer.toString();
   }
 }
 
