@@ -84,16 +84,46 @@ void main() {
 
     expect(signedOut, isTrue);
   });
+
+  testWidgets('patient refreshes help-request status on resume', (
+    tester,
+  ) async {
+    final helpSource = _FakeHelpRequestDataSource();
+    final helpController = ElderlyHelpRequestController(dataSource: helpSource);
+    addTearDown(helpController.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ElderlyInterface(
+          patientId: 'a076ecdb-ae38-4f84-b490-e714977027ee',
+          helpRequestController: helpController,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fetchesBeforeResume = helpSource.fetchCalls;
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(helpSource.fetchCalls, fetchesBeforeResume + 1);
+  });
 }
 
 class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   int createCalls = 0;
+  int fetchCalls = 0;
 
   @override
   String createActionId() => 'action-id';
 
   @override
-  Future<HelpRequestRecord?> fetchActive() async => null;
+  Future<HelpRequestRecord?> fetchActive() async {
+    fetchCalls++;
+    return null;
+  }
 
   @override
   Future<HelpRequestRecord> create({

@@ -250,6 +250,8 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
       unawaited(_processPendingQueue());
 
+      unawaited(helpRequestController.load());
+
       _startStepsRefreshTimer();
 
       return;

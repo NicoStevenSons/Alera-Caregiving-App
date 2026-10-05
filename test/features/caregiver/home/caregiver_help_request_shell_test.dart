@@ -45,11 +45,37 @@ void main() {
     expect(source.resolveCalls, ['request']);
     expect(find.byKey(const Key('home-help-requests-empty')), findsOneWidget);
   });
+
+  testWidgets('caregiver Home polling refreshes help requests', (tester) async {
+    final source = _ShellHelpRequestDataSource();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverShell(
+          repository: const MockCaregiverRepository(),
+          helpRequestDataSource: source,
+          patientPollingInterval: const Duration(milliseconds: 100),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final fetchesBeforePoll = source.fetchCalls;
+
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(source.fetchCalls, greaterThan(fetchesBeforePoll));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }
 
 class _ShellHelpRequestDataSource implements CaregiverHelpRequestDataSource {
   final List<String> acknowledgeCalls = [];
   final List<String> resolveCalls = [];
+  int fetchCalls = 0;
 
   HelpRequestRecord current = _record();
 
@@ -60,6 +86,8 @@ class _ShellHelpRequestDataSource implements CaregiverHelpRequestDataSource {
     int limit = 100,
     int offset = 0,
   }) async {
+    fetchCalls++;
+
     return HelpRequestPage(
       items: current.status == HelpRequestStatus.resolved
           ? const []

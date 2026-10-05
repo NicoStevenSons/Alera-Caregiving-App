@@ -364,6 +364,9 @@ class _CaregiverShellState extends State<CaregiverShell>
     }
     _patientPollTimer = Timer.periodic(widget.patientPollingInterval, (_) {
       unawaited(_refreshPatientsForLiveDashboard());
+      unawaited(
+        _helpRequestController?.load(refresh: true) ?? Future<void>.value(),
+      );
     });
   }
 
@@ -374,7 +377,9 @@ class _CaregiverShellState extends State<CaregiverShell>
 
   void _syncPatientPolling() {
     final shouldPoll =
-        _appResumed && _selectedIndex == 0 && _patientController != null;
+        _appResumed &&
+        _selectedIndex == 0 &&
+        (_patientController != null || _helpRequestController != null);
     if (shouldPoll) {
       _startPatientPolling();
     } else {
