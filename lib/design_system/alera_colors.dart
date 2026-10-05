@@ -15,6 +15,21 @@ abstract final class AleraColors {
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
 
-  // Light tinted surface used by setup and QR presentation.
+  // Form + setup-flow tokens (sampled from the Add Patient Figma frames).
+  // Everywhere else a card fill, border, heading or body colour was needed,
+  // an existing token (background/divider/primarySoft/textPrimary/
+  // textSecondary) was close enough in the source frames to reuse instead
+  // of forking a near-duplicate. All setup-flow cards are the same
+  // borderless, shadowed white AleraCard used everywhere else in the app -
+  // surfaceTint is only for a tinted fill (a selected option, a QR
+  // backdrop), never paired with a border.
   static const Color surfaceTint = Color(0xFFF8F5FE);
+
+  // Text-field tokens. These match the caregiver sign-in screen's fields
+  // exactly (see aleraInputDecoration in alera_text_field.dart) so every
+  // text input in the app - sign-in, Add Patient, patient access - shares
+  // one fill/border/hint colour set instead of two near-identical ones.
+  static const Color fieldFill = Color(0xFFF7F3FF);
+  static const Color fieldBorder = Color(0xFFE0D6F5);
+  static const Color fieldHint = Color(0xFFB5A6DB);
 }

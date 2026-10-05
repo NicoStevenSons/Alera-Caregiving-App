@@ -91,22 +91,28 @@ class _TimelineRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 44,
-            child: Padding(
-              padding: const EdgeInsets.only(top: _cardPadding),
-              child: SizedBox(
-                height: _iconTile,
-                child: showHour
-                    ? Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          reminderHourLabel(local.hour),
-                          style: AleraTypography.body.copyWith(
-                            fontSize: 12,
-                            color: AleraColors.textSecondary,
+            // Align first: the Row stretches this column to the card's full
+            // height, which would otherwise stretch the fixed-height label
+            // box too and push the time label below its node.
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: _cardPadding),
+                child: SizedBox(
+                  height: _iconTile,
+                  child: showHour
+                      ? Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            reminderHourLabel(local.hour),
+                            style: AleraTypography.body.copyWith(
+                              fontSize: 12,
+                              color: AleraColors.textSecondary,
+                            ),
                           ),
-                        ),
-                      )
-                    : null,
+                        )
+                      : null,
+                ),
               ),
             ),
           ),
