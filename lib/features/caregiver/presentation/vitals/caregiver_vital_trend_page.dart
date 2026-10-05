@@ -244,10 +244,7 @@ class _TrendContent extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
-        TrendSummaryCard(
-          text: _trendSummaryText(trend),
-          muted: !hasData,
-        ),
+        TrendSummaryCard(text: _trendSummaryText(trend), muted: !hasData),
 
         const SizedBox(height: 12),
       ],

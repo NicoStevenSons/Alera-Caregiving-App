@@ -208,9 +208,7 @@ class _SleepTrendContent extends StatelessWidget {
             VitalStatTile(
               label: 'Shortest',
               value: _formatPoint(summary.shortestNight),
-              subtitle: _formatDateOrEmpty(
-                summary.shortestNight?.activityDate,
-              ),
+              subtitle: _formatDateOrEmpty(summary.shortestNight?.activityDate),
               icon: const VitalStatAssetIcon(
                 assetPath:
                     'alera-figma-assets/assets/icons/mini_status/stat_low.svg',
@@ -249,10 +247,7 @@ class _SleepTrendContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        TrendSummaryCard(
-          text: _trendSummaryText(trend),
-          muted: !hasData,
-        ),
+        TrendSummaryCard(text: _trendSummaryText(trend), muted: !hasData),
         const SizedBox(height: 12),
       ],
     );

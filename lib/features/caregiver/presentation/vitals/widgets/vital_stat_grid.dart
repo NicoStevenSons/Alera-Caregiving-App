@@ -71,7 +71,9 @@ class VitalStatGrid extends StatelessWidget {
         children: [
           for (var i = 0; i < tiles.length; i++) ...[
             if (i > 0) const SizedBox(width: AleraSpacing.small),
-            Expanded(child: _Tile(tile: tiles[i], muted: muted)),
+            Expanded(
+              child: _Tile(tile: tiles[i], muted: muted),
+            ),
           ],
         ],
       ),
