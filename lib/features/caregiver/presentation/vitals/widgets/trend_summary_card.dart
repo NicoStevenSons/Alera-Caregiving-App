@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import 'trend_empty_colors.dart';
 
 /// A short, plain-language recap of the period shown in the chart above it
 /// (e.g. "Heart rate stayed in the normal range for 5 of 6 periods...").
@@ -15,7 +16,11 @@ import '../../../../../design_system/widgets/alera_card.dart';
 class TrendSummaryCard extends StatelessWidget {
   final String text;
 
-  const TrendSummaryCard({super.key, required this.text});
+  /// Greys the card out when the period has no data, matching the chart's
+  /// empty state.
+  final bool muted;
+
+  const TrendSummaryCard({super.key, required this.text, this.muted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -28,15 +33,17 @@ class TrendSummaryCard extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: AleraColors.primarySoft,
+            decoration: BoxDecoration(
+              color: muted
+                  ? TrendEmptyColors.iconBackground
+                  : AleraColors.primarySoft,
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome,
               size: 18,
-              color: AleraColors.primary,
+              color: muted ? TrendEmptyColors.icon : AleraColors.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -46,7 +53,10 @@ class TrendSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   'Trend summary',
-                  style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+                  style: AleraTypography.sectionTitle.copyWith(
+                    fontSize: 16,
+                    color: muted ? TrendEmptyColors.title : null,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -54,6 +64,7 @@ class TrendSummaryCard extends StatelessWidget {
                   style: AleraTypography.body.copyWith(
                     fontSize: 13,
                     height: 1.4,
+                    color: muted ? TrendEmptyColors.body : null,
                   ),
                 ),
               ],

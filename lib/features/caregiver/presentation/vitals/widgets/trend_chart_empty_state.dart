@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'trend_empty_colors.dart';
+
 /// Sits in the chart's spot, inside the same card as its title/date/range
 /// dropdown, when a period has no readings - rather than replacing the
 /// whole card (which used to take the range dropdown down with it, leaving
@@ -29,14 +31,14 @@ class TrendChartEmptyState extends StatelessWidget {
             const Icon(
               Icons.show_chart_rounded,
               size: 48,
-              color: Color(0xFFCFC7E8),
+              color: TrendEmptyColors.icon,
             ),
             const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Color(0xFFA69BD2),
+                color: TrendEmptyColors.title,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -45,7 +47,10 @@ class TrendChartEmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
+              style: const TextStyle(
+                color: TrendEmptyColors.body,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

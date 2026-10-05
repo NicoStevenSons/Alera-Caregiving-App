@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/widgets/alera_card.dart';
-import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_activity_trend_api_data_source.dart';
 import '../../data/api/dto/activity_trend_dto.dart';
 import 'widgets/activity_trend_chart.dart';
@@ -117,7 +116,7 @@ class _CaregiverActivityTrendPageState
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           children: [
             VitalTrendMetricPills(
               selected: 'Activity',
@@ -173,16 +172,15 @@ class _ActivityTrendContent extends StatelessWidget {
     return Column(
       children: [
         VitalStatGrid(
+          muted: !hasData,
           tiles: [
             VitalStatTile(
               label: 'Average',
               value: _formatAverage(summary.averageStepsPerDay),
               subtitle: 'per day',
-              icon: const AleraSvgIcon(
+              icon: const VitalStatAssetIcon(
                 assetPath:
                     'alera-figma-assets/assets/icons/mini_status/activity.svg',
-                width: 36,
-                height: 36,
               ),
             ),
             VitalStatTile(
@@ -246,7 +244,10 @@ class _ActivityTrendContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        TrendSummaryCard(text: _trendSummaryText(trend)),
+        TrendSummaryCard(
+          text: _trendSummaryText(trend),
+          muted: !hasData,
+        ),
         const SizedBox(height: 12),
       ],
     );

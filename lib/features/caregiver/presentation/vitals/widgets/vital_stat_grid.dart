@@ -5,6 +5,7 @@ import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
+import 'trend_empty_colors.dart';
 
 /// One tile in a [VitalStatGrid] - an icon plus a label/value pair (e.g.
 /// "Average" / "97.4 bpm"). [icon] is a fully-built widget, normally a
@@ -52,7 +53,11 @@ class VitalStatAssetIcon extends StatelessWidget {
 class VitalStatGrid extends StatelessWidget {
   final List<VitalStatTile> tiles;
 
-  const VitalStatGrid({super.key, required this.tiles});
+  /// Greys the row out when the period has no data, matching the chart's
+  /// empty state.
+  final bool muted;
+
+  const VitalStatGrid({super.key, required this.tiles, this.muted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +71,7 @@ class VitalStatGrid extends StatelessWidget {
         children: [
           for (var i = 0; i < tiles.length; i++) ...[
             if (i > 0) const SizedBox(width: AleraSpacing.small),
-            Expanded(child: _Tile(tile: tiles[i])),
+            Expanded(child: _Tile(tile: tiles[i], muted: muted)),
           ],
         ],
       ),
@@ -76,15 +81,25 @@ class VitalStatGrid extends StatelessWidget {
 
 class _Tile extends StatelessWidget {
   final VitalStatTile tile;
+  final bool muted;
 
-  const _Tile({required this.tile});
+  const _Tile({required this.tile, required this.muted});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        tile.icon,
+        if (muted)
+          Opacity(
+            opacity: 0.55,
+            child: ColorFiltered(
+              colorFilter: TrendEmptyColors.desaturate,
+              child: tile.icon,
+            ),
+          )
+        else
+          tile.icon,
         const SizedBox(height: 6),
         Text(
           tile.label,
@@ -92,7 +107,7 @@ class _Tile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AleraTypography.body.copyWith(
             fontSize: 11,
-            color: AleraColors.textSecondary,
+            color: muted ? TrendEmptyColors.body : AleraColors.textSecondary,
           ),
         ),
         const SizedBox(height: 2),
@@ -105,7 +120,10 @@ class _Tile extends StatelessWidget {
             tile.value,
             key: tile.valueKey,
             maxLines: 1,
-            style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+            style: AleraTypography.sectionTitle.copyWith(
+              fontSize: 15,
+              color: muted ? TrendEmptyColors.title : null,
+            ),
           ),
         ),
         if (tile.subtitle != null && tile.subtitle!.isNotEmpty)

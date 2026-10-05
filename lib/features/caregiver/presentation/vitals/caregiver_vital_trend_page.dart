@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/widgets/alera_card.dart';
-import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
 import '../../domain/vital_trend_period_analytics.dart';
@@ -119,7 +118,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           children: [
             VitalTrendMetricPills(
               selected: widget.metric.label,
@@ -179,15 +178,12 @@ class _TrendContent extends StatelessWidget {
     return Column(
       children: [
         VitalStatGrid(
+          muted: !hasData,
           tiles: [
             VitalStatTile(
               label: 'Latest',
               value: _value(summary.latest, trend.unit),
-              icon: AleraSvgIcon(
-                assetPath: _metricIconAsset(metric),
-                width: 36,
-                height: 36,
-              ),
+              icon: VitalStatAssetIcon(assetPath: _metricIconAsset(metric)),
             ),
             VitalStatTile(
               label: 'Average',
@@ -248,7 +244,10 @@ class _TrendContent extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
-        TrendSummaryCard(text: _trendSummaryText(trend)),
+        TrendSummaryCard(
+          text: _trendSummaryText(trend),
+          muted: !hasData,
+        ),
 
         const SizedBox(height: 12),
       ],
