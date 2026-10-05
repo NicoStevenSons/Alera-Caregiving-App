@@ -75,6 +75,48 @@ void main() {
     expect(source.completedOnBehalf, ['a']);
   });
 
+  testWidgets('new reminder opens a full page and saves a draft', (
+    tester,
+  ) async {
+    final source = _FakeSource(const []);
+    await pump(tester, source);
+
+    await tester.tap(find.byKey(const Key('create-reminder-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Set up a reminder for Lola Rosa.'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('reminder-title-field')),
+      'Evening pills',
+    );
+    await tester.ensureVisible(find.byKey(const Key('save-reminder-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-reminder-button')));
+    await tester.pumpAndSettle();
+
+    expect(source.createdDraft?.title, 'Evening pills');
+    expect(source.createdDraft?.startDate, '2026-09-22');
+  });
+
+  testWidgets('time field opens the wheel picker and returns the time', (
+    tester,
+  ) async {
+    final source = _FakeSource(const []);
+    await pump(tester, source);
+
+    await tester.tap(find.byKey(const Key('create-reminder-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('reminder-time-field')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('reminder-time-hour')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('reminder-time-done')));
+    await tester.pumpAndSettle();
+
+    // Clock is 9:00 AM; accepting the picker unchanged keeps it.
+    expect(find.text('9:00 AM'), findsOneWidget);
+  });
+
   testWidgets('manage schedules opens the separate page', (tester) async {
     await pump(tester, _FakeSource(const []));
 
@@ -149,6 +191,7 @@ class _FakeSource implements ReminderDataSource {
 
   final List<ReminderOccurrence> occurrences;
   final List<String> completedOnBehalf = [];
+  ReminderTemplateDraft? createdDraft;
 
   @override
   Future<ReminderPage<ReminderOccurrence>> fetchOccurrences({
@@ -186,6 +229,12 @@ class _FakeSource implements ReminderDataSource {
       reminder: occurrences.firstWhere((o) => o.id == occurrenceId),
       idempotent: false,
     );
+  }
+
+  @override
+  Future<ReminderTemplate> createTemplate(ReminderTemplateDraft draft) async {
+    createdDraft = draft;
+    return _template();
   }
 
   @override

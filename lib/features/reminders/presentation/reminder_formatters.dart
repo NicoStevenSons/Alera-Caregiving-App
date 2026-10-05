@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart' show TimeOfDay;
+
 import '../domain/reminder_models.dart';
 
 const _weekdays = [
@@ -97,4 +99,15 @@ String reminderCategoryAsset(ReminderCategory category) {
     ReminderCategory.other => 'other',
   };
   return 'alera-figma-assets/assets/icons/reminders/$name.svg';
+}
+
+/// "Oct 7, 2026"
+String reminderShortDate(DateTime date) =>
+    '${_months[date.month - 1].substring(0, 3)} ${date.day}, ${date.year}';
+
+/// "12:23 PM"
+String reminderTimeOfDay(TimeOfDay time) {
+  final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+  final minute = time.minute.toString().padLeft(2, '0');
+  return '$hour:$minute ${time.hour >= 12 ? 'PM' : 'AM'}';
 }
