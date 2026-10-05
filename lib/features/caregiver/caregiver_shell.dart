@@ -14,6 +14,8 @@ import 'domain/repositories/caregiver_repository.dart';
 import 'domain/models/care_recipient.dart';
 import 'domain/models/caregiver_alert.dart';
 import 'data/api/caregiver_alert_api_data_source.dart';
+import 'data/api/caregiver_help_request_api_data_source.dart';
+import 'data/help_requests/caregiver_help_request_controller.dart';
 import 'data/alerts/caregiver_alert_controller.dart';
 import 'data/api/caregiver_patient_api_data_source.dart';
 import 'data/api/caregiver_nudge_api_data_source.dart';
@@ -60,6 +62,7 @@ class CaregiverShell extends StatefulWidget {
   final AlertNotificationArrivalBus? alertArrivalBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
   final ReminderDataSource? reminderDataSource;
+  final CaregiverHelpRequestDataSource? helpRequestDataSource;
   final Duration patientPollingInterval;
 
   const CaregiverShell({
@@ -77,6 +80,7 @@ class CaregiverShell extends StatefulWidget {
     this.alertArrivalBus,
     this.nudgeDataSource,
     this.reminderDataSource,
+    this.helpRequestDataSource,
     this.patientPollingInterval = const Duration(seconds: 15),
   });
 
@@ -103,6 +107,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   Timer? _patientPollTimer;
   late final ReminderController _reminderController;
   HomeReminderController? _homeReminderController;
+  CaregiverHelpRequestController? _helpRequestController;
 
   void _homeRemindersChanged() {
     if (mounted) setState(() {});
@@ -262,6 +267,13 @@ class _CaregiverShellState extends State<CaregiverShell>
         dataSource: reminderSource as ReminderDateRangeDataSource,
       )..addListener(_homeRemindersChanged);
     }
+    final helpRequestSource = widget.helpRequestDataSource;
+    if (helpRequestSource != null) {
+      _helpRequestController = CaregiverHelpRequestController(
+        dataSource: helpRequestSource,
+      );
+      unawaited(_helpRequestController!.load());
+    }
     _alertController.load();
     if (widget.loadNotificationAlert != null) {
       _unsubscribeAlertArrivals =
@@ -309,6 +321,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       ?..removeListener(_homeRemindersChanged)
       ..dispose();
     _reminderController.dispose();
+    _helpRequestController?.dispose();
     super.dispose();
   }
 
@@ -379,6 +392,9 @@ class _CaregiverShellState extends State<CaregiverShell>
 
     if (enteringHome) {
       unawaited(_refreshPatientsForLiveDashboard());
+      unawaited(
+        _helpRequestController?.load(refresh: true) ?? Future<void>.value(),
+      );
     }
     if (enteringAlerts) {
       _alertController.load();
@@ -392,6 +408,9 @@ class _CaregiverShellState extends State<CaregiverShell>
       _alertController.load();
       unawaited(_refreshPatientsForLiveDashboard());
       _reminderController.refresh();
+      unawaited(
+        _helpRequestController?.load(refresh: true) ?? Future<void>.value(),
+      );
     }
     _syncPatientPolling();
   }
@@ -869,6 +888,7 @@ class _CaregiverShellState extends State<CaregiverShell>
           ? (type) => _sendNudge(patient, type)
           : null,
       onMetricTap: (metric) => _openVitalTrend(context, patient, metric),
+      helpRequestController: _helpRequestController,
     );
   }
 

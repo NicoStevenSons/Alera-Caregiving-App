@@ -6,9 +6,11 @@ import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
 import '../../domain/models/caregiver_nudge.dart';
+import '../../data/help_requests/caregiver_help_request_controller.dart';
 import '../../../../services/patient_contact_actions.dart';
 import 'widgets/home_alerts_preview.dart';
 import 'widgets/home_health_summary.dart';
+import 'widgets/home_help_requests_preview.dart';
 import 'widgets/home_loading_skeleton.dart';
 import 'widgets/home_insights_card.dart';
 import 'widgets/home_patient_header.dart';
@@ -31,6 +33,7 @@ class CaregiverHomePage extends StatelessWidget {
   final ValueChanged<CaregiverNudgeType>? onSendNudge;
   final bool sendingNudge;
   final ValueChanged<String>? onMetricTap;
+  final CaregiverHelpRequestController? helpRequestController;
 
   const CaregiverHomePage({
     super.key,
@@ -50,6 +53,7 @@ class CaregiverHomePage extends StatelessWidget {
     this.onSendNudge,
     this.sendingNudge = false,
     this.onMetricTap,
+    this.helpRequestController,
   });
 
   void _mock(BuildContext context, String action) {
@@ -112,6 +116,11 @@ class CaregiverHomePage extends StatelessWidget {
             },
           ),
         ),
+        if (helpRequestController != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: HomeHelpRequestsPreview(controller: helpRequestController!),
+          ),
         if (dataLoading)
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 4, 16, 16),

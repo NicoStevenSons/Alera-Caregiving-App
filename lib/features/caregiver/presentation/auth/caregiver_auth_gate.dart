@@ -15,6 +15,7 @@ import '../../../patient/presentation/patient_access.dart';
 import '../../../patient/presentation/patient_qr_scanner_page.dart';
 import '../../caregiver_shell.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
+import '../../data/api/caregiver_help_request_api_data_source.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/caregiver_nudge_api_data_source.dart';
 import '../../data/auth/caregiver_auth_api.dart';
@@ -285,6 +286,9 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
                 ),
                 nudgeDataSource: CaregiverNudgeApiDataSource(session: _session),
                 reminderDataSource: ReminderApiDataSource(session: _session),
+                helpRequestDataSource: CaregiverHelpRequestApiDataSource(
+                  session: _session,
+                ),
                 householdCode: _session.householdCode,
                 caregiverId: caregiverSelectionScope(_session.accessToken),
                 onSignOut: _signOut,
