@@ -91,6 +91,14 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                 style: AleraTypography.body.copyWith(fontSize: 13, height: 1.35),
               ),
               const SizedBox(height: 20),
+              const AleraFieldLabel('Time'),
+              const SizedBox(height: 6),
+              ReminderTimeWheel(
+                key: const Key('reminder-time-wheel'),
+                initial: _time,
+                onChanged: (value) => _time = value,
+              ),
+              const SizedBox(height: 20),
               AleraTextField(
                 fieldKey: const Key('reminder-title-field'),
                 controller: _title,
@@ -119,29 +127,12 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _PickerField(
-                        fieldKey: const Key('reminder-date-field'),
-                        label: 'Date',
-                        value: reminderShortDate(_date),
-                        icon: Icons.calendar_today_outlined,
-                        onTap: _pickDate,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _PickerField(
-                        fieldKey: const Key('reminder-time-field'),
-                        label: 'Time',
-                        value: reminderTimeOfDay(_time),
-                        icon: Icons.schedule,
-                        onTap: _pickTime,
-                      ),
-                    ),
-                  ],
+                child: _PickerField(
+                  fieldKey: const Key('reminder-date-field'),
+                  label: 'Date',
+                  value: reminderShortDate(_date),
+                  icon: Icons.calendar_today_outlined,
+                  onTap: _pickDate,
                 ),
               ),
               _dropdown<ReminderPriority>(
@@ -271,11 +262,6 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
     if (picked != null) setState(() => _date = picked);
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showReminderTimePicker(context, initial: _time);
-    if (picked != null) setState(() => _time = picked);
   }
 
   void _submit() {

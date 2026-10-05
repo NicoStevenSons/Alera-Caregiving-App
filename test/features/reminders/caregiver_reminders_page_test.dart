@@ -98,23 +98,27 @@ void main() {
     expect(source.createdDraft?.startDate, '2026-09-22');
   });
 
-  testWidgets('time field opens the wheel picker and returns the time', (
-    tester,
-  ) async {
+  testWidgets('time wheel sits at the top of the create page', (tester) async {
     final source = _FakeSource(const []);
     await pump(tester, source);
 
     await tester.tap(find.byKey(const Key('create-reminder-button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('reminder-time-field')));
-    await tester.pumpAndSettle();
     expect(find.byKey(const Key('reminder-time-hour')), findsOneWidget);
+    expect(find.byKey(const Key('reminder-time-minute')), findsOneWidget);
+    expect(find.byKey(const Key('reminder-time-period')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('reminder-time-done')));
+    await tester.enterText(
+      find.byKey(const Key('reminder-title-field')),
+      'Pills',
+    );
+    await tester.ensureVisible(find.byKey(const Key('save-reminder-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-reminder-button')));
     await tester.pumpAndSettle();
 
-    // Clock is 9:00 AM; accepting the picker unchanged keeps it.
-    expect(find.text('9:00 AM'), findsOneWidget);
+    // Clock is 9:00 AM; leaving the wheel alone keeps that time.
+    expect(source.createdDraft?.startTime, '09:00:00');
   });
 
   testWidgets('manage schedules opens the separate page', (tester) async {
