@@ -793,7 +793,6 @@ class _CaregiverShellState extends State<CaregiverShell>
       controller: _reminderController,
       patients: patients.where((patient) => patient.backendBacked).toList(),
       initialPatientId: _selectedPatientId,
-      onPatientSelected: _selectPatient,
     );
 
     final controller = _patientController;

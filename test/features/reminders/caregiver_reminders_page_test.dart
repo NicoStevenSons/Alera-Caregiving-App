@@ -1,0 +1,194 @@
+import 'package:alera/features/caregiver/domain/models/care_recipient.dart';
+import 'package:alera/features/caregiver/domain/models/health_snapshot.dart';
+import 'package:alera/features/reminders/data/reminder_api_data_source.dart';
+import 'package:alera/features/reminders/data/reminder_controller.dart';
+import 'package:alera/features/reminders/domain/reminder_models.dart';
+import 'package:alera/features/reminders/presentation/caregiver_reminders_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+final _now = DateTime(2026, 9, 22, 9);
+
+void main() {
+  Future<void> pump(WidgetTester tester, _FakeSource source) async {
+    final controller = ReminderController(dataSource: source);
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverRemindersPage(
+          controller: controller,
+          patients: [_patient('p1', 'Lola Rosa')],
+          initialPatientId: 'p1',
+          now: () => _now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('shows patient name and only the selected day', (tester) async {
+    await pump(
+      tester,
+      _FakeSource([
+        _occurrence('a', 'Morning pills', DateTime(2026, 9, 22, 8, 30)),
+        _occurrence('b', 'Tomorrow walk', DateTime(2026, 9, 23, 10)),
+      ]),
+    );
+
+    expect(find.text('Lola Rosa’s daily reminders'), findsOneWidget);
+    expect(find.text('Tuesday, September 22'), findsOneWidget);
+    expect(find.text('Morning pills'), findsOneWidget);
+    expect(find.text('Tomorrow walk'), findsNothing);
+    expect(find.byKey(const Key('reminder-patient-picker')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('reminder-day-2026-09-23')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tomorrow walk'), findsOneWidget);
+    expect(find.text('Morning pills'), findsNothing);
+  });
+
+  testWidgets('empty day shows the muted empty state', (tester) async {
+    await pump(tester, _FakeSource(const []));
+
+    expect(find.byKey(const Key('reminder-occurrences-empty')), findsOneWidget);
+    expect(find.text('No reminders for this day'), findsOneWidget);
+  });
+
+  testWidgets('completing asks for a note and calls the controller', (
+    tester,
+  ) async {
+    final source = _FakeSource([
+      _occurrence('a', 'Morning pills', DateTime(2026, 9, 22, 8, 30)),
+    ]);
+    await pump(tester, source);
+
+    await tester.tap(find.byKey(const ValueKey('reminder-complete-a')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('reminder-action-note')),
+      'Given at bedside',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Complete'));
+    await tester.pumpAndSettle();
+
+    expect(source.completedOnBehalf, ['a']);
+  });
+
+  testWidgets('manage schedules opens the separate page', (tester) async {
+    await pump(tester, _FakeSource(const []));
+
+    await tester.tap(find.byTooltip('Manage schedules'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Manage schedules'), findsOneWidget);
+    expect(find.byKey(const ValueKey('reminder-template-t1')), findsOneWidget);
+  });
+}
+
+CareRecipient _patient(String id, String name) => CareRecipient(
+  id: id,
+  name: name,
+  relationshipLabel: 'Mother',
+  backendBacked: true,
+  status: CareStatus.stable,
+  alertCount: 0,
+  reminderCount: 0,
+  quickMessages: const [],
+  healthSnapshot: HealthSnapshot(
+    heartRateBpm: null,
+    spo2Percent: null,
+    steps: null,
+    stressLabel: 'Low',
+    sleepDuration: Duration.zero,
+    careRiskScore: 0,
+    careRiskLabel: 'Low',
+    lastCheckIn: DateTime(2026, 9, 22),
+    devices: const [],
+  ),
+);
+
+ReminderOccurrence _occurrence(String id, String title, DateTime at) =>
+    ReminderOccurrence(
+      id: id,
+      templateId: 't1',
+      patientId: 'p1',
+      title: title,
+      category: ReminderCategory.medication,
+      priority: ReminderPriority.normal,
+      scheduledAt: at,
+      dueAt: at.add(const Duration(minutes: 15)),
+      status: ReminderOccurrenceStatus.upcoming,
+      snoozeAllowed: true,
+      defaultSnoozeMinutes: 10,
+      missedAfterMinutes: 30,
+    );
+
+ReminderTemplate _template() => ReminderTemplate(
+  id: 't1',
+  patientId: 'p1',
+  createdByUserId: 'c1',
+  title: 'Morning pills',
+  category: ReminderCategory.medication,
+  priority: ReminderPriority.normal,
+  startDate: '2026-09-22',
+  startTime: '08:30:00',
+  timezone: 'Asia/Manila',
+  dueAfterMinutes: 15,
+  snoozeAllowed: true,
+  defaultSnoozeMinutes: 10,
+  missedAfterMinutes: 30,
+  notificationChannel: ReminderNotificationChannel.push,
+  status: ReminderTemplateStatus.active,
+  createdAt: DateTime(2026, 9, 1),
+  updatedAt: DateTime(2026, 9, 1),
+);
+
+class _FakeSource implements ReminderDataSource {
+  _FakeSource(this.occurrences);
+
+  final List<ReminderOccurrence> occurrences;
+  final List<String> completedOnBehalf = [];
+
+  @override
+  Future<ReminderPage<ReminderOccurrence>> fetchOccurrences({
+    String? patientId,
+    List<ReminderOccurrenceStatus> statuses = const [],
+    int limit = 100,
+    int offset = 0,
+  }) async => ReminderPage(
+    items: occurrences,
+    total: occurrences.length,
+    limit: limit,
+    offset: offset,
+  );
+
+  @override
+  Future<ReminderPage<ReminderTemplate>> fetchTemplates(
+    String patientId, {
+    List<ReminderTemplateStatus> statuses = const [],
+    int limit = 100,
+    int offset = 0,
+  }) async => ReminderPage(
+    items: [_template()],
+    total: 1,
+    limit: limit,
+    offset: offset,
+  );
+
+  @override
+  Future<ReminderActionResult> completeOnBehalf(
+    String occurrenceId,
+    String note,
+  ) async {
+    completedOnBehalf.add(occurrenceId);
+    return ReminderActionResult(
+      reminder: occurrences.firstWhere((o) => o.id == occurrenceId),
+      idempotent: false,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+}
