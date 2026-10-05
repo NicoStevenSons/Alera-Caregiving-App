@@ -320,7 +320,7 @@ void main() {
     expect(find.byType(ElderlyInterface), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
-    expect(find.byKey(const Key('elderly-request-help')), findsOneWidget);
+    expect(find.byKey(const Key('elderly-monitoring-status')), findsOneWidget);
     expect(session.sessionType, SessionType.elderlyPatient);
     expect((await store.readSession())?.token, 'patient-token');
 

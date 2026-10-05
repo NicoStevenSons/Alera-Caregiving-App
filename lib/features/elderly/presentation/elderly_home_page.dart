@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../Services/upload_queue_service.dart';
+import '../data/elderly_help_request_controller.dart';
 import '../domain/elderly_home_view_state.dart';
+import '../domain/models/elderly_help_request.dart';
 import '../domain/models/elderly_reminder.dart';
+import 'widgets/elderly_help_request_card.dart';
 import 'widgets/heart_rate_display.dart';
 import 'widgets/sleep_display.dart';
 import 'widgets/spo2_display.dart';
@@ -13,7 +16,11 @@ class ElderlyHomePage extends StatelessWidget {
     super.key,
     required this.state,
     required this.uploadQueueService,
+    this.helpRequestState = ElderlyHelpRequestState.available,
+    this.activeHelpRequest,
+    this.helpRequestError,
     this.onRequestHelp,
+    this.onRetryHelpRequest,
     this.onReminderTap,
     this.onRetryReminders,
     this.onOpenDeviceStatus,
@@ -21,7 +28,11 @@ class ElderlyHomePage extends StatelessWidget {
 
   final ElderlyHomeViewState state;
   final UploadQueueService uploadQueueService;
+  final ElderlyHelpRequestState helpRequestState;
+  final ElderlyHelpRequest? activeHelpRequest;
+  final String? helpRequestError;
   final VoidCallback? onRequestHelp;
+  final VoidCallback? onRetryHelpRequest;
   final ValueChanged<ElderlyReminder>? onReminderTap;
   final VoidCallback? onRetryReminders;
   final VoidCallback? onOpenDeviceStatus;
@@ -37,28 +48,13 @@ class ElderlyHomePage extends StatelessWidget {
           onOpenDeviceStatus: onOpenDeviceStatus,
         ),
         const SizedBox(height: 16),
-        Semantics(
-          label: 'Request help from your caregiver',
-          button: true,
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton.icon(
-              key: const Key('elderly-request-help'),
-              onPressed: onRequestHelp,
-              icon: const Icon(Icons.sos_rounded),
-              label: const Text('Request Help'),
-            ),
-          ),
+        ElderlyHelpRequestCard(
+          state: helpRequestState,
+          activeRequest: activeHelpRequest,
+          errorMessage: helpRequestError,
+          onRequestHelp: onRequestHelp,
+          onRetry: onRetryHelpRequest,
         ),
-        if (onRequestHelp == null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Help requests will be available soon.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
         const SizedBox(height: 20),
         Row(
           children: [

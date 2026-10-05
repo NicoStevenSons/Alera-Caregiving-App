@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../features/elderly/data/api/device_status_api_service.dart';
+import '../features/elderly/data/api/elderly_help_request_api_service.dart';
+import '../features/elderly/data/elderly_help_request_controller.dart';
 import '../Services/fifo_upload_service.dart';
 import '../features/elderly/data/api/health_event_api_service.dart';
 import '../Services/phone_heartbeat_service.dart';
@@ -35,8 +37,14 @@ import '../features/elderly/data/api/activity_data_api_service.dart';
 class ElderlyInterface extends StatefulWidget {
   final String patientId;
   final VoidCallback? onSignOut;
+  final ElderlyHelpRequestController? helpRequestController;
 
-  const ElderlyInterface({super.key, required this.patientId, this.onSignOut});
+  const ElderlyInterface({
+    super.key,
+    required this.patientId,
+    this.onSignOut,
+    this.helpRequestController,
+  });
 
   @override
   State<ElderlyInterface> createState() => _ElderlyInterfaceState();
@@ -53,6 +61,9 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   final UploadQueueService uploadQueueService = UploadQueueService();
 
   final ReminderApiDataSource reminderService = ReminderApiDataSource();
+
+  late final ElderlyHelpRequestController helpRequestController;
+  late final bool _ownsHelpRequestController;
 
   final HealthConnectRefreshService healthConnectRefreshService =
       HealthConnectRefreshService();
@@ -93,6 +104,14 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   @override
   void initState() {
     super.initState();
+
+    _ownsHelpRequestController = widget.helpRequestController == null;
+    helpRequestController =
+        widget.helpRequestController ??
+        ElderlyHelpRequestController(
+          dataSource: ElderlyHelpRequestApiService(),
+        );
+    unawaited(helpRequestController.load());
 
     healthEventApiService = HealthEventApiService(
       baseUrl: AppConfig.backendBaseUrl,
@@ -296,6 +315,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     watchPayloadService.dispose();
 
+    if (_ownsHelpRequestController) {
+      helpRequestController.dispose();
+    }
+
     super.dispose();
   }
 
@@ -424,6 +447,40 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     );
   }
 
+  Future<void> _confirmHelpRequest() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('elderly-help-confirmation'),
+        title: const Text('Request help?'),
+        content: const Text(
+          'Your caregiver will be notified that you need assistance.',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('elderly-help-cancel'),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(false);
+            },
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            key: const Key('elderly-help-confirm'),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(true);
+            },
+            icon: const Icon(Icons.sos_rounded),
+            label: const Text('Request Help'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await helpRequestController.requestHelp();
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -439,24 +496,34 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
         children: [
           TickerMode(
             enabled: _selectedIndex == 0,
-            child: ElderlyHomePage(
-              state: ElderlyHomeViewState(
-                heartRate: heartRateData,
-                spo2: spo2Data,
-                steps: stepsData,
-                sleep: sleepData,
-                deviceStatus: deviceStatusData,
-                reminders: reminders,
-                remindersLoading: remindersLoading,
-                remindersError: remindersError,
+            child: AnimatedBuilder(
+              animation: helpRequestController,
+              builder: (context, _) => ElderlyHomePage(
+                state: ElderlyHomeViewState(
+                  heartRate: heartRateData,
+                  spo2: spo2Data,
+                  steps: stepsData,
+                  sleep: sleepData,
+                  deviceStatus: deviceStatusData,
+                  reminders: reminders,
+                  remindersLoading: remindersLoading,
+                  remindersError: remindersError,
+                ),
+                uploadQueueService: uploadQueueService,
+                helpRequestState: helpRequestController.state,
+                activeHelpRequest: helpRequestController.activeRequest,
+                helpRequestError: helpRequestController.errorMessage,
+                onRequestHelp: helpRequestController.canRequestHelp
+                    ? _confirmHelpRequest
+                    : null,
+                onRetryHelpRequest: helpRequestController.retry,
+                onReminderTap: _showReminderDetails,
+                onRetryReminders: _loadReminders,
+                onOpenDeviceStatus: () {
+                  if (_selectedIndex == 2) return;
+                  setState(() => _selectedIndex = 2);
+                },
               ),
-              uploadQueueService: uploadQueueService,
-              onReminderTap: _showReminderDetails,
-              onRetryReminders: _loadReminders,
-              onOpenDeviceStatus: () {
-                if (_selectedIndex == 2) return;
-                setState(() => _selectedIndex = 2);
-              },
             ),
           ),
           TickerMode(
