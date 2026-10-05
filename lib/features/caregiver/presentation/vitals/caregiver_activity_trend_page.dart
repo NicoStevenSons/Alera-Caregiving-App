@@ -7,6 +7,7 @@ import '../../data/api/dto/activity_trend_dto.dart';
 import 'widgets/activity_trend_chart.dart';
 import 'widgets/trend_chart_empty_state.dart';
 import 'widgets/trend_date_format.dart';
+import 'widgets/trend_loading_skeleton.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
 import 'widgets/vital_trend_metric_pills.dart';
@@ -132,11 +133,7 @@ class _CaregiverActivityTrendPageState
 
             const SizedBox(height: 16),
             if (_loading)
-              const Padding(
-                key: Key('activity-trend-loading'),
-                padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const TrendLoadingSkeleton(key: Key('activity-trend-loading'))
             else if (_error != null)
               _ActivityTrendError(error: _error!, onRetry: _load)
             else if (_trend != null)
@@ -220,35 +217,32 @@ class _ActivityTrendContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         AleraCard(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                VitalTrendRangeHeader(
-                  title: 'Activity Trend',
-                  fromDate: trend.fromDate,
-                  toDate: trend.toDate,
-                  selectedLabel: range.label,
-                  rangeLabels: [
-                    for (final value in ActivityTrendRange.values)
-                      value.label,
-                  ],
-                  onRangeSelected: onRangeSelected,
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              VitalTrendRangeHeader(
+                title: 'Activity Trend',
+                fromDate: trend.fromDate,
+                toDate: trend.toDate,
+                selectedLabel: range.label,
+                rangeLabels: [
+                  for (final value in ActivityTrendRange.values) value.label,
+                ],
+                onRangeSelected: onRangeSelected,
+              ),
+              const SizedBox(height: 10),
+              if (hasData)
+                ActivityTrendChart(trend: trend)
+              else
+                const TrendChartEmptyState(
+                  key: Key('activity-trend-empty'),
+                  title: 'No activity data in this period',
+                  message:
+                      'Try a different range above, or check back once '
+                      'new step data comes in.',
                 ),
-                const SizedBox(height: 10),
-                if (hasData)
-                  ActivityTrendChart(trend: trend)
-                else
-                  const TrendChartEmptyState(
-                    key: Key('activity-trend-empty'),
-                    title: 'No activity data in this period',
-                    message:
-                        'Try a different range above, or check back once '
-                        'new step data comes in.',
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -340,17 +334,15 @@ class _ActivityTrendError extends StatelessWidget {
 
     return AleraCard(
       key: const Key('activity-trend-error'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-        child: Column(
-          children: [
-            const Icon(Icons.cloud_off_outlined, size: 36),
-            const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 36),
+          const SizedBox(height: 10),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
       ),
     );
   }

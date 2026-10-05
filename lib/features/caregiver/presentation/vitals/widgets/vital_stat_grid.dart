@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
@@ -41,11 +42,11 @@ class VitalStatAssetIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AleraSvgIcon(assetPath: assetPath, width: 36, height: 36);
+    return AleraSvgIcon(assetPath: assetPath, width: 32, height: 32);
   }
 }
 
-/// The four-tile "Latest / Average / High / Low" style stat grid used
+/// The four-tile "Latest / Average / High / Low" style stat row used
 /// across the vital, activity and sleep trend pages, sitting in a single
 /// card instead of four separate ones.
 class VitalStatGrid extends StatelessWidget {
@@ -56,15 +57,18 @@ class VitalStatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AleraCard(
-      padding: const EdgeInsets.all(16),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.45,
-        children: [for (final tile in tiles) _Tile(tile: tile)],
+      padding: const EdgeInsets.symmetric(
+        horizontal: AleraSpacing.medium,
+        vertical: 14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(width: AleraSpacing.small),
+            Expanded(child: _Tile(tile: tiles[i])),
+          ],
+        ],
       ),
     );
   }
@@ -79,32 +83,40 @@ class _Tile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         tile.icon,
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           tile.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AleraTypography.body.copyWith(
-            fontSize: 12,
+            fontSize: 11,
             color: AleraColors.textSecondary,
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          tile.value,
-          key: tile.valueKey,
-          style: AleraTypography.sectionTitle.copyWith(fontSize: 18),
-          overflow: TextOverflow.ellipsis,
+        // Four across leaves little width per tile, so long values
+        // ("2,667 steps") shrink to fit rather than truncating.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            tile.value,
+            key: tile.valueKey,
+            maxLines: 1,
+            style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+          ),
         ),
-        if (tile.subtitle != null)
+        if (tile.subtitle != null && tile.subtitle!.isNotEmpty)
           Text(
             tile.subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AleraTypography.body.copyWith(
-              fontSize: 10,
+              fontSize: 9,
               color: AleraColors.textSecondary,
             ),
-            overflow: TextOverflow.ellipsis,
           ),
       ],
     );

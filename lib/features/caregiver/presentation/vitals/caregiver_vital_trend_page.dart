@@ -7,6 +7,7 @@ import '../../data/api/dto/vital_trend_dto.dart';
 import '../../domain/vital_trend_period_analytics.dart';
 import 'widgets/trend_chart_empty_state.dart';
 import 'widgets/trend_date_format.dart';
+import 'widgets/trend_loading_skeleton.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
 import 'widgets/vital_trend_chart.dart';
@@ -135,10 +136,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
             const SizedBox(height: 16),
 
             if (_loading)
-              const Padding(
-                padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const TrendLoadingSkeleton(key: Key('vital-trend-loading'))
             else if (_error != null)
               _TrendError(error: _error!, onRetry: _load)
             else if (_trend != null)
@@ -222,32 +220,30 @@ class _TrendContent extends StatelessWidget {
 
         const SizedBox(height: 12),
         AleraCard(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                VitalTrendRangeHeader(
-                  title: '${metric.label} Trend',
-                  fromDate: trend.fromAt,
-                  toDate: trend.toAt,
-                  selectedLabel: range.label,
-                  rangeLabels: [
-                    for (final value in VitalTrendRange.values) value.label,
-                  ],
-                  onRangeSelected: onRangeSelected,
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              VitalTrendRangeHeader(
+                title: '${metric.label} Trend',
+                fromDate: trend.fromAt,
+                toDate: trend.toAt,
+                selectedLabel: range.label,
+                rangeLabels: [
+                  for (final value in VitalTrendRange.values) value.label,
+                ],
+                onRangeSelected: onRangeSelected,
+              ),
+              const SizedBox(height: 10),
+              if (hasData)
+                VitalTrendChart(trend: trend, metric: metric)
+              else
+                const TrendChartEmptyState(
+                  message:
+                      'Try a different range above, or check back once '
+                      'new readings come in.',
                 ),
-                const SizedBox(height: 10),
-                if (hasData)
-                  VitalTrendChart(trend: trend, metric: metric)
-                else
-                  const TrendChartEmptyState(
-                    message:
-                        'Try a different range above, or check back once '
-                        'new readings come in.',
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
 
@@ -336,17 +332,15 @@ class _TrendError extends StatelessWidget {
         : 'Unable to load vital trends.';
 
     return AleraCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-        child: Column(
-          children: [
-            const Icon(Icons.cloud_off_outlined, size: 36),
-            const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 36),
+          const SizedBox(height: 10),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
       ),
     );
   }

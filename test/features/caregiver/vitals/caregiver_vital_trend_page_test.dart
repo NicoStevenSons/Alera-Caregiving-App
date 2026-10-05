@@ -16,12 +16,12 @@ void main() {
 
     await _pumpPage(tester, source);
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byKey(const Key('vital-trend-loading')), findsOneWidget);
 
     completer.complete(_trend());
     await tester.pumpAndSettle();
 
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byKey(const Key('vital-trend-loading')), findsNothing);
   });
 
   testWidgets('shows API failure and retry action', (tester) async {
