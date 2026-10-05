@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
 import '../../domain/vital_trend_period_analytics.dart';
+import 'widgets/trend_chart_empty_state.dart';
 import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
@@ -121,9 +120,6 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text(widget.metric.label, style: AleraTypography.sectionTitle),
-            const SizedBox(height: 12),
-
             VitalTrendMetricPills(
               selected: widget.metric.label,
               onSelected: (metric) => switchVitalTrendPage(
@@ -180,36 +176,7 @@ class _TrendContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = trend.summary;
-
-    if (summary.readingCount == 0) {
-      return AleraCard(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 30),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.show_chart,
-                size: 38,
-                color: AleraColors.primary,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'No readings in this period',
-                style: AleraTypography.sectionTitle,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'New readings will appear here when they become available.',
-                textAlign: TextAlign.center,
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final hasData = trend.points.isNotEmpty;
 
     return Column(
       children: [
@@ -271,7 +238,14 @@ class _TrendContent extends StatelessWidget {
                   onRangeSelected: onRangeSelected,
                 ),
                 const SizedBox(height: 10),
-                VitalTrendChart(trend: trend, metric: metric),
+                if (hasData)
+                  VitalTrendChart(trend: trend, metric: metric)
+                else
+                  const TrendChartEmptyState(
+                    message:
+                        'Try a different range above, or check back once '
+                        'new readings come in.',
+                  ),
               ],
             ),
           ),

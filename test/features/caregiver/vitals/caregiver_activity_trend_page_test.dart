@@ -50,6 +50,10 @@ void main() {
     expect(find.text('No activity data in this period'), findsOneWidget);
     expect(find.byKey(const Key('activity-trend-empty')), findsOneWidget);
     expect(find.byType(BarChart), findsNothing);
+
+    // The range dropdown must stay reachable even with no data, so another
+    // period can still be tried from an empty state.
+    expect(find.byKey(const Key('trend-range-dropdown')), findsOneWidget);
   });
 
   testWidgets('starts at 7D and requests 30D after range switch', (

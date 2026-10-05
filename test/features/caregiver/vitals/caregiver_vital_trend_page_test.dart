@@ -46,6 +46,10 @@ void main() {
 
     expect(find.text('No readings in this period'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
+
+    // The range dropdown must stay reachable even with no data, so another
+    // period can still be tried from an empty state.
+    expect(find.byKey(const Key('trend-range-dropdown')), findsOneWidget);
   });
 
   testWidgets('range selector requests the selected backend range', (

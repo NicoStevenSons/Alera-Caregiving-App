@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_activity_trend_api_data_source.dart';
 import '../../data/api/dto/activity_trend_dto.dart';
 import 'widgets/activity_trend_chart.dart';
+import 'widgets/trend_chart_empty_state.dart';
 import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
@@ -119,9 +118,6 @@ class _CaregiverActivityTrendPageState
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text('Activity', style: AleraTypography.sectionTitle),
-            const SizedBox(height: 12),
-
             VitalTrendMetricPills(
               selected: 'Activity',
               onSelected: (metric) => switchVitalTrendPage(
@@ -175,37 +171,7 @@ class _ActivityTrendContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = trend.summary;
-
-    if (trend.points.isEmpty) {
-      return AleraCard(
-        key: const Key('activity-trend-empty'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 30),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.directions_walk_outlined,
-                size: 38,
-                color: AleraColors.primary,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'No activity data in this period',
-                style: AleraTypography.sectionTitle,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Recorded step totals will appear here when available.',
-                textAlign: TextAlign.center,
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final hasData = trend.points.isNotEmpty;
 
     return Column(
       children: [
@@ -271,7 +237,16 @@ class _ActivityTrendContent extends StatelessWidget {
                   onRangeSelected: onRangeSelected,
                 ),
                 const SizedBox(height: 10),
-                ActivityTrendChart(trend: trend),
+                if (hasData)
+                  ActivityTrendChart(trend: trend)
+                else
+                  const TrendChartEmptyState(
+                    key: Key('activity-trend-empty'),
+                    title: 'No activity data in this period',
+                    message:
+                        'Try a different range above, or check back once '
+                        'new step data comes in.',
+                  ),
               ],
             ),
           ),

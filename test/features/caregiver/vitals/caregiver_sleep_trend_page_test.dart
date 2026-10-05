@@ -54,6 +54,10 @@ void main() {
     expect(find.byKey(const Key('sleep-trend-empty')), findsOneWidget);
     expect(find.text('No sleep data in this period'), findsOneWidget);
     expect(find.byType(BarChart), findsNothing);
+
+    // The range dropdown must stay reachable even with no data, so another
+    // period can still be tried from an empty state.
+    expect(find.byKey(const Key('trend-range-dropdown')), findsOneWidget);
   });
 
   testWidgets('defaults to 7D and requests 30D when selected', (tester) async {

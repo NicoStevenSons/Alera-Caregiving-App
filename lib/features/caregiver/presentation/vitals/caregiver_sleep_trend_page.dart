@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/alera_colors.dart';
-import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../data/api/caregiver_sleep_trend_api_data_source.dart';
 import '../../data/api/dto/sleep_trend_dto.dart';
 import 'widgets/sleep_trend_chart.dart';
+import 'widgets/trend_chart_empty_state.dart';
 import 'widgets/trend_date_format.dart';
 import 'widgets/trend_summary_card.dart';
 import 'widgets/vital_stat_grid.dart';
@@ -118,9 +117,6 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           children: [
-            Text('Sleep', style: AleraTypography.sectionTitle),
-            const SizedBox(height: 12),
-
             VitalTrendMetricPills(
               selected: 'Sleep',
               onSelected: (metric) => switchVitalTrendPage(
@@ -174,37 +170,7 @@ class _SleepTrendContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = trend.summary;
-
-    if (trend.points.isEmpty) {
-      return AleraCard(
-        key: const Key('sleep-trend-empty'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 30),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.bedtime_outlined,
-                size: 38,
-                color: AleraColors.primary,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'No sleep data in this period',
-                style: AleraTypography.sectionTitle,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Completed sleep durations will appear here when available.',
-                textAlign: TextAlign.center,
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final hasData = trend.points.isNotEmpty;
 
     return Column(
       children: [
@@ -275,7 +241,16 @@ class _SleepTrendContent extends StatelessWidget {
                   onRangeSelected: onRangeSelected,
                 ),
                 const SizedBox(height: 10),
-                SleepTrendChart(trend: trend),
+                if (hasData)
+                  SleepTrendChart(trend: trend)
+                else
+                  const TrendChartEmptyState(
+                    key: Key('sleep-trend-empty'),
+                    title: 'No sleep data in this period',
+                    message:
+                        'Try a different range above, or check back once '
+                        'new sleep data comes in.',
+                  ),
               ],
             ),
           ),

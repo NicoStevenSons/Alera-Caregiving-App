@@ -64,31 +64,41 @@ class VitalTrendMetricPills extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 42,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const ClampingScrollPhysics(),
-        itemCount: _kMetricPills.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final metric = _kMetricPills[index];
-          final isSelected = metric.label == selected;
+      child: ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Colors.black, Colors.black, Colors.transparent],
+          stops: [0, 0.92, 1],
+        ).createShader(bounds),
+        blendMode: BlendMode.dstIn,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.only(right: 16),
+          itemCount: _kMetricPills.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 6),
+          itemBuilder: (context, index) {
+            final metric = _kMetricPills[index];
+            final isSelected = metric.label == selected;
 
-          return AleraPill(
-            label: metric.label,
-            leading: AleraSvgIcon(
-              assetPath: metric.iconAsset,
-              width: 20,
-              height: 20,
-            ),
-            selected: isSelected,
-            variant: AleraPillVariant.filter,
-            onTap: isSelected
-                ? null
-                : () => metric.available
-                      ? onSelected(metric.label)
-                      : onUnavailable(metric.label),
-          );
-        },
+            return AleraPill(
+              label: metric.label,
+              leading: AleraSvgIcon(
+                assetPath: metric.iconAsset,
+                width: 18,
+                height: 18,
+              ),
+              selected: isSelected,
+              variant: AleraPillVariant.filter,
+              onTap: isSelected
+                  ? null
+                  : () => metric.available
+                        ? onSelected(metric.label)
+                        : onUnavailable(metric.label),
+            );
+          },
+        ),
       ),
     );
   }
