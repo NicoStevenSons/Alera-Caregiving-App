@@ -71,9 +71,9 @@ class VitalStatGrid extends StatelessWidget {
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 18,
+        mainAxisSpacing: 16,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.7,
+        childAspectRatio: 1.45,
         children: [for (final tile in tiles) _Tile(tile: tile)],
       ),
     );
