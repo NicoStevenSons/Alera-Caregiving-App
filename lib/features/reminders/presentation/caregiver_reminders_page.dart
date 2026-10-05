@@ -169,7 +169,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           ReminderDateStrip(
             today: _today,
             selected: _selectedDay,
-            daysWithReminders: byDay.keys.toSet(),
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
           Padding(
@@ -437,7 +436,7 @@ class _TimelineSkeleton extends StatelessWidget {
     children: [
       for (var i = 0; i < 3; i++)
         const Padding(
-          padding: EdgeInsets.only(bottom: 12, left: 84),
+          padding: EdgeInsets.only(bottom: 12, left: 68),
           child: AleraSkeletonBlock(height: 76),
         ),
     ],
