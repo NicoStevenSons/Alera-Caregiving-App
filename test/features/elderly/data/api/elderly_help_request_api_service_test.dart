@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:alera/features/caregiver/data/auth/caregiver_session_controller.dart';
 import 'package:alera/features/elderly/data/api/elderly_help_request_api_service.dart';
-import 'package:alera/features/elderly/domain/models/elderly_help_request.dart';
+import 'package:alera/features/help_requests/domain/help_request.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -26,7 +26,7 @@ void main() {
     expect(captured.url.path, '/api/v1/help-requests/active');
     expect(captured.headers['authorization'], 'Bearer patient-token');
     expect(request?.id, 'help-request-id');
-    expect(request?.status, ElderlyHelpRequestStatus.pending);
+    expect(request?.status, HelpRequestStatus.pending);
     expect(request?.requestedAt.isUtc, isTrue);
   });
 

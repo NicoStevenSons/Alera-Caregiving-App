@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:alera/features/elderly/data/api/elderly_help_request_api_service.dart';
 import 'package:alera/features/elderly/data/elderly_help_request_controller.dart';
-import 'package:alera/features/elderly/domain/models/elderly_help_request.dart';
+import 'package:alera/features/help_requests/domain/help_request.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -103,7 +103,7 @@ void main() {
   });
 
   test('duplicate taps cannot create concurrent help requests', () async {
-    final completion = Completer<ElderlyHelpRequest>();
+    final completion = Completer<HelpRequestRecord>();
     final source = _FakeHelpRequestDataSource()
       ..createFuture = completion.future;
     final controller = ElderlyHelpRequestController(dataSource: source);
@@ -130,9 +130,9 @@ class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   int fetchCalls = 0;
   int createCalls = 0;
 
-  ElderlyHelpRequest? activeResponse;
-  ElderlyHelpRequest? createResponse;
-  Future<ElderlyHelpRequest>? createFuture;
+  HelpRequestRecord? activeResponse;
+  HelpRequestRecord? createResponse;
+  Future<HelpRequestRecord>? createFuture;
   Object? fetchError;
   Object? createError;
 
@@ -143,7 +143,7 @@ class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   String createActionId() => 'action-id';
 
   @override
-  Future<ElderlyHelpRequest?> fetchActive() async {
+  Future<HelpRequestRecord?> fetchActive() async {
     fetchCalls++;
 
     final error = fetchError;
@@ -153,7 +153,7 @@ class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   }
 
   @override
-  Future<ElderlyHelpRequest> create({
+  Future<HelpRequestRecord> create({
     required String clientActionId,
     String? message,
   }) async {
@@ -171,11 +171,11 @@ class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   }
 }
 
-ElderlyHelpRequest _request({bool idempotent = false}) {
-  return ElderlyHelpRequest(
+HelpRequestRecord _request({bool idempotent = false}) {
+  return HelpRequestRecord(
     id: 'help-request-id',
     patientId: 'patient-id',
-    status: ElderlyHelpRequestStatus.pending,
+    status: HelpRequestStatus.pending,
     message: 'Please call me',
     clientActionId: 'action-id',
     requestedAt: DateTime.utc(2026, 10, 5, 2),

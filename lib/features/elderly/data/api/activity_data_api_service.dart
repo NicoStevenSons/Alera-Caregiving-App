@@ -20,19 +20,12 @@ class ActivityDataApiService {
     required this.patientId,
     CaregiverSession? session,
     http.Client? client,
-    this.timeout = const Duration(
-      seconds: 15,
-    ),
-  }) : _session =
-           session ??
-           CaregiverSessionController.instance,
+    this.timeout = const Duration(seconds: 15),
+  }) : _session = session ?? CaregiverSessionController.instance,
        _client = client ?? http.Client();
 
-  Future<bool> sendActivityData(
-    Map<String, dynamic> payload,
-  ) async {
-    final String? token =
-        _session.accessToken;
+  Future<bool> sendActivityData(Map<String, dynamic> payload) async {
+    final String? token = _session.accessToken;
 
     if (token == null || token.isEmpty) {
       debugPrint(
@@ -44,21 +37,16 @@ class ActivityDataApiService {
     }
 
     try {
-      final http.Response response =
-          await _client
-              .post(
-                Uri.parse(
-                  '$baseUrl/api/v1/activity-data',
-                ),
-                headers: {
-                  'authorization':
-                      'Bearer $token',
-                  'content-type':
-                      'application/json',
-                },
-                body: jsonEncode(payload),
-              )
-              .timeout(timeout);
+      final http.Response response = await _client
+          .post(
+            Uri.parse('$baseUrl/api/v1/activity-data'),
+            headers: {
+              'authorization': 'Bearer $token',
+              'content-type': 'application/json',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(timeout);
 
       debugPrint(
         'Activity data response: '
@@ -67,24 +55,18 @@ class ActivityDataApiService {
       );
 
       if (response.statusCode == 401) {
-        await _session
-            .clearInvalidSession();
+        await _session.clearInvalidSession();
 
         return false;
       }
 
-      if (
-        response.statusCode < 200 ||
-        response.statusCode >= 300
-      ) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
         return false;
       }
 
       return true;
     } on TimeoutException {
-      debugPrint(
-        'Activity data upload timed out.',
-      );
+      debugPrint('Activity data upload timed out.');
 
       return false;
     } on http.ClientException catch (error) {

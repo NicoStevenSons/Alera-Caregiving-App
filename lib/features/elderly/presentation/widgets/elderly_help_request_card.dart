@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/elderly_help_request_controller.dart';
-import '../../domain/models/elderly_help_request.dart';
+import '../../../help_requests/domain/help_request.dart';
 
 class ElderlyHelpRequestCard extends StatelessWidget {
   const ElderlyHelpRequestCard({
@@ -14,7 +14,7 @@ class ElderlyHelpRequestCard extends StatelessWidget {
   });
 
   final ElderlyHelpRequestState state;
-  final ElderlyHelpRequest? activeRequest;
+  final HelpRequestRecord? activeRequest;
   final String? errorMessage;
   final VoidCallback? onRequestHelp;
   final VoidCallback? onRetry;
@@ -87,18 +87,18 @@ class ElderlyHelpRequestCard extends StatelessWidget {
 
   String get _activeTitle {
     return switch (activeRequest?.status) {
-      ElderlyHelpRequestStatus.acknowledged =>
+      HelpRequestStatus.acknowledged =>
         'Your caregiver acknowledged your request',
-      ElderlyHelpRequestStatus.resolved => 'Your help request was resolved',
+      HelpRequestStatus.resolved => 'Your help request was resolved',
       _ => 'Help request sent',
     };
   }
 
   String get _activeMessage {
     return switch (activeRequest?.status) {
-      ElderlyHelpRequestStatus.acknowledged =>
+      HelpRequestStatus.acknowledged =>
         'Your caregiver knows that you need assistance.',
-      ElderlyHelpRequestStatus.resolved =>
+      HelpRequestStatus.resolved =>
         'Your caregiver marked this request as resolved.',
       _ => 'Your caregiver will be notified.',
     };

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../Services/upload_queue_service.dart';
 import '../data/elderly_help_request_controller.dart';
 import '../domain/elderly_home_view_state.dart';
-import '../domain/models/elderly_help_request.dart';
+import '../../help_requests/domain/help_request.dart';
 import '../domain/models/elderly_reminder.dart';
 import 'widgets/elderly_help_request_card.dart';
 import 'widgets/heart_rate_display.dart';
@@ -29,7 +29,7 @@ class ElderlyHomePage extends StatelessWidget {
   final ElderlyHomeViewState state;
   final UploadQueueService uploadQueueService;
   final ElderlyHelpRequestState helpRequestState;
-  final ElderlyHelpRequest? activeHelpRequest;
+  final HelpRequestRecord? activeHelpRequest;
   final String? helpRequestError;
   final VoidCallback? onRequestHelp;
   final VoidCallback? onRetryHelpRequest;

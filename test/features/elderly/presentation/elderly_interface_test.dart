@@ -1,6 +1,6 @@
 import 'package:alera/features/elderly/data/api/elderly_help_request_api_service.dart';
 import 'package:alera/features/elderly/data/elderly_help_request_controller.dart';
-import 'package:alera/features/elderly/domain/models/elderly_help_request.dart';
+import 'package:alera/features/help_requests/domain/help_request.dart';
 import 'package:alera/interfaces/elderly_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -93,19 +93,19 @@ class _FakeHelpRequestDataSource implements ElderlyHelpRequestDataSource {
   String createActionId() => 'action-id';
 
   @override
-  Future<ElderlyHelpRequest?> fetchActive() async => null;
+  Future<HelpRequestRecord?> fetchActive() async => null;
 
   @override
-  Future<ElderlyHelpRequest> create({
+  Future<HelpRequestRecord> create({
     required String clientActionId,
     String? message,
   }) async {
     createCalls++;
 
-    return ElderlyHelpRequest(
+    return HelpRequestRecord(
       id: 'help-request-id',
       patientId: 'patient-id',
-      status: ElderlyHelpRequestStatus.pending,
+      status: HelpRequestStatus.pending,
       message: message,
       clientActionId: clientActionId,
       requestedAt: DateTime.utc(2026, 10, 5, 2),

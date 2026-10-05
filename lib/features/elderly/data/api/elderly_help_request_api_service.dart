@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/app_config.dart';
 import '../../../caregiver/data/auth/caregiver_session_controller.dart';
-import '../../domain/models/elderly_help_request.dart';
+import '../../../help_requests/domain/help_request.dart';
 
 class ElderlyHelpRequestApiFailure implements Exception {
   const ElderlyHelpRequestApiFailure(this.message, {this.statusCode});
@@ -21,9 +21,9 @@ class ElderlyHelpRequestApiFailure implements Exception {
 abstract interface class ElderlyHelpRequestDataSource {
   String createActionId();
 
-  Future<ElderlyHelpRequest?> fetchActive();
+  Future<HelpRequestRecord?> fetchActive();
 
-  Future<ElderlyHelpRequest> create({
+  Future<HelpRequestRecord> create({
     required String clientActionId,
     String? message,
   });
@@ -63,7 +63,7 @@ class ElderlyHelpRequestApiService implements ElderlyHelpRequestDataSource {
   }
 
   @override
-  Future<ElderlyHelpRequest?> fetchActive() async {
+  Future<HelpRequestRecord?> fetchActive() async {
     final decoded = await _request('GET', '/api/v1/help-requests/active');
 
     if (decoded == null) return null;
@@ -72,7 +72,7 @@ class ElderlyHelpRequestApiService implements ElderlyHelpRequestDataSource {
   }
 
   @override
-  Future<ElderlyHelpRequest> create({
+  Future<HelpRequestRecord> create({
     required String clientActionId,
     String? message,
   }) async {
@@ -91,7 +91,7 @@ class ElderlyHelpRequestApiService implements ElderlyHelpRequestDataSource {
     return _parse(decoded);
   }
 
-  ElderlyHelpRequest _parse(Object? decoded) {
+  HelpRequestRecord _parse(Object? decoded) {
     if (decoded is! Map<String, dynamic>) {
       throw const ElderlyHelpRequestApiFailure(
         'The help request response was invalid.',
@@ -99,7 +99,7 @@ class ElderlyHelpRequestApiService implements ElderlyHelpRequestDataSource {
     }
 
     try {
-      return ElderlyHelpRequest.fromJson(decoded);
+      return HelpRequestRecord.fromJson(decoded);
     } on FormatException {
       throw const ElderlyHelpRequestApiFailure(
         'The help request response was invalid.',

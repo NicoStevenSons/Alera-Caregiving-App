@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../domain/models/elderly_help_request.dart';
+import '../../help_requests/domain/help_request.dart';
 import 'api/elderly_help_request_api_service.dart';
 
 enum ElderlyHelpRequestState {
@@ -17,14 +17,14 @@ class ElderlyHelpRequestController extends ChangeNotifier {
   final ElderlyHelpRequestDataSource dataSource;
 
   ElderlyHelpRequestState _state = ElderlyHelpRequestState.initialLoading;
-  ElderlyHelpRequest? _activeRequest;
+  HelpRequestRecord? _activeRequest;
   String? _errorMessage;
   String? _pendingActionId;
   bool _disposed = false;
   int _revision = 0;
 
   ElderlyHelpRequestState get state => _state;
-  ElderlyHelpRequest? get activeRequest => _activeRequest;
+  HelpRequestRecord? get activeRequest => _activeRequest;
   String? get errorMessage => _errorMessage;
 
   bool get loading => _state == ElderlyHelpRequestState.initialLoading;

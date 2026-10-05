@@ -1,13 +1,13 @@
-enum ElderlyHelpRequestStatus {
+enum HelpRequestStatus {
   pending('PENDING'),
   acknowledged('ACKNOWLEDGED'),
   resolved('RESOLVED');
 
-  const ElderlyHelpRequestStatus(this.apiValue);
+  const HelpRequestStatus(this.apiValue);
 
   final String apiValue;
 
-  static ElderlyHelpRequestStatus parse(Object? value) {
+  static HelpRequestStatus parse(Object? value) {
     return values.firstWhere(
       (item) => item.apiValue == value,
       orElse: () => throw const FormatException('Unknown help request status.'),
@@ -15,8 +15,8 @@ enum ElderlyHelpRequestStatus {
   }
 }
 
-class ElderlyHelpRequest {
-  const ElderlyHelpRequest({
+class HelpRequestRecord {
+  const HelpRequestRecord({
     required this.id,
     required this.patientId,
     required this.status,
@@ -34,7 +34,7 @@ class ElderlyHelpRequest {
 
   final String id;
   final String patientId;
-  final ElderlyHelpRequestStatus status;
+  final HelpRequestStatus status;
   final String? message;
   final String clientActionId;
   final DateTime requestedAt;
@@ -46,11 +46,11 @@ class ElderlyHelpRequest {
   final String? patientDisplayName;
   final bool idempotent;
 
-  factory ElderlyHelpRequest.fromJson(Map<String, dynamic> json) {
-    return ElderlyHelpRequest(
+  factory HelpRequestRecord.fromJson(Map<String, dynamic> json) {
+    return HelpRequestRecord(
       id: _requiredString(json, 'help_request_id'),
       patientId: _requiredString(json, 'patient_id'),
-      status: ElderlyHelpRequestStatus.parse(json['status']),
+      status: HelpRequestStatus.parse(json['status']),
       message: _nullableString(json, 'message'),
       clientActionId: _requiredString(json, 'client_action_id'),
       requestedAt: _requiredDateTime(json, 'requested_at'),

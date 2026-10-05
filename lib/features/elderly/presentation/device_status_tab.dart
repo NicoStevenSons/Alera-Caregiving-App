@@ -21,10 +21,10 @@ class DeviceStatusTab extends StatelessWidget {
         children: [
           _DeviceHeroCard(data: deviceStatusData, connected: connected),
 
-              if (isWorn == false) ...[
-                const SizedBox(height: 16),
-                const _WatchNotWornCard(),
-              ],
+          if (isWorn == false) ...[
+            const SizedBox(height: 16),
+            const _WatchNotWornCard(),
+          ],
 
           const SizedBox(height: 16),
           Row(
@@ -54,22 +54,22 @@ class DeviceStatusTab extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-            Expanded(
-              child: _StatusTile(
-                icon: isWorn == true
-                  ? Icons.watch_rounded
-                  : isWorn == false
-                  ? Icons.watch_off_rounded
-                  : Icons.help_outline_rounded,
-              label: 'Wear status',
-              value: deviceStatusData.displayedWearStatus,
-              supportingText: isWorn == true
-                  ? 'Watch is being worn'
-                  : isWorn == false
-                  ? 'Watch is currently off wrist'
-                  : 'Waiting for wear status',
+              Expanded(
+                child: _StatusTile(
+                  icon: isWorn == true
+                      ? Icons.watch_rounded
+                      : isWorn == false
+                      ? Icons.watch_off_rounded
+                      : Icons.help_outline_rounded,
+                  label: 'Wear status',
+                  value: deviceStatusData.displayedWearStatus,
+                  supportingText: isWorn == true
+                      ? 'Watch is being worn'
+                      : isWorn == false
+                      ? 'Watch is currently off wrist'
+                      : 'Waiting for wear status',
                 ),
-                  ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -237,9 +237,7 @@ class _WatchNotWornCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.orange.shade50,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.orange.shade200,
-        ),
+        border: Border.all(color: Colors.orange.shade200),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,37 +249,27 @@ class _WatchNotWornCard extends StatelessWidget {
               color: Colors.orange.shade100,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.watch_off_rounded,
-              color: Colors.orange.shade800,
-            ),
+            child: Icon(Icons.watch_off_rounded, color: Colors.orange.shade800),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Watch not worn',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange.shade900,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.orange.shade900,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Put the watch back on to keep '
                   'activity monitoring accurate.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(
-                        color: Colors.orange.shade900,
-                      ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.orange.shade900,
+                  ),
                 ),
               ],
             ),
