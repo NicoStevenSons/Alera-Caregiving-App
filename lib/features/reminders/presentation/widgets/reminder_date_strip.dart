@@ -5,24 +5,21 @@ import '../../../../design_system/alera_typography.dart';
 import '../reminder_formatters.dart';
 
 /// Horizontally scrolling strip of days; the selected day is solid primary.
-/// A small dot under a day marks that it has reminders.
 class ReminderDateStrip extends StatefulWidget {
   const ReminderDateStrip({
     super.key,
     required this.today,
     required this.selected,
-    required this.daysWithReminders,
     required this.onSelected,
   });
 
   final DateTime today;
   final DateTime selected;
-  final Set<DateTime> daysWithReminders;
   final ValueChanged<DateTime> onSelected;
 
   static const daysBefore = 7;
   static const dayCount = 28;
-  static const _itemWidth = 52.0;
+  static const _itemWidth = 50.0;
   static const _gap = 8.0;
 
   @override
@@ -72,7 +69,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 76,
+      height: 64,
       child: ListView.separated(
         key: const Key('reminder-date-strip'),
         controller: _scroll,
@@ -86,8 +83,6 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
           return _DayChip(
             day: normalized,
             selected: normalized == widget.selected,
-            isToday: normalized == widget.today,
-            hasReminders: widget.daysWithReminders.contains(normalized),
             onTap: () => widget.onSelected(normalized),
           );
         },
@@ -100,15 +95,11 @@ class _DayChip extends StatelessWidget {
   const _DayChip({
     required this.day,
     required this.selected,
-    required this.isToday,
-    required this.hasReminders,
     required this.onTap,
   });
 
   final DateTime day;
   final bool selected;
-  final bool isToday;
-  final bool hasReminders;
   final VoidCallback onTap;
 
   @override
@@ -142,25 +133,12 @@ class _DayChip extends StatelessWidget {
                     color: secondary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 0),
                 Text(
                   '${day.day}',
                   style: AleraTypography.sectionTitle.copyWith(
                     fontSize: 18,
                     color: foreground,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: hasReminders
-                        ? (selected ? Colors.white : AleraColors.primary)
-                        : (isToday && !selected
-                              ? AleraColors.primarySoft
-                              : Colors.transparent),
                   ),
                 ),
               ],

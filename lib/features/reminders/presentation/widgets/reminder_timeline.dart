@@ -8,6 +8,9 @@ import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
 import '../reminder_formatters.dart';
 
+const _cardPadding = 12.0;
+const _iconTile = 44.0;
+
 bool reminderIsActionable(ReminderOccurrenceStatus status) => switch (status) {
   ReminderOccurrenceStatus.upcoming ||
   ReminderOccurrenceStatus.due ||
@@ -87,22 +90,28 @@ class _TimelineRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 52,
+            width: 44,
             child: Padding(
-              padding: const EdgeInsets.only(top: 22),
-              child: showHour
-                  ? Text(
-                      reminderHourLabel(local.hour),
-                      style: AleraTypography.body.copyWith(
-                        fontSize: 12,
-                        color: AleraColors.textSecondary,
-                      ),
-                    )
-                  : null,
+              padding: const EdgeInsets.only(top: _cardPadding),
+              child: SizedBox(
+                height: _iconTile,
+                child: showHour
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          reminderHourLabel(local.hour),
+                          style: AleraTypography.body.copyWith(
+                            fontSize: 12,
+                            color: AleraColors.textSecondary,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
             ),
           ),
           SizedBox(
-            width: 32,
+            width: 24,
             child: _Rail(
               status: occurrence.status,
               hour: local.hour,
@@ -141,8 +150,10 @@ class _Rail extends StatelessWidget {
   final bool isFirst;
   final bool isLast;
 
-  static const _nodeTop = 16.0;
-  static const _nodeSize = 22.0;
+  // Centre of the node lines up with the centre of the card's title row
+  // (and the completion circle on its right).
+  static const _nodeSize = 16.0;
+  static const _nodeTop = _cardPadding + _iconTile / 2 - _nodeSize / 2;
 
   @override
   Widget build(BuildContext context) {
@@ -169,13 +180,13 @@ class _Rail extends StatelessWidget {
     if (done) {
       return _circle(
         fill: AleraColors.primary,
-        child: const Icon(Icons.check, size: 14, color: Colors.white),
+        child: const Icon(Icons.check, size: 11, color: Colors.white),
       );
     }
     if (status == ReminderOccurrenceStatus.missed) {
       return _circle(
         border: AleraColors.critical,
-        child: const Icon(Icons.close, size: 13, color: AleraColors.critical),
+        child: const Icon(Icons.close, size: 10, color: AleraColors.critical),
       );
     }
     if (status == ReminderOccurrenceStatus.canceled) {
@@ -187,7 +198,7 @@ class _Rail extends StatelessWidget {
       child: night
           ? const Icon(
               Icons.nightlight_round,
-              size: 12,
+              size: 10,
               color: AleraColors.primary,
             )
           : null,
@@ -200,7 +211,7 @@ class _Rail extends StatelessWidget {
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       color: fill ?? AleraColors.background,
-      border: border == null ? null : Border.all(color: border, width: 2),
+      border: border == null ? null : Border.all(color: border, width: 1.5),
     ),
     child: child == null ? null : Center(child: child),
   );
@@ -240,79 +251,85 @@ class _ReminderCard extends StatelessWidget {
 
     return AleraCard(
       key: ValueKey('reminder-occurrence-${occurrence.id}'),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(_cardPadding),
       onTap: actionable ? onOpen : null,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AleraColors.primarySoft.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Opacity(
-                opacity: muted ? 0.5 : 1,
-                child: AleraSvgIcon(
-                  assetPath: reminderCategoryAsset(occurrence.category),
-                  width: 28,
-                  height: 28,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            height: _iconTile,
+            child: Row(
               children: [
-                Text(
-                  occurrence.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AleraTypography.sectionTitle.copyWith(
-                    fontSize: 15,
-                    decoration: muted ? TextDecoration.lineThrough : null,
+                Container(
+                  width: _iconTile,
+                  height: _iconTile,
+                  decoration: BoxDecoration(
+                    color: AleraColors.primarySoft.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AleraTypography.body.copyWith(
-                    fontSize: 12,
-                    color: AleraColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _Meta(
-                      icon: Icons.schedule,
-                      text: reminderClock(occurrence.scheduledAt),
-                    ),
-                    if (repeatLabel != null)
-                      _Meta(icon: Icons.repeat, text: repeatLabel!),
-                    if (status != null)
-                      AleraPill(
-                        label: status,
-                        variant: AleraPillVariant.label,
+                  child: Center(
+                    child: Opacity(
+                      opacity: muted ? 0.5 : 1,
+                      child: AleraSvgIcon(
+                        assetPath: reminderCategoryAsset(occurrence.category),
+                        width: 28,
+                        height: 28,
                       ),
-                  ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        occurrence.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AleraTypography.sectionTitle.copyWith(
+                          fontSize: 15,
+                          decoration: muted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AleraTypography.body.copyWith(
+                          fontSize: 12,
+                          color: AleraColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _Trailing(
+                  occurrence: occurrence,
+                  busy: busy,
+                  onComplete: onComplete,
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          _Trailing(
-            occurrence: occurrence,
-            busy: busy,
-            onComplete: onComplete,
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 14,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _Meta(
+                icon: Icons.schedule,
+                text: reminderClock(occurrence.scheduledAt),
+              ),
+              if (repeatLabel != null)
+                _Meta(icon: Icons.repeat, text: repeatLabel!),
+              if (status != null)
+                AleraPill(label: status, variant: AleraPillVariant.label),
+            ],
           ),
         ],
       ),
@@ -357,9 +374,9 @@ class _Trailing extends StatelessWidget {
   Widget build(BuildContext context) {
     if (busy) {
       return const SizedBox.square(
-        dimension: 28,
+        dimension: 30,
         child: Padding(
-          padding: EdgeInsets.all(4),
+          padding: EdgeInsets.all(5),
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
       );
@@ -370,12 +387,12 @@ class _Trailing extends StatelessWidget {
     if (done) {
       return const Icon(
         Icons.check_circle,
-        size: 28,
+        size: 30,
         color: AleraColors.primary,
       );
     }
     if (!reminderIsActionable(occurrence.status)) {
-      return const SizedBox(width: 28);
+      return const SizedBox(width: 30);
     }
     return Semantics(
       button: true,
@@ -384,12 +401,20 @@ class _Trailing extends StatelessWidget {
         key: ValueKey('reminder-complete-${occurrence.id}'),
         onTap: onComplete,
         radius: 22,
+        // Larger and softer than the timeline node, with a faint check, so
+        // it reads as a tappable "mark done" control rather than a marker.
         child: Container(
-          width: 28,
-          height: 28,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            color: AleraColors.background,
             border: Border.all(color: AleraColors.primarySoft, width: 2),
+          ),
+          child: const Icon(
+            Icons.check,
+            size: 16,
+            color: AleraColors.primarySoft,
           ),
         ),
       ),
