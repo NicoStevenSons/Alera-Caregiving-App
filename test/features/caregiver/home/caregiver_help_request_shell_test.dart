@@ -2,6 +2,7 @@ import 'package:alera/features/caregiver/caregiver_shell.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_help_request_api_data_source.dart';
 import 'package:alera/features/caregiver/data/mock/mock_caregiver_repository.dart';
 import 'package:alera/features/help_requests/domain/help_request.dart';
+import 'package:alera/services/help_request_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -69,6 +70,41 @@ void main() {
     expect(source.fetchCalls, greaterThan(fetchesBeforePoll));
 
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('created push refreshes caregiver help requests', (tester) async {
+    final source = _ShellHelpRequestDataSource();
+    final bus = HelpRequestNotificationBus();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverShell(
+          repository: const MockCaregiverRepository(),
+          helpRequestDataSource: source,
+          helpRequestNotificationBus: bus,
+          patientPollingInterval: Duration.zero,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final fetchesBeforePush = source.fetchCalls;
+
+    bus.handle(
+      HelpRequestNotification.parse(const {
+        'type': 'HELP_REQUEST',
+        'event': 'CREATED',
+        'help_request_id': '10000000-0000-4000-8000-000000000001',
+        'patient_id': '20000000-0000-4000-8000-000000000002',
+        'status': 'PENDING',
+        'patient_display_name': 'Nana',
+      }, messageId: 'caregiver-created-message'),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(source.fetchCalls, fetchesBeforePush + 1);
   });
 }
 

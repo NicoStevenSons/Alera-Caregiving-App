@@ -40,6 +40,7 @@ import 'presentation/people/caregiver_people_page.dart';
 import 'presentation/people/add_patient_page.dart';
 import 'presentation/widgets/caregiver_page_app_bar.dart';
 import '../../services/alert_notification.dart';
+import '../../services/help_request_notification.dart';
 import '../reminders/data/reminder_api_data_source.dart';
 import '../reminders/data/reminder_controller.dart';
 import '../reminders/data/home_reminder_controller.dart';
@@ -60,6 +61,7 @@ class CaregiverShell extends StatefulWidget {
   final Future<CaregiverAlert> Function(String)? loadNotificationAlert;
   final NotificationTapBus? notificationTapBus;
   final AlertNotificationArrivalBus? alertArrivalBus;
+  final HelpRequestNotificationBus? helpRequestNotificationBus;
   final CaregiverNudgeDataSource? nudgeDataSource;
   final ReminderDataSource? reminderDataSource;
   final CaregiverHelpRequestDataSource? helpRequestDataSource;
@@ -78,6 +80,7 @@ class CaregiverShell extends StatefulWidget {
     this.loadNotificationAlert,
     this.notificationTapBus,
     this.alertArrivalBus,
+    this.helpRequestNotificationBus,
     this.nudgeDataSource,
     this.reminderDataSource,
     this.helpRequestDataSource,
@@ -95,6 +98,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   String? get _selectedPatientId => _patientSelection.selectedPatientId;
   void Function()? _unsubscribeNotifications;
   void Function()? _unsubscribeAlertArrivals;
+  void Function()? _unsubscribeHelpRequests;
   int _notificationRevision = 0;
   late final CareRecipient _homeCareRecipient;
   late final List<CareRecipient> _careRecipients;
@@ -273,6 +277,10 @@ class _CaregiverShellState extends State<CaregiverShell>
         dataSource: helpRequestSource,
       );
       unawaited(_helpRequestController!.load());
+      _unsubscribeHelpRequests =
+          (widget.helpRequestNotificationBus ??
+                  HelpRequestNotificationBus.instance)
+              .subscribe(_receiveHelpRequestNotification);
     }
     _alertController.load();
     if (widget.loadNotificationAlert != null) {
@@ -309,6 +317,7 @@ class _CaregiverShellState extends State<CaregiverShell>
     _stopPatientPolling();
     _unsubscribeNotifications?.call();
     _unsubscribeAlertArrivals?.call();
+    _unsubscribeHelpRequests?.call();
     _alertController
       ..removeListener(_alertsChanged)
       ..dispose();
@@ -418,6 +427,16 @@ class _CaregiverShellState extends State<CaregiverShell>
       );
     }
     _syncPatientPolling();
+  }
+
+  void _receiveHelpRequestNotification(HelpRequestNotification event) {
+    if (event.event != HelpRequestNotificationEvent.created) {
+      return;
+    }
+
+    unawaited(
+      _helpRequestController?.load(refresh: true) ?? Future<void>.value(),
+    );
   }
 
   Future<void> _receiveAlertNotification(AlertNotification event) async {

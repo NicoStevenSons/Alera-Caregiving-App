@@ -2,6 +2,7 @@ import 'package:alera/features/elderly/data/api/elderly_help_request_api_service
 import 'package:alera/features/elderly/data/elderly_help_request_controller.dart';
 import 'package:alera/features/help_requests/domain/help_request.dart';
 import 'package:alera/interfaces/elderly_interface.dart';
+import 'package:alera/services/help_request_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -109,6 +110,42 @@ void main() {
     await tester.pump();
 
     expect(helpSource.fetchCalls, fetchesBeforeResume + 1);
+  });
+
+  testWidgets('acknowledged push refreshes patient help status', (
+    tester,
+  ) async {
+    final helpSource = _FakeHelpRequestDataSource();
+    final helpController = ElderlyHelpRequestController(dataSource: helpSource);
+    final bus = HelpRequestNotificationBus();
+    addTearDown(helpController.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ElderlyInterface(
+          patientId: 'a076ecdb-ae38-4f84-b490-e714977027ee',
+          helpRequestController: helpController,
+          helpRequestNotificationBus: bus,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fetchesBeforePush = helpSource.fetchCalls;
+
+    bus.handle(
+      HelpRequestNotification.parse(const {
+        'type': 'HELP_REQUEST',
+        'event': 'ACKNOWLEDGED',
+        'help_request_id': '10000000-0000-4000-8000-000000000001',
+        'patient_id': 'a076ecdb-ae38-4f84-b490-e714977027ee',
+        'status': 'ACKNOWLEDGED',
+        'patient_display_name': 'Test Patient',
+      }, messageId: 'patient-acknowledged-message'),
+    );
+    await tester.pump();
+
+    expect(helpSource.fetchCalls, fetchesBeforePush + 1);
   });
 }
 

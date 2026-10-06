@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 import 'alert_notification.dart';
+import 'help_request_notification.dart';
 import 'patient_nudge_notification.dart';
 import 'reminder_due_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -412,6 +413,42 @@ class FcmNotificationService {
   }
 
   Future<void> _foreground(RemoteMessage m) async {
+    if (m.data['type'] == 'HELP_REQUEST') {
+      HelpRequestNotificationBus.instance.handle(
+        HelpRequestNotification.parse(m.data, messageId: m.messageId),
+      );
+
+      final data = {
+        ...m.data,
+        if (!m.data.containsKey('title') && m.notification?.title != null)
+          'title': m.notification!.title!,
+        if (!m.data.containsKey('body') && m.notification?.body != null)
+          'body': m.notification!.body!,
+        '_notification_event_id': m.messageId,
+      };
+
+      await _local.show(
+        id: m.data['help_request_id']?.hashCode ?? m.hashCode,
+        title: data['title'] as String? ?? 'Alera help request',
+        body: data['body'] as String? ?? 'A help-request status has changed.',
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'alera_help_requests',
+            'Help requests',
+            channelDescription: 'Urgent patient help-request updates',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: _smallNotificationIcon,
+            largeIcon: DrawableResourceAndroidBitmap(_largeNotificationIcon),
+            visibility: NotificationVisibility.private,
+            category: AndroidNotificationCategory.message,
+          ),
+        ),
+        payload: jsonEncode(data),
+      );
+      return;
+    }
+
     if (m.data['type'] == 'REMINDER_DUE') {
       await _showReminderNotification(_local, m);
       return;
@@ -453,6 +490,9 @@ class FcmNotificationService {
   }
 
   void _handle(RemoteMessage message) {
+    HelpRequestNotificationBus.instance.handle(
+      HelpRequestNotification.parse(message.data, messageId: message.messageId),
+    );
     NotificationTapBus.instance.handle(
       AlertNotification.parse(message.data, messageId: message.messageId),
     );
@@ -476,6 +516,9 @@ class FcmNotificationService {
     };
     ReminderDueTapBus.instance.handle(parsed?.withAction(action));
     if (action == ReminderNotificationAction.open) {
+      HelpRequestNotificationBus.instance.handle(
+        HelpRequestNotification.fromLocalPayload(response.payload),
+      );
       NotificationTapBus.instance.handle(
         AlertNotification.fromLocalPayload(response.payload),
       );

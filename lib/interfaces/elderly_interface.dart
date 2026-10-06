@@ -29,6 +29,7 @@ import '../models/sleep_data.dart';
 import '../models/spo2_data.dart';
 import '../models/steps_data.dart';
 
+import '../services/help_request_notification.dart';
 import '../services/patient_nudge_notification.dart';
 import '../services/reminder_due_notification.dart';
 import '../Services/health_connect_refresh_service.dart';
@@ -38,12 +39,14 @@ class ElderlyInterface extends StatefulWidget {
   final String patientId;
   final VoidCallback? onSignOut;
   final ElderlyHelpRequestController? helpRequestController;
+  final HelpRequestNotificationBus? helpRequestNotificationBus;
 
   const ElderlyInterface({
     super.key,
     required this.patientId,
     this.onSignOut,
     this.helpRequestController,
+    this.helpRequestNotificationBus,
   });
 
   @override
@@ -81,6 +84,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   void Function()? _unsubscribeNudges;
   void Function()? _unsubscribeDueReminders;
+  void Function()? _unsubscribeHelpRequests;
 
   late final FifoUploadService fifoUploadService;
   late final WatchListenerController watchListenerController;
@@ -131,6 +135,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       _unsubscribeDueReminders = ReminderDueTapBus.instance.subscribe(
         _openDueReminder,
       );
+      _unsubscribeHelpRequests =
+          (widget.helpRequestNotificationBus ??
+                  HelpRequestNotificationBus.instance)
+              .subscribe(_receiveHelpRequestNotification);
     });
 
     deviceStatusApiService = DeviceStatusApiService(
@@ -310,6 +318,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
     _unsubscribeNudges?.call();
     _unsubscribeDueReminders?.call();
+    _unsubscribeHelpRequests?.call();
 
     phoneHeartbeatService.stop();
 
@@ -322,6 +331,14 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     }
 
     super.dispose();
+  }
+
+  void _receiveHelpRequestNotification(HelpRequestNotification event) {
+    if (event.event == HelpRequestNotificationEvent.created) {
+      return;
+    }
+
+    unawaited(helpRequestController.load());
   }
 
   void _openNudge(PatientNudgeNotification event) {
