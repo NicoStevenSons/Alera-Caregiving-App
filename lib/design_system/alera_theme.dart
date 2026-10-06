@@ -38,6 +38,39 @@ abstract final class AleraTheme {
         ),
         actionTextColor: AleraColors.primary,
       ),
+      // Controls use the same purple as the app's buttons (not the deeper
+      // brand purple).
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.all(Colors.white),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AleraColors.selected
+              : AleraColors.primarySoft,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AleraColors.selected
+              : AleraColors.fieldBorder,
+        ),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AleraColors.selected
+              : null,
+        ),
+        checkColor: WidgetStateProperty.all(Colors.white),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AleraColors.selected
+              : null,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AleraColors.selected),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AleraColors.surface,
         indicatorColor: Colors.transparent,
