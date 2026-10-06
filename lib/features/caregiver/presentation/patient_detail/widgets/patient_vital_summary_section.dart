@@ -37,14 +37,7 @@ class PatientVitalSummarySection extends StatelessWidget {
       child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('Vitals', style: AleraTypography.sectionTitle),
-            ),
-            _ConnectionPill(devices: snapshot.devices),
-          ],
-        ),
+        Text('Vitals', style: AleraTypography.sectionTitle),
         const SizedBox(height: 12),
         _squarePair(
           _VitalCard(
@@ -129,61 +122,6 @@ class PatientVitalSummarySection extends StatelessWidget {
   }
 
 /// "● Connected" pill reflecting the monitoring devices feeding these vitals.
-class _ConnectionPill extends StatelessWidget {
-  final List<MonitoringDevice> devices;
-
-  const _ConnectionPill({required this.devices});
-
-  @override
-  Widget build(BuildContext context) {
-    final MonitoringDevice? watch = devices.watch;
-    final bool anyConnected = devices.any((d) => d.isConnected);
-    final bool known = devices.any(
-      (d) => d.connectionStatus != MonitoringDeviceConnectionStatus.unknown,
-    );
-    final bool connected = watch?.isConnected ?? anyConnected;
-
-    final String label = connected
-        ? 'Connected'
-        : known
-        ? 'Disconnected'
-        : 'No device';
-    final Color color = connected
-        ? const Color(0xFF05A869)
-        : known
-        ? AleraColors.critical
-        : AleraColors.textSecondary;
-
-    return Container(
-      key: const Key('vitals-connection-pill'),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _UnavailableVitalCard extends StatelessWidget {
   final String backgroundAsset;
   final String iconAsset;
