@@ -117,10 +117,7 @@ class CaregiverHomePage extends StatelessWidget {
           ),
         ),
         if (helpRequestController != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: HomeHelpRequestsPreview(controller: helpRequestController!),
-          ),
+          HomeHelpRequestsPreview(controller: helpRequestController!),
         if (dataLoading)
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 4, 16, 16),

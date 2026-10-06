@@ -5,60 +5,78 @@ import '../../../../Services/upload_queue_service.dart';
 import '../../../../interfaces/pages/records/heart_rate_history_page.dart';
 
 class HeartRateDisplay extends StatelessWidget {
-  final HeartRateData heartRateData;
-  final UploadQueueService uploadQueueService;
-
   const HeartRateDisplay({
     super.key,
     required this.heartRateData,
     required this.uploadQueueService,
   });
 
+  final HeartRateData heartRateData;
+  final UploadQueueService uploadQueueService;
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  HeartRateHistoryPage(uploadQueueService: uploadQueueService),
-            ),
-          );
-        },
+    final hasReading = heartRateData.bpm != null && heartRateData.bpm! > 0;
+    final value = hasReading ? '${heartRateData.bpm} BPM' : '-- BPM';
 
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.favorite, color: Colors.red),
-                  const SizedBox(width: 8),
-                  const Text('Heart Rate'),
-                ],
+    return SizedBox(
+      height: 154,
+      child: Card(
+        elevation: 1,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => HeartRateHistoryPage(
+                  uploadQueueService: uploadQueueService,
+                ),
               ),
-
-              Padding(
-                padding: const EdgeInsets.only(top: 70),
-                child: Row(
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
                   children: [
-                    Text(
-                      '${heartRateData.displayedHeartRate} BPM',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Icon(Icons.favorite_rounded, color: Color(0xFFFF6467)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Heart Rate',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const Spacer(),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasReading
+                      ? heartRateData.displayedStatus
+                      : 'Waiting for watch',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
         ),
       ),

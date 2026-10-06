@@ -19,32 +19,36 @@ class HomeHelpRequestsPreview extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         if (controller.state == CaregiverHelpRequestState.initialLoading) {
-          return const Card(
-            key: Key('home-help-requests-loading'),
-            child: ListTile(
-              leading: SizedBox.square(
-                dimension: 24,
-                child: CircularProgressIndicator(strokeWidth: 3),
+          return _section(
+            const Card(
+              key: Key('home-help-requests-loading'),
+              child: ListTile(
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                title: Text('Checking help requests…'),
               ),
-              title: Text('Checking help requests…'),
             ),
           );
         }
 
         if (controller.state == CaregiverHelpRequestState.error &&
             controller.requests.isEmpty) {
-          return Card(
-            key: const Key('home-help-requests-error'),
-            child: ListTile(
-              leading: const Icon(Icons.cloud_off_rounded),
-              title: const Text('Unable to load help requests'),
-              subtitle: Text(controller.errorMessage ?? 'Please try again.'),
-              trailing: TextButton(
-                key: const Key('home-help-requests-retry'),
-                onPressed: () {
-                  controller.load();
-                },
-                child: const Text('Retry'),
+          return _section(
+            Card(
+              key: const Key('home-help-requests-error'),
+              child: ListTile(
+                leading: const Icon(Icons.cloud_off_rounded),
+                title: const Text('Unable to load help requests'),
+                subtitle: Text(controller.errorMessage ?? 'Please try again.'),
+                trailing: TextButton(
+                  key: const Key('home-help-requests-retry'),
+                  onPressed: () {
+                    controller.load();
+                  },
+                  child: const Text('Retry'),
+                ),
               ),
             ),
           );
@@ -58,77 +62,86 @@ class HomeHelpRequestsPreview extends StatelessWidget {
             .take(maxItems)
             .toList(growable: false);
 
-        return Card(
-          key: const Key('home-help-requests'),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.sos_rounded),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Help requests',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+        return _section(
+          Card(
+            key: const Key('home-help-requests'),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.sos_rounded),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Help requests',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      if (controller.pendingCount > 0)
+                        Badge(
+                          key: const Key('home-help-requests-badge'),
+                          label: Text('${controller.pendingCount}'),
+                        ),
+                    ],
+                  ),
+                  if (controller.errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      controller.errorMessage!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
-                    if (controller.pendingCount > 0)
-                      Badge(
-                        key: const Key('home-help-requests-badge'),
-                        label: Text('${controller.pendingCount}'),
-                      ),
                   ],
-                ),
-                if (controller.errorMessage != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    controller.errorMessage!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
+                  if (controller.actionErrorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      controller.actionErrorMessage!,
+                      key: const Key('home-help-request-action-error'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
-                  ),
-                ],
-                if (controller.actionErrorMessage != null) ...[
+                  ],
                   const SizedBox(height: 8),
-                  Text(
-                    controller.actionErrorMessage!,
-                    key: const Key('home-help-request-action-error'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
+                  for (var index = 0; index < visible.length; index++) ...[
+                    _HelpRequestTile(
+                      request: visible[index],
+                      busy: controller.isBusy(visible[index].id),
+                      onAcknowledge: () {
+                        controller.acknowledge(visible[index].id);
+                      },
+                      onResolve: () {
+                        controller.resolve(visible[index].id);
+                      },
                     ),
-                  ),
+                    if (index != visible.length - 1) const Divider(),
+                  ],
+                  if (controller.requests.length > visible.length) ...[
+                    const Divider(),
+                    Text(
+                      '${controller.requests.length - visible.length} '
+                      'more active help requests',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
-                const SizedBox(height: 8),
-                for (var index = 0; index < visible.length; index++) ...[
-                  _HelpRequestTile(
-                    request: visible[index],
-                    busy: controller.isBusy(visible[index].id),
-                    onAcknowledge: () {
-                      controller.acknowledge(visible[index].id);
-                    },
-                    onResolve: () {
-                      controller.resolve(visible[index].id);
-                    },
-                  ),
-                  if (index != visible.length - 1) const Divider(),
-                ],
-                if (controller.requests.length > visible.length) ...[
-                  const Divider(),
-                  Text(
-                    '${controller.requests.length - visible.length} '
-                    'more active help requests',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _section(Widget child) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: child,
     );
   }
 }
