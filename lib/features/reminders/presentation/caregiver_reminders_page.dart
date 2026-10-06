@@ -16,6 +16,7 @@ import 'reminder_formatters.dart';
 import 'reminder_note_dialog.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
+import 'widgets/reminder_date_header.dart';
 import 'widgets/reminder_summary_card.dart';
 import 'widgets/reminder_timeline.dart';
 import '../../../design_system/alera_sheet_animation.dart';
@@ -176,18 +177,14 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             markedDays: byDay.keys.toSet(),
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: ReminderSummaryCard(
-              occurrences: dayItems,
-              isToday: isToday,
-              date: _selectedDay,
-              onToday: () => setState(() => _selectedDay = _today),
-              onPickDate: _pickDate,
-              showSummary: !(controller.loading &&
-                  controller.occurrences.isEmpty),
+          if (!(controller.loading && controller.occurrences.isEmpty))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: ReminderSummaryCard(
+                occurrences: dayItems,
+                isToday: isToday,
+              ),
             ),
-          ),
           if (controller.errorMessage case final message?)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -207,27 +204,43 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     List<ReminderOccurrence> dayItems,
     bool isToday,
   ) {
+    final Widget content;
     if (controller.loading && controller.occurrences.isEmpty) {
-      return const _TimelineSkeleton(key: Key('reminder-loading'));
-    }
-    if (dayItems.isEmpty) {
-      return const _MutedState(
+      content = const _TimelineSkeleton(key: Key('reminder-loading'));
+    } else if (dayItems.isEmpty) {
+      content = const _MutedState(
         key: Key('reminder-occurrences-empty'),
         icon: Icons.alarm_off,
         title: 'No reminders for this day',
         message: 'Tap + to add one.',
       );
+    } else {
+      content = ReminderTimeline(
+        occurrences: dayItems,
+        templates: controller.templates,
+        isBusy: controller.isBusy,
+        onComplete: _complete,
+        onOpen: _openActions,
+        now: isToday ? (widget.now ?? DateTime.now)() : null,
+      );
     }
     return AleraCard(
       key: const Key('reminder-list-card'),
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-      child: ReminderTimeline(
-      occurrences: dayItems,
-      templates: controller.templates,
-      isBusy: controller.isBusy,
-      onComplete: _complete,
-      onOpen: _openActions,
-      now: isToday ? (widget.now ?? DateTime.now)() : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: ReminderDateHeader(
+              date: _selectedDay,
+              isToday: isToday,
+              onPickDate: _pickDate,
+              onToday: () => setState(() => _selectedDay = _today),
+            ),
+          ),
+          content,
+        ],
       ),
     );
   }

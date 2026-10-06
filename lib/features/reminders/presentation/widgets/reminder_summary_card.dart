@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
-import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
 import '../reminder_category_style.dart';
@@ -16,24 +15,8 @@ class ReminderSummaryCard extends StatelessWidget {
     super.key,
     required this.occurrences,
     required this.isToday,
-    required this.date,
-    this.onToday,
-    this.onPickDate,
-    this.showSummary = true,
     this.now,
   });
-
-  /// The selected day, shown as the card's title.
-  final DateTime date;
-
-  /// Opens the calendar to jump to any date.
-  final VoidCallback? onPickDate;
-
-  /// Jumps back to today; the Today pill is inert when null / already today.
-  final VoidCallback? onToday;
-
-  /// False while the first load is in flight: only the date title shows.
-  final bool showSummary;
 
   /// The selected day's reminders, sorted by time.
   final List<ReminderOccurrence> occurrences;
@@ -75,106 +58,47 @@ class ReminderSummaryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: InkWell(
-                    key: const Key('reminder-pick-date'),
-                    onTap: onPickDate,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.calendar_month,
-                            size: 20,
-                            color: AleraColors.primary,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              reminderLongDate(date),
-                              key: const Key('reminder-selected-date'),
-                              overflow: TextOverflow.ellipsis,
-                              style: AleraTypography.pageTitle.copyWith(
-                                fontSize: 17,
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.keyboard_arrow_down,
-                            size: 22,
-                            color: AleraColors.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              AleraPill(
-                key: const Key('reminder-today-pill'),
-                label: 'Today',
-                variant: isToday
-                    ? AleraPillVariant.label
-                    : AleraPillVariant.action,
-                onTap: isToday ? null : onToday,
-              ),
-            ],
-          ),
-          if (showSummary) ...[
-            const SizedBox(height: 6),
-  Row(
-          children: [
-            if (allDone)
-              const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(Icons.check_circle, size: 28, color: Color(0xFF05A869)),
-              ),
-            if (big != null) ...[
-              Text(
-                big,
-                style: AleraTypography.pageTitle.copyWith(
-                  fontSize: 28,
-                  height: 1,
-                  color: AleraColors.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    headline,
-                    style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
-                  ),
-                  if (missed > 0) ...[
-                    const SizedBox(height: 1),
-                    Text(
-                      missed == 1 ? '1 missed' : '$missed missed',
-                      style: const TextStyle(
-                        color: AleraColors.critical,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ],
+          if (allDone)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.check_circle, size: 28, color: Color(0xFF05A869)),
+            ),
+          if (big != null) ...[
+            Text(
+              big,
+              style: AleraTypography.pageTitle.copyWith(
+                fontSize: 28,
+                height: 1,
+                color: AleraColors.primary,
               ),
             ),
-            if (next != null) _NextChip(next: next),
+            const SizedBox(width: 10),
           ],
-        ),
-          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headline,
+                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+                ),
+                if (missed > 0) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    missed == 1 ? '1 missed' : '$missed missed',
+                    style: const TextStyle(
+                      color: AleraColors.critical,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (next != null) _NextChip(next: next),
         ],
       ),
     );
