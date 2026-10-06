@@ -5,11 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../../design_system/alera_spacing.dart';
 import '../../design_system/alera_theme.dart';
 import '../../design_system/status/status.dart';
 
-import '../../design_system/alera_typography.dart';
 import 'domain/repositories/caregiver_repository.dart';
 import 'domain/models/care_recipient.dart';
 import 'domain/models/caregiver_alert.dart';
@@ -33,12 +31,12 @@ import 'presentation/vitals/caregiver_vital_trend_page.dart';
 import 'domain/models/health_snapshot.dart';
 import 'domain/models/caregiver_nudge.dart';
 import 'presentation/home/caregiver_home_page.dart';
+import 'presentation/more/caregiver_more_page.dart';
 import 'presentation/alerts/caregiver_alerts_page.dart';
 import 'presentation/alerts/caregiver_alert_detail_page.dart';
 import 'presentation/patient_detail/caregiver_patient_detail_page.dart';
 import 'presentation/people/caregiver_people_page.dart';
 import 'presentation/people/add_patient_page.dart';
-import 'presentation/widgets/caregiver_page_app_bar.dart';
 import '../../services/alert_notification.dart';
 import '../../services/help_request_notification.dart';
 import '../reminders/data/reminder_api_data_source.dart';
@@ -685,9 +683,8 @@ class _CaregiverShellState extends State<CaregiverShell>
                     ),
                     _buildAlerts(context),
                     _buildReminders(),
-                    _PlaceholderPage(
-                      title: 'More',
-                      isTemporary: true,
+                    CaregiverMorePage(
+                      helpRequestDataSource: widget.helpRequestDataSource,
                       onSignOut: widget.onSignOut,
                     ),
                   ],
@@ -1122,48 +1119,4 @@ class _RepositoryAlertDataSource implements CaregiverAlertDataSource {
 
   @override
   Future<List<CaregiverAlert>> fetchAlerts() async => repository.getAlerts();
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  final bool isTemporary;
-  final VoidCallback? onSignOut;
-
-  const _PlaceholderPage({
-    required this.title,
-    this.isTemporary = false,
-    this.onSignOut,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CaregiverPageAppBar(title: title),
-      body: Padding(
-        padding: const EdgeInsets.all(AleraSpacing.large),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (onSignOut != null)
-              TextButton.icon(
-                onPressed: onSignOut,
-                icon: const Icon(Icons.logout),
-                label: const Text('Sign out'),
-              ),
-            const Spacer(),
-            Center(
-              child: Text(
-                isTemporary
-                    ? 'Temporary $title placeholder'
-                    : '$title screen placeholder',
-                style: AleraTypography.body,
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const Spacer(),
-          ],
-        ),
-      ),
-    );
-  }
 }

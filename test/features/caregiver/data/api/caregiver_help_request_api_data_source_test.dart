@@ -226,6 +226,149 @@ void main() {
       ),
     );
   });
+
+  test('creates a valid UUID-v4 note action id', () {
+    final source = CaregiverHelpRequestApiDataSource(
+      session: _Session('token'),
+    );
+
+    final actionId = source.createNoteActionId();
+
+    expect(
+      actionId,
+      matches(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-'
+          r'[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+  });
+
+  test('lists caregiver notes with pagination and attribution', () async {
+    late http.Request captured;
+
+    final source = CaregiverHelpRequestApiDataSource(
+      session: _Session('caregiver-token'),
+      client: MockClient((request) async {
+        captured = request;
+
+        return http.Response(
+          jsonEncode({
+            'items': [_helpRequestNoteJson()],
+            'total': 1,
+            'limit': 25,
+            'offset': 5,
+          }),
+          200,
+        );
+      }),
+    );
+
+    final page = await source.fetchNotes('request-id', limit: 25, offset: 5);
+
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/v1/help-requests/request-id/notes');
+    expect(captured.url.queryParameters['limit'], '25');
+    expect(captured.url.queryParameters['offset'], '5');
+    expect(captured.headers['authorization'], 'Bearer caregiver-token');
+
+    expect(page.total, 1);
+    expect(page.limit, 25);
+    expect(page.offset, 5);
+    expect(page.items.single.id, 'note-id');
+    expect(page.items.single.helpRequestId, 'request-id');
+    expect(page.items.single.authorDisplayName, 'Caregiver Ana');
+    expect(page.items.single.note, 'Called Nana.');
+  });
+
+  test('adds a trimmed caregiver note with JSON body', () async {
+    late http.Request captured;
+
+    final source = CaregiverHelpRequestApiDataSource(
+      session: _Session('caregiver-token'),
+      client: MockClient((request) async {
+        captured = request;
+
+        return http.Response(
+          jsonEncode(
+            _helpRequestNoteJson(
+              clientActionId: 'note-action-id',
+              note: 'Called Nana.',
+            ),
+          ),
+          201,
+        );
+      }),
+    );
+
+    final note = await source.addNote(
+      'request-id',
+      clientActionId: 'note-action-id',
+      note: '  Called Nana.  ',
+    );
+
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/help-requests/request-id/notes');
+    expect(captured.headers['content-type'], contains('application/json'));
+    expect(jsonDecode(captured.body), {
+      'client_action_id': 'note-action-id',
+      'note': 'Called Nana.',
+    });
+
+    expect(note.helpRequestId, 'request-id');
+    expect(note.clientActionId, 'note-action-id');
+    expect(note.note, 'Called Nana.');
+  });
+
+  test('rejects a note belonging to another help request', () async {
+    final source = CaregiverHelpRequestApiDataSource(
+      session: _Session('token'),
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'items': [_helpRequestNoteJson(helpRequestId: 'different-request')],
+            'total': 1,
+            'limit': 50,
+            'offset': 0,
+          }),
+          200,
+        ),
+      ),
+    );
+
+    await expectLater(
+      source.fetchNotes('request-id'),
+      throwsA(
+        isA<CaregiverHelpRequestFailure>().having(
+          (error) => error.message,
+          'message',
+          'The help-request response was invalid.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects a substituted note creation response', () async {
+    final source = CaregiverHelpRequestApiDataSource(
+      session: _Session('token'),
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode(_helpRequestNoteJson(clientActionId: 'different-action')),
+          201,
+        ),
+      ),
+    );
+
+    await expectLater(
+      source.addNote(
+        'request-id',
+        clientActionId: 'expected-action',
+        note: 'Called Nana.',
+      ),
+      throwsA(isA<CaregiverHelpRequestFailure>()),
+    );
+  });
 }
 
 Map<String, dynamic> _helpRequestJson({
@@ -248,6 +391,27 @@ Map<String, dynamic> _helpRequestJson({
     'updated_at': '2026-10-05T02:10:00Z',
     'patient_display_name': 'Nana',
     'idempotent': false,
+  };
+}
+
+Map<String, dynamic> _helpRequestNoteJson({
+  String id = 'note-id',
+  String helpRequestId = 'request-id',
+  String authorUserId = 'caregiver-id',
+  String clientActionId = 'note-action-id',
+  String note = 'Called Nana.',
+  String? authorDisplayName = 'Caregiver Ana',
+  bool idempotent = false,
+}) {
+  return {
+    'help_request_note_id': id,
+    'help_request_id': helpRequestId,
+    'author_user_id': authorUserId,
+    'client_action_id': clientActionId,
+    'note': note,
+    'created_at': '2026-10-06T14:30:00Z',
+    'author_display_name': authorDisplayName,
+    'idempotent': idempotent,
   };
 }
 

@@ -28,7 +28,12 @@ void main() {
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Temporary More placeholder'), findsOneWidget);
+
+    final historyTile = tester.widget<ListTile>(
+      find.byKey(const Key('more-help-request-history')),
+    );
+    expect(historyTile.enabled, isFalse);
+    expect(historyTile.onTap, isNull);
 
     final IndexedStack stack = tester.widget(find.byType(IndexedStack));
     expect(stack.children, hasLength(5));

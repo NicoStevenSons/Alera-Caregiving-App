@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
 import '../../../../config/app_config.dart';
 import '../../../help_requests/domain/help_request.dart';
 import '../auth/caregiver_session_controller.dart';
+import '../help_requests/caregiver_help_request_note.dart';
 
 class CaregiverHelpRequestFailure implements Exception {
   const CaregiverHelpRequestFailure(this.message, {this.statusCode});
@@ -31,6 +33,22 @@ class HelpRequestPage {
   final int offset;
 }
 
+abstract interface class CaregiverHelpRequestNotesDataSource {
+  String createNoteActionId();
+
+  Future<HelpRequestNotePage> fetchNotes(
+    String helpRequestId, {
+    int limit,
+    int offset,
+  });
+
+  Future<HelpRequestNoteRecord> addNote(
+    String helpRequestId, {
+    required String clientActionId,
+    required String note,
+  });
+}
+
 abstract interface class CaregiverHelpRequestDataSource {
   Future<HelpRequestPage> fetchRequests({
     List<HelpRequestStatus> statuses,
@@ -47,16 +65,21 @@ abstract interface class CaregiverHelpRequestDataSource {
 }
 
 class CaregiverHelpRequestApiDataSource
-    implements CaregiverHelpRequestDataSource {
+    implements
+        CaregiverHelpRequestDataSource,
+        CaregiverHelpRequestNotesDataSource {
   CaregiverHelpRequestApiDataSource({
     http.Client? client,
     CaregiverSession? session,
+    Random? random,
     this.timeout = const Duration(seconds: 15),
   }) : _client = client ?? http.Client(),
-       _session = session ?? CaregiverSessionController.instance;
+       _session = session ?? CaregiverSessionController.instance,
+       _random = random ?? Random.secure();
 
   final http.Client _client;
   final CaregiverSession _session;
+  final Random _random;
   final Duration timeout;
 
   @override
@@ -131,6 +154,124 @@ class CaregiverHelpRequestApiDataSource
   }
 
   @override
+  String createNoteActionId() {
+    final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    final hex = bytes
+        .map((value) => value.toRadixString(16).padLeft(2, '0'))
+        .join();
+
+    return '${hex.substring(0, 8)}-'
+        '${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-'
+        '${hex.substring(16, 20)}-'
+        '${hex.substring(20)}';
+  }
+
+  @override
+  Future<HelpRequestNotePage> fetchNotes(
+    String helpRequestId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final decoded = await _request(
+      'GET',
+      '/api/v1/help-requests/'
+          '${Uri.encodeComponent(helpRequestId)}/notes',
+      query: {'limit': '$limit', 'offset': '$offset'},
+    );
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const CaregiverHelpRequestFailure(
+        'The help-request response was invalid.',
+      );
+    }
+
+    final items = decoded['items'];
+    final total = decoded['total'];
+    final responseLimit = decoded['limit'];
+    final responseOffset = decoded['offset'];
+
+    if (items is! List ||
+        total is! int ||
+        responseLimit is! int ||
+        responseOffset is! int ||
+        total < 0 ||
+        responseLimit < 1 ||
+        responseOffset < 0) {
+      throw const CaregiverHelpRequestFailure(
+        'The help-request response was invalid.',
+      );
+    }
+
+    try {
+      return HelpRequestNotePage(
+        items: items
+            .map((item) {
+              if (item is! Map<String, dynamic>) {
+                throw const FormatException();
+              }
+
+              final note = HelpRequestNoteRecord.fromJson(item);
+
+              if (note.helpRequestId.toLowerCase() !=
+                  helpRequestId.toLowerCase()) {
+                throw const FormatException();
+              }
+
+              return note;
+            })
+            .toList(growable: false),
+        total: total,
+        limit: responseLimit,
+        offset: responseOffset,
+      );
+    } on FormatException {
+      throw const CaregiverHelpRequestFailure(
+        'The help-request response was invalid.',
+      );
+    }
+  }
+
+  @override
+  Future<HelpRequestNoteRecord> addNote(
+    String helpRequestId, {
+    required String clientActionId,
+    required String note,
+  }) async {
+    final decoded = await _request(
+      'POST',
+      '/api/v1/help-requests/'
+          '${Uri.encodeComponent(helpRequestId)}/notes',
+      body: {'client_action_id': clientActionId, 'note': note.trim()},
+    );
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const CaregiverHelpRequestFailure(
+        'The help-request response was invalid.',
+      );
+    }
+
+    try {
+      final result = HelpRequestNoteRecord.fromJson(decoded);
+
+      if (result.helpRequestId.toLowerCase() != helpRequestId.toLowerCase() ||
+          result.clientActionId.toLowerCase() != clientActionId.toLowerCase()) {
+        throw const FormatException();
+      }
+
+      return result;
+    } on FormatException {
+      throw const CaregiverHelpRequestFailure(
+        'The help-request response was invalid.',
+      );
+    }
+  }
+
+  @override
   Future<HelpRequestRecord> fetchRequest(String helpRequestId) async {
     final decoded = await _request(
       'GET',
@@ -187,6 +328,7 @@ class CaregiverHelpRequestApiDataSource
     String method,
     String path, {
     Map<String, dynamic>? query,
+    Map<String, dynamic>? body,
   }) async {
     final token = _session.accessToken;
 
@@ -202,14 +344,23 @@ class CaregiverHelpRequestApiDataSource
     ).replace(queryParameters: query);
 
     try {
-      final headers = <String, String>{'authorization': 'Bearer $token'};
+      final headers = <String, String>{
+        'authorization': 'Bearer $token',
+        if (body != null) 'content-type': 'application/json',
+      };
 
       final http.Response response;
 
       if (method == 'GET') {
         response = await _client.get(uri, headers: headers).timeout(timeout);
       } else if (method == 'POST') {
-        response = await _client.post(uri, headers: headers).timeout(timeout);
+        response = await _client
+            .post(
+              uri,
+              headers: headers,
+              body: body == null ? null : jsonEncode(body),
+            )
+            .timeout(timeout);
       } else {
         throw StateError('Unsupported caregiver help-request method.');
       }
