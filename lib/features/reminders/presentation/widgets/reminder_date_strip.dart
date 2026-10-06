@@ -33,8 +33,15 @@ class ReminderDateStrip extends StatefulWidget {
 class _ReminderDateStripState extends State<ReminderDateStrip> {
   late final ScrollController _scroll;
 
-  DateTime get _first =>
-      widget.today.subtract(const Duration(days: ReminderDateStrip.daysBefore));
+  /// First day shown. Normally a week before today; re-anchored on the
+  /// selected day when a date outside the window is picked from the calendar.
+  late DateTime _first = widget.today.subtract(
+    const Duration(days: ReminderDateStrip.daysBefore),
+  );
+
+  bool _inWindow(DateTime day) =>
+      !day.isBefore(_first) &&
+      day.isBefore(_first.add(const Duration(days: ReminderDateStrip.dayCount)));
 
   @override
   void initState() {
@@ -45,7 +52,25 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
   @override
   void didUpdateWidget(ReminderDateStrip oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selected != widget.selected && _scroll.hasClients) {
+    if (oldWidget.selected != widget.selected && !_inWindow(widget.selected)) {
+      final today = widget.today;
+      final defaultFirst = today.subtract(
+        const Duration(days: ReminderDateStrip.daysBefore),
+      );
+      final todayWindowHolds =
+          !widget.selected.isBefore(defaultFirst) &&
+          widget.selected.isBefore(
+            defaultFirst.add(const Duration(days: ReminderDateStrip.dayCount)),
+          );
+      setState(() {
+        _first = todayWindowHolds
+            ? defaultFirst
+            : widget.selected.subtract(
+                const Duration(days: ReminderDateStrip.daysBefore),
+              );
+      });
+      if (_scroll.hasClients) _scroll.jumpTo(_offsetFor(widget.selected));
+    } else if (oldWidget.selected != widget.selected && _scroll.hasClients) {
       _scroll.animateTo(
         _offsetFor(widget.selected),
         duration: const Duration(milliseconds: 250),

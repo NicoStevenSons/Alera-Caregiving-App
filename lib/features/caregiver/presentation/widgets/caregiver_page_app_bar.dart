@@ -30,11 +30,13 @@ class CaregiverPageAppBar extends StatelessWidget
 }
 
 IconButton caregiverPageAction({
+  Key? key,
   required String tooltip,
   required VoidCallback onPressed,
   required IconData icon,
 }) {
   return IconButton(
+    key: key,
     tooltip: tooltip,
     color: AleraColors.primarySoft,
     iconSize: 24,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
+import '../../../design_system/widgets/alera_date_picker.dart';
 import '../../../design_system/widgets/alera_empty_state.dart';
 import '../../../design_system/widgets/alera_pill.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
@@ -103,6 +104,12 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       appBar: CaregiverPageAppBar(
         title: 'Reminders',
         actions: [
+          caregiverPageAction(
+            key: const Key('reminder-pick-date'),
+            tooltip: 'Pick a date',
+            onPressed: patientId == null ? () {} : _pickDate,
+            icon: Icons.calendar_month,
+          ),
           caregiverPageAction(
             tooltip: 'Manage schedules',
             onPressed: patientId == null ? () {} : _openSchedules,
@@ -249,6 +256,19 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       onOpen: _openActions,
       now: isToday ? (widget.now ?? DateTime.now)() : null,
       ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showAleraDatePicker(
+      context,
+      initialDate: _selectedDay,
+      firstDate: _today.subtract(const Duration(days: 365)),
+      lastDate: _today.add(const Duration(days: 365 * 2)),
+    );
+    if (picked == null || !mounted) return;
+    setState(
+      () => _selectedDay = DateTime(picked.year, picked.month, picked.day),
     );
   }
 
