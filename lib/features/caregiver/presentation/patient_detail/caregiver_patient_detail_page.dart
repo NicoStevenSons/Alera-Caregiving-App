@@ -144,6 +144,8 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               activeAlertCount: alerts
                   .where((a) => a.status == CaregiverAlertStatus.active)
                   .length,
+              careRiskScore: careRecipient.healthSnapshot.careRiskScore,
+              careRiskLabel: careRecipient.healthSnapshot.careRiskLabel,
             ),
             const SizedBox(height: 12),
             PatientNeedsAttention(
