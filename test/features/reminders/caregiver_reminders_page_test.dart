@@ -65,10 +65,7 @@ void main() {
     expect(find.text('left today'), findsOneWidget);
     expect(find.byKey(const Key('reminder-now-marker')), findsOneWidget);
     expect(find.textContaining('empty hours'), findsWidgets);
-    expect(
-      find.byKey(const ValueKey('reminder-dot-2026-09-22')),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Tuesday · '), findsWidgets);
   });
 
   testWidgets('empty day shows the muted empty state', (tester) async {

@@ -631,7 +631,8 @@ class _ReminderCard extends StatelessWidget {
             children: [
               _Meta(
                 icon: Icons.schedule,
-                text: reminderClock(occurrence.scheduledAt),
+                text:
+                    '${reminderWeekday(occurrence.scheduledAt)} · ${reminderClock(occurrence.scheduledAt)}',
                 color: accent,
               ),
               if (repeatLabel != null)
@@ -645,10 +646,7 @@ class _ReminderCard extends StatelessWidget {
     return Material(
       key: ValueKey('reminder-occurrence-${occurrence.id}'),
       color: background,
-      elevation: isNext ? 5 : 1,
-      shadowColor: (missed ? AleraColors.critical : accent).withValues(
-        alpha: isNext ? 0.30 : 0.12,
-      ),
+      elevation: 0,
       borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
-import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../reminders/presentation/reminder_category_style.dart';
 import '../../../reminders/presentation/reminder_formatters.dart';
 import '../../domain/models/caregiver_reminder.dart';
 
 /// The one reminder row used on both Home and the patient page: category
-/// icon tile, title, coloured "Status · time", and either a Complete button
-/// (when it can still be completed and a handler is given) or a chevron.
+/// icon tile, title, coloured "Status · time" and a chevron. Completing
+/// happens from the reminder's detail sheet, not the row.
 class CaregiverReminderRow extends StatelessWidget {
   final CaregiverReminder reminder;
   final VoidCallback onTap;
@@ -39,16 +38,12 @@ class CaregiverReminderRow extends StatelessWidget {
             : done
             ? 'Completed'
             : 'Upcoming');
-    final bool canComplete =
-        onComplete != null && reminder.status == CaregiverReminderStatus.upcoming;
 
     return Material(
       color: missed
           ? AleraColors.critical.withValues(alpha: 0.10)
           : reminderCategoryWash(reminder.category),
       borderRadius: BorderRadius.circular(14),
-      elevation: 1,
-      shadowColor: AleraColors.primary.withValues(alpha: 0.10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -98,17 +93,7 @@ class CaregiverReminderRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (canComplete)
-                AleraButton(
-                  key: ValueKey('reminder-row-complete-${reminder.id}'),
-                  label: 'Complete',
-                  icon: Icons.check,
-                  expand: false,
-                  height: 34,
-                  onPressed: () => onComplete!(reminder),
-                )
-              else
-                const Icon(
+              const Icon(
                   Icons.chevron_right,
                   size: 22,
                   color: AleraColors.mutedChevron,

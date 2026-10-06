@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
 import '../../../domain/models/caregiver_reminder.dart';
@@ -35,7 +34,7 @@ class PatientRemindersSection extends StatelessWidget {
               key: Key('patient-no-reminders'),
               icon: Icons.alarm_off,
               title: 'No reminders today',
-              message: 'Add one to help keep the day on track.',
+              message: 'Use Remind above to add one.',
               padding: EdgeInsets.symmetric(vertical: 14),
             )
           else
@@ -47,15 +46,6 @@ class PatientRemindersSection extends StatelessWidget {
                 onComplete: onCompleteReminder,
               ),
             ],
-          const SizedBox(height: 12),
-          AleraButton(
-            key: const Key('patient-new-reminder'),
-            label: 'Add reminder',
-            icon: Icons.add,
-            variant: AleraButtonVariant.lightPill,
-            height: 42,
-            onPressed: onNewReminder,
-          ),
         ],
       ),
     );

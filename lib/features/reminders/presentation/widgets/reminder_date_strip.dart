@@ -131,8 +131,7 @@ class _DayChip extends StatelessWidget {
             : isToday
             ? const Color(0xFFE4D6FF)
             : Colors.white,
-        elevation: selected ? 4 : 2,
-        shadowColor: AleraColors.primary.withValues(alpha: 0.18),
+        elevation: 0,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
@@ -155,18 +154,6 @@ class _DayChip extends StatelessWidget {
                   style: AleraTypography.sectionTitle.copyWith(
                     fontSize: 18,
                     color: foreground,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Container(
-                  key: marked ? ValueKey('reminder-dot-${reminderApiDate(day)}') : null,
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: marked
-                        ? (selected ? Colors.white : AleraColors.selected)
-                        : Colors.transparent,
                   ),
                 ),
               ],

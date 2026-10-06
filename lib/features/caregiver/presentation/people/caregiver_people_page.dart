@@ -175,25 +175,22 @@ class _AddPatientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AleraColors.primarySoft,
+      color: Colors.white,
       shape: const StadiumBorder(),
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: onPressed,
         child: SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 40,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add, size: 22, color: AleraColors.primary),
+              const Icon(Icons.add, size: 24, color: AleraColors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 'Add Patient',
-                style: AleraTypography.label.copyWith(
-                  fontSize: 15,
-                  color: AleraColors.primary,
-                ),
+                style: AleraTypography.label.copyWith(fontSize: 15),
               ),
             ],
           ),
