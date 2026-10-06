@@ -44,7 +44,7 @@ class CaregiverReminderRow extends StatelessWidget {
       color: missed
           ? AleraColors.critical.withValues(alpha: 0.10)
           : reminderCategoryWash(reminder.category),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
