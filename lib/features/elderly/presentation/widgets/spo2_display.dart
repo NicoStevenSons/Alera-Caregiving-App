@@ -22,9 +22,9 @@ class SpO2Display extends StatelessWidget {
     return SizedBox(
       height: 154,
       child: Card(
-        elevation: 1,
+        elevation: 2,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -42,7 +42,7 @@ class SpO2Display extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.bloodtype_rounded, color: Color(0xFF7161D7)),
+                    Icon(Icons.bloodtype_rounded, color: Color(0xFF7161D7), size: 28),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -60,7 +60,7 @@ class SpO2Display extends StatelessWidget {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 28,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -70,7 +70,7 @@ class SpO2Display extends StatelessWidget {
                   hasReading ? spo2Data.displayedStatus : 'Waiting for watch',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),

@@ -5,6 +5,8 @@ import '../data/elderly_help_request_controller.dart';
 import '../domain/elderly_home_view_state.dart';
 import '../../help_requests/domain/help_request.dart';
 import '../domain/models/elderly_reminder.dart';
+import '../../../design_system/alera_colors.dart';
+import 'elderly_reminder_style.dart';
 import 'widgets/elderly_help_request_card.dart';
 import 'widgets/heart_rate_display.dart';
 import 'widgets/sleep_display.dart';
@@ -48,6 +50,14 @@ class ElderlyHomePage extends StatelessWidget {
           onOpenDeviceStatus: onOpenDeviceStatus,
         ),
         const SizedBox(height: 16),
+        _NextReminderCard(
+          loading: state.remindersLoading,
+          errorMessage: state.remindersError,
+          reminder: state.nextReminder,
+          onTap: onReminderTap,
+          onRetry: onRetryReminders,
+        ),
+        const SizedBox(height: 16),
         ElderlyHelpRequestCard(
           state: helpRequestState,
           activeRequest: activeHelpRequest,
@@ -55,7 +65,9 @@ class ElderlyHomePage extends StatelessWidget {
           onRequestHelp: onRequestHelp,
           onRetry: onRetryHelpRequest,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
+        const _SectionTitle('Today\'s health'),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -64,7 +76,7 @@ class ElderlyHomePage extends StatelessWidget {
                 uploadQueueService: uploadQueueService,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(
               child: SpO2Display(
                 spo2Data: state.spo2,
@@ -77,14 +89,6 @@ class ElderlyHomePage extends StatelessWidget {
         StepsDisplay(stepsData: state.steps),
         const SizedBox(height: 16),
         SleepDisplay(sleepData: state.sleep),
-        const SizedBox(height: 16),
-        _NextReminderCard(
-          loading: state.remindersLoading,
-          errorMessage: state.remindersError,
-          reminder: state.nextReminder,
-          onTap: onReminderTap,
-          onRetry: onRetryReminders,
-        ),
       ],
     );
   }
@@ -127,14 +131,47 @@ class _MonitoringStatusCard extends StatelessWidget {
     final actionable =
         state != ElderlyMonitoringState.connected && onOpenDeviceStatus != null;
 
+    final Color color = switch (state) {
+      ElderlyMonitoringState.connected => const Color(0xFF05A869),
+      ElderlyMonitoringState.waitingForWatch => AleraColors.information,
+      _ => const Color(0xFFD99A00),
+    };
+
     return Card(
       key: const Key('elderly-monitoring-status'),
       child: ListTile(
         onTap: actionable ? onOpenDeviceStatus : null,
-        leading: Icon(icon),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 28),
+        ),
         title: Text(title),
         subtitle: Text(message),
         trailing: actionable ? const Icon(Icons.chevron_right_rounded) : null,
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+        color: AleraColors.textPrimary,
       ),
     );
   }
@@ -195,14 +232,70 @@ class _NextReminderCard extends StatelessWidget {
       );
     }
 
+    final ElderlyReminderStyle style = ElderlyReminderStyle.forCategory(
+      item.category,
+    );
+
     return Card(
       key: const Key('elderly-next-reminder'),
-      child: ListTile(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap == null ? null : () => onTap!(item),
-        leading: const Icon(Icons.schedule_rounded),
-        title: Text(item.title),
-        subtitle: Text(_time(item.scheduledAt)),
-        trailing: const Icon(Icons.chevron_right_rounded),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: style.color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(style.icon, color: style.color, size: 36),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Next reminder',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AleraColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AleraColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _time(item.scheduledAt),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: style.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 20,
+                color: AleraColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

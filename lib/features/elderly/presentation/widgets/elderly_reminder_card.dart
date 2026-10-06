@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/alera_colors.dart';
 import '../../domain/models/elderly_reminder.dart';
+import '../elderly_reminder_style.dart';
 
 class ElderlyReminderCard extends StatelessWidget {
   final ElderlyReminder reminder;
@@ -19,88 +21,104 @@ class ElderlyReminderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ElderlyReminderStyle style = ElderlyReminderStyle.forCategory(
+      reminder.category,
+    );
+    final Color statusColor = ElderlyReminderStyle.statusColor(reminder.status);
+    final bool actionable = _canComplete;
+
     return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: busy ? null : onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.notifications_active,
-                color: Colors.purple,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      reminder.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: style.color.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    if (reminder.instructions != null) ...[
-                      const SizedBox(height: 6),
-                      Text(reminder.instructions!),
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      _formatDateTime(reminder.dueAt),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
+                    child: Icon(style.icon, color: style.color, size: 32),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _canComplete
-                                ? (busy ? null : onComplete)
-                                : null,
-                            child: busy
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Complete'),
+                        Text(
+                          reminder.title,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AleraColors.textPrimary,
                           ),
                         ),
-                        if (reminder.snoozeAllowed) ...[
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _canSnooze
-                                  ? (busy ? null : onSnooze)
-                                  : null,
-                              child: Text(
-                                'Snooze ${reminder.defaultSnoozeMinutes} min',
-                              ),
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatDateTime(reminder.dueAt),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatStatus(reminder.status),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: statusColor,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _formatStatus(reminder.status),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              if (reminder.instructions != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  reminder.instructions!,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    color: AleraColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (actionable) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: busy ? null : onComplete,
+                    child: busy
+                        ? const SizedBox.square(
+                            dimension: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Complete'),
+                  ),
+                ),
+                if (reminder.snoozeAllowed) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _canSnooze && !busy ? onSnooze : null,
+                      child: Text('Snooze ${reminder.defaultSnoozeMinutes} min'),
+                    ),
+                  ),
+                ],
+              ],
             ],
           ),
         ),

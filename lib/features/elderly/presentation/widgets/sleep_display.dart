@@ -47,7 +47,7 @@ class SleepDisplay extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.bedtime, color: Colors.indigo),
+                      Icon(Icons.bedtime, color: Colors.indigo, size: 28),
                       SizedBox(width: 8),
                       Text('Sleep Today'),
                     ],
@@ -58,7 +58,7 @@ class SleepDisplay extends StatelessWidget {
                     child: Text(
                       'No sleep data available today',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -106,7 +106,7 @@ class SleepDisplay extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.bedtime, color: Colors.indigo),
+                    Icon(Icons.bedtime, color: Colors.indigo, size: 28),
                     SizedBox(width: 8),
                     Text(
                       'Sleep Today',

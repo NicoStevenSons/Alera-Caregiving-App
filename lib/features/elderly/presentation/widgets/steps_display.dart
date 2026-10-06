@@ -34,7 +34,7 @@ class StepsDisplay extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.stairs, color: Colors.blue),
+                    Icon(Icons.stairs, color: Colors.blue, size: 28),
                     SizedBox(width: 8),
                     Text('Activity'),
                   ],
@@ -54,7 +54,7 @@ class StepsDisplay extends StatelessWidget {
                     Text(
                       '${stepsData.displayedTotalSteps} Steps',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

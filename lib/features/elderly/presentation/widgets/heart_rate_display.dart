@@ -22,9 +22,9 @@ class HeartRateDisplay extends StatelessWidget {
     return SizedBox(
       height: 154,
       child: Card(
-        elevation: 1,
+        elevation: 2,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -43,7 +43,7 @@ class HeartRateDisplay extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.favorite_rounded, color: Color(0xFFFF6467)),
+                    Icon(Icons.favorite_rounded, color: Color(0xFFFF6467), size: 28),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -61,7 +61,7 @@ class HeartRateDisplay extends StatelessWidget {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 28,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -73,7 +73,7 @@ class HeartRateDisplay extends StatelessWidget {
                       : 'Waiting for watch',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),
