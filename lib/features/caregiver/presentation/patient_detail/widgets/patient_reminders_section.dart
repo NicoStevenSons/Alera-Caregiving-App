@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
-import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../../reminders/presentation/reminder_category_style.dart';
+import '../../../../../reminders/presentation/reminder_formatters.dart';
 import '../../../domain/models/caregiver_reminder.dart';
 
 /// Today's reminders as quiet rows, with one button to add another.
@@ -78,22 +79,32 @@ class _ReminderRow extends StatelessWidget {
         reminder.statusLabel ??
         (missed ? 'Missed' : done ? 'Completed' : 'Upcoming');
 
-    return AleraCard(
+    return Material(
+      color: missed
+          ? AleraColors.critical.withValues(alpha: 0.10)
+          : reminderCategoryWash(reminder.category),
+      borderRadius: BorderRadius.circular(14),
+      elevation: 1,
+      shadowColor: AleraColors.primary.withValues(alpha: 0.10),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
       padding: const EdgeInsets.all(12),
-      onTap: onTap,
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AleraColors.primarySoft.withValues(alpha: 0.6),
+              color: reminderCategoryTile(reminder.category),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(
+            child: Center(
               child: AleraSvgIcon(
-                assetPath:
-                    'alera-figma-assets/assets/icons/status/reminder.svg',
+                assetPath: reminder.category == null
+                    ? 'alera-figma-assets/assets/icons/status/reminder.svg'
+                    : reminderCategoryAsset(reminder.category!),
                 width: 26,
                 height: 26,
               ),
@@ -128,6 +139,8 @@ class _ReminderRow extends StatelessWidget {
             color: AleraColors.mutedChevron,
           ),
         ],
+      ),
+        ),
       ),
     );
   }

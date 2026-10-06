@@ -6,6 +6,9 @@ import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
 import '../../../../../design_system/widgets/alera_skeleton.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../reminders/presentation/reminder_category_style.dart';
+import '../../../../reminders/presentation/reminder_formatters.dart';
 import '../../../domain/models/caregiver_reminder.dart';
 
 class HomeRemindersPreview extends StatelessWidget {
@@ -86,12 +89,17 @@ class _Reminder extends StatelessWidget {
     final Color accent = missed
         ? AleraColors.critical
         : AleraColors.information;
+    final Color wash = missed
+        ? AleraColors.critical.withValues(alpha: 0.10)
+        : reminderCategoryWash(reminder.category);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: missed
+            ? Color.alphaBlend(wash, Colors.white)
+            : wash,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: AleraColors.primary.withValues(alpha: 0.06),
@@ -100,37 +108,73 @@ class _Reminder extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${reminder.statusLabel ?? switch (reminder.status) {
-                  CaregiverReminderStatus.missed => 'Missed',
-                  CaregiverReminderStatus.upcoming => 'Upcoming',
-                  CaregiverReminderStatus.completed => 'Completed',
-                }} ${_time(reminder.scheduledAt)}',
-            style: TextStyle(color: accent, fontWeight: FontWeight.w700),
-          ),
-          Text(
-            reminder.title,
-            style: AleraTypography.label.copyWith(
-              color: AleraColors.textPrimary,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: reminderCategoryTile(reminder.category),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: AleraSvgIcon(
+                assetPath: reminder.category == null
+                    ? 'alera-figma-assets/assets/icons/status/reminder.svg'
+                    : reminderCategoryAsset(reminder.category!),
+                width: 28,
+                height: 28,
+              ),
             ),
           ),
-          Text(
-            reminder.description,
-            style: AleraTypography.body.copyWith(fontSize: 10),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 7,
-            runSpacing: 6,
-            children: [
-              _Button(
-                label: 'Open Reminders',
-                onTap: () => onAction('Open Reminders'),
-              ),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${reminder.statusLabel ?? switch (reminder.status) {
+                        CaregiverReminderStatus.missed => 'Missed',
+                        CaregiverReminderStatus.upcoming => 'Upcoming',
+                        CaregiverReminderStatus.completed => 'Completed',
+                      }} ${_time(reminder.scheduledAt)}',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reminder.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AleraTypography.label.copyWith(
+                    color: AleraColors.textPrimary,
+                    fontSize: 15,
+                  ),
+                ),
+                if (reminder.description.isNotEmpty)
+                  Text(
+                    reminder.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AleraTypography.body.copyWith(fontSize: 11),
+                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 6,
+                  children: [
+                    _Button(
+                      label: 'Open Reminders',
+                      onTap: () => onAction('Open Reminders'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

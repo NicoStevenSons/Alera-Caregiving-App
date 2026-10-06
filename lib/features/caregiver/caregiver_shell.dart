@@ -114,6 +114,38 @@ class _CaregiverShellState extends State<CaregiverShell>
     if (mounted) setState(() {});
   }
 
+  /// Short live summary for the People cards, from today's loaded reminders.
+  /// Null when this patient's reminders aren't loaded (so we never show a
+  /// misleading "0").
+  String? _reminderSummaryFor(String patientId) {
+    final controller = _homeReminderController;
+    if (controller == null ||
+        controller.patientId != patientId ||
+        !controller.hasLoaded ||
+        controller.errorMessage != null) {
+      return null;
+    }
+    var due = 0;
+    var missed = 0;
+    for (final item in controller.occurrences) {
+      switch (item.status) {
+        case ReminderOccurrenceStatus.upcoming:
+        case ReminderOccurrenceStatus.due:
+        case ReminderOccurrenceStatus.snoozed:
+          due++;
+        case ReminderOccurrenceStatus.missed:
+          missed++;
+        default:
+          break;
+      }
+    }
+    if (due == 0 && missed == 0) return 'No reminders due';
+    return [
+      if (due > 0) '$due due today',
+      if (missed > 0) '$missed missed',
+    ].join(' · ');
+  }
+
   List<CaregiverReminder> _homeReminderItems(CareRecipient patient) {
     if (!patient.backendBacked) {
       return widget.repository
@@ -141,6 +173,7 @@ class _CaregiverShellState extends State<CaregiverShell>
                 CaregiverReminderStatus.completed,
               _ => CaregiverReminderStatus.upcoming,
             },
+            category: item.category,
             statusLabel: switch (item.status) {
               ReminderOccurrenceStatus.upcoming => 'Upcoming',
               ReminderOccurrenceStatus.due => 'Due',
@@ -453,10 +486,16 @@ class _CaregiverShellState extends State<CaregiverShell>
   void _openCareRecipient(BuildContext context, CareRecipient careRecipient) {
     if (careRecipient.backendBacked && _patientController != null) {
       _selectPatient(careRecipient.id);
+      unawaited(
+        _homeReminderController?.ensureLoaded(careRecipient.id) ??
+            Future<void>.value(),
+      );
       Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (context) => CaregiverPatientDetailLoaderPage(
+          builder: (context) {
+            Widget page(List<CaregiverReminder> liveReminders) =>
+                CaregiverPatientDetailLoaderPage(
             patientId: careRecipient.id,
             controller: _patientController!,
             patientDataSource:
@@ -466,10 +505,7 @@ class _CaregiverShellState extends State<CaregiverShell>
             alerts: _alertController.alerts
                 .where((alert) => alert.careRecipientId == careRecipient.id)
                 .toList(),
-            reminders: widget.repository
-                .getReminders()
-                .where((item) => item.careRecipientId == careRecipient.id)
-                .toList(),
+            reminders: liveReminders,
             onViewAllAlerts: () {
               Navigator.pop(context);
               _selectDestination(2);
@@ -483,7 +519,14 @@ class _CaregiverShellState extends State<CaregiverShell>
             onVitalTap: (metric) =>
                 _openVitalTrend(context, careRecipient, metric),
             onNewReminder: () => _createReminderFor(context, careRecipient),
-          ),
+          );
+            final reminders = _homeReminderController;
+            if (reminders == null) return page(const []);
+            return ListenableBuilder(
+              listenable: reminders,
+              builder: (context, _) => page(_homeReminderItems(careRecipient)),
+            );
+          },
         ),
       );
       return;
@@ -532,7 +575,10 @@ class _CaregiverShellState extends State<CaregiverShell>
     if (draft == null || !context.mounted) return;
     await runReminderAction(
       context,
-      () => _reminderController.createTemplate(draft),
+      () async {
+        await _reminderController.createTemplate(draft);
+        await _homeReminderController?.refresh();
+      },
       success: 'Reminder created.',
     );
   }
@@ -661,6 +707,7 @@ class _CaregiverShellState extends State<CaregiverShell>
                     CaregiverPeoplePage(
                       careRecipients: _careRecipients,
                       controller: _patientController,
+                      reminderSummaryFor: _reminderSummaryFor,
                       onCareRecipientSelected: (careRecipient) =>
                           _openCareRecipient(context, careRecipient),
                       onAddPatient: () => _openAddPatient(context),

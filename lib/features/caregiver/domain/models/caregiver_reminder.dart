@@ -1,3 +1,5 @@
+import '../../../reminders/domain/reminder_models.dart' show ReminderCategory;
+
 enum CaregiverReminderStatus { missed, upcoming, completed }
 
 class CaregiverReminder {
@@ -8,6 +10,7 @@ class CaregiverReminder {
   final DateTime scheduledAt;
   final CaregiverReminderStatus status;
   final String? statusLabel;
+  final ReminderCategory? category;
 
   const CaregiverReminder({
     required this.id,
@@ -17,5 +20,6 @@ class CaregiverReminder {
     required this.scheduledAt,
     required this.status,
     this.statusLabel,
+    this.category,
   });
 }

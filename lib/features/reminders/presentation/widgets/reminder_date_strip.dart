@@ -11,11 +11,15 @@ class ReminderDateStrip extends StatefulWidget {
     required this.today,
     required this.selected,
     required this.onSelected,
+    this.markedDays = const {},
   });
 
   final DateTime today;
   final DateTime selected;
   final ValueChanged<DateTime> onSelected;
+
+  /// Days (midnight, local) that have reminders; they get a small dot.
+  final Set<DateTime> markedDays;
 
   static const daysBefore = 7;
   static const dayCount = 28;
@@ -69,7 +73,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 64,
+      height: 74,
       child: ListView.separated(
         key: const Key('reminder-date-strip'),
         controller: _scroll,
@@ -83,6 +87,8 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
           return _DayChip(
             day: normalized,
             selected: normalized == widget.selected,
+            isToday: normalized == widget.today,
+            marked: widget.markedDays.contains(normalized),
             onTap: () => widget.onSelected(normalized),
           );
         },
@@ -95,11 +101,15 @@ class _DayChip extends StatelessWidget {
   const _DayChip({
     required this.day,
     required this.selected,
+    required this.isToday,
+    required this.marked,
     required this.onTap,
   });
 
   final DateTime day;
   final bool selected;
+  final bool isToday;
+  final bool marked;
   final VoidCallback onTap;
 
   @override
@@ -114,7 +124,12 @@ class _DayChip extends StatelessWidget {
       label: reminderLongDate(day),
       child: Material(
         key: ValueKey('reminder-day-${reminderApiDate(day)}'),
-        color: selected ? AleraColors.selected : Colors.white,
+        color: selected
+            ? AleraColors.selected
+            : Color.alphaBlend(
+                AleraColors.primarySoft.withValues(alpha: isToday ? 0.7 : 0.3),
+                Colors.white,
+              ),
         elevation: selected ? 2 : 1,
         shadowColor: AleraColors.primary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),
@@ -139,6 +154,18 @@ class _DayChip extends StatelessWidget {
                   style: AleraTypography.sectionTitle.copyWith(
                     fontSize: 18,
                     color: foreground,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Container(
+                  key: marked ? ValueKey('reminder-dot-${reminderApiDate(day)}') : null,
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: marked
+                        ? (selected ? Colors.white : AleraColors.selected)
+                        : Colors.transparent,
                   ),
                 ),
               ],

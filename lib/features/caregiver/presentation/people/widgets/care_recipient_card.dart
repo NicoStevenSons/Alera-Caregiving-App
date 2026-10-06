@@ -13,10 +13,15 @@ class CareRecipientCard extends StatelessWidget {
   final CareRecipient careRecipient;
   final VoidCallback onTap;
 
+  /// Live reminder summary for backend patients (e.g. "2 due today"). Null
+  /// means it isn't loaded for this patient yet, so we don't claim "0".
+  final String? reminderSummary;
+
   const CareRecipientCard({
     super.key,
     required this.careRecipient,
     required this.onTap,
+    this.reminderSummary,
   });
 
   @override
@@ -78,7 +83,9 @@ class CareRecipientCard extends StatelessWidget {
                 _StatusRow(
                   assetPath:
                       'alera-figma-assets/assets/icons/status/reminder.svg',
-                  label: '${careRecipient.reminderCount} Reminders',
+                  label: careRecipient.backendBacked
+                      ? (reminderSummary ?? 'View reminders')
+                      : '${careRecipient.reminderCount} Reminders',
                 ),
                 const SizedBox(height: 4),
                 Wrap(

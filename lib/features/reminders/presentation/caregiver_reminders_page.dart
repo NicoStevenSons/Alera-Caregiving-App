@@ -16,6 +16,7 @@ import 'reminder_formatters.dart';
 import 'reminder_note_dialog.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
+import 'widgets/reminder_summary_card.dart';
 import 'widgets/reminder_timeline.dart';
 import '../../../design_system/alera_sheet_animation.dart';
 
@@ -172,8 +173,17 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           ReminderDateStrip(
             today: _today,
             selected: _selectedDay,
+            markedDays: byDay.keys.toSet(),
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
+          if (!(controller.loading && controller.occurrences.isEmpty))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: ReminderSummaryCard(
+                occurrences: dayItems,
+                isToday: isToday,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
@@ -205,7 +215,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _timeline(controller, dayItems),
+            child: _timeline(controller, dayItems, isToday),
           ),
         ],
       ),
@@ -215,6 +225,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   Widget _timeline(
     ReminderController controller,
     List<ReminderOccurrence> dayItems,
+    bool isToday,
   ) {
     if (controller.loading && controller.occurrences.isEmpty) {
       return const _TimelineSkeleton(key: Key('reminder-loading'));
@@ -233,6 +244,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       isBusy: controller.isBusy,
       onComplete: _complete,
       onOpen: _openActions,
+      now: isToday ? (widget.now ?? DateTime.now)() : null,
     );
   }
 

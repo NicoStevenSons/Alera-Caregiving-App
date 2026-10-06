@@ -24,7 +24,11 @@ class CaregiverPeoplePage extends StatelessWidget {
     required this.onCareRecipientSelected,
     this.onAddPatient,
     this.controller,
+    this.reminderSummaryFor,
   });
+
+  /// Returns a short live reminder summary for a patient, or null if unknown.
+  final String? Function(String patientId)? reminderSummaryFor;
 
   void _showMockFeedback(BuildContext context, String message) {
     showAleraSnackBar(context, message, type: AleraSnackBarType.info);
@@ -131,6 +135,7 @@ class CaregiverPeoplePage extends StatelessWidget {
             return CareRecipientCard(
               careRecipient: recipient,
               onTap: () => onCareRecipientSelected(recipient),
+              reminderSummary: reminderSummaryFor?.call(recipient.id),
             );
           }
 

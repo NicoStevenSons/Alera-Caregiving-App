@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
-import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
+import '../reminder_category_style.dart';
 import '../reminder_formatters.dart';
 
 const _cardPadding = 12.0;
@@ -18,9 +18,10 @@ bool reminderIsActionable(ReminderOccurrenceStatus status) => switch (status) {
   _ => false,
 };
 
-/// A day's reminders laid out on a vertical rail, one time label per hour
-/// that actually has reminders (empty hours are not shown).
-class ReminderTimeline extends StatelessWidget {
+/// A day's reminders laid out on a vertical rail. Runs of two or more empty
+/// hours collapse into an "N empty hours hidden · Expand" row, and when
+/// [now] is given a "NOW" marker sits at the current time.
+class ReminderTimeline extends StatefulWidget {
   const ReminderTimeline({
     super.key,
     required this.occurrences,
@@ -28,6 +29,7 @@ class ReminderTimeline extends StatelessWidget {
     required this.isBusy,
     required this.onComplete,
     required this.onOpen,
+    this.now,
   });
 
   /// Already filtered to one day and sorted by time.
@@ -37,26 +39,376 @@ class ReminderTimeline extends StatelessWidget {
   final ValueChanged<ReminderOccurrence> onComplete;
   final ValueChanged<ReminderOccurrence> onOpen;
 
+  /// Local "current time" marker; null hides it (days other than today).
+  final DateTime? now;
+
+  @override
+  State<ReminderTimeline> createState() => _ReminderTimelineState();
+}
+
+sealed class _Entry {
+  const _Entry();
+}
+
+class _ItemEntry extends _Entry {
+  const _ItemEntry(this.occurrence, this.showHour);
+  final ReminderOccurrence occurrence;
+  final bool showHour;
+}
+
+class _NowEntry extends _Entry {
+  const _NowEntry(this.time);
+  final DateTime time;
+}
+
+class _GapEntry extends _Entry {
+  const _GapEntry(this.fromHour, this.toHour);
+  final int fromHour; // inclusive
+  final int toHour; // inclusive
+  int get count => toHour - fromHour + 1;
+}
+
+class _ReminderTimelineState extends State<ReminderTimeline> {
+  final Set<int> _expandedGaps = {};
+
+  List<_Entry> _entries() {
+    final items = widget.occurrences;
+    final now = widget.now;
+    // Merge items and the NOW marker in time order.
+    final timed = <({DateTime time, ReminderOccurrence? item})>[
+      for (final o in items) (time: o.scheduledAt.toLocal(), item: o),
+    ];
+    if (now != null) {
+      var at = timed.length;
+      for (var i = 0; i < timed.length; i++) {
+        if (timed[i].time.isAfter(now)) {
+          at = i;
+          break;
+        }
+      }
+      timed.insert(at, (time: now, item: null));
+    }
+
+    final entries = <_Entry>[];
+    var previousHour = -1;
+    var previousItemHour = -1;
+    for (final t in timed) {
+      final hour = t.time.hour;
+      final emptyFrom = previousHour + 1;
+      final emptyTo = hour - 1;
+      if (emptyTo - emptyFrom + 1 >= 2) {
+        entries.add(_GapEntry(emptyFrom, emptyTo));
+      }
+      if (t.item == null) {
+        entries.add(_NowEntry(t.time));
+      } else {
+        entries.add(_ItemEntry(t.item!, hour != previousItemHour));
+        previousItemHour = hour;
+      }
+      previousHour = hour;
+    }
+    if (23 - (previousHour + 1) + 1 >= 2) {
+      entries.add(_GapEntry(previousHour + 1, 23));
+    }
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final templateById = {for (final t in templates) t.id: t};
+    final templateById = {for (final t in widget.templates) t.id: t};
+    final entries = _entries();
+    // First actionable item gets the "lifted" next-up treatment.
+    final nextId = widget.occurrences
+        .where(
+          (o) =>
+              reminderIsActionable(o.status) &&
+              (widget.now == null || !o.scheduledAt.toLocal().isBefore(widget.now!)),
+        )
+        .map((o) => o.id)
+        .firstOrNull;
     return Column(
       children: [
-        for (var i = 0; i < occurrences.length; i++)
-          _TimelineRow(
-            occurrence: occurrences[i],
-            template: templateById[occurrences[i].templateId],
-            showHour:
-                i == 0 ||
-                occurrences[i].scheduledAt.toLocal().hour !=
-                    occurrences[i - 1].scheduledAt.toLocal().hour,
-            isFirst: i == 0,
-            isLast: i == occurrences.length - 1,
-            busy: isBusy(occurrences[i].id),
-            onComplete: () => onComplete(occurrences[i]),
-            onOpen: () => onOpen(occurrences[i]),
-          ),
+        for (var i = 0; i < entries.length; i++)
+          switch (entries[i]) {
+            _ItemEntry(:final occurrence, :final showHour) => _TimelineRow(
+              occurrence: occurrence,
+              template: templateById[occurrence.templateId],
+              showHour: showHour,
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+              isNext: occurrence.id == nextId,
+              busy: widget.isBusy(occurrence.id),
+              onComplete: () => widget.onComplete(occurrence),
+              onOpen: () => widget.onOpen(occurrence),
+            ),
+            _NowEntry(:final time) => _NowRow(
+              time: time,
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+            ),
+            _GapEntry() => _GapRow(
+              gap: entries[i] as _GapEntry,
+              expanded: _expandedGaps.contains((entries[i] as _GapEntry).fromHour),
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+              onToggle: () => setState(() {
+                final key = (entries[i] as _GapEntry).fromHour;
+                if (!_expandedGaps.remove(key)) _expandedGaps.add(key);
+              }),
+            ),
+          },
       ],
+    );
+  }
+}
+
+/// Rail segment for rows that aren't reminder cards: a continuous line with
+/// [node] drawn at [nodeTop].
+class _SimpleRail extends StatelessWidget {
+  const _SimpleRail({
+    required this.isFirst,
+    required this.isLast,
+    required this.node,
+    this.nodeTop = 8,
+    this.nodeSize = 14,
+  });
+
+  final bool isFirst;
+  final bool isLast;
+  final Widget node;
+  final double nodeTop;
+  final double nodeSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final centre = nodeTop + nodeSize / 2;
+    return SizedBox(
+      width: 24,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: isFirst ? centre : 0,
+            bottom: isLast ? null : 0,
+            height: isLast ? centre : null,
+            child: isFirst && isLast
+                ? const SizedBox.shrink()
+                : Container(width: 2, color: AleraColors.primarySoft),
+          ),
+          Positioned(top: nodeTop, child: node),
+        ],
+      ),
+    );
+  }
+}
+
+class _NowRow extends StatelessWidget {
+  const _NowRow({required this.time, required this.isFirst, required this.isLast});
+
+  final DateTime time;
+  final bool isFirst;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(width: 44),
+          _SimpleRail(
+            isFirst: isFirst,
+            isLast: isLast,
+            nodeTop: 9,
+            nodeSize: 12,
+            node: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: AleraColors.selected,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10, top: 2),
+              child: Row(
+                children: [
+                  Container(
+                    key: const Key('reminder-now-marker'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AleraColors.selected,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'NOW · ${reminderClock(time)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(child: _DashedLine()),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashedLine extends StatelessWidget {
+  const _DashedLine();
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final count = (constraints.maxWidth / 8).floor();
+      return Row(
+        children: [
+          for (var i = 0; i < count; i++)
+            Container(
+              width: 4,
+              height: 2,
+              margin: const EdgeInsets.only(right: 4),
+              color: AleraColors.selected.withValues(alpha: 0.6),
+            ),
+        ],
+      );
+    },
+  );
+}
+
+class _GapRow extends StatelessWidget {
+  const _GapRow({
+    required this.gap,
+    required this.expanded,
+    required this.isFirst,
+    required this.isLast,
+    required this.onToggle,
+  });
+
+  final _GapEntry gap;
+  final bool expanded;
+  final bool isFirst;
+  final bool isLast;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = gap.count == 1
+        ? '1 empty hour hidden'
+        : '${gap.count} empty hours hidden';
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 44,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${reminderHourLabel(gap.fromHour)}\nto ${reminderHourLabel(gap.toHour)}',
+                  style: AleraTypography.body.copyWith(
+                    fontSize: 9,
+                    height: 1.2,
+                    color: AleraColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          _SimpleRail(
+            isFirst: isFirst,
+            isLast: isLast,
+            nodeTop: 10,
+            nodeSize: 12,
+            node: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: AleraColors.background,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.bedtime,
+                size: 10,
+                color: AleraColors.mutedIcon,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: AleraColors.primarySoft.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  key: ValueKey('reminder-gap-${gap.fromHour}'),
+                  onTap: onToggle,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                label,
+                                style: AleraTypography.body.copyWith(
+                                  fontSize: 12,
+                                  color: AleraColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              expanded ? 'Hide' : 'Expand',
+                              style: const TextStyle(
+                                color: AleraColors.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (expanded)
+                          for (var h = gap.fromHour; h <= gap.toHour; h++)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                '${reminderHourLabel(h)} · nothing scheduled',
+                                style: AleraTypography.body.copyWith(
+                                  fontSize: 11,
+                                  color: AleraColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -68,6 +420,7 @@ class _TimelineRow extends StatelessWidget {
     required this.showHour,
     required this.isFirst,
     required this.isLast,
+    required this.isNext,
     required this.busy,
     required this.onComplete,
     required this.onOpen,
@@ -78,6 +431,7 @@ class _TimelineRow extends StatelessWidget {
   final bool showHour;
   final bool isFirst;
   final bool isLast;
+  final bool isNext;
   final bool busy;
   final VoidCallback onComplete;
   final VoidCallback onOpen;
@@ -131,6 +485,7 @@ class _TimelineRow extends StatelessWidget {
               child: _ReminderCard(
                 occurrence: occurrence,
                 repeatLabel: reminderRepeatLabel(template),
+                isNext: isNext,
                 busy: busy,
                 onComplete: onComplete,
                 onOpen: onOpen,
@@ -227,6 +582,7 @@ class _ReminderCard extends StatelessWidget {
   const _ReminderCard({
     required this.occurrence,
     required this.repeatLabel,
+    required this.isNext,
     required this.busy,
     required this.onComplete,
     required this.onOpen,
@@ -234,6 +590,7 @@ class _ReminderCard extends StatelessWidget {
 
   final ReminderOccurrence occurrence;
   final String? repeatLabel;
+  final bool isNext;
   final bool busy;
   final VoidCallback onComplete;
   final VoidCallback onOpen;
@@ -255,11 +612,20 @@ class _ReminderCard extends StatelessWidget {
     final status = _statusLabel;
     final muted = occurrence.status == ReminderOccurrenceStatus.canceled;
 
-    return AleraCard(
-      key: ValueKey('reminder-occurrence-${occurrence.id}'),
-      padding: const EdgeInsets.all(_cardPadding),
-      onTap: actionable ? onOpen : null,
-      child: Column(
+    final done =
+        occurrence.status == ReminderOccurrenceStatus.completed ||
+        occurrence.status == ReminderOccurrenceStatus.completedLate;
+    final missed = occurrence.status == ReminderOccurrenceStatus.missed;
+    final accent = reminderCategoryColor(occurrence.category);
+    final background = muted
+        ? Colors.white
+        : missed
+        ? Color.alphaBlend(
+            AleraColors.critical.withValues(alpha: 0.10),
+            Colors.white,
+          )
+        : reminderCategoryWash(occurrence.category, strength: done ? 0.05 : 0.09);
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
@@ -270,7 +636,9 @@ class _ReminderCard extends StatelessWidget {
                   width: _iconTile,
                   height: _iconTile,
                   decoration: BoxDecoration(
-                    color: AleraColors.primarySoft.withValues(alpha: 0.6),
+                    color: muted
+                        ? AleraColors.primarySoft.withValues(alpha: 0.6)
+                        : reminderCategoryTile(occurrence.category),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -330,29 +698,50 @@ class _ReminderCard extends StatelessWidget {
               _Meta(
                 icon: Icons.schedule,
                 text: reminderClock(occurrence.scheduledAt),
+                color: accent,
               ),
               if (repeatLabel != null)
-                _Meta(icon: Icons.repeat, text: repeatLabel!),
+                _Meta(icon: Icons.repeat, text: repeatLabel!, color: accent),
               if (status != null)
                 AleraPill(label: status, variant: AleraPillVariant.label),
             ],
           ),
         ],
+    );
+    return Material(
+      key: ValueKey('reminder-occurrence-${occurrence.id}'),
+      color: background,
+      elevation: isNext ? 5 : 1,
+      shadowColor: (missed ? AleraColors.critical : accent).withValues(
+        alpha: isNext ? 0.30 : 0.12,
+      ),
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: actionable ? onOpen : null,
+        child: Opacity(
+          opacity: done ? 0.78 : 1,
+          child: Padding(
+            padding: const EdgeInsets.all(_cardPadding),
+            child: content,
+          ),
+        ),
       ),
     );
   }
 }
 
 class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.text});
+  const _Meta({required this.icon, required this.text, required this.color});
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14, color: AleraColors.primary),
+      Icon(icon, size: 14, color: color),
       const SizedBox(width: 4),
       Text(
         text,
@@ -394,7 +783,14 @@ class _Trailing extends StatelessWidget {
       return const Icon(
         Icons.check_circle,
         size: 30,
-        color: AleraColors.primary,
+        color: Color(0xFF05A869),
+      );
+    }
+    if (occurrence.status == ReminderOccurrenceStatus.missed) {
+      return const Icon(
+        Icons.notifications_active,
+        size: 28,
+        color: AleraColors.critical,
       );
     }
     if (!reminderIsActionable(occurrence.status)) {

@@ -48,17 +48,29 @@ void showAleraSnackBarOn(
         elevation: 0,
         padding: EdgeInsets.zero,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        // The SnackBar's own Material clips its child by default, which
+        // cut the card's shadow off and made the toast blend into the page.
+        clipBehavior: Clip.none,
         duration: duration,
         content: Container(
           padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
           decoration: BoxDecoration(
             color: AleraColors.surface,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AleraColors.primary.withValues(alpha: 0.10),
+            ),
             boxShadow: [
               BoxShadow(
-                color: AleraColors.primary.withValues(alpha: 0.18),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                color: const Color(0xFF2A1B5C).withValues(alpha: 0.22),
+                blurRadius: 24,
+                spreadRadius: 1,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: const Color(0xFF2A1B5C).withValues(alpha: 0.12),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
