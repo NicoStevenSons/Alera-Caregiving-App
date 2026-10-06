@@ -82,9 +82,12 @@ class PatientVitalSummarySection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 112,
-          child: _VitalCard(
+        // Same height as the square cards above: half the row width less
+        // half the gap, so Activity is a full-width card of equal height.
+        LayoutBuilder(
+          builder: (context, constraints) => SizedBox(
+            height: (constraints.maxWidth - 10) / 2,
+            child: _VitalCard(
             backgroundAsset: '$_bg/activity_background.svg',
             iconAsset: '$_ic/activity.svg',
             title: 'Activity',
@@ -92,6 +95,7 @@ class PatientVitalSummarySection extends StatelessWidget {
             unit: snapshot.steps == null ? '' : 'steps',
             textColor: const Color(0xFF3C6300),
             onTap: () => onVitalTap('Activity'),
+            ),
           ),
         ),
       ],

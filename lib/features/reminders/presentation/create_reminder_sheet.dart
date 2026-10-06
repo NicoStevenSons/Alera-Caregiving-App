@@ -10,6 +10,7 @@ import '../domain/reminder_models.dart';
 import 'reminder_formatters.dart';
 import 'reminder_repeat.dart';
 import 'reminder_time_picker.dart';
+import '../../../design_system/alera_sheet_animation.dart';
 
 /// Pull-up "New reminder" drawer, laid out like the phone's New alarm
 /// screen: a live "Reminds in…" line, the time wheel, a repeat selector,
@@ -23,6 +24,7 @@ Future<ReminderTemplateDraft?> showCreateReminderSheet(
   DateTime Function()? now,
 }) => showModalBottomSheet<ReminderTemplateDraft>(
   context: context,
+      sheetAnimationStyle: aleraSheetAnimation,
   isScrollControlled: true,
   useSafeArea: true,
   backgroundColor: AleraColors.background,

@@ -6,8 +6,8 @@ import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
-/// Who the patient is, plus the four things a caregiver does most: call,
-/// message, add a reminder, add a note.
+/// Compact patient header: who they are, how they are right now (status
+/// pill), and the four most common actions on a single tonal row.
 class PatientDetailSummaryCard extends StatelessWidget {
   final CareRecipient careRecipient;
   final ValueChanged<String> onAction;
@@ -20,8 +20,13 @@ class PatientDetailSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final snapshot = careRecipient.healthSnapshot;
+    final subtitle = snapshot.hasLastCheckIn
+        ? '${careRecipient.relationshipLabel} · Checked in ${_time(snapshot.lastCheckIn)}'
+        : '${careRecipient.relationshipLabel} · No check-in yet';
+
     return AleraCard(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      padding: const EdgeInsets.all(14),
       child: Column(
         children: [
           Row(
@@ -29,50 +34,39 @@ class PatientDetailSummaryCard extends StatelessWidget {
               AleraPatientAvatar(
                 name: careRecipient.name,
                 photoUrl: careRecipient.profilePhotoUrl,
-                radius: 30,
+                radius: 22,
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       careRecipient.name,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 20,
-                        height: 1.15,
+                        fontSize: 17,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AleraColors.primarySoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        child: Text(
-                          careRecipient.relationshipLabel,
-                          style: const TextStyle(
-                            color: AleraColors.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.body.copyWith(fontSize: 12),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
+              PatientStatusPill(status: careRecipient.status),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
+            spacing: 8,
             children: [
               _QuickAction(
                 icon: Icons.phone,
@@ -86,12 +80,12 @@ class PatientDetailSummaryCard extends StatelessWidget {
               ),
               _QuickAction(
                 icon: Icons.notifications_active,
-                label: 'Reminder',
+                label: 'Remind',
                 onTap: () => onAction('Reminder'),
               ),
               _QuickAction(
                 icon: Icons.edit,
-                label: 'Add note',
+                label: 'Note',
                 onTap: () => onAction('Add Note'),
               ),
             ],
@@ -100,7 +94,70 @@ class PatientDetailSummaryCard extends StatelessWidget {
       ),
     );
   }
+
+  String _time(DateTime value) {
+    final int hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    return '$hour:${value.minute.toString().padLeft(2, '0')} '
+        '${value.hour >= 12 ? 'PM' : 'AM'}';
+  }
 }
+
+/// Small "● Stable" style pill coloured by the patient's care status.
+class PatientStatusPill extends StatelessWidget {
+  final CareStatus status;
+
+  const PatientStatusPill({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = patientStatusColor(status);
+    return Container(
+      key: const Key('patient-status-pill'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            patientStatusTitle(status),
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Readable-on-tint accent for each care status.
+Color patientStatusColor(CareStatus status) => switch (status) {
+  CareStatus.stable => const Color(0xFF05A869),
+  CareStatus.warning ||
+  CareStatus.needsAttention => const Color(0xFFD99A00),
+  CareStatus.critical => const Color(0xFFE04C5D),
+  CareStatus.noData || CareStatus.unknown => AleraColors.textSecondary,
+};
+
+String patientStatusTitle(CareStatus status) => switch (status) {
+  CareStatus.stable => 'Stable',
+  CareStatus.warning => 'Warning',
+  CareStatus.critical => 'Critical',
+  CareStatus.needsAttention => 'Needs attention',
+  CareStatus.noData => 'No data',
+  CareStatus.unknown => 'Unknown',
+};
 
 class _QuickAction extends StatelessWidget {
   final IconData icon;
@@ -116,35 +173,37 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AleraColors.primarySoft.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(14),
+      child: Material(
+        color: AleraColors.primarySoft.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: 40,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 16, color: AleraColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: AleraColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Icon(icon, size: 22, color: AleraColors.primary),
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AleraColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

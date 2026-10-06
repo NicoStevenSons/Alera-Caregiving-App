@@ -139,13 +139,10 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               onAction: (action) => _handleAction(context, action),
             ),
             const SizedBox(height: 12),
-            PatientCareStatusCard(
-              careRecipient: careRecipient,
-              activeAlertCount: alerts
-                  .where((alert) => alert.status == CaregiverAlertStatus.active)
-                  .length,
-            ),
-            const SizedBox(height: 12),
+            if (PatientStatusBanner.shouldShow(careRecipient.status)) ...[
+              PatientStatusBanner(status: careRecipient.status),
+              const SizedBox(height: 12),
+            ],
             PatientNeedsAttention(
               alerts: alerts,
               onViewHistory: onViewAllAlerts,

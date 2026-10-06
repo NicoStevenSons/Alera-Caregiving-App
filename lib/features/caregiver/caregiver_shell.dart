@@ -51,6 +51,7 @@ import '../reminders/presentation/reminder_action_runner.dart';
 import '../startup/presentation/alera_startup_screen.dart';
 import '../../design_system/widgets/alera_snackbar.dart';
 import '../../design_system/widgets/alera_empty_state.dart';
+import '../../design_system/alera_sheet_animation.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -926,6 +927,7 @@ class _CaregiverShellState extends State<CaregiverShell>
 
     showModalBottomSheet<void>(
       context: context,
+      sheetAnimationStyle: aleraSheetAnimation,
       isScrollControlled: true,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(

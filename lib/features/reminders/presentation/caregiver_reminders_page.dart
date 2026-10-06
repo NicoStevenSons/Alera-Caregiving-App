@@ -17,6 +17,7 @@ import 'reminder_note_dialog.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
 import 'widgets/reminder_timeline.dart';
+import '../../../design_system/alera_sheet_animation.dart';
 
 /// Day-by-day reminder timeline for the patient selected in the caregiver
 /// shell. There is no patient picker here: the shell (and the dashboard) own
@@ -299,6 +300,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   Future<void> _openActions(ReminderOccurrence occurrence) async {
     final action = await showModalBottomSheet<String>(
       context: context,
+      sheetAnimationStyle: aleraSheetAnimation,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
