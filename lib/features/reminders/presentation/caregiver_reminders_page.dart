@@ -177,14 +177,16 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             child: Row(
               children: [
                 if (name != null)
-                  Flexible(
+                  Expanded(
                     child: _PatientChip(
                       name: name,
                       photoUrl: _patientPhoto,
                       onTap: widget.onSwitchPatient,
                     ),
-                  ),
-                const Spacer(),
+                  )
+                else
+                  const Spacer(),
+                const SizedBox(width: 10),
                 _CalendarButton(onTap: _pickDate),
               ],
             ),
@@ -584,11 +586,10 @@ class _PatientChip extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: 14),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: Text(
                   name,
                   key: const Key('reminder-patient-subtitle'),
