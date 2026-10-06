@@ -11,12 +11,9 @@ class ReminderDateStrip extends StatefulWidget {
     required this.today,
     required this.selected,
     required this.onSelected,
-    required this.onPickDate,
     this.markedDays = const {},
   });
 
-  /// Opens the calendar to jump to any date.
-  final VoidCallback onPickDate;
 
   final DateTime today;
   final DateTime selected;
@@ -105,7 +102,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
         key: const Key('reminder-date-strip'),
         controller: _scroll,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         itemCount: ReminderDateStrip.dayCount,
         separatorBuilder: (_, _) => const SizedBox(width: ReminderDateStrip._gap),
         itemBuilder: (context, index) {
@@ -120,18 +117,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
           );
         },
     );
-    return SizedBox(
-      height: 66,
-      child: Row(
-        children: [
-          Expanded(child: strip),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 6, 16, 6),
-            child: _CalendarChip(onTap: widget.onPickDate),
-          ),
-        ],
-      ),
-    );
+    return SizedBox(height: 66, child: strip);
   }
 }
 
@@ -192,49 +178,6 @@ class _DayChip extends StatelessWidget {
                   style: AleraTypography.sectionTitle.copyWith(
                     fontSize: 18,
                     color: foreground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Fixed first chip of the strip: opens the calendar for any date.
-class _CalendarChip extends StatelessWidget {
-  const _CalendarChip({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Pick a date from the calendar',
-      child: Material(
-        key: const Key('reminder-pick-date'),
-        color: AleraColors.primarySoft,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: const SizedBox(
-            width: ReminderDateStrip._itemWidth,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.calendar_month, size: 22, color: AleraColors.primary),
-                SizedBox(height: 1),
-                Text(
-                  'Calendar',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: AleraColors.primary,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],

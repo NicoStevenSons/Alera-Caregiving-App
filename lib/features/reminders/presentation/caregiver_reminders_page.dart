@@ -172,24 +172,28 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(top: 12, bottom: 104),
         children: [
-          if (name != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: _PatientChip(
-                  name: name,
-                  photoUrl: _patientPhoto,
-                  onTap: widget.onSwitchPatient,
-                ),
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                if (name != null)
+                  Flexible(
+                    child: _PatientChip(
+                      name: name,
+                      photoUrl: _patientPhoto,
+                      onTap: widget.onSwitchPatient,
+                    ),
+                  ),
+                const Spacer(),
+                _CalendarButton(onTap: _pickDate),
+              ],
             ),
+          ),
           const SizedBox(height: 8),
           ReminderDateStrip(
             today: _today,
             selected: _selectedDay,
             markedDays: byDay.keys.toSet(),
-            onPickDate: _pickDate,
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
           if (!(controller.loading && controller.occurrences.isEmpty))
@@ -602,6 +606,47 @@ class _PatientChip extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the calendar to jump to any date (e.g. to book ahead).
+class _CalendarButton extends StatelessWidget {
+  const _CalendarButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AleraColors.primarySoft,
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+      child: InkWell(
+        key: const Key('reminder-pick-date'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+        child: const SizedBox(
+          height: 40,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_month, size: 20, color: AleraColors.primary),
+                SizedBox(width: 6),
+                Text(
+                  'Calendar',
+                  style: TextStyle(
+                    color: AleraColors.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
