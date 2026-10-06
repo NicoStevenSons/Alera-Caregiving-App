@@ -5,7 +5,6 @@ import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_date_picker.dart';
 import '../../../design_system/widgets/alera_empty_state.dart';
-import '../../../design_system/widgets/alera_pill.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
@@ -183,36 +182,15 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             markedDays: byDay.keys.toSet(),
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
-          if (!(controller.loading && controller.occurrences.isEmpty))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: ReminderSummaryCard(
-                occurrences: dayItems,
-                isToday: isToday,
-              ),
-            ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    reminderLongDate(_selectedDay),
-                    key: const Key('reminder-selected-date'),
-                    style: AleraTypography.pageTitle.copyWith(fontSize: 20),
-                  ),
-                ),
-                AleraPill(
-                  key: const Key('reminder-today-pill'),
-                  label: 'Today',
-                  variant: isToday
-                      ? AleraPillVariant.label
-                      : AleraPillVariant.action,
-                  onTap: isToday
-                      ? null
-                      : () => setState(() => _selectedDay = _today),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: ReminderSummaryCard(
+              occurrences: dayItems,
+              isToday: isToday,
+              date: _selectedDay,
+              onToday: () => setState(() => _selectedDay = _today),
+              showSummary: !(controller.loading &&
+                  controller.occurrences.isEmpty),
             ),
           ),
           if (controller.errorMessage case final message?)

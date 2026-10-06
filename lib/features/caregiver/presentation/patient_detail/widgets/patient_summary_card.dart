@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/alera_spacing.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 import '../../../domain/models/health_snapshot.dart';
 
-/// Patient header: big avatar with a status ring, name, relationship line,
+/// Patient header: avatar, name, relationship line,
 /// a live connection pill, and the actions (Call as the primary pill, the
 /// rest as round tonal icon buttons).
 class PatientDetailSummaryCard extends StatelessWidget {
@@ -23,7 +24,6 @@ class PatientDetailSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = careRecipient.healthSnapshot;
-    final Color ring = patientStatusColor(careRecipient.status);
     final subtitle = snapshot.hasLastCheckIn
         ? '${careRecipient.relationshipLabel} · Last check-in ${_time(snapshot.lastCheckIn)}'
         : '${careRecipient.relationshipLabel} · No check-in yet';
@@ -34,18 +34,10 @@ class PatientDetailSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                key: const Key('patient-header-avatar-ring'),
-                padding: const EdgeInsets.all(2.5),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: ring, width: 2),
-                ),
-                child: AleraPatientAvatar(
-                  name: careRecipient.name,
-                  photoUrl: careRecipient.profilePhotoUrl,
-                  radius: 28,
-                ),
+              AleraPatientAvatar(
+                name: careRecipient.name,
+                photoUrl: careRecipient.profilePhotoUrl,
+                radius: 28,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -85,9 +77,9 @@ class PatientDetailSummaryCard extends StatelessWidget {
               Expanded(
                 child: Material(
                   color: AleraColors.selected,
-                  shape: const StadiumBorder(),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                   child: InkWell(
-                    customBorder: const StadiumBorder(),
+                    borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                     onTap: () => onAction('Call'),
                     child: const SizedBox(
                       height: 44,
@@ -268,9 +260,9 @@ class _RoundAction extends StatelessWidget {
       message: label,
       child: Material(
         color: AleraColors.selected,
-        shape: const CircleBorder(),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         child: InkWell(
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           onTap: onTap,
           child: Semantics(
             button: true,
