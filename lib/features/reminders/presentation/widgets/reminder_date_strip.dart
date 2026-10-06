@@ -73,7 +73,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 74,
+      height: 58,
       child: ListView.separated(
         key: const Key('reminder-date-strip'),
         controller: _scroll,
