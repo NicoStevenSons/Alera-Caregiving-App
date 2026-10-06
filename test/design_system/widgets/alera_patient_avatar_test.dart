@@ -149,16 +149,12 @@ void main() {
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      final Color first = tester
-          .widget<CircleAvatar>(find.byType(CircleAvatar))
-          .backgroundColor!;
+      final Color first = _initialsColour(tester);
 
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      final Color second = tester
-          .widget<CircleAvatar>(find.byType(CircleAvatar))
-          .backgroundColor!;
+      final Color second = _initialsColour(tester);
 
       expect(first, second);
     });
@@ -178,4 +174,17 @@ void main() {
       handle.dispose();
     });
   });
+}
+
+/// The avatar paints its initials on a circular [Container]; read that colour.
+Color _initialsColour(WidgetTester tester) {
+  final Container container = tester.widget<Container>(
+    find
+        .descendant(
+          of: find.byType(AleraPatientAvatar),
+          matching: find.byType(Container),
+        )
+        .first,
+  );
+  return (container.decoration! as BoxDecoration).color!;
 }
