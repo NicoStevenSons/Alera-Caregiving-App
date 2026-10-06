@@ -13,6 +13,7 @@ import '../Services/watch_listener_controller.dart';
 import '../Services/watch_payload_service.dart';
 
 import '../config/app_config.dart';
+import '../design_system/alera_elderly_theme.dart';
 
 import '../features/elderly/domain/elderly_home_view_state.dart';
 import '../features/elderly/domain/models/elderly_reminder.dart';
@@ -508,7 +509,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final ThemeData theme = AleraElderlyTheme.build(Theme.of(context));
+    return Theme(
+      data: theme,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Alera')),
       body: IndexedStack(
         index: _selectedIndex,
@@ -569,7 +573,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: theme.colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -580,7 +584,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
         ),
         child: NavigationBar(
           elevation: 0,
-          height: 68,
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
             if (_selectedIndex == index) return;
@@ -588,19 +591,18 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           },
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded),
+              icon: Icon(Icons.grid_view_rounded),
               label: 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.schedule_outlined),
-              selectedIcon: Icon(Icons.schedule),
+              icon: Icon(Icons.schedule),
               label: 'Reminders',
             ),
             NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
           ],
         ),
       ),
+    ),
     );
   }
 }
