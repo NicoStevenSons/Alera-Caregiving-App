@@ -183,6 +183,8 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                _categoryGrid(),
+                const SizedBox(height: 12),
                 AleraCard(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -209,16 +211,6 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                             ),
                           ],
                         ),
-                      ),
-                      const _RowDivider(),
-                      _dropdownRow<ReminderCategory>(
-                        fieldKey: const Key('reminder-category-field'),
-                        label: 'Category',
-                        value: _category,
-                        values: ReminderCategory.values,
-                        text: (v) => reminderTitleCase(v.apiValue),
-                        leading: (v) => _CategoryIcon(v),
-                        onChanged: (v) => setState(() => _category = v),
                       ),
                       const _RowDivider(),
                       _dropdownRow<ReminderPriority>(
@@ -266,6 +258,38 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     fontSize: 13,
     color: AleraColors.textPrimary,
   );
+
+  /// Tap-to-select icon tiles, three per row, replacing the old dropdown.
+  Widget _categoryGrid() {
+    return AleraCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Category', style: AleraTypography.sectionTitle),
+          const SizedBox(height: 12),
+          GridView.count(
+            key: const Key('reminder-category-field'),
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 1.3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              for (final category in ReminderCategory.values)
+                _CategoryTile(
+                  key: Key('reminder-category-${category.apiValue}'),
+                  category: category,
+                  selected: category == _category,
+                  onTap: () => setState(() => _category = category),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _repeatPills() {
     Widget pill(String label, ReminderRepeatMode mode, Key key) => Expanded(
@@ -520,4 +544,65 @@ class _CategoryIcon extends StatelessWidget {
     width: 28,
     height: 28,
   );
+}
+
+/// One selectable category tile: icon above a short label.
+class _CategoryTile extends StatelessWidget {
+  final ReminderCategory category;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryTile({
+    super.key,
+    required this.category,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: reminderTitleCase(category.apiValue),
+      child: Material(
+        color: selected
+            ? AleraColors.selected.withValues(alpha: 0.14)
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: selected ? AleraColors.selected : AleraColors.divider,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _CategoryIcon(category),
+                const SizedBox(height: 6),
+                Text(
+                  reminderTitleCase(category.apiValue),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? AleraColors.textPrimary
+                        : AleraColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
