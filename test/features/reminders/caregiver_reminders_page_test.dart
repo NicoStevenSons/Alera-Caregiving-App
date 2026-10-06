@@ -75,50 +75,66 @@ void main() {
     expect(source.completedOnBehalf, ['a']);
   });
 
-  testWidgets('new reminder opens a full page and saves a draft', (
+  Future<void> openSheet(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('create-reminder-button')));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('new reminder opens a drawer with the wheel at the top', (
     tester,
   ) async {
     final source = _FakeSource(const []);
     await pump(tester, source);
 
-    await tester.tap(find.byKey(const Key('create-reminder-button')));
-    await tester.pumpAndSettle();
-    expect(find.text('Set up a reminder for Lola Rosa.'), findsOneWidget);
+    await openSheet(tester);
+    expect(find.byKey(const Key('reminder-time-hour')), findsOneWidget);
+    expect(find.byKey(const Key('reminder-time-minute')), findsOneWidget);
+    expect(find.byKey(const Key('reminder-time-period')), findsOneWidget);
+    // Clock is 9:00 AM on the selected day, so a one-off is "now"-ish.
+    expect(find.byKey(const Key('reminder-time-until')), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('reminder-title-field')),
       'Evening pills',
     );
-    await tester.ensureVisible(find.byKey(const Key('save-reminder-button')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('save-reminder-button')));
     await tester.pumpAndSettle();
 
     expect(source.createdDraft?.title, 'Evening pills');
     expect(source.createdDraft?.startDate, '2026-09-22');
+    expect(source.createdDraft?.startTime, '09:00:00');
+    expect(source.createdDraft?.scheduleRule, isNull);
   });
 
-  testWidgets('time wheel sits at the top of the create page', (tester) async {
+  testWidgets('weekdays and custom repeat set a schedule rule', (tester) async {
     final source = _FakeSource(const []);
     await pump(tester, source);
 
-    await tester.tap(find.byKey(const Key('create-reminder-button')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('reminder-time-hour')), findsOneWidget);
-    expect(find.byKey(const Key('reminder-time-minute')), findsOneWidget);
-    expect(find.byKey(const Key('reminder-time-period')), findsOneWidget);
-
-    await tester.enterText(
-      find.byKey(const Key('reminder-title-field')),
-      'Pills',
-    );
-    await tester.ensureVisible(find.byKey(const Key('save-reminder-button')));
+    await openSheet(tester);
+    await tester.enterText(find.byKey(const Key('reminder-title-field')), 'Walk');
+    await tester.tap(find.byKey(const Key('reminder-repeat-weekdays')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('save-reminder-button')));
     await tester.pumpAndSettle();
+    expect(
+      source.createdDraft?.scheduleRule,
+      'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+    );
 
-    // Clock is 9:00 AM; leaving the wheel alone keeps that time.
-    expect(source.createdDraft?.startTime, '09:00:00');
+    await openSheet(tester);
+    await tester.enterText(find.byKey(const Key('reminder-title-field')), 'Yoga');
+    await tester.tap(find.byKey(const Key('reminder-repeat-custom')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-reminder-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('reminder-custom-days-error')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('reminder-day-toggle-1')));
+    await tester.tap(find.byKey(const ValueKey('reminder-day-toggle-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-reminder-button')));
+    await tester.pumpAndSettle();
+    expect(source.createdDraft?.scheduleRule, 'FREQ=WEEKLY;BYDAY=MO,WE');
   });
 
   testWidgets('manage schedules opens the separate page', (tester) async {
