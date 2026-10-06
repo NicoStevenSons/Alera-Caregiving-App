@@ -38,6 +38,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   /// Opens the create-reminder drawer for this patient. Null on the mock
   /// repository path, where "Reminder" falls back to the mock snackbar.
   final VoidCallback? onNewReminder;
+  final ValueChanged<CaregiverReminder>? onCompleteReminder;
 
   const CaregiverPatientDetailPage({
     super.key,
@@ -52,6 +53,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     this.onPatientAccessAction,
     this.onVitalTap,
     this.onNewReminder,
+    this.onCompleteReminder,
   });
 
   void _showFeedback(BuildContext context, String message) {
@@ -170,6 +172,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
             PatientRemindersSection(
               reminders: reminders,
               onViewAll: onViewAllReminders,
+              onCompleteReminder: onCompleteReminder,
               onNewReminder: onNewReminder ??
                   () => _showFeedback(
                     context,
@@ -206,6 +209,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final CaregiverPatientDataSource? patientDataSource;
   final ValueChanged<String>? onVitalTap;
   final VoidCallback? onNewReminder;
+  final ValueChanged<CaregiverReminder>? onCompleteReminder;
 
   const CaregiverPatientDetailLoaderPage({
     super.key,
@@ -220,6 +224,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     this.patientDataSource,
     this.onVitalTap,
     this.onNewReminder,
+    this.onCompleteReminder,
   });
 
   @override
@@ -297,6 +302,7 @@ class _CaregiverPatientDetailLoaderPageState
         onPatientAccessAction: _openPatientAccess,
         onVitalTap: widget.onVitalTap,
         onNewReminder: widget.onNewReminder,
+        onCompleteReminder: widget.onCompleteReminder,
       );
     }
     final failure = _failure;

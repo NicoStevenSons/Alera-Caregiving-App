@@ -522,6 +522,8 @@ class _CaregiverShellState extends State<CaregiverShell>
             onVitalTap: (metric) =>
                 _openVitalTrend(context, careRecipient, metric),
             onNewReminder: () => _createReminderFor(context, careRecipient),
+            onCompleteReminder: (reminder) =>
+                _completeHomeReminder(context, reminder),
           );
             final reminders = _homeReminderController;
             if (reminders == null) return page(const []);

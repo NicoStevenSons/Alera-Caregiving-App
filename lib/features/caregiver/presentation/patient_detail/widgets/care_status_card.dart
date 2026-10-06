@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
 import 'patient_summary_card.dart';
 
@@ -90,14 +91,11 @@ class PatientStatusSummaryCard extends StatelessWidget {
   Widget _statusRow(Color color) {
     return Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(_icon(status), size: 20, color: color),
+          AleraSvgIcon(
+            assetPath: _statusAsset(status),
+            width: 44,
+            height: 44,
+            semanticLabel: patientStatusTitle(status),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -137,11 +135,16 @@ class PatientStatusSummaryCard extends StatelessWidget {
     );
   }
 
-  IconData _icon(CareStatus status) => switch (status) {
-    CareStatus.stable => Icons.check_circle,
-    CareStatus.critical => Icons.error,
-    CareStatus.warning || CareStatus.needsAttention => Icons.warning,
-    CareStatus.noData || CareStatus.unknown => Icons.help,
+  /// Figma status icons. No data / Unknown use the `error.svg` placeholder
+  /// (listed in PLACEHOLDER_ICONS.md) until dedicated artwork exists.
+  String _statusAsset(CareStatus status) => switch (status) {
+    CareStatus.stable => 'alera-figma-assets/assets/icons/status/stable.svg',
+    CareStatus.warning ||
+    CareStatus.needsAttention =>
+      'alera-figma-assets/assets/icons/status/warning.svg',
+    CareStatus.critical => 'alera-figma-assets/assets/icons/status/critical.svg',
+    CareStatus.noData ||
+    CareStatus.unknown => 'alera-figma-assets/assets/icons/status/error.svg',
   };
 
   String _description(CareStatus status) => switch (status) {
