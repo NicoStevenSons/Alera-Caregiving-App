@@ -28,7 +28,7 @@ void main() {
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Temporary More placeholder'), findsOneWidget);
+    expect(find.text('Manage patients'), findsOneWidget);
 
     final IndexedStack stack = tester.widget(find.byType(IndexedStack));
     expect(stack.children, hasLength(5));

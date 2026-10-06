@@ -34,7 +34,7 @@ class HomeInsightsCard extends StatelessWidget {
                 ? 'No overnight SpO2 reading'
                 : 'SpO2 stayed stable overnight',
             subtitle: backendBacked
-                ? 'Overnight insight remains mock-only'
+                ? 'Not available yet'
                 : snapshot.spo2Percent == null
                 ? 'No backend reading available'
                 : '${(snapshot.spo2Percent! - 1).toStringAsFixed(0)} - ${snapshot.spo2Percent!.toStringAsFixed(0)}% while sleeping',
@@ -50,9 +50,9 @@ class HomeInsightsCard extends StatelessWidget {
                 ? 'No activity data today'
                 : 'Low activity today',
             subtitle: backendBacked
-                ? 'Activity remains mock-only'
+                ? 'Not available yet'
                 : snapshot.steps == null
-                ? 'Activity remains mock-only'
+                ? 'Not available yet'
                 : '${snapshot.steps} steps recorded',
           ),
           const SizedBox(height: 10),
@@ -64,7 +64,7 @@ class HomeInsightsCard extends StatelessWidget {
                 : snapshot.sleepDuration == Duration.zero
                 ? 'Sleep data unavailable'
                 : 'Slept $sleep',
-            subtitle: 'Sleep remains mock-only',
+            subtitle: 'Not available yet',
           ),
         ],
       ),

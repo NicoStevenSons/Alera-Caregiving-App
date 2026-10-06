@@ -102,7 +102,7 @@ void main() {
     expect(find.textContaining('Highest severity:'), findsNothing);
     expect(find.textContaining('Device:'), findsNothing);
     expect(find.text('Drink water 💧'), findsOneWidget);
-    expect(find.text('Stress — mock-only'), findsOneWidget);
+    expect(find.text('Stress — not available'), findsOneWidget);
     expect(source.listCalls, 1);
   });
 

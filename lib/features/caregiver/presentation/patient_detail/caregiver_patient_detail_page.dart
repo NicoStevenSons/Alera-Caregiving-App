@@ -98,10 +98,10 @@ class CaregiverPatientDetailPage extends StatelessWidget {
           onNewReminder!();
           return;
         }
-        _showFeedback(context, '$action is mock-only for now.');
+        _showFeedback(context, 'Reminders are coming soon for this patient.');
         return;
       default:
-        _showFeedback(context, '$action is mock-only for now.');
+        _showFeedback(context, '$action is coming soon.');
     }
   }
 
@@ -163,7 +163,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
                   return;
                 }
 
-                _showFeedback(context, '$label history is mock-only for now.');
+                _showFeedback(context, '$label history is coming soon.');
               },
             ),
             const SizedBox(height: 20),
@@ -173,7 +173,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               onNewReminder: onNewReminder ??
                   () => _showFeedback(
                     context,
-                    'New reminder is mock-only for now.',
+                    'Reminders are coming soon for this patient.',
                   ),
             ),
             const SizedBox(height: 12),

@@ -82,7 +82,7 @@ class HomeHealthSummary extends StatelessWidget {
                   assetPath:
                       'alera-figma-assets/assets/icons/vitals/stress.svg',
                   label: careRecipient.backendBacked
-                      ? 'Stress — mock-only'
+                      ? 'Stress — not available'
                       : snapshot.stressLabel,
                   color: const Color(0xFFFF875F),
                   onTap: () => onMetricTap('Stress'),
@@ -93,7 +93,7 @@ class HomeHealthSummary extends StatelessWidget {
                   assetPath:
                       'alera-figma-assets/assets/icons/vitals/activity.svg',
                   label: snapshot.steps == null
-                      ? 'Activity — mock-only'
+                      ? 'Activity — not available'
                       : '${snapshot.steps} steps',
                       timestamp: _timestamp(
                         snapshot.stepsUpdatedAt,

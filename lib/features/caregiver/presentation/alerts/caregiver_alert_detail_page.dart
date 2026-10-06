@@ -271,7 +271,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
   }
 
   void _mock(String action) {
-    showAleraSnackBar(context, '$action is mock-only for now.', type: AleraSnackBarType.info);
+    showAleraSnackBar(context, '$action is coming soon.', type: AleraSnackBarType.info);
   }
 
   @override
