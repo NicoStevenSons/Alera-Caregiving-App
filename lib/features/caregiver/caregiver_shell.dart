@@ -48,6 +48,7 @@ import 'domain/models/caregiver_reminder.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
 import '../startup/presentation/alera_startup_screen.dart';
 import '../../design_system/widgets/alera_snackbar.dart';
+import '../../design_system/widgets/alera_empty_state.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -781,20 +782,23 @@ class _CaregiverShellState extends State<CaregiverShell>
           return const HomeLoadingSkeleton();
         }
         if (controller.state == CaregiverPatientListState.empty) {
-          return const _HomePatientState(
+          return const AleraEmptyState(
             key: Key('home-patient-empty'),
             icon: Icons.person_search,
+            title: 'No patients yet',
             message: 'No assigned patients yet.',
           );
         }
         if (controller.state == CaregiverPatientListState.error) {
           final forbidden =
               controller.failureKind == CaregiverPatientFailureKind.forbidden;
-          return _HomePatientState(
+          return AleraEmptyState(
             key: Key(
               forbidden ? 'home-patient-forbidden' : 'home-patient-error',
             ),
-            icon: forbidden ? Icons.lock : Icons.cloud_off,
+            icon: forbidden ? Icons.lock : null,
+            assetPath: forbidden ? null : AleraEmptyState.errorAsset,
+            title: forbidden ? 'No access' : 'Couldn’t load patients',
             message: controller.errorMessage ?? 'Unable to load patients.',
             actionLabel: forbidden ? null : 'Retry',
             onAction: forbidden ? null : controller.load,
@@ -802,8 +806,9 @@ class _CaregiverShellState extends State<CaregiverShell>
         }
         final patients = controller.visiblePatients;
         if (patients.isEmpty) {
-          return const _HomePatientState(
+          return const AleraEmptyState(
             icon: Icons.person_search,
+            title: 'No patients yet',
             message: 'No assigned patients yet.',
           );
         }
@@ -1057,37 +1062,6 @@ class _CaregiverShellState extends State<CaregiverShell>
       ),
     );
   }
-}
-
-class _HomePatientState extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  const _HomePatientState({
-    super.key,
-    required this.icon,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 48),
-        const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center),
-        if (actionLabel != null) ...[
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-        ],
-      ],
-    ),
-  );
 }
 
 class _RepositoryAlertDataSource implements CaregiverAlertDataSource {

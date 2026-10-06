@@ -10,6 +10,7 @@ import '../../data/patients/caregiver_patient_controller.dart';
 import 'widgets/care_recipient_card.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/widgets/alera_empty_state.dart';
 
 class CaregiverPeoplePage extends StatelessWidget {
   final List<CareRecipient> careRecipients;
@@ -74,19 +75,21 @@ class CaregiverPeoplePage extends StatelessWidget {
       return const _PeopleLoadingSkeleton();
     }
     if (patientController?.state == CaregiverPatientListState.error) {
-      return _PeopleMessage(
+      return AleraEmptyState(
         key: const Key('people-error'),
-        icon: Icons.cloud_off,
-        title: patientController!.errorMessage ?? 'Unable to load patients.',
+        assetPath: AleraEmptyState.errorAsset,
+        title: 'Couldn’t load patients',
+        message: patientController!.errorMessage ?? 'Unable to load patients.',
         actionLabel: 'Retry',
         onAction: patientController.load,
       );
     }
     if (patientController?.state == CaregiverPatientListState.empty) {
-      return _PeopleMessage(
+      return AleraEmptyState(
         key: const Key('people-empty'),
-        icon: Icons.people_outline,
+        icon: Icons.people,
         title: 'No patients yet',
+        message: 'Add a patient to start monitoring their care.',
         actionLabel: 'Add Patient',
         onAction: onAddPatient,
       );
@@ -156,36 +159,6 @@ class _DemoBanner extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
     ),
     child: const Text('Demo data — the patient service is currently offline.'),
-  );
-}
-
-class _PeopleMessage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String actionLabel;
-  final VoidCallback? onAction;
-  const _PeopleMessage({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.actionLabel,
-    this.onAction,
-  });
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 44, color: AleraColors.textSecondary),
-          const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onAction, child: Text(actionLabel)),
-        ],
-      ),
-    ),
   );
 }
 

@@ -40,13 +40,14 @@ class HomeRemindersPreview extends StatelessWidget {
               child: LinearProgressIndicator(),
             )
           else if (errorMessage != null)
-            Column(
+            AleraEmptyState(
               key: const Key('home-reminders-error'),
-              children: [
-                Text(errorMessage!, textAlign: TextAlign.center),
-                if (onRetry != null)
-                  TextButton(onPressed: onRetry, child: const Text('Retry')),
-              ],
+              assetPath: AleraEmptyState.errorAsset,
+              title: 'Couldn’t load reminders',
+              message: errorMessage!,
+              actionLabel: onRetry == null ? null : 'Retry',
+              onAction: onRetry,
+              padding: const EdgeInsets.symmetric(vertical: 18),
             )
           else if (reminders.isEmpty)
             const AleraEmptyState(

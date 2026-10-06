@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'alera_button.dart';
 import 'alera_svg_icon.dart';
 
 /// Muted "nothing here" block shared by every empty state in the app
@@ -14,6 +15,8 @@ class AleraEmptyState extends StatelessWidget {
     this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
     this.padding = const EdgeInsets.symmetric(vertical: 26, horizontal: 24),
   }) : assert(
          (assetPath == null) != (icon == null),
@@ -24,7 +27,16 @@ class AleraEmptyState extends StatelessWidget {
   final IconData? icon;
   final String title;
   final String message;
+
+  /// Optional pill button under the message (Retry, Add Patient, ...).
+  final String? actionLabel;
+  final VoidCallback? onAction;
   final EdgeInsetsGeometry padding;
+
+  /// Placeholder for "couldn't load / disconnected" states until a dedicated
+  /// icon is drawn. See alera-figma-assets/PLACEHOLDER_ICONS.md.
+  static const String errorAsset =
+      'alera-figma-assets/assets/icons/status/error.svg';
 
   static const Color _iconColor = Color(0xFFCFC7E8);
   static const Color _titleColor = Color(0xFFA69BD2);
@@ -62,6 +74,16 @@ class AleraEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(color: _messageColor, fontSize: 12),
           ),
+          if (actionLabel != null) ...[
+            const SizedBox(height: 16),
+            AleraButton(
+              label: actionLabel!,
+              onPressed: onAction,
+              variant: AleraButtonVariant.pill,
+              expand: false,
+              height: 40,
+            ),
+          ],
         ],
       ),
     ),
