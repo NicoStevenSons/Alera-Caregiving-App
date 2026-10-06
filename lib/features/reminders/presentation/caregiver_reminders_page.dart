@@ -238,13 +238,17 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         message: 'Tap + to add one.',
       );
     }
-    return ReminderTimeline(
+    return AleraCard(
+      key: const Key('reminder-list-card'),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      child: ReminderTimeline(
       occurrences: dayItems,
       templates: controller.templates,
       isBusy: controller.isBusy,
       onComplete: _complete,
       onOpen: _openActions,
       now: isToday ? (widget.now ?? DateTime.now)() : null,
+      ),
     );
   }
 

@@ -64,7 +64,7 @@ void main() {
     expect(find.byKey(const Key('reminder-summary-card')), findsOneWidget);
     expect(find.text('left today'), findsOneWidget);
     expect(find.byKey(const Key('reminder-now-marker')), findsOneWidget);
-    expect(find.textContaining('empty hours hidden'), findsWidgets);
+    expect(find.textContaining('empty hours'), findsWidgets);
     expect(
       find.byKey(const ValueKey('reminder-dot-2026-09-22')),
       findsOneWidget,

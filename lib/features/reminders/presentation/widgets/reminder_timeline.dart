@@ -69,8 +69,6 @@ class _GapEntry extends _Entry {
 }
 
 class _ReminderTimelineState extends State<ReminderTimeline> {
-  final Set<int> _expandedGaps = {};
-
   List<_Entry> _entries() {
     final items = widget.occurrences;
     final now = widget.now;
@@ -106,9 +104,6 @@ class _ReminderTimelineState extends State<ReminderTimeline> {
         previousItemHour = hour;
       }
       previousHour = hour;
-    }
-    if (23 - (previousHour + 1) + 1 >= 2) {
-      entries.add(_GapEntry(previousHour + 1, 23));
     }
     return entries;
   }
@@ -148,13 +143,8 @@ class _ReminderTimelineState extends State<ReminderTimeline> {
             ),
             _GapEntry() => _GapRow(
               gap: entries[i] as _GapEntry,
-              expanded: _expandedGaps.contains((entries[i] as _GapEntry).fromHour),
               isFirst: i == 0,
               isLast: i == entries.length - 1,
-              onToggle: () => setState(() {
-                final key = (entries[i] as _GapEntry).fromHour;
-                if (!_expandedGaps.remove(key)) _expandedGaps.add(key);
-              }),
             ),
           },
       ],
@@ -298,57 +288,35 @@ class _DashPainter extends CustomPainter {
   bool shouldRepaint(_DashPainter old) => old.color != color;
 }
 
+/// A quiet, non-interactive marker for a stretch with nothing scheduled.
 class _GapRow extends StatelessWidget {
   const _GapRow({
     required this.gap,
-    required this.expanded,
     required this.isFirst,
     required this.isLast,
-    required this.onToggle,
   });
 
   final _GapEntry gap;
-  final bool expanded;
   final bool isFirst;
   final bool isLast;
-  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final label = gap.count == 1
-        ? '1 empty hour hidden'
-        : '${gap.count} empty hours hidden';
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: 44,
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '${reminderHourLabel(gap.fromHour)}\nto ${reminderHourLabel(gap.toHour)}',
-                  style: AleraTypography.body.copyWith(
-                    fontSize: 9,
-                    height: 1.2,
-                    color: AleraColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(width: 44),
           _SimpleRail(
             isFirst: isFirst,
             isLast: isLast,
-            nodeTop: 10,
+            nodeTop: 6,
             nodeSize: 12,
             node: Container(
               width: 12,
               height: 12,
               decoration: const BoxDecoration(
-                color: AleraColors.background,
+                color: Colors.white,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -360,59 +328,15 @@ class _GapRow extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Material(
-                color: AleraColors.primarySoft.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(12),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  key: ValueKey('reminder-gap-${gap.fromHour}'),
-                  onTap: onToggle,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                label,
-                                style: AleraTypography.body.copyWith(
-                                  fontSize: 12,
-                                  color: AleraColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              expanded ? 'Hide' : 'Expand',
-                              style: const TextStyle(
-                                color: AleraColors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (expanded)
-                          for (var h = gap.fromHour; h <= gap.toHour; h++)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                '${reminderHourLabel(h)} · nothing scheduled',
-                                style: AleraTypography.body.copyWith(
-                                  fontSize: 11,
-                                  color: AleraColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                      ],
-                    ),
-                  ),
+              padding: const EdgeInsets.only(bottom: 10, top: 2),
+              child: Text(
+                '${gap.count} empty hours · '
+                '${reminderHourLabel(gap.fromHour)} to '
+                '${reminderHourLabel(gap.toHour)}',
+                key: ValueKey('reminder-gap-${gap.fromHour}'),
+                style: AleraTypography.body.copyWith(
+                  fontSize: 11,
+                  color: AleraColors.textSecondary,
                 ),
               ),
             ),
@@ -634,7 +558,7 @@ class _ReminderCard extends StatelessWidget {
             AleraColors.critical.withValues(alpha: 0.10),
             Colors.white,
           )
-        : reminderCategoryWash(occurrence.category, strength: done ? 0.10 : 0.17);
+        : reminderCategoryWash(occurrence.category, strength: done ? 0.04 : 0.08);
     final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

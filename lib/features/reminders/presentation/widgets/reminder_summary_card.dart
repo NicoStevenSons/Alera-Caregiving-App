@@ -49,34 +49,27 @@ class ReminderSummaryCard extends StatelessWidget {
 
     return Container(
       key: const Key('reminder-summary-card'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFD8C5FF), Color(0xFFECE2FF)],
+          colors: [Color(0xFFE9DFFF), Color(0xFFF5EFFF)],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AleraColors.primary.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           if (allDone)
             const Padding(
               padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.check_circle, size: 40, color: Color(0xFF05A869)),
+              child: Icon(Icons.check_circle, size: 28, color: Color(0xFF05A869)),
             ),
           if (big != null) ...[
             Text(
               big,
               style: AleraTypography.pageTitle.copyWith(
-                fontSize: 40,
+                fontSize: 28,
                 height: 1,
                 color: AleraColors.primary,
               ),
@@ -89,10 +82,10 @@ class ReminderSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   headline,
-                  style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
                 ),
                 if (missed > 0) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 1),
                   Text(
                     missed == 1 ? '1 missed' : '$missed missed',
                     style: const TextStyle(
@@ -121,17 +114,17 @@ class _NextChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 150),
-      padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+      padding: const EdgeInsets.fromLTRB(6, 5, 10, 5),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: reminderCategoryTile(next.category),
               borderRadius: BorderRadius.circular(10),
@@ -139,8 +132,8 @@ class _NextChip extends StatelessWidget {
             child: Center(
               child: AleraSvgIcon(
                 assetPath: reminderCategoryAsset(next.category),
-                width: 20,
-                height: 20,
+                width: 16,
+                height: 16,
               ),
             ),
           ),
