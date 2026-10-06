@@ -12,6 +12,10 @@ class AleraPill extends StatelessWidget {
   final VoidCallback? onTap;
   final AleraPillVariant variant;
 
+  /// Fills the width it's given (label centred) instead of hugging its
+  /// content, so a row of pills can share one uniform size.
+  final bool expand;
+
   const AleraPill({
     super.key,
     required this.label,
@@ -19,6 +23,7 @@ class AleraPill extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.variant = AleraPillVariant.action,
+    this.expand = false,
   });
 
   @override
@@ -49,7 +54,10 @@ class AleraPill extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisAlignment: expand
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
               children: [
                 if (leading != null) ...[leading!, const SizedBox(width: 6)],
                 Text(

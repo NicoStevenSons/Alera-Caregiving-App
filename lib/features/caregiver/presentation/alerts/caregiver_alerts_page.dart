@@ -4,6 +4,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/status/adapters/alert_severity_chip.dart';
 import '../../../../design_system/status/alera_badged_avatar.dart';
+import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
@@ -510,9 +511,17 @@ class _AlertFilterDrawer extends StatelessWidget {
     final patients = [...careRecipients]
       ..sort((a, b) => a.name.compareTo(b.name));
 
+    Widget option(String label, AlertFilter filter) => _DrawerFilterOption(
+      label: label,
+      selected: filters.contains(filter),
+      onChanged: () => onFilterToggled(filter),
+    );
+
     return Drawer(
       key: const Key('alerts-filter-drawer'),
       width: MediaQuery.sizeOf(context).width * .88,
+      backgroundColor: AleraColors.background,
+      surfaceTintColor: Colors.transparent,
       child: SafeArea(
         child: Column(
           children: [
@@ -523,7 +532,7 @@ class _AlertFilterDrawer extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Filter alerts',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: AleraTypography.sectionTitle,
                     ),
                   ),
                   TextButton(
@@ -539,79 +548,57 @@ class _AlertFilterDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 children: [
                   const _FilterSectionTitle('Patient'),
-                  _PatientFilterOption(
-                    key: const Key('alerts-patient-filter-all'),
-                    label: 'All Patients',
-                    selected: selectedPatientId == null,
-                    onTap: () => onPatientSelected(null),
-                  ),
-                  for (final patient in patients)
-                    _PatientFilterOption(
-                      key: ValueKey<String>(
-                        'alerts-patient-filter-${patient.id}',
+                  _FilterCard(
+                    children: [
+                      _PatientFilterOption(
+                        key: const Key('alerts-patient-filter-all'),
+                        label: 'All Patients',
+                        selected: selectedPatientId == null,
+                        onTap: () => onPatientSelected(null),
                       ),
-                      label: patient.name,
-                      photoUrl: patient.profilePhotoUrl,
-                      selected: selectedPatientId == patient.id,
-                      onTap: () => onPatientSelected(patient.id),
-                    ),
-                  const Divider(height: 28),
+                      for (final patient in patients)
+                        _PatientFilterOption(
+                          key: ValueKey<String>(
+                            'alerts-patient-filter-${patient.id}',
+                          ),
+                          label: patient.name,
+                          photoUrl: patient.profilePhotoUrl,
+                          selected: selectedPatientId == patient.id,
+                          onTap: () => onPatientSelected(patient.id),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Severity'),
-                  _DrawerFilterOption(
-                    label: 'Warning',
-                    selected: filters.contains(AlertFilter.warning),
-                    onChanged: () => onFilterToggled(AlertFilter.warning),
+                  _FilterCard(
+                    children: [
+                      option('Warning', AlertFilter.warning),
+                      option('Critical', AlertFilter.critical),
+                    ],
                   ),
-                  _DrawerFilterOption(
-                    label: 'Critical',
-                    selected: filters.contains(AlertFilter.critical),
-                    onChanged: () => onFilterToggled(AlertFilter.critical),
-                  ),
-                  const Divider(height: 28),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Metric'),
-                  _DrawerFilterOption(
-                    label: 'Heart Rate',
-                    selected: filters.contains(AlertFilter.heartRate),
-                    onChanged: () => onFilterToggled(AlertFilter.heartRate),
+                  _FilterCard(
+                    children: [
+                      option('Heart Rate', AlertFilter.heartRate),
+                      option('SpO2', AlertFilter.spo2),
+                      option('Watch Battery', AlertFilter.watchBattery),
+                    ],
                   ),
-                  _DrawerFilterOption(
-                    label: 'SpO2',
-                    selected: filters.contains(AlertFilter.spo2),
-                    onChanged: () => onFilterToggled(AlertFilter.spo2),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Watch Battery',
-                    selected: filters.contains(AlertFilter.watchBattery),
-                    onChanged: () => onFilterToggled(AlertFilter.watchBattery),
-                  ),
-                  const Divider(height: 28),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Status'),
-                  _DrawerFilterOption(
-                    label: 'Unacknowledged',
-                    selected: filters.contains(AlertFilter.unacknowledged),
-                    onChanged: () =>
-                        onFilterToggled(AlertFilter.unacknowledged),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Acknowledged',
-                    selected: filters.contains(AlertFilter.acknowledged),
-                    onChanged: () => onFilterToggled(AlertFilter.acknowledged),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Resolved',
-                    selected: filters.contains(AlertFilter.resolved),
-                    onChanged: () => onFilterToggled(AlertFilter.resolved),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'False Alarm',
-                    selected: filters.contains(AlertFilter.falseAlarm),
-                    onChanged: () => onFilterToggled(AlertFilter.falseAlarm),
+                  _FilterCard(
+                    children: [
+                      option('Unacknowledged', AlertFilter.unacknowledged),
+                      option('Acknowledged', AlertFilter.acknowledged),
+                      option('Resolved', AlertFilter.resolved),
+                      option('False Alarm', AlertFilter.falseAlarm),
+                    ],
                   ),
                 ],
               ),
@@ -623,6 +610,41 @@ class _AlertFilterDrawer extends StatelessWidget {
   }
 }
 
+/// One Alera card holding a group of options, separated by hairlines.
+class _FilterCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _FilterCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 16,
+                endIndent: 16,
+                color: AleraColors.divider,
+              ),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+const TextStyle _filterLabelStyle = TextStyle(
+  fontSize: 14,
+  fontWeight: FontWeight.w500,
+  color: AleraColors.textPrimary,
+);
+
 class _FilterSectionTitle extends StatelessWidget {
   final String label;
 
@@ -631,8 +653,11 @@ class _FilterSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(label, style: AleraTypography.sectionTitle),
+      padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
+      child: Text(
+        label,
+        style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+      ),
     );
   }
 }
@@ -654,11 +679,15 @@ class _PatientFilterOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
-      title: Text(label),
+      title: Text(label, style: _filterLabelStyle),
       trailing: selected
-          ? const Icon(Icons.check, semanticLabel: 'Selected')
+          ? const Icon(
+              Icons.check_circle,
+              color: AleraColors.selected,
+              semanticLabel: 'Selected',
+            )
           : null,
       onTap: onTap,
     );
@@ -679,10 +708,15 @@ class _DrawerFilterOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       controlAffinity: ListTileControlAffinity.leading,
+      activeColor: AleraColors.selected,
+      checkboxShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+      ),
+      side: const BorderSide(color: AleraColors.fieldBorder, width: 1.5),
       value: selected,
-      title: Text(label),
+      title: Text(label, style: _filterLabelStyle),
       onChanged: (_) => onChanged(),
     );
   }

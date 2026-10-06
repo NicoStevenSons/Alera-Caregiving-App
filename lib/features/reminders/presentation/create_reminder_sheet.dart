@@ -266,20 +266,20 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
 
   Widget _repeatPills() {
     Widget pill(String label, ReminderRepeatMode mode, Key key) => Expanded(
-      child: Center(
-        child: AleraPill(
-          key: key,
-          label: label,
-          variant: AleraPillVariant.filter,
-          selected: _repeat.mode == mode,
-          onTap: () => setState(() {
-            _repeat = _repeat.copyWith(mode: mode);
-            _customDaysError = false;
-          }),
-        ),
+      child: AleraPill(
+        key: key,
+        label: label,
+        variant: AleraPillVariant.filter,
+        expand: true,
+        selected: _repeat.mode == mode,
+        onTap: () => setState(() {
+          _repeat = _repeat.copyWith(mode: mode);
+          _customDaysError = false;
+        }),
       ),
     );
     return Row(
+      spacing: 8,
       children: [
         pill('Once', ReminderRepeatMode.once, const Key('reminder-repeat-once')),
         pill(

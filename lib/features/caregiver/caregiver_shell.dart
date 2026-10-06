@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../design_system/alera_colors.dart';
 import '../../design_system/alera_spacing.dart';
 import '../../design_system/alera_theme.dart';
+import '../../design_system/widgets/alera_card.dart';
 import '../../design_system/status/status.dart';
 
 import '../../design_system/alera_typography.dart';
@@ -914,46 +916,86 @@ class _CaregiverShellState extends State<CaregiverShell>
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: AleraColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.8,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             children: [
-              Text(
-                'Switch patient',
-                style: Theme.of(sheetContext).textTheme.titleLarge,
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
+                child: Text('Switch patient', style: AleraTypography.sectionTitle),
               ),
-              const SizedBox(height: 8),
-              for (final patient in patients)
-                ListTile(
+              for (final patient in patients) ...[
+                AleraCard(
                   key: ValueKey<String>('patient-switch-${patient.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  leading: AleraBadgedAvatar(
-                    name: patient.name,
-                    photoUrl: patient.profilePhotoUrl,
-                    radius: 20,
-                    status: PatientStatusChip.describe(
-                      patient.status,
-                      sheetContext,
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
                   ),
-                  title: Text(patient.name),
-                  subtitle: Text(patient.relationshipLabel),
-                  trailing:
-                      patient.id == _selectedPatientId ||
-                          (_selectedPatientId == null &&
-                              patient == patients.first)
-                      ? const Icon(Icons.check, semanticLabel: 'Selected')
-                      : null,
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     if (mounted) {
                       _selectPatient(patient.id);
                     }
                   },
+                  child: Row(
+                    children: [
+                      AleraBadgedAvatar(
+                        name: patient.name,
+                        photoUrl: patient.profilePhotoUrl,
+                        radius: 22,
+                        ringColor: AleraColors.surface,
+                        status: PatientStatusChip.describe(
+                          patient.status,
+                          sheetContext,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              patient.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AleraTypography.sectionTitle.copyWith(
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              patient.relationshipLabel,
+                              style: AleraTypography.body.copyWith(
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (patient.id == _selectedPatientId ||
+                          (_selectedPatientId == null &&
+                              patient == patients.first))
+                        const Icon(
+                          Icons.check_circle,
+                          size: 24,
+                          color: AleraColors.selected,
+                          semanticLabel: 'Selected',
+                        ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 10),
+              ],
             ],
           ),
         ),
