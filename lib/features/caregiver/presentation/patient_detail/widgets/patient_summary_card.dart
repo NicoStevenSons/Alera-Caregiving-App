@@ -29,56 +29,68 @@ class PatientDetailSummaryCard extends StatelessWidget {
         : '${careRecipient.relationshipLabel} · No check-in yet';
 
     return AleraCard(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         children: [
-          Container(
-            key: const Key('patient-header-avatar-ring'),
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: ring, width: 2.5),
-            ),
-            child: AleraPatientAvatar(
-              name: careRecipient.name,
-              photoUrl: careRecipient.profilePhotoUrl,
-              radius: 36,
-            ),
+          Row(
+            children: [
+              Container(
+                key: const Key('patient-header-avatar-ring'),
+                padding: const EdgeInsets.all(2.5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: ring, width: 2),
+                ),
+                child: AleraPatientAvatar(
+                  name: careRecipient.name,
+                  photoUrl: careRecipient.profilePhotoUrl,
+                  radius: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      careRecipient.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.sectionTitle.copyWith(
+                        fontSize: 18,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.body.copyWith(fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    PatientConnectionPill(
+                      key: const Key('patient-connection-pill'),
+                      devices: snapshot.devices,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            careRecipient.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AleraTypography.pageTitle.copyWith(fontSize: 22, height: 1.2),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AleraTypography.body.copyWith(fontSize: 13),
-          ),
-          const SizedBox(height: 10),
-          PatientConnectionPill(
-            key: const Key('patient-connection-pill'),
-            devices: snapshot.devices,
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             spacing: 10,
             children: [
               Expanded(
                 child: Material(
-                  color: AleraColors.primary,
+                  color: AleraColors.selected,
                   shape: const StadiumBorder(),
                   child: InkWell(
                     customBorder: const StadiumBorder(),
                     onTap: () => onAction('Call'),
                     child: const SizedBox(
-                      height: 46,
+                      height: 44,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -255,7 +267,7 @@ class _RoundAction extends StatelessWidget {
     return Tooltip(
       message: label,
       child: Material(
-        color: AleraColors.primarySoft,
+        color: AleraColors.selected,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -264,9 +276,9 @@ class _RoundAction extends StatelessWidget {
             button: true,
             label: label,
             child: SizedBox(
-              width: 46,
-              height: 46,
-              child: Icon(icon, size: 20, color: AleraColors.primary),
+              width: 44,
+              height: 44,
+              child: Icon(icon, size: 20, color: Colors.white),
             ),
           ),
         ),
