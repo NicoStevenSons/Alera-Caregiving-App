@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Color, Icons, IconData, TimeOfDay;
+import 'package:flutter/material.dart' show TimeOfDay;
 
 import '../domain/reminder_models.dart';
 
@@ -111,32 +111,6 @@ String reminderCategoryAsset(ReminderCategory category) {
   };
   return 'alera-figma-assets/assets/icons/reminders/$name.svg';
 }
-
-/// Filled Material icon for a category (Alera prefers filled glyphs).
-IconData reminderCategoryIcon(ReminderCategory category) => switch (category) {
-  ReminderCategory.medication => Icons.medication,
-  ReminderCategory.healthCheck => Icons.monitor_heart,
-  ReminderCategory.hydration => Icons.water_drop,
-  ReminderCategory.meal => Icons.restaurant,
-  ReminderCategory.mobility => Icons.directions_walk,
-  ReminderCategory.appointment => Icons.event,
-  ReminderCategory.checkIn => Icons.waving_hand,
-  ReminderCategory.deviceTask => Icons.watch,
-  ReminderCategory.other => Icons.star,
-};
-
-/// Accent colour paired with [reminderCategoryIcon].
-Color reminderCategoryColor(ReminderCategory category) => switch (category) {
-  ReminderCategory.medication => const Color(0xFFE5576B),
-  ReminderCategory.healthCheck => const Color(0xFFE2603F),
-  ReminderCategory.hydration => const Color(0xFF3B9DE8),
-  ReminderCategory.meal => const Color(0xFFF0A02B),
-  ReminderCategory.mobility => const Color(0xFF3FAE6A),
-  ReminderCategory.appointment => const Color(0xFF6C6CE5),
-  ReminderCategory.checkIn => const Color(0xFFE56AA7),
-  ReminderCategory.deviceTask => const Color(0xFF2FB5B0),
-  ReminderCategory.other => const Color(0xFF8B5DE7),
-};
 
 /// "Oct 7, 2026"
 String reminderShortDate(DateTime date) =>

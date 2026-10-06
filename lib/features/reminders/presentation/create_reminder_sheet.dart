@@ -4,6 +4,7 @@ import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_pill.dart';
+import '../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../design_system/widgets/alera_text_field.dart';
 import '../domain/reminder_models.dart';
 import 'reminder_formatters.dart';
@@ -505,23 +506,16 @@ class _DayDot extends StatelessWidget {
   );
 }
 
-/// Rounded tinted tile holding a category's filled icon.
+/// A category's Figma icon (see `alera-figma-assets/PLACEHOLDER_ICONS.md`).
 class _CategoryIcon extends StatelessWidget {
   final ReminderCategory category;
 
   const _CategoryIcon(this.category);
 
   @override
-  Widget build(BuildContext context) {
-    final color = reminderCategoryColor(category);
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(reminderCategoryIcon(category), size: 17, color: color),
-    );
-  }
+  Widget build(BuildContext context) => AleraSvgIcon(
+    assetPath: reminderCategoryAsset(category),
+    width: 28,
+    height: 28,
+  );
 }

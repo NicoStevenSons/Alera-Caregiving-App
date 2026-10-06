@@ -511,15 +511,10 @@ class _AlertFilterDrawer extends StatelessWidget {
     final patients = [...careRecipients]
       ..sort((a, b) => a.name.compareTo(b.name));
 
-    Widget option(
-      String label,
-      AlertFilter filter,
-      IconData icon,
-      Color color,
-    ) => _DrawerFilterOption(
+    Widget option(String label, AlertFilter filter, String assetPath) =>
+        _DrawerFilterOption(
       label: label,
-      icon: icon,
-      color: color,
+      assetPath: assetPath,
       selected: filters.contains(filter),
       onChanged: () => onFilterToggled(filter),
     );
@@ -584,27 +579,27 @@ class _AlertFilterDrawer extends StatelessWidget {
                   const _FilterSectionTitle('Severity'),
                   _FilterCard(
                     children: [
-                      option('Warning', AlertFilter.warning, Icons.warning, AleraColors.warning),
-                      option('Critical', AlertFilter.critical, Icons.error, AleraColors.critical),
+                      option('Warning', AlertFilter.warning, _filterIconWarning),
+                      option('Critical', AlertFilter.critical, _filterIconCritical),
                     ],
                   ),
                   const SizedBox(height: 16),
                   const _FilterSectionTitle('Metric'),
                   _FilterCard(
                     children: [
-                      option('Heart Rate', AlertFilter.heartRate, Icons.favorite, AleraColors.critical),
-                      option('SpO2', AlertFilter.spo2, Icons.air, AleraColors.information),
-                      option('Watch Battery', AlertFilter.watchBattery, Icons.battery_5_bar, AleraColors.success),
+                      option('Heart Rate', AlertFilter.heartRate, _filterIconHeartRate),
+                      option('SpO2', AlertFilter.spo2, _filterIconSpo2),
+                      option('Watch Battery', AlertFilter.watchBattery, _filterIconBattery),
                     ],
                   ),
                   const SizedBox(height: 16),
                   const _FilterSectionTitle('Status'),
                   _FilterCard(
                     children: [
-                      option('Unacknowledged', AlertFilter.unacknowledged, Icons.notifications_active, AleraColors.warning),
-                      option('Acknowledged', AlertFilter.acknowledged, Icons.done_all, AleraColors.information),
-                      option('Resolved', AlertFilter.resolved, Icons.check_circle, AleraColors.success),
-                      option('False Alarm', AlertFilter.falseAlarm, Icons.notifications_off, AleraColors.textSecondary),
+                      option('Unacknowledged', AlertFilter.unacknowledged, _filterIconUnacknowledged),
+                      option('Acknowledged', AlertFilter.acknowledged, _filterIconPlaceholder),
+                      option('Resolved', AlertFilter.resolved, _filterIconResolved),
+                      option('False Alarm', AlertFilter.falseAlarm, _filterIconPlaceholder),
                     ],
                   ),
                 ],
@@ -701,17 +696,34 @@ class _PatientFilterOption extends StatelessWidget {
   }
 }
 
+// Filter icons come from alera-figma-assets. Filters with no matching Figma
+// icon use status/error.svg as a placeholder (see PLACEHOLDER_ICONS.md).
+const String _filterIconWarning =
+    'alera-figma-assets/assets/icons/mini_status/warning.svg';
+const String _filterIconCritical =
+    'alera-figma-assets/assets/icons/mini_status/critical.svg';
+const String _filterIconHeartRate =
+    'alera-figma-assets/assets/icons/mini_status/heart_rate.svg';
+const String _filterIconSpo2 =
+    'alera-figma-assets/assets/icons/mini_status/spo2.svg';
+const String _filterIconBattery =
+    'alera-figma-assets/assets/icons/mini_status/battery.svg';
+const String _filterIconUnacknowledged =
+    'alera-figma-assets/assets/icons/status/alert.svg';
+const String _filterIconResolved =
+    'alera-figma-assets/assets/icons/mini_status/stable.svg';
+const String _filterIconPlaceholder =
+    'alera-figma-assets/assets/icons/status/error.svg';
+
 class _DrawerFilterOption extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final Color color;
+  final String assetPath;
   final bool selected;
   final VoidCallback onChanged;
 
   const _DrawerFilterOption({
     required this.label,
-    required this.icon,
-    required this.color,
+    required this.assetPath,
     required this.selected,
     required this.onChanged,
   });
@@ -729,15 +741,7 @@ class _DrawerFilterOption extends StatelessWidget {
       value: selected,
       title: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
+          AleraSvgIcon(assetPath: assetPath, width: 32, height: 32),
           const SizedBox(width: 12),
           Expanded(child: Text(label, style: _filterLabelStyle)),
         ],
