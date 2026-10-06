@@ -175,6 +175,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             today: _today,
             selected: _selectedDay,
             markedDays: byDay.keys.toSet(),
+            onPickDate: _pickDate,
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
           if (!(controller.loading && controller.occurrences.isEmpty))
@@ -235,7 +236,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             child: ReminderDateHeader(
               date: _selectedDay,
               isToday: isToday,
-              onPickDate: _pickDate,
               onToday: () => setState(() => _selectedDay = _today),
             ),
           ),

@@ -34,22 +34,20 @@ class ReminderSummaryCard extends StatelessWidget {
     final next = actionable.isEmpty ? null : actionable.first;
     final allDone = occurrences.isNotEmpty && actionable.isEmpty && missed == 0;
 
-    final String headline;
-    final String? big;
-    if (occurrences.isEmpty) {
-      big = null;
-      headline = isToday ? 'Nothing scheduled today' : 'Nothing scheduled';
-    } else if (allDone) {
-      big = null;
-      headline = isToday ? 'All done for today' : 'All done';
-    } else {
-      big = '${actionable.length}';
-      headline = isToday ? 'left today' : 'scheduled';
-    }
+    // Same layout for every day: big count, label, optional sub-line, and the
+    // "Next" chip. Only the wording changes.
+    final int count = isToday ? actionable.length : occurrences.length;
+    final String headline = isToday ? 'left today' : 'scheduled';
+    final String? subline = missed > 0
+        ? (missed == 1 ? '1 missed' : '$missed missed')
+        : allDone
+        ? 'All done'
+        : null;
 
     return Container(
       key: const Key('reminder-summary-card'),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -60,41 +58,35 @@ class ReminderSummaryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (allDone)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.check_circle, size: 28, color: Color(0xFF05A869)),
+          Text(
+            '$count',
+            style: AleraTypography.pageTitle.copyWith(
+              fontSize: 28,
+              height: 1,
+              color: AleraColors.primary,
             ),
-          if (big != null) ...[
-            Text(
-              big,
-              style: AleraTypography.pageTitle.copyWith(
-                fontSize: 28,
-                height: 1,
-                color: AleraColors.primary,
-              ),
-            ),
-            const SizedBox(width: 10),
-          ],
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   headline,
                   style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
                 ),
-                if (missed > 0) ...[
-                  const SizedBox(height: 1),
+                if (subline != null)
                   Text(
-                    missed == 1 ? '1 missed' : '$missed missed',
-                    style: const TextStyle(
-                      color: AleraColors.critical,
+                    subline,
+                    style: TextStyle(
+                      color: missed > 0
+                          ? AleraColors.critical
+                          : const Color(0xFF05A869),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
               ],
             ),
           ),
