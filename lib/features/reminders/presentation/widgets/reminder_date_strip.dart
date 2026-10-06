@@ -105,7 +105,7 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
         key: const Key('reminder-date-strip'),
         controller: _scroll,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
         itemCount: ReminderDateStrip.dayCount,
         separatorBuilder: (_, _) => const SizedBox(width: ReminderDateStrip._gap),
         itemBuilder: (context, index) {
@@ -121,14 +121,14 @@ class _ReminderDateStripState extends State<ReminderDateStrip> {
         },
     );
     return SizedBox(
-      height: 58,
+      height: 66,
       child: Row(
         children: [
+          Expanded(child: strip),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 0, 4),
+            padding: const EdgeInsets.fromLTRB(0, 6, 16, 6),
             child: _CalendarChip(onTap: widget.onPickDate),
           ),
-          Expanded(child: strip),
         ],
       ),
     );

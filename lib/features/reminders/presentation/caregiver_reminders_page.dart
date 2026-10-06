@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
+import '../../../design_system/alera_spacing.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_date_picker.dart';
 import '../../../design_system/widgets/alera_empty_state.dart';
+import '../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
@@ -22,20 +24,24 @@ import 'widgets/reminder_timeline.dart';
 import '../../../design_system/alera_sheet_animation.dart';
 
 /// Day-by-day reminder timeline for the patient selected in the caregiver
-/// shell. There is no patient picker here: the shell (and the dashboard) own
-/// patient selection, and this page just follows it.
+/// shell. The shell owns patient selection; the patient chip at the top just
+/// opens its switcher when there is more than one patient.
 class CaregiverRemindersPage extends StatefulWidget {
   const CaregiverRemindersPage({
     super.key,
     required this.controller,
     required this.patients,
     this.initialPatientId,
+    this.onSwitchPatient,
     this.now,
   });
 
   final ReminderController controller;
   final List<CareRecipient> patients;
   final String? initialPatientId;
+
+  /// Opens the shell's patient switcher; null when there is only one patient.
+  final VoidCallback? onSwitchPatient;
 
   /// Overridable clock for tests.
   final DateTime Function()? now;
@@ -87,6 +93,13 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         widget.controller.loadForPatient(selected);
       }
     });
+  }
+
+  String? get _patientPhoto {
+    for (final patient in widget.patients) {
+      if (patient.id == _patientId) return patient.profilePhotoUrl;
+    }
+    return null;
   }
 
   String? get _patientName {
@@ -162,11 +175,12 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           if (name != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '$name’s daily reminders',
-                key: const Key('reminder-patient-subtitle'),
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _PatientChip(
+                  name: name,
+                  photoUrl: _patientPhoto,
+                  onTap: widget.onSwitchPatient,
                 ),
               ),
             ),
@@ -543,4 +557,54 @@ class _ActionDivider extends StatelessWidget {
     endIndent: 16,
     color: AleraColors.divider,
   );
+}
+
+/// "Who these reminders are for": avatar + name, with a dropdown arrow and tap
+/// to switch when the caregiver has more than one patient.
+class _PatientChip extends StatelessWidget {
+  const _PatientChip({required this.name, this.photoUrl, this.onTap});
+
+  final String name;
+  final String? photoUrl;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+      child: InkWell(
+        key: const Key('reminder-patient-chip'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: 14),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  name,
+                  key: const Key('reminder-patient-subtitle'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: AleraColors.primary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

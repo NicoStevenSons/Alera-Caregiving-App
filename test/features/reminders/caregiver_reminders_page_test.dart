@@ -36,7 +36,7 @@ void main() {
       ]),
     );
 
-    expect(find.text('Lola Rosa’s daily reminders'), findsOneWidget);
+    expect(find.text('Lola Rosa'), findsOneWidget);
     expect(find.text('Tuesday, September 22'), findsOneWidget);
     // Also shown in the summary card's "Next" chip.
     expect(find.text('Morning pills'), findsWidgets);
