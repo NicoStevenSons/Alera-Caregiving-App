@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
 import '../reminder_category_style.dart';
@@ -44,18 +45,11 @@ class ReminderSummaryCard extends StatelessWidget {
         ? 'All done'
         : null;
 
-    return Container(
+    return AleraCard(
       key: const Key('reminder-summary-card'),
-      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE9DFFF), Color(0xFFF5EFFF)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      child: SizedBox(
+        height: 56,
       child: Row(
         children: [
           Text(
@@ -93,6 +87,7 @@ class ReminderSummaryCard extends StatelessWidget {
           if (next != null) _NextChip(next: next),
         ],
       ),
+      ),
     );
   }
 }
@@ -108,7 +103,7 @@ class _NextChip extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 150),
       padding: const EdgeInsets.fromLTRB(6, 5, 10, 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: AleraColors.fieldFill,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

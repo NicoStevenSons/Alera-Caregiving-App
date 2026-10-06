@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
-import '../../../design_system/alera_spacing.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_date_picker.dart';
@@ -576,39 +575,32 @@ class _PatientChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
-      child: InkWell(
-        key: const Key('reminder-patient-chip'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
-          child: Row(
-            children: [
-              AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: 14),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  name,
-                  key: const Key('reminder-patient-subtitle'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
-                ),
-              ),
-              if (onTap != null) ...[
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 20,
-                  color: AleraColors.primary,
-                ),
-              ],
-            ],
+    return AleraCard(
+      key: const Key('reminder-patient-chip'),
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+      child: Row(
+        children: [
+          AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              key: const Key('reminder-patient-subtitle'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+            ),
           ),
-        ),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 20,
+              color: AleraColors.primary,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -622,33 +614,26 @@ class _CalendarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AleraColors.primarySoft,
-      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
-      child: InkWell(
-        key: const Key('reminder-pick-date'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
-        child: const SizedBox(
-          height: 40,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.calendar_month, size: 20, color: AleraColors.primary),
-                SizedBox(width: 6),
-                Text(
-                  'Calendar',
-                  style: TextStyle(
-                    color: AleraColors.primary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+    return AleraCard(
+      key: const Key('reminder-pick-date'),
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: const SizedBox(
+        height: 40,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_month, size: 20, color: AleraColors.primary),
+            SizedBox(width: 6),
+            Text(
+              'Calendar',
+              style: TextStyle(
+                color: AleraColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
