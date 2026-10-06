@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
+import '../../../design_system/widgets/alera_dialog.dart';
 import '../../../design_system/widgets/alera_pill.dart';
 import '../../../design_system/widgets/alera_svg_icon.dart';
 import '../data/reminder_controller.dart';
@@ -108,26 +109,16 @@ class ReminderSchedulesPage extends StatelessWidget {
   }
 
   Future<void> _archive(BuildContext context, ReminderTemplate template) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Archive schedule?'),
-        content: Text(
-          'Future occurrences for “${template.title}” will be canceled.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Archive'),
-          ),
-        ],
-      ),
+    final confirmed = await showAleraConfirmDialog(
+      context,
+      icon: Icons.archive,
+      title: 'Archive schedule?',
+      message: 'Future occurrences for “${template.title}” will be canceled.',
+      confirmLabel: 'Archive',
+      cancelLabel: 'Keep',
+      destructive: true,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     await runReminderAction(
       context,
       () => controller.archiveTemplate(template.id),

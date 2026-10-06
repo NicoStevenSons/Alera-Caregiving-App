@@ -11,6 +11,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_dialog.dart';
 import '../../../../design_system/widgets/alera_section_card.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
@@ -553,49 +554,29 @@ class _AddPatientPageState extends State<AddPatientPage>
   }
 
   Future<void> finish() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (x) => AlertDialog(
-        title: const Text('Finish setup for now?'),
-        content: const Text(
+    final ok = await showAleraConfirmDialog(
+      context,
+      icon: Icons.pause_circle,
+      title: 'Finish setup for now?',
+      message:
           'The patient remains saved but cannot send readings until connected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(x),
-            child: const Text('Continue setup'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(x, true),
-            child: const Text('Finish for now'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Finish for now',
+      cancelLabel: 'Continue setup',
     );
-    if (ok == true && mounted) Navigator.pop(context);
+    if (ok && mounted) Navigator.pop(context);
   }
 
   Future<void> confirm() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (x) => AlertDialog(
-        title: Text('Create ${name.text.trim()}’s profile?'),
-        content: const Text(
+    final ok = await showAleraConfirmDialog(
+      context,
+      icon: Icons.person_add,
+      title: 'Create ${name.text.trim()}’s profile?',
+      message:
           'The patient will be added using the reviewed information and connection can happen afterward.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(x),
-            child: const Text('Review again'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(x, true),
-            child: const Text('Create patient'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Create patient',
+      cancelLabel: 'Review again',
     );
-    if (ok == true) await create();
+    if (ok) await create();
   }
 
   @override

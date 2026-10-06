@@ -4,6 +4,8 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_dialog.dart';
+import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../services/patient_contact_actions.dart';
 import '../../domain/models/care_recipient.dart';
@@ -130,66 +132,47 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                key: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
-                controller: controller,
-                enabled: !submitting,
-                maxLines: 3,
-                decoration: InputDecoration(labelText: fieldLabel),
-              ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
-            ],
+        builder: (context, setDialogState) => AleraDialog(
+          icon: Icons.edit_note,
+          title: title,
+          busy: submitting,
+          errorText: error,
+          cancelLabel: 'Cancel',
+          confirmLabel: submitting ? 'Saving…' : title,
+          onCancel: () => Navigator.pop(dialogContext),
+          content: AleraTextField(
+            fieldKey: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
+            controller: controller,
+            enabled: !submitting,
+            label: fieldLabel,
+            hint: 'Write a short note',
+            required: requiredText,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            bottomSpacing: 0,
           ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : title,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      final text = controller.text.trim();
-                      if (requiredText && text.isEmpty) {
-                        setDialogState(
-                          () => error = '$fieldLabel is required.',
-                        );
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await submit(text.isEmpty ? null : text);
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-              expand: false,
-              height: 42,
-            ),
-          ],
+          onConfirm: () async {
+            final text = controller.text.trim();
+            if (requiredText && text.isEmpty) {
+              setDialogState(() => error = '$fieldLabel is required.');
+              return;
+            }
+            setDialogState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              await submit(text.isEmpty ? null : text);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            } catch (_) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  submitting = false;
+                  error = 'We couldn’t update this alert. Please try again.';
+                });
+              }
+            }
+          },
         ),
       ),
     );
@@ -204,15 +187,27 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Log Intervention'),
+        builder: (context, setDialogState) => AleraDialog(
+          icon: Icons.medical_services,
+          title: 'Log Intervention',
+          busy: submitting,
+          errorText: error,
+          cancelLabel: 'Cancel',
+          confirmLabel: submitting ? 'Saving…' : 'Log Intervention',
+          onCancel: () => Navigator.pop(dialogContext),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const AleraFieldLabel('Intervention'),
+              const SizedBox(height: 6),
               DropdownButtonFormField<CaregiverInterventionType>(
                 key: const Key('intervention-type-field'),
                 initialValue: type,
-                decoration: const InputDecoration(labelText: 'Intervention'),
+                isExpanded: true,
+                decoration: aleraInputDecoration(hint: 'Choose one'),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
                 items: CaregiverInterventionType.values
                     .map(
                       (value) => DropdownMenuItem(
@@ -230,61 +225,44 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                       },
               ),
               const SizedBox(height: 12),
-              TextField(
-                key: const Key('intervention-note-field'),
+              AleraTextField(
+                fieldKey: const Key('intervention-note-field'),
                 controller: note,
                 enabled: !submitting,
+                label: 'Note',
+                hint: 'Write a short note',
+                required: true,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Note'),
+                textCapitalization: TextCapitalization.sentences,
+                bottomSpacing: 0,
               ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : 'Log Intervention',
-              expand: false,
-              height: 42,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      if (note.text.trim().isEmpty) {
-                        setDialogState(() => error = 'Note is required.');
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await widget.alertController!.logIntervention(
-                          _alert.id,
-                          type,
-                          note.text.trim(),
-                        );
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-            ),
-          ],
+          onConfirm: () async {
+            if (note.text.trim().isEmpty) {
+              setDialogState(() => error = 'Note is required.');
+              return;
+            }
+            setDialogState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              await widget.alertController!.logIntervention(
+                _alert.id,
+                type,
+                note.text.trim(),
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            } catch (_) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  submitting = false;
+                  error = 'We couldn’t update this alert. Please try again.';
+                });
+              }
+            }
+          },
         ),
       ),
     );

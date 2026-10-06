@@ -3,7 +3,16 @@ import 'package:flutter/material.dart';
 import '../alera_colors.dart';
 import '../alera_typography.dart';
 
-enum AleraButtonVariant { primary, secondary, white, pill, lightPill }
+enum AleraButtonVariant {
+  primary,
+  secondary,
+  white,
+  pill,
+  lightPill,
+
+  /// Red pill for destructive confirmations (archive, remove).
+  destructivePill,
+}
 
 class AleraButton extends StatelessWidget {
   final String label;
@@ -27,18 +36,29 @@ class AleraButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool destructive = variant == AleraButtonVariant.destructivePill;
     final bool primary =
         variant == AleraButtonVariant.primary ||
-        variant == AleraButtonVariant.pill;
+        variant == AleraButtonVariant.pill ||
+        destructive;
 
     final bool white = variant == AleraButtonVariant.white;
 
     final bool pill =
         variant == AleraButtonVariant.pill ||
-        variant == AleraButtonVariant.lightPill;
+        variant == AleraButtonVariant.lightPill ||
+        destructive;
 
     final ButtonStyle style = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (destructive) {
+          if (states.contains(WidgetState.disabled)) {
+            return AleraColors.critical.withValues(alpha: 0.38);
+          }
+          return states.contains(WidgetState.pressed)
+              ? const Color(0xFFE04C5D)
+              : AleraColors.critical;
+        }
         if (states.contains(WidgetState.disabled)) {
           return primary
               ? AleraColors.primary.withValues(alpha: 0.38)
