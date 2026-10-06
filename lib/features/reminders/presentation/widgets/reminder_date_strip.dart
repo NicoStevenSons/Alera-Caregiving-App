@@ -153,7 +153,7 @@ class _DayChip extends StatelessWidget {
         color: selected
             ? AleraColors.selected
             : isToday
-            ? const Color(0xFFE4D6FF)
+            ? AleraColors.todayTint
             : Colors.white,
         elevation: 0,
         borderRadius: BorderRadius.circular(16),

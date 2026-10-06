@@ -7,6 +7,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../design_system/widgets/alera_date_picker.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
@@ -1032,11 +1033,12 @@ class _AddPatientPageState extends State<AddPatientPage>
   );
   Future<void> pick() async {
     final now = DateTime.now();
-    final x = await showDatePicker(
-      context: context,
+    final x = await showAleraDatePicker(
+      context,
       firstDate: DateTime(1900),
       lastDate: now,
       initialDate: birthdate ?? DateTime(now.year - 65),
+      helpText: 'Date of birth',
     );
     if (x != null && mounted) setState(() => birthdate = x);
   }

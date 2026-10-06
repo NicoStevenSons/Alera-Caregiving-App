@@ -15,6 +15,18 @@ abstract final class AleraColors {
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
 
+  /// Deeper status accents that stay readable as text on a light tint
+  /// (status pills, "Connected", "Stable", "All done").
+  static const Color successStrong = Color(0xFF05A869);
+  static const Color warningStrong = Color(0xFFD99A00);
+  static const Color criticalStrong = Color(0xFFE04C5D);
+
+  /// Pale amber fill for warning banners.
+  static const Color warningSoft = Color(0xFFFFF1CC);
+
+  /// Tint for "today" when it is not the selected day.
+  static const Color todayTint = Color(0xFFE4D6FF);
+
   // Form + setup-flow tokens (sampled from the Add Patient Figma frames).
   // Everywhere else a card fill, border, heading or body colour was needed,
   // an existing token (background/divider/primarySoft/textPrimary/

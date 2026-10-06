@@ -185,7 +185,7 @@ class _RiskGauge extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: const [
-                Icon(Icons.shield, size: 28, color: AleraColors.primary),
+                Icon(Icons.shield, size: 28, color: AleraColors.selected),
                 Padding(
                   padding: EdgeInsets.only(bottom: 1),
                   child: Icon(Icons.favorite, size: 12, color: Colors.white),
@@ -238,7 +238,7 @@ class _GaugePainter extends CustomPainter {
       ..shader = const SweepGradient(
         startAngle: 0,
         endAngle: sweep,
-        colors: [Color(0xFFC9B2F5), AleraColors.primary],
+        colors: [Color(0xFFC9B2F5), AleraColors.selected],
         transform: GradientRotation(start),
       ).createShader(rect);
     canvas.drawArc(rect.deflate(6), start, sweep * fraction, false, fill);

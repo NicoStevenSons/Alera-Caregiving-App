@@ -31,7 +31,7 @@ class AleraPill extends StatelessWidget {
     final bool filterSelected = variant == AleraPillVariant.filter && selected;
     final Color foreground =
         filterSelected || variant == AleraPillVariant.action
-        ? AleraColors.primary
+        ? AleraColors.selected
         : AleraColors.textSecondary;
     final Color background = filterSelected
         ? AleraColors.primarySoft

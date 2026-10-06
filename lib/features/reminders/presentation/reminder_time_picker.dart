@@ -173,7 +173,7 @@ class _Wheel extends StatelessWidget {
           fontSize: isSelected ? 26 : 20,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
           color: isSelected
-              ? AleraColors.primary
+              ? AleraColors.selected
               : AleraColors.textSecondary.withValues(alpha: 0.55),
         ),
       ),

@@ -83,8 +83,8 @@ class _DeviceRow extends StatelessWidget {
         return AleraColors.textSecondary;
       case MonitoringDeviceConnectionStatus.connected:
         return _isWatch && d.isWorn == false
-            ? const Color(0xFFD99A00)
-            : const Color(0xFF05A869);
+            ? AleraColors.warningStrong
+            : AleraColors.successStrong;
     }
   }
 
@@ -144,7 +144,7 @@ class _DeviceRow extends StatelessWidget {
                   size: 20,
                   color: battery == null
                       ? AleraColors.mutedIcon
-                      : AleraColors.primary,
+                      : AleraColors.selected,
                 ),
               ],
             ),

@@ -763,7 +763,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(
-                          color: AleraColors.primary,
+                          color: AleraColors.selected,
                           width: 1.5,
                         ),
                       ),
@@ -871,7 +871,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(
-                color: AleraColors.primary,
+                color: AleraColors.selected,
                 width: 1.5,
               ),
             ),

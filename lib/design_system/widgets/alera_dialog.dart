@@ -50,7 +50,7 @@ class AleraDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color accent = destructive
         ? AleraColors.critical
-        : AleraColors.primary;
+        : AleraColors.selected;
     return Dialog(
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,

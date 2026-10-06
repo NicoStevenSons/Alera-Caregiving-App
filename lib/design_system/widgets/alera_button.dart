@@ -56,7 +56,7 @@ class AleraButton extends StatelessWidget {
             return AleraColors.critical.withValues(alpha: 0.38);
           }
           return states.contains(WidgetState.pressed)
-              ? const Color(0xFFE04C5D)
+              ? AleraColors.criticalStrong
               : AleraColors.critical;
         }
         if (states.contains(WidgetState.disabled)) {

@@ -57,7 +57,7 @@ class ReminderSummaryCard extends StatelessWidget {
             style: AleraTypography.pageTitle.copyWith(
               fontSize: 28,
               height: 1,
-              color: AleraColors.primary,
+              color: AleraColors.selected,
             ),
           ),
           const SizedBox(width: 10),
@@ -76,7 +76,7 @@ class ReminderSummaryCard extends StatelessWidget {
                     style: TextStyle(
                       color: missed > 0
                           ? AleraColors.critical
-                          : const Color(0xFF05A869),
+                          : AleraColors.successStrong,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -135,7 +135,7 @@ class _NextChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: AleraColors.primary,
+                    color: AleraColors.selected,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),

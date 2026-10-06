@@ -30,7 +30,7 @@ class CaregiverReminderRow extends StatelessWidget {
     final Color accent = missed
         ? AleraColors.critical
         : done
-        ? const Color(0xFF05A869)
+        ? AleraColors.successStrong
         : AleraColors.information;
     final String label =
         reminder.statusLabel ??

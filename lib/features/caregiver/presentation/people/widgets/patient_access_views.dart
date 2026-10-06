@@ -218,7 +218,7 @@ class PatientAccessNoticeContent extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: Icon(icon, size: 28, color: AleraColors.primary),
+                    child: Icon(icon, size: 28, color: AleraColors.selected),
                   ),
                 const SizedBox(height: 16),
                 Text(
@@ -279,7 +279,7 @@ class _InfoRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 20, color: AleraColors.primary),
+          child: Icon(icon, size: 20, color: AleraColors.selected),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -416,7 +416,7 @@ class _StripItem extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 16, color: AleraColors.primary),
+          child: Icon(icon, size: 16, color: AleraColors.selected),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -462,7 +462,7 @@ class _ActionTile extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: AleraColors.primary),
+          Icon(icon, size: 18, color: AleraColors.selected),
           const SizedBox(width: 8),
           Text(
             label,

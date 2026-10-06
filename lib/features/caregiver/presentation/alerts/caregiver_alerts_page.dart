@@ -745,7 +745,7 @@ class _PatientFilterOption extends StatelessWidget {
               child: const Icon(
                 Icons.groups,
                 size: 20,
-                color: AleraColors.primary,
+                color: AleraColors.selected,
               ),
             )
           : AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
@@ -1194,7 +1194,7 @@ class _HistoryGroup extends StatelessWidget {
                       ? 'Show less'
                       : 'See more (${alerts.length - collapsedLimit})',
                   style: AleraTypography.label.copyWith(
-                    color: AleraColors.primary,
+                    color: AleraColors.selected,
                   ),
                 ),
               ),

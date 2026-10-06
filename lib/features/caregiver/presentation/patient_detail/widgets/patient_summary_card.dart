@@ -152,7 +152,7 @@ class PatientConnectionPill extends StatelessWidget {
         ? 'Disconnected'
         : 'No device';
     final Color color = connected
-        ? const Color(0xFF05A869)
+        ? AleraColors.successStrong
         : known
         ? AleraColors.critical
         : AleraColors.textSecondary;
@@ -227,10 +227,10 @@ class PatientStatusPill extends StatelessWidget {
 
 /// Readable-on-tint accent for each care status.
 Color patientStatusColor(CareStatus status) => switch (status) {
-  CareStatus.stable => const Color(0xFF05A869),
+  CareStatus.stable => AleraColors.successStrong,
   CareStatus.warning ||
-  CareStatus.needsAttention => const Color(0xFFD99A00),
-  CareStatus.critical => const Color(0xFFE04C5D),
+  CareStatus.needsAttention => AleraColors.warningStrong,
+  CareStatus.critical => AleraColors.criticalStrong,
   CareStatus.noData || CareStatus.unknown => AleraColors.textSecondary,
 };
 

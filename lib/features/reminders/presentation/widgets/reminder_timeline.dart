@@ -475,7 +475,7 @@ class _Rail extends StatelessWidget {
         status == ReminderOccurrenceStatus.completedLate;
     if (done) {
       return _circle(
-        fill: AleraColors.primary,
+        fill: AleraColors.selected,
         child: const Icon(Icons.check, size: 11, color: Colors.white),
       );
     }
@@ -490,12 +490,12 @@ class _Rail extends StatelessWidget {
     }
     final night = hour < 6 || hour >= 21;
     return _circle(
-      border: AleraColors.primary,
+      border: AleraColors.selected,
       child: night
           ? const Icon(
               Icons.nightlight_round,
               size: 10,
-              color: AleraColors.primary,
+              color: AleraColors.selected,
             )
           : null,
     );
@@ -715,7 +715,7 @@ class _Trailing extends StatelessWidget {
       return const Icon(
         Icons.check_circle,
         size: 30,
-        color: Color(0xFF05A869),
+        color: AleraColors.successStrong,
       );
     }
     if (occurrence.status == ReminderOccurrenceStatus.missed) {

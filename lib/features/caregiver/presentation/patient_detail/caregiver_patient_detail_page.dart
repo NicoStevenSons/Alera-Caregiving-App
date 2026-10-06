@@ -424,7 +424,7 @@ class _PatientAccessStatusCard extends StatelessWidget {
                 child: const Icon(
                   Icons.smartphone,
                   size: 22,
-                  color: AleraColors.primary,
+                  color: AleraColors.selected,
                 ),
               ),
               const SizedBox(width: 12),

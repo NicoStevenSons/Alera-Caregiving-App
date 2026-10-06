@@ -208,7 +208,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                             const Icon(
                               Icons.calendar_month,
                               size: 16,
-                              color: AleraColors.primary,
+                              color: AleraColors.selected,
                             ),
                           ],
                         ),
@@ -519,7 +519,7 @@ class _DayDot extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: selected ? AleraColors.primary : AleraColors.primarySoft,
+        color: selected ? AleraColors.selected : AleraColors.primarySoft,
       ),
       child: Text(
         letter,

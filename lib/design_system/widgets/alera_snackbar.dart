@@ -104,7 +104,7 @@ void showAleraSnackBarOn(
                     onAction?.call();
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: AleraColors.primary,
+                    foregroundColor: AleraColors.selected,
                     visualDensity: VisualDensity.compact,
                   ),
                   child: Text(actionLabel),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/alera_colors.dart';
+
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../domain/models/care_recipient.dart';
@@ -68,7 +70,7 @@ class CaregiverHomePage extends StatelessWidget {
         if (showDemoBanner)
           Container(
             key: const Key('home-demo-fallback'),
-            color: const Color(0xFFFFF1CC),
+            color: AleraColors.warningSoft,
             padding: const EdgeInsets.all(10),
             child: const Text(
               'Demo data — the patient service is currently offline.',

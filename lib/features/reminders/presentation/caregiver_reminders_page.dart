@@ -515,7 +515,7 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AleraColors.critical : AleraColors.primary;
+    final color = destructive ? AleraColors.critical : AleraColors.selected;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -597,7 +597,7 @@ class _PatientChip extends StatelessWidget {
             const Icon(
               Icons.keyboard_arrow_down,
               size: 20,
-              color: AleraColors.primary,
+              color: AleraColors.selected,
             ),
           ],
         ],
@@ -623,7 +623,7 @@ class _CalendarButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.calendar_month, size: 20, color: AleraColors.primary),
+            Icon(Icons.calendar_month, size: 20, color: AleraColors.selected),
             SizedBox(width: 6),
             Text(
               'Calendar',

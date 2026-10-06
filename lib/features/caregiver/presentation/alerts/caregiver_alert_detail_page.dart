@@ -804,7 +804,7 @@ List<_AlertDetailFactData> _detailFacts(
           value: alert.triggerDuration == null
               ? 'Immediate'
               : _formatDuration(alert.triggerDuration!),
-          color: AleraColors.primary,
+          color: AleraColors.selected,
           icon: Icons.timer_outlined,
         ),
         _AlertDetailFactData(
@@ -916,7 +916,7 @@ List<_AlertDetailFactData> _detailFacts(
           _AlertDetailFactData(
             label: 'Duration',
             value: _formatDuration(alert.triggerDuration!),
-            color: AleraColors.primary,
+            color: AleraColors.selected,
             icon: Icons.timer_outlined,
           ),
         if (resolved != null)
@@ -1153,7 +1153,7 @@ class _NotesCard extends StatelessWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide: const BorderSide(
-                  color: AleraColors.primary,
+                  color: AleraColors.selected,
                   width: 1.5,
                 ),
               ),
@@ -1212,7 +1212,7 @@ class _ContextMetric extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: AleraColors.primary),
+          Icon(icon, size: 19, color: AleraColors.selected),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
@@ -1432,7 +1432,7 @@ String _confirmationDescription(CaregiverAlert alert, DateTime confirmedAt) {
 Color _statusColor(CaregiverAlertStatus status) {
   return switch (status) {
     CaregiverAlertStatus.active => AleraColors.textSecondary,
-    CaregiverAlertStatus.acknowledged => AleraColors.primary,
+    CaregiverAlertStatus.acknowledged => AleraColors.selected,
     CaregiverAlertStatus.resolved => AleraColors.success,
     CaregiverAlertStatus.falseAlarm => AleraColors.textSecondary,
   };

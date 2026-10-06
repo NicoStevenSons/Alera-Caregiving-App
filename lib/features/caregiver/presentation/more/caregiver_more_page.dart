@@ -178,7 +178,7 @@ class _MoreRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = color ?? AleraColors.primary;
+    final Color accent = color ?? AleraColors.selected;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -218,7 +218,7 @@ class _MoreRow extends StatelessWidget {
                 child: const Text(
                   'Soon',
                   style: TextStyle(
-                    color: AleraColors.primary,
+                    color: AleraColors.selected,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
