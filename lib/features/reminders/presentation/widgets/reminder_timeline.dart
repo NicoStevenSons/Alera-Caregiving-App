@@ -631,9 +631,13 @@ class _ReminderCard extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _Meta(
+                icon: Icons.calendar_today,
+                text: reminderCardDate(occurrence.scheduledAt),
+                color: accent,
+              ),
+              _Meta(
                 icon: Icons.schedule,
-                text:
-                    '${reminderWeekday(occurrence.scheduledAt)} · ${reminderClock(occurrence.scheduledAt)}',
+                text: reminderClock(occurrence.scheduledAt),
                 color: accent,
               ),
               if (repeatLabel != null)

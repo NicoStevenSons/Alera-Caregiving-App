@@ -112,6 +112,11 @@ String reminderCategoryAsset(ReminderCategory category) {
   return 'alera-figma-assets/assets/icons/reminders/$name.svg';
 }
 
+/// "Wed, Oct 7"
+String reminderCardDate(DateTime date) =>
+    '${reminderWeekday(date, short: true)}, '
+    '${_months[date.month - 1].substring(0, 3)} ${date.day}';
+
 /// "Oct 7, 2026"
 String reminderShortDate(DateTime date) =>
     '${_months[date.month - 1].substring(0, 3)} ${date.day}, ${date.year}';
