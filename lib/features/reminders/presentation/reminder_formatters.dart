@@ -74,13 +74,24 @@ String reminderTitleCase(String value) => value
     .join(' ');
 
 /// The schedule rule is an opaque backend string, so this only recognises
-/// the common frequencies and falls back to a generic "Repeats".
+/// the RRULE-style rules the create sheet writes plus a few common words,
+/// and falls back to a generic "Repeats".
 String? reminderRepeatLabel(ReminderTemplate? template) {
   final rule = template?.scheduleRule;
   if (template == null) return null;
   if (rule == null || rule.trim().isEmpty) return 'Once';
   final upper = rule.toUpperCase();
   if (upper.contains('DAILY')) return 'Daily';
+  final byDay = RegExp(r'BYDAY=([A-Z,]+)').firstMatch(upper)?.group(1);
+  if (byDay != null) {
+    const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+    final days = byDay.split(',').where(codes.contains).toList()
+      ..sort((a, b) => codes.indexOf(a).compareTo(codes.indexOf(b)));
+    if (days.join(',') == 'MO,TU,WE,TH,FR') return 'Weekdays';
+    if (days.isNotEmpty) {
+      return days.map((d) => _weekdays[codes.indexOf(d)].substring(0, 3)).join(', ');
+    }
+  }
   if (upper.contains('WEEKLY')) return 'Weekly';
   if (upper.contains('MONTHLY')) return 'Monthly';
   return 'Repeats';

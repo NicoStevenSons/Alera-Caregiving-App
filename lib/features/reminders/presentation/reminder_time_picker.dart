@@ -1,36 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
-import '../../../design_system/alera_typography.dart';
 
 /// Scrolling-wheel time picker (hour / minute / AM-PM), modelled on the
-/// phone's clock app rather than Material's dial. Returns the chosen time,
-/// or null if dismissed.
-Future<TimeOfDay?> showReminderTimePicker(
-  BuildContext context, {
-  required TimeOfDay initial,
-}) => showModalBottomSheet<TimeOfDay>(
-  context: context,
-  backgroundColor: Colors.white,
-  showDragHandle: true,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-  ),
-  builder: (context) => _ReminderTimePickerSheet(initial: initial),
-);
+/// phone's clock app rather than Material's dial. Lives inline on the page;
+/// [onChanged] fires as the wheels settle.
+class ReminderTimeWheel extends StatefulWidget {
+  const ReminderTimeWheel({
+    super.key,
+    required this.initial,
+    required this.onChanged,
+  });
 
-class _ReminderTimePickerSheet extends StatefulWidget {
-  const _ReminderTimePickerSheet({required this.initial});
   final TimeOfDay initial;
+  final ValueChanged<TimeOfDay> onChanged;
 
   @override
-  State<_ReminderTimePickerSheet> createState() =>
-      _ReminderTimePickerSheetState();
+  State<ReminderTimeWheel> createState() => _ReminderTimeWheelState();
 }
 
-class _ReminderTimePickerSheetState extends State<_ReminderTimePickerSheet> {
-  static const _itemExtent = 52.0;
-  static const _visibleItems = 5;
+class _ReminderTimeWheelState extends State<ReminderTimeWheel> {
+  static const _itemExtent = 46.0;
+  static const _visibleItems = 3;
 
   late int _hour12; // 1..12
   late int _minute; // 0..59
@@ -60,106 +51,82 @@ class _ReminderTimePickerSheetState extends State<_ReminderTimePickerSheet> {
     super.dispose();
   }
 
-  TimeOfDay get _value =>
-      TimeOfDay(hour: (_hour12 % 12) + (_pm ? 12 : 0), minute: _minute);
+  void _changed(VoidCallback update) {
+    setState(update);
+    widget.onChanged(
+      TimeOfDay(hour: (_hour12 % 12) + (_pm ? 12 : 0), minute: _minute),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                TextButton(
-                  key: const Key('reminder-time-cancel'),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                Expanded(
-                  child: Text(
-                    'Set time',
-                    textAlign: TextAlign.center,
-                    style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
-                  ),
-                ),
-                TextButton(
-                  key: const Key('reminder-time-done'),
-                  onPressed: () => Navigator.pop(context, _value),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: _itemExtent * _visibleItems,
+    return Container(
+      height: _itemExtent * _visibleItems,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AleraColors.primary.withValues(alpha: 0.10),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Highlight band behind the centred (selected) row.
+          IgnorePointer(
+            child: Container(
+              height: _itemExtent,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: AleraColors.fieldFill,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Highlight band behind the centred (selected) row.
-                  IgnorePointer(
-                    child: Container(
-                      height: _itemExtent,
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: AleraColors.primarySoft,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _Wheel(
-                          key: const Key('reminder-time-hour'),
-                          controller: _hourController,
-                          looping: true,
-                          count: 12,
-                          label: (i) => '${i + 1}',
-                          selected: _hour12 - 1,
-                          suffix: 'h',
-                          onChanged: (i) => setState(() => _hour12 = i + 1),
-                        ),
-                      ),
-                      Expanded(
-                        child: _Wheel(
-                          key: const Key('reminder-time-minute'),
-                          controller: _minuteController,
-                          looping: true,
-                          count: 60,
-                          label: (i) => i.toString().padLeft(2, '0'),
-                          selected: _minute,
-                          suffix: 'min',
-                          onChanged: (i) => setState(() => _minute = i),
-                        ),
-                      ),
-                      Expanded(
-                        child: _Wheel(
-                          key: const Key('reminder-time-period'),
-                          controller: _periodController,
-                          looping: false,
-                          count: 2,
-                          label: (i) => i == 0 ? 'AM' : 'PM',
-                          selected: _pm ? 1 : 0,
-                          onChanged: (i) => setState(() => _pm = i == 1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                color: AleraColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ],
-        ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _Wheel(
+                  key: const Key('reminder-time-hour'),
+                  controller: _hourController,
+                  looping: true,
+                  count: 12,
+                  label: (i) => '${i + 1}',
+                  selected: _hour12 - 1,
+                  suffix: 'h',
+                  onChanged: (i) => _changed(() => _hour12 = i + 1),
+                ),
+              ),
+              Expanded(
+                child: _Wheel(
+                  key: const Key('reminder-time-minute'),
+                  controller: _minuteController,
+                  looping: true,
+                  count: 60,
+                  label: (i) => i.toString().padLeft(2, '0'),
+                  selected: _minute,
+                  suffix: 'min',
+                  onChanged: (i) => _changed(() => _minute = i),
+                ),
+              ),
+              Expanded(
+                child: _Wheel(
+                  key: const Key('reminder-time-period'),
+                  controller: _periodController,
+                  looping: false,
+                  count: 2,
+                  label: (i) => i == 0 ? 'AM' : 'PM',
+                  selected: _pm ? 1 : 0,
+                  onChanged: (i) => _changed(() => _pm = i == 1),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -224,7 +191,7 @@ class _Wheel extends StatelessWidget {
           );
     return ListWheelScrollView.useDelegate(
       controller: controller,
-      itemExtent: _ReminderTimePickerSheetState._itemExtent,
+      itemExtent: _ReminderTimeWheelState._itemExtent,
       physics: const FixedExtentScrollPhysics(),
       perspective: 0.003,
       diameterRatio: 2.2,

@@ -9,7 +9,7 @@ import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
 import '../data/reminder_controller.dart';
 import '../domain/reminder_models.dart';
-import 'create_reminder_page.dart';
+import 'create_reminder_sheet.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
 import 'reminder_schedules_page.dart';
@@ -356,15 +356,12 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   );
 
   Future<void> _showCreateReminder(String patientId) async {
-    final draft = await Navigator.of(context).push<ReminderTemplateDraft>(
-      MaterialPageRoute(
-        builder: (_) => CreateReminderPage(
-          patientId: patientId,
-          patientName: _patientName,
-          initialDate: _selectedDay,
-          now: widget.now,
-        ),
-      ),
+    final draft = await showCreateReminderSheet(
+      context,
+      patientId: patientId,
+      patientName: _patientName,
+      initialDate: _selectedDay,
+      now: widget.now,
     );
     if (draft == null || !mounted) return;
     await runReminderAction(
