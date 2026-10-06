@@ -2,156 +2,130 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
+import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_empty_state.dart';
+import '../../../../../design_system/widgets/alera_section_card.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/caregiver_reminder.dart';
 
+/// Today's reminders as quiet rows, with one button to add another.
 class PatientRemindersSection extends StatelessWidget {
   final List<CaregiverReminder> reminders;
   final VoidCallback onViewAll;
-  final ValueChanged<String> onAction;
+  final VoidCallback onNewReminder;
 
   const PatientRemindersSection({
     super.key,
     required this.reminders,
     required this.onViewAll,
-    required this.onAction,
+    required this.onNewReminder,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AleraCard(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+    return AleraSectionCard(
+      title: 'Reminders',
+      actionLabel: 'View all',
+      onActionPressed: onViewAll,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Reminders', style: AleraTypography.sectionTitle),
-              ),
-              TextButton(
-                onPressed: onViewAll,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: const Size(44, 36),
-                ),
-                child: const Text(
-                  'View all Reminders',
-                  style: TextStyle(fontSize: 11),
-                ),
-              ),
-            ],
-          ),
-          _NewReminderField(onTap: () => onAction('New reminder')),
-          const SizedBox(height: 8),
           if (reminders.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No reminders for this patient.'),
+            const AleraEmptyState(
+              key: Key('patient-no-reminders'),
+              icon: Icons.alarm_off,
+              title: 'No reminders today',
+              message: 'Add one to help keep the day on track.',
+              padding: EdgeInsets.symmetric(vertical: 14),
             )
           else
-            for (final CaregiverReminder reminder in reminders) ...[
-              _ReminderCard(reminder: reminder, onAction: onAction),
-              if (reminder != reminders.last) const SizedBox(height: 8),
+            for (var i = 0; i < reminders.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              _ReminderRow(reminder: reminders[i], onTap: onViewAll),
             ],
+          const SizedBox(height: 12),
+          AleraButton(
+            key: const Key('patient-new-reminder'),
+            label: 'Add reminder',
+            icon: Icons.add,
+            variant: AleraButtonVariant.lightPill,
+            height: 42,
+            onPressed: onNewReminder,
+          ),
         ],
       ),
     );
   }
 }
 
-class _NewReminderField extends StatelessWidget {
+class _ReminderRow extends StatelessWidget {
+  final CaregiverReminder reminder;
   final VoidCallback onTap;
 
-  const _NewReminderField({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AleraColors.background,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'New reminder...',
-                  style: TextStyle(color: AleraColors.fieldHint, fontSize: 12),
-                ),
-              ),
-              Icon(Icons.edit, color: AleraColors.fieldHint, size: 17),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReminderCard extends StatelessWidget {
-  final CaregiverReminder reminder;
-  final ValueChanged<String> onAction;
-
-  const _ReminderCard({required this.reminder, required this.onAction});
+  const _ReminderRow({required this.reminder, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final bool missed = reminder.status == CaregiverReminderStatus.missed;
+    final bool done = reminder.status == CaregiverReminderStatus.completed;
     final Color accent = missed
         ? AleraColors.critical
+        : done
+        ? const Color(0xFF05A869)
         : AleraColors.information;
-    return Container(
+    final String label =
+        reminder.statusLabel ??
+        (missed ? 'Missed' : done ? 'Completed' : 'Upcoming');
+
+    return AleraCard(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AleraColors.primary.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      onTap: onTap,
+      child: Row(
         children: [
-          Text(
-            '${missed ? 'Missed' : 'Upcoming'} ${_time(reminder.scheduledAt)}',
-            style: TextStyle(color: accent, fontWeight: FontWeight.w700),
-          ),
-          Text(
-            reminder.title,
-            style: AleraTypography.label.copyWith(
-              color: AleraColors.textPrimary,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AleraColors.primarySoft.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: AleraSvgIcon(
+                assetPath:
+                    'alera-figma-assets/assets/icons/status/reminder.svg',
+                width: 26,
+                height: 26,
+              ),
             ),
           ),
-          Text(
-            reminder.description,
-            style: AleraTypography.body.copyWith(fontSize: 11),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 7,
-            runSpacing: 6,
-            children: [
-              if (missed) ...[
-                _ActionButton(label: 'Call', onTap: () => onAction('Call')),
-                _ActionButton(
-                  label: 'Resolve',
-                  onTap: () => onAction('Resolve'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reminder.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
                 ),
-              ] else
-                _ActionButton(label: 'Remind', onTap: () => onAction('Remind')),
-              _ActionButton(
-                label: 'View Details',
-                onTap: () => onAction('Reminder details'),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  '$label · ${_time(reminder.scheduledAt)}',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            size: 22,
+            color: AleraColors.mutedChevron,
           ),
         ],
       ),
@@ -159,31 +133,8 @@ class _ReminderCard extends StatelessWidget {
   }
 
   String _time(DateTime value) {
-    final int hour = value.hour > 12 ? value.hour - 12 : value.hour;
-    return '$hour:${value.minute.toString().padLeft(2, '0')}${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 34,
-      child: FilledButton.tonal(
-        onPressed: onTap,
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          foregroundColor: AleraColors.textSecondary,
-          backgroundColor: AleraColors.primarySoft,
-          textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-        ),
-        child: Text(label),
-      ),
-    );
+    final int hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    return '$hour:${value.minute.toString().padLeft(2, '0')} '
+        '${value.hour >= 12 ? 'PM' : 'AM'}';
   }
 }

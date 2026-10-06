@@ -3,91 +3,121 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
+import '../../../../../design_system/widgets/alera_pill.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
 import '../../../domain/models/health_snapshot.dart';
 
+/// The one answer to "is the patient OK right now?": status, one-line
+/// summary, and small chips for last check-in, active alerts and today's
+/// reminders. Care risk only appears once an assessment exists.
 class PatientCareStatusCard extends StatelessWidget {
   final CareRecipient careRecipient;
+  final int activeAlertCount;
 
-  const PatientCareStatusCard({super.key, required this.careRecipient});
-
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AleraCard(
-            padding: const EdgeInsets.all(8),
-            child: _StatusSection(careRecipient: careRecipient),
-          ),
-          const SizedBox(height: 12),
-          AleraCard(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Expanded(child: _RiskDetails(careRecipient: careRecipient)),
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Unavailable',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AleraColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusSection extends StatelessWidget {
-  final CareRecipient careRecipient;
-
-  const _StatusSection({required this.careRecipient});
+  const PatientCareStatusCard({
+    super.key,
+    required this.careRecipient,
+    this.activeAlertCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final CareStatus status = careRecipient.status;
     final HealthSnapshot snapshot = careRecipient.healthSnapshot;
-    return Row(
-      children: [
-        AleraSvgIcon(
-          assetPath: _statusIcon(status),
-          width: 48,
-          height: 48,
-          semanticLabel: _statusTitle(status),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final String riskLabel = snapshot.careRiskLabel.trim();
+    final bool riskAvailable =
+        riskLabel.isNotEmpty && riskLabel.toLowerCase() != 'not assessed';
+    final int reminders = careRecipient.reminderCount;
+
+    return AleraCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(_statusTitle(status), style: AleraTypography.sectionTitle),
-              Text(
-                _statusDescription(status),
-                style: AleraTypography.body.copyWith(fontSize: 12),
+              AleraSvgIcon(
+                assetPath: _statusIcon(status),
+                width: 52,
+                height: 52,
+                semanticLabel: _statusTitle(status),
               ),
-              const SizedBox(height: 2),
-              Text(
-                snapshot.hasLastCheckIn
-                    ? '◷ Last Check-in: ${_time(snapshot.lastCheckIn)}'
-                    : '◷ Last Check-in: Unavailable',
-                style: const TextStyle(color: Color(0xFFAA91DD), fontSize: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _statusTitle(status),
+                      style: AleraTypography.sectionTitle.copyWith(
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _statusDescription(status),
+                      style: AleraTypography.body.copyWith(fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              AleraPill(
+                variant: AleraPillVariant.label,
+                leading: const Icon(
+                  Icons.schedule,
+                  size: 14,
+                  color: AleraColors.textSecondary,
+                ),
+                label: snapshot.hasLastCheckIn
+                    ? 'Checked in ${_time(snapshot.lastCheckIn)}'
+                    : 'No check-in yet',
+              ),
+              AleraPill(
+                variant: AleraPillVariant.label,
+                leading: Icon(
+                  Icons.notifications_active,
+                  size: 14,
+                  color: activeAlertCount > 0
+                      ? AleraColors.critical
+                      : AleraColors.textSecondary,
+                ),
+                label: activeAlertCount == 1
+                    ? '1 active alert'
+                    : '$activeAlertCount active alerts',
+              ),
+              AleraPill(
+                variant: AleraPillVariant.label,
+                leading: const Icon(
+                  Icons.alarm,
+                  size: 14,
+                  color: AleraColors.textSecondary,
+                ),
+                label: reminders == 1
+                    ? '1 reminder today'
+                    : '$reminders reminders today',
+              ),
+              if (riskAvailable)
+                AleraPill(
+                  variant: AleraPillVariant.label,
+                  leading: const Icon(
+                    Icons.health_and_safety,
+                    size: 14,
+                    color: AleraColors.textSecondary,
+                  ),
+                  label: 'Care risk: $riskLabel (${snapshot.careRiskScore})',
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -99,61 +129,6 @@ class _StatusSection extends StatelessWidget {
         : value.hour;
     return '$hour:${value.minute.toString().padLeft(2, '0')} '
         '${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
-}
-
-class _RiskDetails extends StatelessWidget {
-  final CareRecipient careRecipient;
-
-  const _RiskDetails({required this.careRecipient});
-
-  @override
-  Widget build(BuildContext context) {
-    final HealthSnapshot snapshot = careRecipient.healthSnapshot;
-    final String label = snapshot.careRiskLabel.trim();
-    final bool available =
-        label.isNotEmpty && label.toLowerCase() != 'not assessed';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('Care Risk', style: AleraTypography.sectionTitle),
-        const SizedBox(height: 8),
-        if (available) ...[
-          Text(
-            '${snapshot.careRiskScore}',
-            style: const TextStyle(
-              color: AleraColors.textPrimary,
-              fontSize: 34,
-              height: 1,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: AleraTypography.body.copyWith(fontSize: 13)),
-          const SizedBox(height: 4),
-          const Text(
-            'Closer attention advised.',
-            style: TextStyle(color: AleraColors.textSecondary, fontSize: 11),
-          ),
-        ] else ...[
-          const Text(
-            'Not assessed',
-            style: TextStyle(
-              color: AleraColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'No risk assessment is available yet.',
-            style: AleraTypography.body.copyWith(fontSize: 12),
-          ),
-        ],
-      ],
-    );
   }
 }
 

@@ -6,7 +6,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_button.dart';
-import '../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
@@ -16,7 +16,7 @@ import '../../data/patients/caregiver_patient_controller.dart';
 import '../../data/api/dto/patient_dto.dart';
 import '../people/patient_access_setup_page.dart';
 import 'widgets/care_status_card.dart';
-import 'widgets/patient_alert_history.dart';
+import 'widgets/patient_needs_attention.dart';
 import 'widgets/patient_reminders_section.dart';
 import 'widgets/monitoring_devices_card.dart';
 import 'widgets/patient_summary_card.dart';
@@ -35,6 +35,10 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   final VoidCallback? onPatientAccessAction;
   final ValueChanged<String>? onVitalTap;
 
+  /// Opens the create-reminder drawer for this patient. Null on the mock
+  /// repository path, where "Reminder" falls back to the mock snackbar.
+  final VoidCallback? onNewReminder;
+
   const CaregiverPatientDetailPage({
     super.key,
     required this.careRecipient,
@@ -47,6 +51,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     this.patientAccessStatus,
     this.onPatientAccessAction,
     this.onVitalTap,
+    this.onNewReminder,
   });
 
   void _showFeedback(BuildContext context, String message) {
@@ -88,6 +93,13 @@ class CaregiverPatientDetailPage extends StatelessWidget {
       case 'Message':
         await _openContactApp(context, scheme: 'sms', appLabel: 'messaging');
         return;
+      case 'Reminder':
+        if (onNewReminder != null) {
+          onNewReminder!();
+          return;
+        }
+        _showFeedback(context, '$action is mock-only for now.');
+        return;
       default:
         _showFeedback(context, '$action is mock-only for now.');
     }
@@ -127,28 +139,20 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               onAction: (action) => _handleAction(context, action),
             ),
             const SizedBox(height: 12),
-            _DashboardCounters(careRecipient: careRecipient),
-            const SizedBox(height: 12),
-            PatientCareStatusCard(careRecipient: careRecipient),
-            const SizedBox(height: 12),
-            if (patientAccessStatus != null) ...[
-              _PatientAccessStatusCard(
-                status: patientAccessStatus!,
-                onAction: onPatientAccessAction,
-              ),
-              const SizedBox(height: 12),
-            ],
-            PatientMonitoringDevicesCard(
-              devices: careRecipient.healthSnapshot.devices,
+            PatientCareStatusCard(
+              careRecipient: careRecipient,
+              activeAlertCount: alerts
+                  .where((alert) => alert.status == CaregiverAlertStatus.active)
+                  .length,
             ),
             const SizedBox(height: 12),
-            PatientAlertHistory(
+            PatientNeedsAttention(
               alerts: alerts,
-              onViewAll: onViewAllAlerts,
+              onViewHistory: onViewAllAlerts,
               onAlertTap: onAlertTap,
               onMarkAsSeen: onMarkAsSeen,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             PatientVitalSummarySection(
               snapshot: careRecipient.healthSnapshot,
               onVitalTap: (label) {
@@ -160,13 +164,27 @@ class CaregiverPatientDetailPage extends StatelessWidget {
                 _showFeedback(context, '$label history is mock-only for now.');
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             PatientRemindersSection(
               reminders: reminders,
               onViewAll: onViewAllReminders,
-              onAction: (action) =>
-                  _showFeedback(context, '$action is mock-only for now.'),
+              onNewReminder: onNewReminder ??
+                  () => _showFeedback(
+                    context,
+                    'New reminder is mock-only for now.',
+                  ),
             ),
+            const SizedBox(height: 12),
+            PatientMonitoringDevicesCard(
+              devices: careRecipient.healthSnapshot.devices,
+            ),
+            if (patientAccessStatus != null) ...[
+              const SizedBox(height: 12),
+              _PatientAccessStatusCard(
+                status: patientAccessStatus!,
+                onAction: onPatientAccessAction,
+              ),
+            ],
           ],
         ),
       ),
@@ -185,6 +203,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final CaregiverPatientDataSource? patientDataSource;
   final ValueChanged<String>? onVitalTap;
+  final VoidCallback? onNewReminder;
 
   const CaregiverPatientDetailLoaderPage({
     super.key,
@@ -198,6 +217,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     this.onMarkAsSeen,
     this.patientDataSource,
     this.onVitalTap,
+    this.onNewReminder,
   });
 
   @override
@@ -274,6 +294,7 @@ class _CaregiverPatientDetailLoaderPageState
         patientAccessStatus: _patientAccessStatus,
         onPatientAccessAction: _openPatientAccess,
         onVitalTap: widget.onVitalTap,
+        onNewReminder: widget.onNewReminder,
       );
     }
     final failure = _failure;
@@ -360,34 +381,74 @@ class _PatientAccessStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = switch (status.status) {
-      PatientAccessState.notConnected => 'Patient access not connected',
+      PatientAccessState.notConnected => 'Not connected',
       PatientAccessState.invitePending => 'Invitation pending',
-      PatientAccessState.connected => 'Patient access connected',
-      PatientAccessState.unknown => 'Patient access status unavailable',
+      PatientAccessState.connected => 'Connected',
+      PatientAccessState.unknown => 'Status unavailable',
     };
     final detail = switch (status.status) {
       PatientAccessState.invitePending when status.pendingExpiresAt != null =>
-        'Invitation expires ${_dateTime(status.pendingExpiresAt!)}',
+        'Expires ${_dateTime(status.pendingExpiresAt!)}',
       PatientAccessState.connected when status.connectedAt != null =>
-        'Connected ${_dateTime(status.connectedAt!)}',
+        'Since ${_dateTime(status.connectedAt!)}',
       _ => null,
     };
+    final actionLabel = switch (status.status) {
+      PatientAccessState.notConnected => 'Connect patient access',
+      PatientAccessState.invitePending => 'Open invitation',
+      PatientAccessState.connected => 'Generate login code',
+      PatientAccessState.unknown => null,
+    };
     return AleraCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Patient access'),
-          const SizedBox(height: 4),
-          Text(label),
-          if (detail != null) ...[const SizedBox(height: 4), Text(detail)],
-          if (onAction != null &&
-              status.status == PatientAccessState.notConnected)
-            AleraButton(label: 'Connect patient access', onPressed: onAction!),
-          if (onAction != null &&
-              status.status == PatientAccessState.invitePending)
-            AleraButton(label: 'Open invitation', onPressed: onAction!),
-          if (onAction != null && status.status == PatientAccessState.connected)
-            AleraButton(label: 'Generate login code', onPressed: onAction!),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AleraColors.primarySoft.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.smartphone,
+                  size: 22,
+                  color: AleraColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Patient app access',
+                      style: AleraTypography.sectionTitle.copyWith(
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detail == null ? label : '$label · $detail',
+                      style: AleraTypography.body.copyWith(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (onAction != null && actionLabel != null) ...[
+            const SizedBox(height: 12),
+            AleraButton(
+              label: actionLabel,
+              variant: AleraButtonVariant.lightPill,
+              height: 42,
+              onPressed: onAction!,
+            ),
+          ],
         ],
       ),
     );
@@ -395,124 +456,15 @@ class _PatientAccessStatusCard extends StatelessWidget {
 }
 
 String _dateTime(DateTime value) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
   final local = value.toLocal();
-  return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-      '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-}
-
-class _DashboardCounters extends StatelessWidget {
-  final CareRecipient careRecipient;
-
-  const _DashboardCounters({required this.careRecipient});
-
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: [
-          Expanded(
-            child: _Counter(
-              assetPath: 'alera-figma-assets/assets/icons/status/alert.svg',
-              color: const Color(0xFFB48BF2),
-              value: '${careRecipient.alertCount}',
-              label: 'Alerts\nToday',
-            ),
-          ),
-          _SummaryDivider(),
-          Expanded(
-            child: _Counter(
-              assetPath: 'alera-figma-assets/assets/icons/status/reminder.svg',
-              color: const Color(0xFF55A5FF),
-              value: '${careRecipient.reminderCount}',
-              label: 'Reminders\nToday',
-            ),
-          ),
-          _SummaryDivider(),
-          const Expanded(
-            child: _Counter(
-              assetPath:
-                  'alera-figma-assets/assets/icons/mini_status/stable.svg',
-              color: Color(0xFF08D887),
-              value: '',
-              label: 'Monitoring\nActive',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1,
-    height: 36,
-    color: AleraColors.divider.withValues(alpha: 0.55),
-  );
-}
-
-class _Counter extends StatelessWidget {
-  final String assetPath;
-  final Color color;
-  final String value;
-  final String label;
-
-  const _Counter({
-    required this.assetPath,
-    required this.color,
-    required this.value,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: AleraSvgIcon(
-              assetPath: assetPath,
-              width: 18,
-              height: 18,
-              semanticLabel: label.replaceAll('\n', ' '),
-            ),
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (value.isNotEmpty)
-                  Text(
-                    value,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 20,
-                      height: 1,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                Text(
-                  label,
-                  style: TextStyle(color: color, fontSize: 10, height: 1.15),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  return '${months[local.month - 1]} ${local.day}, $hour:'
+      '${local.minute.toString().padLeft(2, '0')} '
+      '${local.hour >= 12 ? 'PM' : 'AM'}';
 }
 
 class _PatientDetailLoadingSkeleton extends StatelessWidget {
@@ -531,9 +483,6 @@ class _PatientDetailLoadingSkeleton extends StatelessWidget {
       ),
       children: const [
         _PatientSummarySkeleton(),
-        SizedBox(height: 12),
-
-        _PatientCountersSkeleton(),
         SizedBox(height: 12),
 
         _PatientSectionSkeleton(lineWidths: [.72, .48]),
@@ -575,50 +524,6 @@ class _PatientSummarySkeleton extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PatientCountersSkeleton extends StatelessWidget {
-  const _PatientCountersSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return AleraCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      child: Row(
-        children: [
-          Expanded(child: _CounterSkeleton()),
-          SizedBox(width: 12),
-          Expanded(child: _CounterSkeleton()),
-          SizedBox(width: 12),
-          Expanded(child: _CounterSkeleton()),
-        ],
-      ),
-    );
-  }
-}
-
-class _CounterSkeleton extends StatelessWidget {
-  const _CounterSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const AleraSkeletonBlock(width: 34, height: 34, borderRadius: 10),
-        const SizedBox(width: 7),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              AleraSkeletonBar(widthFactor: .55, height: 12),
-              SizedBox(height: 6),
-              AleraSkeletonBar(widthFactor: .82, height: 8),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -46,6 +46,8 @@ import '../reminders/data/home_reminder_controller.dart';
 import '../reminders/domain/reminder_models.dart';
 import 'domain/models/caregiver_reminder.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
+import '../reminders/presentation/create_reminder_sheet.dart';
+import '../reminders/presentation/reminder_action_runner.dart';
 import '../startup/presentation/alera_startup_screen.dart';
 import '../../design_system/widgets/alera_snackbar.dart';
 import '../../design_system/widgets/alera_empty_state.dart';
@@ -480,6 +482,7 @@ class _CaregiverShellState extends State<CaregiverShell>
             onMarkAsSeen: _markAsSeen,
             onVitalTap: (metric) =>
                 _openVitalTrend(context, careRecipient, metric),
+            onNewReminder: () => _createReminderFor(context, careRecipient),
           ),
         ),
       );
@@ -511,6 +514,26 @@ class _CaregiverShellState extends State<CaregiverShell>
               _openVitalTrend(context, careRecipient, metric),
         ),
       ),
+    );
+  }
+
+  /// Opens the create-reminder drawer from a patient's page and saves the
+  /// result through the shared reminder controller.
+  Future<void> _createReminderFor(
+    BuildContext context,
+    CareRecipient patient,
+  ) async {
+    final draft = await showCreateReminderSheet(
+      context,
+      patientId: patient.id,
+      patientName: patient.name,
+      initialDate: DateTime.now(),
+    );
+    if (draft == null || !context.mounted) return;
+    await runReminderAction(
+      context,
+      () => _reminderController.createTemplate(draft),
+      success: 'Reminder created.',
     );
   }
 

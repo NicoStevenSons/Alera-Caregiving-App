@@ -6,6 +6,8 @@ import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
 
+/// Who the patient is, plus the four things a caregiver does most: call,
+/// message, add a reminder, add a note.
 class PatientDetailSummaryCard extends StatelessWidget {
   final CareRecipient careRecipient;
   final ValueChanged<String> onAction;
@@ -19,7 +21,7 @@ class PatientDetailSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AleraCard(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       child: Column(
         children: [
           Row(
@@ -27,21 +29,23 @@ class PatientDetailSummaryCard extends StatelessWidget {
               AleraPatientAvatar(
                 name: careRecipient.name,
                 photoUrl: careRecipient.profilePhotoUrl,
-                radius: 24,
+                radius: 30,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       careRecipient.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 19,
-                        height: 1.05,
+                        fontSize: 20,
+                        height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         color: AleraColors.primarySoft,
@@ -49,14 +53,14 @@ class PatientDetailSummaryCard extends StatelessWidget {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                          horizontal: 8,
+                          vertical: 3,
                         ),
                         child: Text(
                           careRecipient.relationshipLabel,
                           style: const TextStyle(
                             color: AleraColors.primary,
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -67,7 +71,7 @@ class PatientDetailSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 16),
           Row(
             children: [
               _QuickAction(
@@ -87,7 +91,7 @@ class PatientDetailSummaryCard extends StatelessWidget {
               ),
               _QuickAction(
                 icon: Icons.edit,
-                label: 'Add Note',
+                label: 'Add note',
                 onTap: () => onAction('Add Note'),
               ),
             ],
@@ -112,34 +116,35 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Material(
-        color: Colors.white,
-        elevation: 1.5,
-        shadowColor: Colors.black.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 13, color: AleraColors.textSecondary),
-                const SizedBox(width: 3),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AleraColors.textSecondary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AleraColors.primarySoft.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
-            ),
+                child: Icon(icon, size: 22, color: AleraColors.primary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AleraColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ),

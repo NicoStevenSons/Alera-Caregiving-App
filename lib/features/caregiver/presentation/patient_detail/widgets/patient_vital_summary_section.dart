@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../design_system/alera_typography.dart';
-import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
 
@@ -18,13 +17,14 @@ class PatientVitalSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AleraCard(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Vitals', style: AleraTypography.sectionTitle),
-          const SizedBox(height: 7),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text('Vitals', style: AleraTypography.sectionTitle),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -108,7 +108,6 @@ class PatientVitalSummarySection extends StatelessWidget {
             onTap: () => onVitalTap('Activity'),
           ),
         ],
-      ),
     );
   }
 
@@ -189,13 +188,13 @@ class _VitalCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 170,
+          height: 118,
           child: Stack(
             fit: StackFit.expand,
             children: [
               SvgPicture.asset(backgroundAsset, fit: BoxFit.cover),
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -239,7 +238,7 @@ class _VitalCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: textColor,
-                                  fontSize: isUnavailable ? 16 : 30,
+                                  fontSize: isUnavailable ? 15 : 26,
                                   height: 1.1,
                                   fontWeight: FontWeight.w600,
                                   textBaseline: TextBaseline.alphabetic,
@@ -267,8 +266,8 @@ class _VitalCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                right: 14,
-                bottom: 14,
+                right: 12,
+                bottom: 12,
                 child: Icon(
                   Icons.chevron_right,
                   color: secondaryColor,
