@@ -779,7 +779,7 @@ class _SelectableRow extends StatelessWidget {
         onTap: onTap,
         child: Container(
           color: selected
-              ? AleraColors.selected.withValues(alpha: 0.10)
+              ? AleraColors.selected.withValues(alpha: 0.24)
               : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
@@ -807,7 +807,7 @@ class _SelectableRow extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AleraColors.fieldBorder,
+                          color: AleraColors.mutedIcon,
                           width: 1.5,
                         ),
                       ),

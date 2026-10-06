@@ -269,23 +269,33 @@ class _NowRow extends StatelessWidget {
 class _DashedLine extends StatelessWidget {
   const _DashedLine();
 
+  // CustomPaint (not LayoutBuilder): this sits inside an IntrinsicHeight row,
+  // which cannot measure a LayoutBuilder and would throw.
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final count = (constraints.maxWidth / 8).floor();
-      return Row(
-        children: [
-          for (var i = 0; i < count; i++)
-            Container(
-              width: 4,
-              height: 2,
-              margin: const EdgeInsets.only(right: 4),
-              color: AleraColors.selected.withValues(alpha: 0.6),
-            ),
-        ],
-      );
-    },
+  Widget build(BuildContext context) => SizedBox(
+    height: 2,
+    child: CustomPaint(
+      painter: _DashPainter(AleraColors.selected.withValues(alpha: 0.6)),
+      size: const Size(double.infinity, 2),
+    ),
   );
+}
+
+class _DashPainter extends CustomPainter {
+  _DashPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawRect(Rect.fromLTWH(x, 0, 4, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashPainter old) => old.color != color;
 }
 
 class _GapRow extends StatelessWidget {
@@ -624,7 +634,7 @@ class _ReminderCard extends StatelessWidget {
             AleraColors.critical.withValues(alpha: 0.10),
             Colors.white,
           )
-        : reminderCategoryWash(occurrence.category, strength: done ? 0.05 : 0.09);
+        : reminderCategoryWash(occurrence.category, strength: done ? 0.10 : 0.17);
     final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

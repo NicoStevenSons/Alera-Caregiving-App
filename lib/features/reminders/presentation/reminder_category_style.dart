@@ -18,7 +18,7 @@ Color reminderCategoryColor(ReminderCategory? category) => switch (category) {
 };
 
 /// Very light category tint to use as a card background (on white).
-Color reminderCategoryWash(ReminderCategory? category, {double strength = 0.08}) =>
+Color reminderCategoryWash(ReminderCategory? category, {double strength = 0.16}) =>
     Color.alphaBlend(
       reminderCategoryColor(category).withValues(alpha: strength),
       Colors.white,
@@ -26,4 +26,4 @@ Color reminderCategoryWash(ReminderCategory? category, {double strength = 0.08})
 
 /// Slightly stronger tint for the icon tile.
 Color reminderCategoryTile(ReminderCategory? category) =>
-    reminderCategoryColor(category).withValues(alpha: 0.16);
+    reminderCategoryColor(category).withValues(alpha: 0.24);

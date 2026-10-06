@@ -54,7 +54,7 @@ class ReminderSummaryCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE9DDFF), Color(0xFFF7F2FF)],
+          colors: [Color(0xFFD8C5FF), Color(0xFFECE2FF)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [

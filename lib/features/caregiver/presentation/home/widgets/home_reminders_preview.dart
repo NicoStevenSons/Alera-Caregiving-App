@@ -15,6 +15,7 @@ class HomeRemindersPreview extends StatelessWidget {
   final List<CaregiverReminder> reminders;
   final VoidCallback onViewAll;
   final ValueChanged<String> onAction;
+  final ValueChanged<CaregiverReminder>? onComplete;
   final bool loading;
   final String? errorMessage;
   final VoidCallback? onRetry;
@@ -24,6 +25,7 @@ class HomeRemindersPreview extends StatelessWidget {
     required this.reminders,
     required this.onViewAll,
     required this.onAction,
+    this.onComplete,
     this.loading = false,
     this.errorMessage,
     this.onRetry,
@@ -68,7 +70,11 @@ class HomeRemindersPreview extends StatelessWidget {
             )
           else
             for (int index = 0; index < reminders.length; index++) ...[
-              _Reminder(reminder: reminders[index], onAction: onAction),
+              _Reminder(
+                reminder: reminders[index],
+                onAction: onAction,
+                onComplete: onComplete,
+              ),
               if (index != reminders.length - 1) const SizedBox(height: 8),
             ],
         ],
@@ -80,8 +86,13 @@ class HomeRemindersPreview extends StatelessWidget {
 class _Reminder extends StatelessWidget {
   final CaregiverReminder reminder;
   final ValueChanged<String> onAction;
+  final ValueChanged<CaregiverReminder>? onComplete;
 
-  const _Reminder({required this.reminder, required this.onAction});
+  const _Reminder({
+    required this.reminder,
+    required this.onAction,
+    this.onComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +178,16 @@ class _Reminder extends StatelessWidget {
                   spacing: 7,
                   runSpacing: 6,
                   children: [
+                    if (onComplete != null &&
+                        reminder.status == CaregiverReminderStatus.upcoming)
+                      AleraButton(
+                        key: ValueKey('home-reminder-complete-${reminder.id}'),
+                        label: 'Complete',
+                        icon: Icons.check,
+                        onPressed: () => onComplete!(reminder),
+                        expand: false,
+                        height: 34,
+                      ),
                     _Button(
                       label: 'Open Reminders',
                       onTap: () => onAction('Open Reminders'),

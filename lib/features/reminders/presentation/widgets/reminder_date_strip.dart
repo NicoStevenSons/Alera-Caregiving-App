@@ -124,13 +124,14 @@ class _DayChip extends StatelessWidget {
       label: reminderLongDate(day),
       child: Material(
         key: ValueKey('reminder-day-${reminderApiDate(day)}'),
+        // White chips lift off the lavender page; today gets a stronger tint
+        // so it still reads when it isn't the selected day.
         color: selected
             ? AleraColors.selected
-            : Color.alphaBlend(
-                AleraColors.primarySoft.withValues(alpha: isToday ? 0.7 : 0.3),
-                Colors.white,
-              ),
-        elevation: selected ? 2 : 1,
+            : isToday
+            ? const Color(0xFFE4D6FF)
+            : Colors.white,
+        elevation: selected ? 4 : 2,
         shadowColor: AleraColors.primary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(

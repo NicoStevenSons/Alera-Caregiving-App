@@ -47,6 +47,7 @@ import 'domain/models/caregiver_reminder.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
 import '../reminders/presentation/create_reminder_sheet.dart';
 import '../reminders/presentation/reminder_action_runner.dart';
+import '../reminders/presentation/reminder_note_dialog.dart';
 import '../startup/presentation/alera_startup_screen.dart';
 import '../../design_system/widgets/alera_snackbar.dart';
 import '../../design_system/widgets/alera_empty_state.dart';
@@ -108,6 +109,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   bool _appResumed = true;
   Timer? _patientPollTimer;
   late final ReminderController _reminderController;
+  late final ReminderDataSource _reminderSource;
   HomeReminderController? _homeReminderController;
 
   void _homeRemindersChanged() {
@@ -295,6 +297,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       fallback: widget.repository.getAlerts(),
     )..addListener(_alertsChanged);
     final reminderSource = widget.reminderDataSource ?? ReminderApiDataSource();
+    _reminderSource = reminderSource;
     _reminderController = ReminderController(dataSource: reminderSource);
     if (reminderSource is ReminderDateRangeDataSource) {
       _homeReminderController = HomeReminderController(
@@ -558,6 +561,27 @@ class _CaregiverShellState extends State<CaregiverShell>
         ),
       ),
     );
+  }
+
+  /// Home card "Complete": asks for the on-behalf note, completes the
+  /// occurrence, then refreshes today's reminders (and the Reminders tab).
+  Future<void> _completeHomeReminder(
+    BuildContext context,
+    CaregiverReminder reminder,
+  ) async {
+    final note = await showReminderNoteDialog(
+      context,
+      icon: Icons.check_circle,
+      title: 'Complete for patient',
+      hint: 'Why are you completing this on their behalf?',
+      actionLabel: 'Complete',
+    );
+    if (note == null || !context.mounted) return;
+    await runReminderAction(context, () async {
+      await _reminderSource.completeOnBehalf(reminder.id, note);
+      await _homeReminderController?.refresh();
+      await _reminderController.refresh();
+    }, success: 'Reminder completed.');
   }
 
   /// Opens the create-reminder drawer from a patient's page and saves the
@@ -932,6 +956,9 @@ class _CaregiverShellState extends State<CaregiverShell>
           : () => reminderController.loadForPatient(patient.id),
       onViewAllAlerts: () => _selectDestination(2),
       onViewAllReminders: () => _selectDestination(3),
+      onCompleteReminder: patient.backendBacked
+          ? (reminder) => _completeHomeReminder(context, reminder)
+          : null,
       onAlertTap: (alert) => _openAlertDetail(context, alert),
       onMarkAsSeen: _markAsSeen,
       onSelectPatient: onSelectPatient,

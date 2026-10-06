@@ -25,6 +25,7 @@ class CaregiverHomePage extends StatelessWidget {
   final VoidCallback? onRetryReminders;
   final VoidCallback onViewAllAlerts;
   final VoidCallback onViewAllReminders;
+  final ValueChanged<CaregiverReminder>? onCompleteReminder;
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final bool showDemoBanner;
@@ -44,6 +45,7 @@ class CaregiverHomePage extends StatelessWidget {
     this.onRetryReminders,
     required this.onViewAllAlerts,
     required this.onViewAllReminders,
+    this.onCompleteReminder,
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.showDemoBanner = false,
@@ -152,6 +154,7 @@ class CaregiverHomePage extends StatelessWidget {
                   errorMessage: remindersError,
                   onRetry: onRetryReminders,
                   onAction: (_) => onViewAllReminders(),
+                  onComplete: onCompleteReminder,
                 ),
               ],
             ),
