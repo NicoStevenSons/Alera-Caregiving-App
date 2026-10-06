@@ -130,7 +130,7 @@ class _DeviceRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           SizedBox(
-            width: 62,
+            width: 74,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
