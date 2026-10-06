@@ -1174,7 +1174,7 @@ class AlertListCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.expand_more, color: Color(0xFFB7B2C3)),
+              const Icon(Icons.expand_more, color: AleraColors.mutedChevron),
             ],
           ),
         ),

@@ -120,7 +120,7 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
         child: IconButton(
           onPressed: _connecting ? null : () => Navigator.of(context).pop(),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.mutedIcon,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.expand(),
           visualDensity: VisualDensity.compact,

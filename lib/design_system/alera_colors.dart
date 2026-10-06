@@ -36,4 +36,13 @@ abstract final class AleraColors {
   // Softer purple for "selected / active" chrome: the nav bar's current tab,
   // the picked day on Reminders, and the new-reminder button.
   static const Color selected = Color(0xFFAE8BEA);
+
+  /// Muted grey-lavender for chevrons, back arrows and quiet secondary icons.
+  static const Color mutedIcon = Color(0xFFB4AEC2);
+
+  /// Slightly lighter variant used for list-row chevrons.
+  static const Color mutedChevron = Color(0xFFB7B2C3);
+
+  /// Empty-state title text (matches the faded 'No active alerts' motif).
+  static const Color emptyTitle = Color(0xFFA69BD2);
 }

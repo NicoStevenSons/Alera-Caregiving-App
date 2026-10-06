@@ -40,7 +40,7 @@ class ReminderSchedulesPage extends StatelessWidget {
           tooltip: 'Back',
           onPressed: () => Navigator.maybePop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.mutedIcon,
         ),
       ),
       body: AnimatedBuilder(
@@ -80,7 +80,7 @@ class ReminderSchedulesPage extends StatelessWidget {
                         Text(
                           'No reminder schedules yet',
                           style: TextStyle(
-                            color: Color(0xFFA69BD2),
+                            color: AleraColors.emptyTitle,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),

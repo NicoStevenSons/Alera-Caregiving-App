@@ -106,7 +106,7 @@ class CareRecipientCard extends StatelessWidget {
             padding: EdgeInsets.only(top: 12),
             child: Icon(
               Icons.chevron_right,
-              color: Color(0xFFB7B2C3),
+              color: AleraColors.mutedChevron,
               size: 24,
             ),
           ),

@@ -6,6 +6,7 @@ import '../../../../design_system/widgets/alera_card.dart';
 import '../../data/api/caregiver_sleep_trend_api_data_source.dart';
 import '../../data/api/dto/sleep_trend_dto.dart';
 import 'widgets/sleep_trend_chart.dart';
+import 'widgets/trend_loading_skeleton.dart';
 
 class CaregiverSleepTrendPage extends StatefulWidget {
   final String patientId;
@@ -113,11 +114,7 @@ class _CaregiverSleepTrendPageState extends State<CaregiverSleepTrendPage> {
             _SleepRangeSelector(selected: _range, onSelected: _selectRange),
             const SizedBox(height: 16),
             if (_loading)
-              const Padding(
-                key: Key('sleep-trend-loading'),
-                padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const TrendLoadingSkeleton(key: Key('sleep-trend-loading'))
             else if (_error != null)
               _SleepTrendError(error: _error!, onRetry: _load)
             else if (_trend != null)

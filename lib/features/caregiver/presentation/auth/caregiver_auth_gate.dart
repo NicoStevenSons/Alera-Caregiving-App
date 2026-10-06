@@ -602,7 +602,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
         tooltip: 'Back',
         onPressed: _submitting ? null : _back,
         icon: const Icon(Icons.chevron_left, size: 28),
-        color: const Color(0xFFB4AEC2),
+        color: AleraColors.mutedIcon,
       ),
     );
   }
@@ -661,7 +661,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   child: Text(
                     'or',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFFB4AEC2)),
+                    style: TextStyle(color: AleraColors.mutedIcon),
                   ),
                 ),
                 Center(
@@ -753,12 +753,12 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
                       hintText: 'XXXX - XXXX - XXXX',
-                      hintStyle: const TextStyle(color: Color(0xFFB5A6DB)),
+                      hintStyle: const TextStyle(color: AleraColors.fieldHint),
                       filled: true,
-                      fillColor: const Color(0xFFF7F3FF),
+                      fillColor: AleraColors.fieldFill,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
+                        borderSide: const BorderSide(color: AleraColors.fieldBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -860,13 +860,13 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
           onFieldSubmitted: onFieldSubmitted,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFFB5A6DB)),
+            hintStyle: const TextStyle(color: AleraColors.fieldHint),
             filled: true,
-            fillColor: const Color(0xFFF7F3FF),
+            fillColor: AleraColors.fieldFill,
             suffixIcon: suffixIcon,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
+              borderSide: const BorderSide(color: AleraColors.fieldBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

@@ -7,6 +7,7 @@ import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
 import '../../domain/vital_trend_period_analytics.dart';
 import 'widgets/vital_trend_chart.dart';
+import 'widgets/trend_loading_skeleton.dart';
 
 class CaregiverVitalTrendPage extends StatefulWidget {
   final String patientId;
@@ -122,10 +123,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
             const SizedBox(height: 16),
 
             if (_loading)
-              const Padding(
-                padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const TrendLoadingSkeleton(key: Key('trend-loading'))
             else if (_error != null)
               _TrendError(error: _error!, onRetry: _load)
             else if (_trend != null)

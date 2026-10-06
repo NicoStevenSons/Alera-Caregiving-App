@@ -305,7 +305,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
           tooltip: 'Back',
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.mutedIcon,
         ),
       ),
       body: SafeArea(
@@ -1111,11 +1111,11 @@ class _NotesCard extends StatelessWidget {
               ),
               hintText: 'Add a note about this alert...',
               hintStyle: const TextStyle(
-                color: Color(0xFFB5A6DB),
+                color: AleraColors.fieldHint,
                 fontSize: 13,
               ),
               filled: true,
-              fillColor: const Color(0xFFF7F3FF),
+              fillColor: AleraColors.fieldFill,
 
               // 3. Constrains the suffix container size
               suffixIconConstraints: const BoxConstraints(
@@ -1148,7 +1148,7 @@ class _NotesCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(
                   20,
                 ), // Reduced border radius to match smaller height
-                borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
+                borderSide: const BorderSide(color: AleraColors.fieldBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),

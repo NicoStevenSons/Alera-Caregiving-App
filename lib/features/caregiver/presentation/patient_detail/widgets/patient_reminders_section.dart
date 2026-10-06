@@ -80,10 +80,10 @@ class _NewReminderField extends StatelessWidget {
               Expanded(
                 child: Text(
                   'New reminder...',
-                  style: TextStyle(color: Color(0xFFB5A6DB), fontSize: 12),
+                  style: TextStyle(color: AleraColors.fieldHint, fontSize: 12),
                 ),
               ),
-              Icon(Icons.edit, color: Color(0xFFB5A6DB), size: 17),
+              Icon(Icons.edit, color: AleraColors.fieldHint, size: 17),
             ],
           ),
         ),

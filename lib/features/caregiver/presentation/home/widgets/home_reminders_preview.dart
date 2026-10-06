@@ -4,6 +4,7 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
+import '../../../../../design_system/widgets/alera_skeleton.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../domain/models/caregiver_reminder.dart';
 
@@ -34,10 +35,15 @@ class HomeRemindersPreview extends StatelessWidget {
       child: Column(
         children: [
           if (loading)
-            const Padding(
+            const Column(
               key: Key('home-reminders-loading'),
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: LinearProgressIndicator(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AleraSkeletonBar(widthFactor: .5, height: 14),
+                SizedBox(height: 8),
+                AleraSkeletonBar(widthFactor: .8, height: 12),
+                SizedBox(height: 12),
+              ],
             )
           else if (errorMessage != null)
             AleraEmptyState(

@@ -47,8 +47,26 @@ Heart Rate, SpO2 (`vitals/*`), Unacknowledged (`status/alert.svg`), Resolved
 uses the placeholder via its own `_filterIconBattery` constant (a battery SVG
 exists at `device_status/batterylvl-high.svg` if you'd rather reuse it).
 
+## Error / disconnected states
+
+`AleraEmptyState.errorAsset` (in `lib/design_system/widgets/alera_empty_state.dart`)
+points at `status/error.svg`. Draw one "couldn't load / disconnected" icon and
+change that single constant to update every place below:
+
+| Where                                   | Key                      |
+| --------------------------------------- | ------------------------ |
+| People tab, patient list failed         | `people-error`           |
+| Home, patient list failed               | `home-patient-error`     |
+| Home Reminders card, reminders failed   | `home-reminders-error`   |
+
+## Status badge (patient avatars)
+
+`status/error.svg` is also the badge for the **No data** and **Unknown** patient
+statuses, set in `lib/design_system/status/adapters/patient_status_chip.dart`
+(`CareStatus.noData`, `CareStatus.unknown`). That is the "disconnected" badge
+to design. Stable / Critical / Warning / Needs attention use the mini_status
+icons.
+
 ## Not covered
 
-The small status badge on patient avatars (Switch patient drawer, Alerts list)
-still uses Material glyphs, because that badge tints a single-colour glyph white
-on a solid circle, and the Figma icons are full-colour.
+Nothing else. The status badge no longer uses Material glyphs (see above).

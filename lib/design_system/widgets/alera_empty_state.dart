@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'alera_button.dart';
 import 'alera_svg_icon.dart';
+import '../alera_colors.dart';
 
 /// Muted "nothing here" block shared by every empty state in the app
 /// (No active alerts, No reminders, ...): a faded icon, a bold lavender title
@@ -39,7 +40,7 @@ class AleraEmptyState extends StatelessWidget {
       'alera-figma-assets/assets/icons/status/error.svg';
 
   static const Color _iconColor = Color(0xFFCFC7E8);
-  static const Color _titleColor = Color(0xFFA69BD2);
+  static const Color _titleColor = AleraColors.emptyTitle;
   static const Color _messageColor = Color(0xFFB5AADB);
 
   @override
