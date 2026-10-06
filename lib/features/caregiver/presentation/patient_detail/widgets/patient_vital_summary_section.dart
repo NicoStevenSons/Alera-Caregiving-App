@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../design_system/alera_typography.dart';
-import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
