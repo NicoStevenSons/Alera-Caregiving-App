@@ -8,6 +8,7 @@ import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
+import '../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
@@ -914,39 +915,12 @@ class _EmptyActiveAlerts extends StatelessWidget {
   const _EmptyActiveAlerts();
 
   @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 26),
-      child: Center(
-        child: Column(
-          children: [
-            AleraSvgIcon(
-              assetPath:
-                  'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
-              width: 48,
-              height: 48,
-              semanticLabel: 'No active alerts',
-            ),
-            SizedBox(height: 10),
-            Text(
-              'No active alerts right now',
-              style: TextStyle(
-                color: Color(0xFFA69BD2),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'We’ll let you know if anything needs attention.',
-              style: TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const AleraEmptyState(
+    assetPath: 'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+    title: 'No active alerts right now',
+    message: 'We’ll let you know if anything needs attention.',
+    padding: EdgeInsets.symmetric(vertical: 26),
+  );
 }
 
 class _EmptyHistory extends StatelessWidget {

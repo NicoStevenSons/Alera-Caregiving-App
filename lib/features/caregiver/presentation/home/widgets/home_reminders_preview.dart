@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
+import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../domain/models/caregiver_reminder.dart';
@@ -48,9 +49,12 @@ class HomeRemindersPreview extends StatelessWidget {
               ],
             )
           else if (reminders.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No reminders today'),
+            const AleraEmptyState(
+              key: Key('home-reminders-empty'),
+              icon: Icons.alarm_off,
+              title: 'No reminders today',
+              message: 'Reminders you schedule will show up here.',
+              padding: EdgeInsets.symmetric(vertical: 18),
             )
           else
             for (int index = 0; index < reminders.length; index++) ...[

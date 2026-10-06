@@ -41,32 +41,50 @@ class PatientStatusChip extends StatelessWidget {
     return switch (status) {
       CareStatus.critical => AleraStatusDescriptor(
         tone: AleraStatusTone.critical,
-        glyph: const AleraStatusGlyph.material(Icons.priority_high),
+        glyph: const AleraStatusGlyph.material(
+          Icons.priority_high,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/critical.svg',
+        ),
         label: labels.patientStatusCritical,
       ),
       CareStatus.warning => AleraStatusDescriptor(
         tone: AleraStatusTone.warning,
-        glyph: const AleraStatusGlyph.material(Icons.warning),
+        glyph: const AleraStatusGlyph.material(
+          Icons.warning,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/warning.svg',
+        ),
         label: labels.patientStatusWarning,
       ),
       CareStatus.needsAttention => AleraStatusDescriptor(
         tone: AleraStatusTone.warning,
-        glyph: const AleraStatusGlyph.material(Icons.flag),
+        glyph: const AleraStatusGlyph.material(
+          Icons.flag,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/flag.svg',
+        ),
         label: labels.patientStatusNeedsAttention,
       ),
       CareStatus.stable => AleraStatusDescriptor(
         tone: AleraStatusTone.success,
-        glyph: const AleraStatusGlyph.material(Icons.check),
+        glyph: const AleraStatusGlyph.material(
+          Icons.check,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/stable.svg',
+        ),
         label: labels.patientStatusStable,
       ),
       CareStatus.noData => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.remove),
+        glyph: const AleraStatusGlyph.material(
+          Icons.remove,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/status/error.svg',
+        ),
         label: labels.patientStatusNoData,
       ),
       CareStatus.unknown => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.question_mark),
+        glyph: const AleraStatusGlyph.material(
+          Icons.question_mark,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/status/error.svg',
+        ),
         label: labels.patientStatusUnknown,
       ),
     };

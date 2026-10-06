@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'alera_status_descriptor.dart';
 import 'alera_status_icon.dart';
@@ -59,6 +60,26 @@ class AleraStatusBadge extends StatelessWidget {
         ringColor ?? Theme.of(context).colorScheme.surface;
     final String semanticLabel =
         descriptor.semanticLabel ?? labelOverride ?? descriptor.label;
+
+    final String? badgeAsset = descriptor.glyph.badgeAssetPath;
+    if (badgeAsset != null) {
+      // Full-colour Figma icon sitting on a ring-coloured disc, so the badge
+      // reads the same on any photo and no dark circle shows behind it.
+      return Semantics(
+        label: semanticLabel,
+        excludeSemantics: true,
+        child: Container(
+          width: diameter,
+          height: diameter,
+          padding: EdgeInsets.all(ringWidth),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: resolvedRingColor,
+          ),
+          child: SvgPicture.asset(badgeAsset, fit: BoxFit.contain),
+        ),
+      );
+    }
 
     return Semantics(
       label: semanticLabel,

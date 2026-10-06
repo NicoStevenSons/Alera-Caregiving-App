@@ -35,12 +35,18 @@ class AlertSeverityChip extends StatelessWidget {
     return switch (severity) {
       CaregiverAlertSeverity.critical => AleraStatusDescriptor(
         tone: AleraStatusTone.critical,
-        glyph: const AleraStatusGlyph.material(Icons.priority_high),
+        glyph: const AleraStatusGlyph.material(
+          Icons.priority_high,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/critical.svg',
+        ),
         label: labels.alertCritical,
       ),
       CaregiverAlertSeverity.warning => AleraStatusDescriptor(
         tone: AleraStatusTone.warning,
-        glyph: const AleraStatusGlyph.material(Icons.warning),
+        glyph: const AleraStatusGlyph.material(
+          Icons.warning,
+          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/warning.svg',
+        ),
         label: labels.alertWarning,
       ),
     };

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
+import '../../../design_system/widgets/alera_empty_state.dart';
 import '../../../design_system/widgets/alera_pill.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
@@ -451,33 +452,8 @@ class _MutedState extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 24),
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 48, color: const Color(0xFFCFC7E8)),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFA69BD2),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
-          ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      AleraEmptyState(icon: icon, title: title, message: message);
 }
 
 class _ActionRow extends StatelessWidget {
