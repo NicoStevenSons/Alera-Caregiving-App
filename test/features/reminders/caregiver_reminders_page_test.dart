@@ -1,5 +1,6 @@
 import 'package:alera/features/caregiver/domain/models/care_recipient.dart';
 import 'package:alera/features/caregiver/domain/models/health_snapshot.dart';
+import 'package:alera/design_system/widgets/alera_button.dart';
 import 'package:alera/features/reminders/data/reminder_api_data_source.dart';
 import 'package:alera/features/reminders/data/reminder_controller.dart';
 import 'package:alera/features/reminders/domain/reminder_models.dart';
@@ -69,7 +70,7 @@ void main() {
       find.byKey(const Key('reminder-action-note')),
       'Given at bedside',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Complete'));
+    await tester.tap(find.widgetWithText(AleraButton, 'Complete'));
     await tester.pumpAndSettle();
 
     expect(source.completedOnBehalf, ['a']);

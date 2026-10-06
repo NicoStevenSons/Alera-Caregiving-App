@@ -12,6 +12,7 @@ import '../domain/reminder_models.dart';
 import 'create_reminder_sheet.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
+import 'reminder_note_dialog.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
 import 'widgets/reminder_timeline.dart';
@@ -246,6 +247,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _complete(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
+      icon: Icons.check_circle_outline,
       title: 'Complete for patient',
       hint: 'Why are you completing this on their behalf?',
       actionLabel: 'Complete',
@@ -259,6 +261,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _snooze(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
+      icon: Icons.snooze,
       title: 'Snooze for patient',
       hint: 'Why does the patient need more time?',
       actionLabel: 'Snooze',
@@ -278,7 +281,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _cancel(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
-      title: 'Cancel occurrence',
+      icon: Icons.event_busy_outlined,
+      title: 'Cancel reminder',
       hint: 'Reason for cancellation',
       actionLabel: 'Cancel reminder',
     );
@@ -295,42 +299,68 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     final action = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      backgroundColor: AleraColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${occurrence.title} · ${reminderClock(occurrence.scheduledAt)}',
-                  style: AleraTypography.sectionTitle,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      occurrence.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.sectionTitle,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      reminderClock(occurrence.scheduledAt),
+                      style: AleraTypography.body.copyWith(fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            ListTile(
-              key: const Key('reminder-action-complete'),
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Mark complete'),
-              onTap: () => Navigator.pop(context, 'complete'),
-            ),
-            if (occurrence.snoozeAllowed)
-              ListTile(
-                key: const Key('reminder-action-snooze'),
-                leading: const Icon(Icons.snooze),
-                title: Text(
-                  'Snooze ${occurrence.defaultSnoozeMinutes} minutes',
+              AleraCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _ActionRow(
+                      key: const Key('reminder-action-complete'),
+                      icon: Icons.check_circle_outline,
+                      label: 'Mark complete',
+                      onTap: () => Navigator.pop(context, 'complete'),
+                    ),
+                    if (occurrence.snoozeAllowed) ...[
+                      const _ActionDivider(),
+                      _ActionRow(
+                        key: const Key('reminder-action-snooze'),
+                        icon: Icons.snooze,
+                        label: 'Snooze ${occurrence.defaultSnoozeMinutes} minutes',
+                        onTap: () => Navigator.pop(context, 'snooze'),
+                      ),
+                    ],
+                    const _ActionDivider(),
+                    _ActionRow(
+                      key: const Key('reminder-action-cancel'),
+                      icon: Icons.event_busy_outlined,
+                      label: 'Cancel this reminder',
+                      destructive: true,
+                      onTap: () => Navigator.pop(context, 'cancel'),
+                    ),
+                  ],
                 ),
-                onTap: () => Navigator.pop(context, 'snooze'),
               ),
-            ListTile(
-              key: const Key('reminder-action-cancel'),
-              leading: const Icon(Icons.event_busy_outlined),
-              title: const Text('Cancel this reminder'),
-              onTap: () => Navigator.pop(context, 'cancel'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -346,13 +376,16 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   }
 
   Future<String?> _askForNote({
+    required IconData icon,
     required String title,
     required String hint,
     required String actionLabel,
-  }) => showDialog<String>(
-    context: context,
-    builder: (context) =>
-        _ReminderNoteDialog(title: title, hint: hint, actionLabel: actionLabel),
+  }) => showReminderNoteDialog(
+    context,
+    icon: icon,
+    title: title,
+    hint: hint,
+    actionLabel: actionLabel,
   );
 
   Future<void> _showCreateReminder(String patientId) async {
@@ -369,62 +402,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       () => widget.controller.createTemplate(draft),
       success: 'Reminder created.',
     );
-  }
-}
-
-class _ReminderNoteDialog extends StatefulWidget {
-  const _ReminderNoteDialog({
-    required this.title,
-    required this.hint,
-    required this.actionLabel,
-  });
-
-  final String title;
-  final String hint;
-  final String actionLabel;
-
-  @override
-  State<_ReminderNoteDialog> createState() => _ReminderNoteDialogState();
-}
-
-class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
-    content: TextField(
-      key: const Key('reminder-action-note'),
-      controller: _controller,
-      autofocus: true,
-      maxLines: 3,
-      decoration: InputDecoration(labelText: widget.hint),
-      onSubmitted: (_) => _submit(),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Back'),
-      ),
-      FilledButton(onPressed: _submit, child: Text(widget.actionLabel)),
-    ],
-  );
-
-  void _submit() {
-    final note = _controller.text.trim();
-    if (note.isNotEmpty) Navigator.pop(context, note);
   }
 }
 
@@ -501,5 +478,70 @@ class _MutedState extends StatelessWidget {
         ],
       ),
     ),
+  );
+}
+
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? AleraColors.critical : AleraColors.primary;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.12),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: destructive
+                      ? AleraColors.critical
+                      : AleraColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionDivider extends StatelessWidget {
+  const _ActionDivider();
+
+  @override
+  Widget build(BuildContext context) => const Divider(
+    height: 1,
+    thickness: 1,
+    indent: 16,
+    endIndent: 16,
+    color: AleraColors.divider,
   );
 }
