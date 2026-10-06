@@ -21,12 +21,14 @@ void main() {
     expect(find.text('Maria Santos'), findsOneWidget);
 
     // Order: header, status, alerts, vitals, reminders, devices.
+    // 'Needs attention' can also be the status title, so anchor on the
+    // unique "View history" action.
     await tester.scrollUntilVisible(
-      find.text('Needs attention'),
+      find.text('View history'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Needs attention'), findsOneWidget);
+    expect(find.text('Needs attention'), findsWidgets);
     expect(find.text('View history'), findsOneWidget);
 
     await tester.scrollUntilVisible(

@@ -1,5 +1,4 @@
-import 'package:flutter/animation.dart';
-import 'package:flutter/material.dart' show AnimationStyle;
+import 'package:flutter/material.dart';
 
 /// Slide-up for every Alera pull-up drawer: a clear ease-out on the way in,
 /// a slightly quicker ease-in on the way out. Pass as `sheetAnimationStyle`
