@@ -32,4 +32,8 @@ abstract final class AleraColors {
   static const Color fieldFill = Color(0xFFF7F3FF);
   static const Color fieldBorder = Color(0xFFE0D6F5);
   static const Color fieldHint = Color(0xFFB5A6DB);
+
+  // Softer purple for "selected / active" chrome: the nav bar's current tab,
+  // the picked day on Reminders, and the new-reminder button.
+  static const Color selected = Color(0xFFAE8BEA);
 }
