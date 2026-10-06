@@ -117,7 +117,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
               key: const Key('create-reminder-button'),
               tooltip: 'New reminder',
               shape: const CircleBorder(),
-              backgroundColor: AleraColors.primary,
+              backgroundColor: AleraColors.selected,
               foregroundColor: Colors.white,
               onPressed: () => _showCreateReminder(patientId),
               child: const Icon(Icons.add, size: 28),

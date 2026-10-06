@@ -114,7 +114,7 @@ class _DayChip extends StatelessWidget {
       label: reminderLongDate(day),
       child: Material(
         key: ValueKey('reminder-day-${reminderApiDate(day)}'),
-        color: selected ? AleraColors.primary : Colors.white,
+        color: selected ? AleraColors.selected : Colors.white,
         elevation: selected ? 2 : 1,
         shadowColor: AleraColors.primary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),

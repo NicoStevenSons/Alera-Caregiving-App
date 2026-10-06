@@ -31,14 +31,14 @@ abstract final class AleraTheme {
         iconTheme: WidgetStateProperty.resolveWith((states) {
           return IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? AleraColors.primary
+                ? AleraColors.selected
                 : AleraColors.primarySoft,
           );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           return TextStyle(
             color: states.contains(WidgetState.selected)
-                ? AleraColors.primary
+                ? AleraColors.selected
                 : AleraColors.textSecondary.withValues(alpha: 0.45),
             fontSize: 12,
             fontWeight: FontWeight.w600,
