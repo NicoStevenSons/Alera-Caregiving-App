@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../design_system/alera_typography.dart';
+import '../../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
 
@@ -30,14 +32,20 @@ class PatientVitalSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return AleraCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Text('Vitals', style: AleraTypography.sectionTitle),
+        Row(
+          children: [
+            Expanded(
+              child: Text('Vitals', style: AleraTypography.sectionTitle),
+            ),
+            _ConnectionPill(devices: snapshot.devices),
+          ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _squarePair(
           _VitalCard(
             backgroundAsset: '$_bg/heart_rate_background.svg',
@@ -99,6 +107,7 @@ class PatientVitalSummarySection extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -118,6 +127,62 @@ class PatientVitalSummarySection extends StatelessWidget {
   }
 
   }
+
+/// "● Connected" pill reflecting the monitoring devices feeding these vitals.
+class _ConnectionPill extends StatelessWidget {
+  final List<MonitoringDevice> devices;
+
+  const _ConnectionPill({required this.devices});
+
+  @override
+  Widget build(BuildContext context) {
+    final MonitoringDevice? watch = devices.watch;
+    final bool anyConnected = devices.any((d) => d.isConnected);
+    final bool known = devices.any(
+      (d) => d.connectionStatus != MonitoringDeviceConnectionStatus.unknown,
+    );
+    final bool connected = watch?.isConnected ?? anyConnected;
+
+    final String label = connected
+        ? 'Connected'
+        : known
+        ? 'Disconnected'
+        : 'No device';
+    final Color color = connected
+        ? const Color(0xFF05A869)
+        : known
+        ? AleraColors.critical
+        : AleraColors.textSecondary;
+
+    return Container(
+      key: const Key('vitals-connection-pill'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _UnavailableVitalCard extends StatelessWidget {
   final String backgroundAsset;

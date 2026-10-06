@@ -60,8 +60,6 @@ class PatientDetailSummaryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              PatientStatusPill(status: careRecipient.status),
             ],
           ),
           const SizedBox(height: 12),
