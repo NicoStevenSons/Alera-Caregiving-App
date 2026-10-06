@@ -6,8 +6,8 @@ import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../../design_system/widgets/alera_section_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
-import '../../../../../reminders/presentation/reminder_category_style.dart';
-import '../../../../../reminders/presentation/reminder_formatters.dart';
+import '../../../../reminders/presentation/reminder_category_style.dart';
+import '../../../../reminders/presentation/reminder_formatters.dart';
 import '../../../domain/models/caregiver_reminder.dart';
 
 /// Today's reminders as quiet rows, with one button to add another.
