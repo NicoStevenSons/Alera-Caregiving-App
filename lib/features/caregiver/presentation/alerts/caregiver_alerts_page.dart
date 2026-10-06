@@ -4,6 +4,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/status/adapters/alert_severity_chip.dart';
 import '../../../../design_system/status/alera_badged_avatar.dart';
+import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
@@ -55,7 +56,6 @@ class CaregiverAlertsPage extends StatefulWidget {
 }
 
 class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final Set<AlertFilter> _filters = <AlertFilter>{};
   final Set<String> _expandedAlertIds = <String>{};
   String? _patientFilterId;
@@ -215,7 +215,47 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     });
   }
 
-  void _openFilterDrawer() => _scaffoldKey.currentState?.openEndDrawer();
+  /// Slides a full-height filter panel in from the right on the root
+  /// navigator so it also covers the bottom navigation bar.
+  void _openFilterDrawer() {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close filters',
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      transitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (dialogContext, _, _) => Align(
+        alignment: Alignment.centerRight,
+        child: StatefulBuilder(
+          builder: (context, setPanel) {
+            void refresh(VoidCallback change) {
+              change();
+              setPanel(() {});
+            }
+
+            return _AlertFilterDrawer(
+              careRecipients: widget.careRecipients,
+              selectedPatientId: _patientFilterId,
+              filters: _filters,
+              resultCount: _displayedAlerts.where(_matches).length,
+              onPatientSelected: (id) => refresh(() => _selectPatient(id)),
+              onFilterToggled: (filter) =>
+                  refresh(() => _toggleFilter(filter)),
+              onClear: () => refresh(_clearFilters),
+            );
+          },
+        ),
+      ),
+      transitionBuilder: (context, animation, _, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic)),
+        child: child,
+      ),
+    );
+  }
 
   void _showDetailMessage(BuildContext context) {
     showAleraSnackBar(context, 'Alert detail coming next', type: AleraSnackBarType.info);
@@ -260,7 +300,6 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         .toList();
 
     return Scaffold(
-      key: _scaffoldKey,
       appBar: CaregiverPageAppBar(
         title: 'Alerts',
         actions: [
@@ -270,14 +309,6 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
             icon: Icons.filter_list,
           ),
         ],
-      ),
-      endDrawer: _AlertFilterDrawer(
-        careRecipients: widget.careRecipients,
-        selectedPatientId: _patientFilterId,
-        filters: _filters,
-        onPatientSelected: _selectPatient,
-        onFilterToggled: _toggleFilter,
-        onClear: _clearFilters,
       ),
       body: Column(
         children: [
@@ -487,11 +518,13 @@ class _AlertFilterDrawer extends StatelessWidget {
   final ValueChanged<String?> onPatientSelected;
   final ValueChanged<AlertFilter> onFilterToggled;
   final VoidCallback onClear;
+  final int resultCount;
 
   const _AlertFilterDrawer({
     required this.careRecipients,
     required this.selectedPatientId,
     required this.filters,
+    required this.resultCount,
     required this.onPatientSelected,
     required this.onFilterToggled,
     required this.onClear,
@@ -510,12 +543,14 @@ class _AlertFilterDrawer extends StatelessWidget {
       onChanged: () => onFilterToggled(filter),
     );
 
-    return Drawer(
+    return Material(
       key: const Key('alerts-filter-drawer'),
-      width: MediaQuery.sizeOf(context).width * .88,
-      backgroundColor: AleraColors.background,
-      surfaceTintColor: Colors.transparent,
-      child: SafeArea(
+      color: AleraColors.background,
+      elevation: 16,
+      child: SizedBox(
+        width: MediaQuery.sizeOf(context).width * .88,
+        height: double.infinity,
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -551,6 +586,7 @@ class _AlertFilterDrawer extends StatelessWidget {
                       _PatientFilterOption(
                         key: const Key('alerts-patient-filter-all'),
                         label: 'All Patients',
+                        isAll: true,
                         selected: selectedPatientId == null,
                         onTap: () => onPatientSelected(null),
                       ),
@@ -596,7 +632,29 @@ class _AlertFilterDrawer extends StatelessWidget {
                 ],
               ),
             ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: AleraColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: AleraColors.primary.withValues(alpha: 0.10),
+                    blurRadius: 12,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
+              child: AleraButton(
+                key: const Key('alerts-filter-apply'),
+                label: resultCount == 1
+                    ? 'Show 1 alert'
+                    : 'Show $resultCount alerts',
+                height: 48,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
           ],
+        ),
         ),
       ),
     );
@@ -659,30 +717,105 @@ class _PatientFilterOption extends StatelessWidget {
   final String label;
   final String? photoUrl;
   final bool selected;
+  final bool isAll;
   final VoidCallback onTap;
 
   const _PatientFilterOption({
     super.key,
     required this.label,
     this.photoUrl,
+    this.isAll = false,
     required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
-      title: Text(label, style: _filterLabelStyle),
-      trailing: selected
-          ? const Icon(
-              Icons.check_circle,
-              color: AleraColors.selected,
-              semanticLabel: 'Selected',
-            )
-          : null,
+    return _SelectableRow(
+      selected: selected,
       onTap: onTap,
+      leading: isAll
+          ? Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: AleraColors.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.groups,
+                size: 20,
+                color: AleraColors.primary,
+              ),
+            )
+          : AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
+      label: label,
+    );
+  }
+}
+
+/// Shared row for every filter option: leading visual, label and the same
+/// right-hand selection mark, with a faint tint when selected.
+class _SelectableRow extends StatelessWidget {
+  final Widget leading;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SelectableRow({
+    required this.leading,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          color: selected
+              ? AleraColors.selected.withValues(alpha: 0.10)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              leading,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: _filterLabelStyle.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              selected
+                  ? const Icon(
+                      Icons.check_circle,
+                      size: 24,
+                      color: AleraColors.selected,
+                      semanticLabel: 'Selected',
+                    )
+                  : Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AleraColors.fieldBorder,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -721,23 +854,11 @@ class _DrawerFilterOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CheckboxListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      controlAffinity: ListTileControlAffinity.leading,
-      activeColor: AleraColors.selected,
-      checkboxShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-      ),
-      side: const BorderSide(color: AleraColors.fieldBorder, width: 1.5),
-      value: selected,
-      title: Row(
-        children: [
-          AleraSvgIcon(assetPath: assetPath, width: 32, height: 32),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label, style: _filterLabelStyle)),
-        ],
-      ),
-      onChanged: (_) => onChanged(),
+    return _SelectableRow(
+      selected: selected,
+      onTap: onChanged,
+      leading: AleraSvgIcon(assetPath: assetPath, width: 36, height: 36),
+      label: label,
     );
   }
 }
