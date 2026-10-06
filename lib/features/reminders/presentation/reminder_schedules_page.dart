@@ -71,7 +71,7 @@ class ReminderSchedulesPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(
-                          Icons.event_repeat_outlined,
+                          Icons.event_repeat,
                           size: 48,
                           color: Color(0xFFCFC7E8),
                         ),
@@ -216,7 +216,7 @@ class _ScheduleCard extends StatelessWidget {
               tooltip: 'Archive schedule',
               color: AleraColors.textSecondary,
               onPressed: onArchive,
-              icon: const Icon(Icons.archive_outlined),
+              icon: const Icon(Icons.archive),
             ),
         ],
       ),

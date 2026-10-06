@@ -788,7 +788,7 @@ class _CaregiverShellState extends State<CaregiverShell>
         if (controller.state == CaregiverPatientListState.empty) {
           return const _HomePatientState(
             key: Key('home-patient-empty'),
-            icon: Icons.person_search_outlined,
+            icon: Icons.person_search,
             message: 'No assigned patients yet.',
           );
         }
@@ -799,7 +799,7 @@ class _CaregiverShellState extends State<CaregiverShell>
             key: Key(
               forbidden ? 'home-patient-forbidden' : 'home-patient-error',
             ),
-            icon: forbidden ? Icons.lock_outline : Icons.cloud_off,
+            icon: forbidden ? Icons.lock : Icons.cloud_off,
             message: controller.errorMessage ?? 'Unable to load patients.',
             actionLabel: forbidden ? null : 'Retry',
             onAction: forbidden ? null : controller.load,
@@ -808,7 +808,7 @@ class _CaregiverShellState extends State<CaregiverShell>
         final patients = controller.visiblePatients;
         if (patients.isEmpty) {
           return const _HomePatientState(
-            icon: Icons.person_search_outlined,
+            icon: Icons.person_search,
             message: 'No assigned patients yet.',
           );
         }
@@ -915,7 +915,6 @@ class _CaregiverShellState extends State<CaregiverShell>
 
     showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(
@@ -928,7 +927,7 @@ class _CaregiverShellState extends State<CaregiverShell>
           ),
           child: ListView(
             shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 12),

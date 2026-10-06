@@ -24,7 +24,6 @@ Future<ReminderTemplateDraft?> showCreateReminderSheet(
   context: context,
   isScrollControlled: true,
   useSafeArea: true,
-  showDragHandle: true,
   backgroundColor: AleraColors.background,
   shape: const RoundedRectangleBorder(
     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -201,7 +200,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                             ),
                             const SizedBox(width: 8),
                             const Icon(
-                              Icons.calendar_today_outlined,
+                              Icons.calendar_month,
                               size: 16,
                               color: AleraColors.primary,
                             ),
@@ -215,6 +214,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                         value: _category,
                         values: ReminderCategory.values,
                         text: (v) => reminderTitleCase(v.apiValue),
+                        leading: (v) => _CategoryIcon(v),
                         onChanged: (v) => setState(() => _category = v),
                       ),
                       const _RowDivider(),
@@ -338,6 +338,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     required T value,
     required List<T> values,
     required String Function(T) text,
+    Widget Function(T)? leading,
     required ValueChanged<T> onChanged,
   }) => _SettingRow(
     label: label,
@@ -355,9 +356,34 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(12),
         style: _valueStyle,
+        selectedItemBuilder: leading == null
+            ? null
+            : (context) => [
+                for (final v in values)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      leading(v),
+                      const SizedBox(width: 8),
+                      Text(text(v), style: _valueStyle),
+                    ],
+                  ),
+              ],
         items: [
           for (final v in values)
-            DropdownMenuItem(value: v, child: Text(text(v))),
+            DropdownMenuItem(
+              value: v,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (leading != null) ...[
+                    leading(v),
+                    const SizedBox(width: 12),
+                  ],
+                  Text(text(v)),
+                ],
+              ),
+            ),
         ],
         onChanged: (v) {
           if (v != null) onChanged(v);
@@ -477,4 +503,25 @@ class _DayDot extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Rounded tinted tile holding a category's filled icon.
+class _CategoryIcon extends StatelessWidget {
+  final ReminderCategory category;
+
+  const _CategoryIcon(this.category);
+
+  @override
+  Widget build(BuildContext context) {
+    final color = reminderCategoryColor(category);
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(reminderCategoryIcon(category), size: 17, color: color),
+    );
+  }
 }

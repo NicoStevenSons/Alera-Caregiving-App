@@ -103,7 +103,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           caregiverPageAction(
             tooltip: 'Manage schedules',
             onPressed: patientId == null ? () {} : _openSchedules,
-            icon: Icons.event_repeat_outlined,
+            icon: Icons.event_repeat,
           ),
           caregiverPageAction(
             tooltip: 'Refresh reminders',
@@ -125,7 +125,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             ),
       body: widget.patients.isEmpty
           ? const _MutedState(
-              icon: Icons.person_search_outlined,
+              icon: Icons.person_search,
               title: 'No patient selected',
               message: 'Add or connect a patient before creating reminders.',
             )
@@ -220,7 +220,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     if (dayItems.isEmpty) {
       return const _MutedState(
         key: Key('reminder-occurrences-empty'),
-        icon: Icons.alarm_off_outlined,
+        icon: Icons.alarm_off,
         title: 'No reminders for this day',
         message: 'Tap + to add one.',
       );
@@ -247,7 +247,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _complete(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
-      icon: Icons.check_circle_outline,
+      icon: Icons.check_circle,
       title: 'Complete for patient',
       hint: 'Why are you completing this on their behalf?',
       actionLabel: 'Complete',
@@ -281,7 +281,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _cancel(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
-      icon: Icons.event_busy_outlined,
+      icon: Icons.event_busy,
       title: 'Cancel reminder',
       hint: 'Reason for cancellation',
       actionLabel: 'Cancel reminder',
@@ -298,14 +298,13 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   Future<void> _openActions(ReminderOccurrence occurrence) async {
     final action = await showModalBottomSheet<String>(
       context: context,
-      showDragHandle: true,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +334,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
                   children: [
                     _ActionRow(
                       key: const Key('reminder-action-complete'),
-                      icon: Icons.check_circle_outline,
+                      icon: Icons.check_circle,
                       label: 'Mark complete',
                       onTap: () => Navigator.pop(context, 'complete'),
                     ),
@@ -351,7 +350,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
                     const _ActionDivider(),
                     _ActionRow(
                       key: const Key('reminder-action-cancel'),
-                      icon: Icons.event_busy_outlined,
+                      icon: Icons.event_busy,
                       label: 'Cancel this reminder',
                       destructive: true,
                       onTap: () => Navigator.pop(context, 'cancel'),
@@ -429,7 +428,7 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) => AleraCard(
     child: Row(
       children: [
-        const Icon(Icons.error_outline, color: AleraColors.critical),
+        const Icon(Icons.error, color: AleraColors.critical),
         const SizedBox(width: 12),
         Expanded(child: Text(message, style: AleraTypography.body)),
         TextButton(onPressed: onRetry, child: const Text('Retry')),

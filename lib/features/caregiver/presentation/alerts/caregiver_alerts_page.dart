@@ -511,8 +511,15 @@ class _AlertFilterDrawer extends StatelessWidget {
     final patients = [...careRecipients]
       ..sort((a, b) => a.name.compareTo(b.name));
 
-    Widget option(String label, AlertFilter filter) => _DrawerFilterOption(
+    Widget option(
+      String label,
+      AlertFilter filter,
+      IconData icon,
+      Color color,
+    ) => _DrawerFilterOption(
       label: label,
+      icon: icon,
+      color: color,
       selected: filters.contains(filter),
       onChanged: () => onFilterToggled(filter),
     );
@@ -577,27 +584,27 @@ class _AlertFilterDrawer extends StatelessWidget {
                   const _FilterSectionTitle('Severity'),
                   _FilterCard(
                     children: [
-                      option('Warning', AlertFilter.warning),
-                      option('Critical', AlertFilter.critical),
+                      option('Warning', AlertFilter.warning, Icons.warning, AleraColors.warning),
+                      option('Critical', AlertFilter.critical, Icons.error, AleraColors.critical),
                     ],
                   ),
                   const SizedBox(height: 16),
                   const _FilterSectionTitle('Metric'),
                   _FilterCard(
                     children: [
-                      option('Heart Rate', AlertFilter.heartRate),
-                      option('SpO2', AlertFilter.spo2),
-                      option('Watch Battery', AlertFilter.watchBattery),
+                      option('Heart Rate', AlertFilter.heartRate, Icons.favorite, AleraColors.critical),
+                      option('SpO2', AlertFilter.spo2, Icons.air, AleraColors.information),
+                      option('Watch Battery', AlertFilter.watchBattery, Icons.battery_5_bar, AleraColors.success),
                     ],
                   ),
                   const SizedBox(height: 16),
                   const _FilterSectionTitle('Status'),
                   _FilterCard(
                     children: [
-                      option('Unacknowledged', AlertFilter.unacknowledged),
-                      option('Acknowledged', AlertFilter.acknowledged),
-                      option('Resolved', AlertFilter.resolved),
-                      option('False Alarm', AlertFilter.falseAlarm),
+                      option('Unacknowledged', AlertFilter.unacknowledged, Icons.notifications_active, AleraColors.warning),
+                      option('Acknowledged', AlertFilter.acknowledged, Icons.done_all, AleraColors.information),
+                      option('Resolved', AlertFilter.resolved, Icons.check_circle, AleraColors.success),
+                      option('False Alarm', AlertFilter.falseAlarm, Icons.notifications_off, AleraColors.textSecondary),
                     ],
                   ),
                 ],
@@ -696,11 +703,15 @@ class _PatientFilterOption extends StatelessWidget {
 
 class _DrawerFilterOption extends StatelessWidget {
   final String label;
+  final IconData icon;
+  final Color color;
   final bool selected;
   final VoidCallback onChanged;
 
   const _DrawerFilterOption({
     required this.label,
+    required this.icon,
+    required this.color,
     required this.selected,
     required this.onChanged,
   });
@@ -716,7 +727,21 @@ class _DrawerFilterOption extends StatelessWidget {
       ),
       side: const BorderSide(color: AleraColors.fieldBorder, width: 1.5),
       value: selected,
-      title: Text(label, style: _filterLabelStyle),
+      title: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: _filterLabelStyle)),
+        ],
+      ),
       onChanged: (_) => onChanged(),
     );
   }

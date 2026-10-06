@@ -41,12 +41,12 @@ class PatientStatusChip extends StatelessWidget {
     return switch (status) {
       CareStatus.critical => AleraStatusDescriptor(
         tone: AleraStatusTone.critical,
-        glyph: const AleraStatusGlyph.material(Icons.error),
+        glyph: const AleraStatusGlyph.material(Icons.priority_high),
         label: labels.patientStatusCritical,
       ),
       CareStatus.warning => AleraStatusDescriptor(
         tone: AleraStatusTone.warning,
-        glyph: const AleraStatusGlyph.material(Icons.warning_amber),
+        glyph: const AleraStatusGlyph.material(Icons.warning),
         label: labels.patientStatusWarning,
       ),
       CareStatus.needsAttention => AleraStatusDescriptor(
@@ -56,17 +56,17 @@ class PatientStatusChip extends StatelessWidget {
       ),
       CareStatus.stable => AleraStatusDescriptor(
         tone: AleraStatusTone.success,
-        glyph: const AleraStatusGlyph.material(Icons.check_circle_outline),
+        glyph: const AleraStatusGlyph.material(Icons.check),
         label: labels.patientStatusStable,
       ),
       CareStatus.noData => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.remove_circle_outline),
+        glyph: const AleraStatusGlyph.material(Icons.remove),
         label: labels.patientStatusNoData,
       ),
       CareStatus.unknown => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.help_outline),
+        glyph: const AleraStatusGlyph.material(Icons.question_mark),
         label: labels.patientStatusUnknown,
       ),
     };
