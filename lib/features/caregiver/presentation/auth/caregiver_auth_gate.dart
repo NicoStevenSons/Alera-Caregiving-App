@@ -602,7 +602,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
         tooltip: 'Back',
         onPressed: _submitting ? null : _back,
         icon: const Icon(Icons.chevron_left, size: 28),
-        color: AleraColors.mutedIcon,
+        color: AleraColors.selected,
       ),
     );
   }

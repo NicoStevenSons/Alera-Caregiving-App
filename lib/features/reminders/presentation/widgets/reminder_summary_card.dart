@@ -18,12 +18,16 @@ class ReminderSummaryCard extends StatelessWidget {
     required this.isToday,
     required this.date,
     this.onToday,
+    this.onPickDate,
     this.showSummary = true,
     this.now,
   });
 
   /// The selected day, shown as the card's title.
   final DateTime date;
+
+  /// Opens the calendar to jump to any date.
+  final VoidCallback? onPickDate;
 
   /// Jumps back to today; the Today pill is inert when null / already today.
   final VoidCallback? onToday;
@@ -77,10 +81,42 @@ class ReminderSummaryCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  reminderLongDate(date),
-                  key: const Key('reminder-selected-date'),
-                  style: AleraTypography.pageTitle.copyWith(fontSize: 17),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: InkWell(
+                    key: const Key('reminder-pick-date'),
+                    onTap: onPickDate,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_month,
+                            size: 20,
+                            color: AleraColors.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              reminderLongDate(date),
+                              key: const Key('reminder-selected-date'),
+                              overflow: TextOverflow.ellipsis,
+                              style: AleraTypography.pageTitle.copyWith(
+                                fontSize: 17,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 22,
+                            color: AleraColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               AleraPill(

@@ -38,7 +38,7 @@ IconButton caregiverPageAction({
   return IconButton(
     key: key,
     tooltip: tooltip,
-    color: AleraColors.primarySoft,
+    color: AleraColors.selected,
     iconSize: 24,
     onPressed: onPressed,
     icon: Icon(icon),

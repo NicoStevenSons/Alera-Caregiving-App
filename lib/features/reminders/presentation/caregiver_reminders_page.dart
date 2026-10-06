@@ -104,12 +104,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         title: 'Reminders',
         actions: [
           caregiverPageAction(
-            key: const Key('reminder-pick-date'),
-            tooltip: 'Pick a date',
-            onPressed: patientId == null ? () {} : _pickDate,
-            icon: Icons.calendar_month,
-          ),
-          caregiverPageAction(
             tooltip: 'Manage schedules',
             onPressed: patientId == null ? () {} : _openSchedules,
             icon: Icons.event_repeat,
@@ -189,6 +183,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
               isToday: isToday,
               date: _selectedDay,
               onToday: () => setState(() => _selectedDay = _today),
+              onPickDate: _pickDate,
               showSummary: !(controller.loading &&
                   controller.occurrences.isEmpty),
             ),

@@ -305,7 +305,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
           tooltip: 'Back',
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: AleraColors.mutedIcon,
+          color: AleraColors.selected,
         ),
       ),
       body: SafeArea(
