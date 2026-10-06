@@ -326,7 +326,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                   label: 'HR',
                   filter: AlertFilter.heartRate,
                   assetPath:
-                      'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
+                      'alera-figma-assets/assets/icons/vitals/heart_rate.svg',
                   selected: _filters.contains(AlertFilter.heartRate),
                   onTap: _toggleFilter,
                 ),
@@ -334,7 +334,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                   label: 'SpO2',
                   filter: AlertFilter.spo2,
                   assetPath:
-                      'alera-figma-assets/assets/icons/mini_status/spo2.svg',
+                      'alera-figma-assets/assets/icons/vitals/spo2.svg',
                   selected: _filters.contains(AlertFilter.spo2),
                   onTap: _toggleFilter,
                 ),
@@ -699,19 +699,19 @@ class _PatientFilterOption extends StatelessWidget {
 // Filter icons come from alera-figma-assets. Filters with no matching Figma
 // icon use status/error.svg as a placeholder (see PLACEHOLDER_ICONS.md).
 const String _filterIconWarning =
-    'alera-figma-assets/assets/icons/mini_status/warning.svg';
+    'alera-figma-assets/assets/icons/status/warning.svg';
 const String _filterIconCritical =
-    'alera-figma-assets/assets/icons/mini_status/critical.svg';
+    'alera-figma-assets/assets/icons/status/critical.svg';
 const String _filterIconHeartRate =
-    'alera-figma-assets/assets/icons/mini_status/heart_rate.svg';
+    'alera-figma-assets/assets/icons/vitals/heart_rate.svg';
 const String _filterIconSpo2 =
-    'alera-figma-assets/assets/icons/mini_status/spo2.svg';
+    'alera-figma-assets/assets/icons/vitals/spo2.svg';
 const String _filterIconBattery =
-    'alera-figma-assets/assets/icons/mini_status/battery.svg';
+    'alera-figma-assets/assets/icons/status/error.svg';
 const String _filterIconUnacknowledged =
     'alera-figma-assets/assets/icons/status/alert.svg';
 const String _filterIconResolved =
-    'alera-figma-assets/assets/icons/mini_status/stable.svg';
+    'alera-figma-assets/assets/icons/status/stable.svg';
 const String _filterIconPlaceholder =
     'alera-figma-assets/assets/icons/status/error.svg';
 

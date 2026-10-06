@@ -21,8 +21,8 @@ create-reminder category dropdown, the reminders timeline and Manage schedules.
 | Other        | `assets/icons/reminders/other.svg`                  |
 
 Categories that already use a matching Figma icon (replace only if you want a
-dedicated one): Health Check (`mini_status/heart_rate.svg`), Mobility
-(`mini_status/activity.svg`), Device Task (`devices/watch-monitoring.svg`),
+dedicated one): Health Check (`vitals/heart_rate.svg`), Mobility
+(`vitals/activity.svg`), Device Task (`devices/watch-monitoring.svg`),
 Appointment (`status/reminder.svg`).
 
 ## Filter alerts drawer
@@ -33,6 +33,7 @@ by:
 
 | Filter       | Where                                   |
 | ------------ | --------------------------------------- |
+| Watch Battery | `_filterIconBattery` (own constant)    |
 | Acknowledged | `option('Acknowledged', ...)`           |
 | False Alarm  | `option('False Alarm', ...)`            |
 
@@ -40,9 +41,11 @@ To fix, add a new constant (e.g. `_filterIconAcknowledged`) pointing at the new
 SVG and use it in that `option(...)` call. Once neither filter uses
 `_filterIconPlaceholder`, delete it.
 
-Filters that already use a matching Figma icon: Warning, Critical, Heart Rate,
-SpO2, Watch Battery (`mini_status/*`), Unacknowledged (`status/alert.svg`),
-Resolved (`mini_status/stable.svg`).
+Filters that already use a matching Figma icon: Warning, Critical (`status/*`),
+Heart Rate, SpO2 (`vitals/*`), Unacknowledged (`status/alert.svg`), Resolved
+(`status/stable.svg`). Watch Battery has no tile in `status/` or `vitals/`, so it
+uses the placeholder via its own `_filterIconBattery` constant (a battery SVG
+exists at `device_status/batterylvl-high.svg` if you'd rather reuse it).
 
 ## Not covered
 
