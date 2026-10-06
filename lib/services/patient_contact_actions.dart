@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../features/caregiver/domain/models/care_recipient.dart';
+import '../design_system/widgets/alera_snackbar.dart';
 
 void showPatientContactFeedback(BuildContext context, String message) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+  showAleraSnackBar(context, message, type: AleraSnackBarType.info);
 }
 
 Future<void> openPatientContactApp(

@@ -18,6 +18,7 @@ import '../../data/alerts/caregiver_alert_controller.dart';
 import '../widgets/caregiver_alert_card.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../widgets/caregiver_page_app_bar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 enum AlertFilter {
   warning,
@@ -217,14 +218,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
   void _openFilterDrawer() => _scaffoldKey.currentState?.openEndDrawer();
 
   void _showDetailMessage(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Alert detail coming next'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    showAleraSnackBar(context, 'Alert detail coming next', type: AleraSnackBarType.info);
   }
 
   void _handleAlertTap(BuildContext context, CaregiverAlert alert) {
@@ -248,11 +242,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
       await _controller.acknowledge(alert.id);
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('We couldn’t update this alert. Please try again.'),
-          ),
-        );
+        showAleraSnackBar(context, 'We couldn’t update this alert. Please try again.', type: AleraSnackBarType.error);
       }
     }
   }

@@ -24,6 +24,20 @@ abstract final class AleraTheme {
         ),
       scaffoldBackgroundColor: AleraColors.background,
       dividerColor: AleraColors.divider,
+      // Fallback for any plain SnackBar: same floating white card look as
+      // showAleraSnackBar.
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AleraColors.surface,
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentTextStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AleraColors.textPrimary,
+        ),
+        actionTextColor: AleraColors.primary,
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AleraColors.surface,
         indicatorColor: Colors.transparent,

@@ -8,6 +8,7 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
+import '../../../../../design_system/widgets/alera_snackbar.dart';
 
 /// Payload encoded in the patient access QR code. The patient app decodes
 /// this (see patient_access.dart), so the shape must stay `version: 2`.
@@ -77,14 +78,7 @@ class PatientAccessCodeContent extends StatelessWidget {
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: accessCode));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Access code copied'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    showAleraSnackBar(context, 'Access code copied', type: AleraSnackBarType.success);
   }
 
   @override

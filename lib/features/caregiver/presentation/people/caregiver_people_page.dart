@@ -9,6 +9,7 @@ import '../../domain/models/care_recipient.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
 import 'widgets/care_recipient_card.dart';
 import '../widgets/caregiver_page_app_bar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverPeoplePage extends StatelessWidget {
   final List<CareRecipient> careRecipients;
@@ -25,9 +26,7 @@ class CaregiverPeoplePage extends StatelessWidget {
   });
 
   void _showMockFeedback(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showAleraSnackBar(context, message, type: AleraSnackBarType.info);
   }
 
   @override

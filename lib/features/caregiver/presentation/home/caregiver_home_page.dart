@@ -13,6 +13,7 @@ import 'widgets/home_loading_skeleton.dart';
 import 'widgets/home_insights_card.dart';
 import 'widgets/home_patient_header.dart';
 import 'widgets/home_reminders_preview.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverHomePage extends StatelessWidget {
   final CareRecipient careRecipient;
@@ -53,9 +54,7 @@ class CaregiverHomePage extends StatelessWidget {
   });
 
   void _mock(BuildContext context, String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    showAleraSnackBar(context, '$action is mock-only for now.', type: AleraSnackBarType.info);
   }
 
   @override

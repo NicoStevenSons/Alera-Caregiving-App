@@ -21,6 +21,7 @@ import 'widgets/patient_reminders_section.dart';
 import 'widgets/monitoring_devices_card.dart';
 import 'widgets/patient_summary_card.dart';
 import 'widgets/patient_vital_summary_section.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverPatientDetailPage extends StatelessWidget {
   final CareRecipient careRecipient;
@@ -49,9 +50,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   });
 
   void _showFeedback(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showAleraSnackBar(context, message, type: AleraSnackBarType.info);
   }
 
   Future<void> _openContactApp(

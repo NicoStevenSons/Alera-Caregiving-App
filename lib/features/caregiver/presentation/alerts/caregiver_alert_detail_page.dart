@@ -14,6 +14,7 @@ import '../../data/alerts/caregiver_alert_controller.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverAlertDetailPage extends StatefulWidget {
   final CaregiverAlert alert;
@@ -270,9 +271,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
   }
 
   void _mock(String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    showAleraSnackBar(context, '$action is mock-only for now.', type: AleraSnackBarType.info);
   }
 
   @override

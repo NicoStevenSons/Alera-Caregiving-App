@@ -47,6 +47,7 @@ import '../reminders/domain/reminder_models.dart';
 import 'domain/models/caregiver_reminder.dart';
 import '../reminders/presentation/caregiver_reminders_page.dart';
 import '../startup/presentation/alera_startup_screen.dart';
+import '../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -443,9 +444,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   void _notificationUnavailable() {
     Navigator.of(context).popUntil((route) => route.isFirst);
     _selectDestination(2);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('This alert is no longer available.')),
-    );
+    showAleraSnackBar(context, 'This alert is no longer available.', type: AleraSnackBarType.error);
   }
 
   void _openCareRecipient(BuildContext context, CareRecipient careRecipient) {
@@ -721,11 +720,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       await _alertController.acknowledge(alert.id);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('We couldn’t update this alert. Please try again.'),
-          ),
-        );
+        showAleraSnackBar(context, 'We couldn’t update this alert. Please try again.', type: AleraSnackBarType.error);
       }
     }
   }
@@ -883,25 +878,13 @@ class _CaregiverShellState extends State<CaregiverShell>
     try {
       await source.sendNudge(patient.id, type);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('${type.label} sent to ${patient.name}.')),
-        );
+      showAleraSnackBar(context, '${type.label} sent to ${patient.name}.', type: AleraSnackBarType.success);
     } on CaregiverNudgeFailure catch (failure) {
       if (!mounted || failure.statusCode == 401) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(failure.message)));
+      showAleraSnackBar(context, failure.message, type: AleraSnackBarType.error);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Unable to send the reminder. Please try again.'),
-          ),
-        );
+      showAleraSnackBar(context, 'Unable to send the reminder. Please try again.', type: AleraSnackBarType.error);
     } finally {
       if (mounted) setState(() => _sendingNudge = false);
     }
@@ -1017,24 +1000,20 @@ class _CaregiverShellState extends State<CaregiverShell>
     final isSleep = metric == 'Sleep';
 
     if (trendMetric == null && !isActivity && !isSleep) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('$metric history is not available yet.')),
-        );
+      showAleraSnackBar(
+        context,
+        '$metric history is not available yet.',
+        type: AleraSnackBarType.info,
+      );
       return;
     }
 
     if (!patient.backendBacked) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Trend history is only available for connected patients.',
-            ),
-          ),
-        );
+      showAleraSnackBar(
+        context,
+        'Trend history is only available for connected patients.',
+        type: AleraSnackBarType.info,
+      );
       return;
     }
 

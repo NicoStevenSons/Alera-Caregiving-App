@@ -1,6 +1,7 @@
 import '../../../reminders/data/reminder_api_data_source.dart';
 import '../../data/patients/caregiver_patient_selection_store.dart';
 import 'package:flutter/material.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -248,13 +249,12 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
       await _session.logout();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            action: SnackBarAction(label: 'Retry', onPressed: _signOut),
-            content: const Text(
-              'Unable to clear saved sign-in. Please try signing out again.',
-            ),
-          ),
+        showAleraSnackBar(
+          context,
+          'Unable to clear saved sign-in. Please try signing out again.',
+          type: AleraSnackBarType.error,
+          actionLabel: 'Retry',
+          onAction: _signOut,
         );
       }
     }
