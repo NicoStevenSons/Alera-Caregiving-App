@@ -152,9 +152,9 @@ void main() {
     expect(find.text('Help request history is coming soon.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 6));
 
-    await tester.tap(find.byKey(const Key('caregiver-sign-out')));
+    await tester.ensureVisible(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sign out').last);
+    await tester.tap(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
 
     expect(signedOut, isTrue);

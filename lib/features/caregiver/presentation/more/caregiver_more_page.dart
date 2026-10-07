@@ -4,7 +4,6 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
-import '../../../../design_system/widgets/alera_dialog.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
 import '../../../notifications/presentation/reminder_sound_page.dart';
 import '../../data/api/caregiver_help_request_api_data_source.dart';
@@ -33,18 +32,6 @@ class CaregiverMorePage extends StatelessWidget {
       '$label is coming soon.',
       type: AleraSnackBarType.info,
     );
-  }
-
-  Future<void> _confirmSignOut(BuildContext context) async {
-    final bool confirmed = await showAleraConfirmDialog(
-      context,
-      icon: Icons.logout,
-      title: 'Sign out?',
-      message: 'You will need to sign in again to see your patients.',
-      confirmLabel: 'Sign out',
-      destructive: true,
-    );
-    if (confirmed) onSignOut?.call();
   }
 
   @override
@@ -140,7 +127,7 @@ class CaregiverMorePage extends StatelessWidget {
                   label: 'Sign out',
                   color: AleraColors.critical,
                   chevron: false,
-                  onTap: () => _confirmSignOut(context),
+                  onTap: onSignOut!,
                 ),
               ],
             ),

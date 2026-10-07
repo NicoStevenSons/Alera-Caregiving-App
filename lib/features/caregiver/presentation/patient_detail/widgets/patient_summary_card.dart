@@ -25,8 +25,10 @@ class PatientDetailSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final snapshot = careRecipient.healthSnapshot;
     final subtitle = snapshot.hasLastCheckIn
-        ? '${careRecipient.relationshipLabel} · Last check-in ${_time(snapshot.lastCheckIn)}'
-        : '${careRecipient.relationshipLabel} · No check-in yet';
+        ? 'Last check-in ${_time(snapshot.lastCheckIn)}'
+        : 'No check-in yet';
+    final relationship =
+        careRecipient.relationship ?? careRecipient.relationshipLabel;
 
     return AleraCard(
       padding: const EdgeInsets.all(14),
@@ -61,9 +63,37 @@ class PatientDetailSummaryCard extends StatelessWidget {
                       style: AleraTypography.body.copyWith(fontSize: 12),
                     ),
                     const SizedBox(height: 8),
-                    PatientConnectionPill(
-                      key: const Key('patient-connection-pill'),
-                      devices: snapshot.devices,
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        DecoratedBox(
+                          key: const Key('patient-relationship-pill'),
+                          decoration: BoxDecoration(
+                            color: AleraColors.primarySoft,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            child: Text(
+                              relationship,
+                              style: const TextStyle(
+                                color: AleraColors.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        PatientConnectionPill(
+                          key: const Key('patient-connection-pill'),
+                          devices: snapshot.devices,
+                        ),
+                      ],
                     ),
                   ],
                 ),
