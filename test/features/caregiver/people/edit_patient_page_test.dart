@@ -73,7 +73,13 @@ void main() {
     expect(text(tester, 'edit-conditions-field'), 'Hypertension');
     expect(text(tester, 'edit-medications-field'), 'Medication A');
     expect(text(tester, 'edit-notes-field'), 'Morning checks');
-    expect(text(tester, 'relationship-field'), 'Mother');
+    expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
+          .initialValue,
+      'Mother',
+    );
+    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
     expect(
       tester
           .widget<TextField>(find.byKey(const Key('edit-birth-day-field')))
@@ -129,8 +135,9 @@ void main() {
       find.byKey(const Key('edit-name-field')),
       '  Maria S.  ',
     );
+    await pickRelationship(tester, 'Other…');
     await tester.enterText(
-      find.byKey(const Key('relationship-field')),
+      find.byKey(const Key('relationship-other-field')),
       '  Grand   mother ',
     );
     await tester.tap(find.byKey(const Key('edit-patient-save')));
@@ -145,16 +152,27 @@ void main() {
     expect(find.byKey(const Key('edit-patient-form')), findsNothing);
   });
 
-  testWidgets('relationship suggestions fill the field; custom text works', (
+  testWidgets('picking a relationship from the dropdown saves it', (
     tester,
   ) async {
     await pumpPage(tester);
-    await tester.tap(find.byKey(const Key('relationship-suggestion-Client')));
-    await tester.pump();
-    expect(text(tester, 'relationship-field'), 'Client');
+    // One compact control: no second text box until "Other…" is chosen.
+    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
 
+    await pickRelationship(tester, 'Client');
+    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
+    await tester.tap(find.byKey(const Key('edit-patient-save')));
+    await tester.pumpAndSettle();
+    expect(edit.requests.single.relationshipLabel, 'Client');
+  });
+
+  testWidgets('Other… reveals a text box for a custom relationship', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+    await pickRelationship(tester, 'Other…');
     await tester.enterText(
-      find.byKey(const Key('relationship-field')),
+      find.byKey(const Key('relationship-other-field')),
       'Neighbour',
     );
     await tester.tap(find.byKey(const Key('edit-patient-save')));
@@ -162,21 +180,35 @@ void main() {
     expect(edit.requests.single.relationshipLabel, 'Neighbour');
   });
 
-  testWidgets('a blank relationship clears it', (tester) async {
+  testWidgets('a saved custom relationship opens in the text box', (
+    tester,
+  ) async {
+    await pumpPage(tester, relationship: 'Neighbour');
+    expect(text(tester, 'relationship-other-field'), 'Neighbour');
+    expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
+          .initialValue,
+      isNot('Neighbour'),
+    );
+  });
+
+  testWidgets('Not set clears the relationship', (tester) async {
     await pumpPage(tester, relationship: 'Mother');
-    await tester.enterText(find.byKey(const Key('relationship-field')), '   ');
+    await pickRelationship(tester, 'Not set');
     await tester.tap(find.byKey(const Key('edit-patient-save')));
     await tester.pumpAndSettle();
     expect(edit.requests.single.toJson()['relationship_label'], isNull);
   });
 
-  testWidgets('limits the relationship to 50 characters', (tester) async {
+  testWidgets('limits a custom relationship to 50 characters', (tester) async {
     await pumpPage(tester);
+    await pickRelationship(tester, 'Other…');
     await tester.enterText(
-      find.byKey(const Key('relationship-field')),
+      find.byKey(const Key('relationship-other-field')),
       'a' * 80,
     );
-    expect(text(tester, 'relationship-field').length, 50);
+    expect(text(tester, 'relationship-other-field').length, 50);
   });
 
   testWidgets('shows saving state and blocks double submission', (

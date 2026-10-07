@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:alera/features/caregiver/presentation/people/widgets/relationship_field.dart';
+
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_patient_edit_data_source.dart';
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
@@ -112,4 +116,21 @@ class FakePhotoDataSource implements CaregiverPatientDataSource {
     String patientId,
     UpdateMonitoringSettingsRequest request,
   ) => throw UnimplementedError();
+}
+
+/// The relationship dropdown (the Sex dropdown is also a
+/// DropdownButtonFormField, so scope to the relationship field).
+Finder get relationshipDropdown => find.descendant(
+  of: find.byType(RelationshipField),
+  matching: find.byType(DropdownButtonFormField<String>),
+);
+
+/// Opens the relationship dropdown and picks [label] ("Mother", "Other…",
+/// "Not set", ...).
+Future<void> pickRelationship(WidgetTester tester, String label) async {
+  await tester.ensureVisible(relationshipDropdown);
+  await tester.tap(relationshipDropdown);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label).last);
+  await tester.pumpAndSettle();
 }

@@ -83,7 +83,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('edit-patient-button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('relationship-suggestion-Mother')));
+    await pickRelationship(tester, 'Mother');
     await tester.enterText(
       find.byKey(const Key('edit-name-field')),
       'Maria S.',
