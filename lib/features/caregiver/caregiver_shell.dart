@@ -269,7 +269,7 @@ class _CaregiverShellState extends State<CaregiverShell>
     final reminderSource = widget.reminderDataSource ?? ReminderApiDataSource();
     _reminderController = ReminderController(dataSource: reminderSource);
     _reminderEventsSource = reminderSource is ReminderEventsDataSource
-        ? reminderSource
+        ? reminderSource as ReminderEventsDataSource
         : null;
     if (reminderSource is ReminderDateRangeDataSource) {
       _homeReminderController = HomeReminderController(
