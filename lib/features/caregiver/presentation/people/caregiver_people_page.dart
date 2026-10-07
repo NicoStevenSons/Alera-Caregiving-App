@@ -9,6 +9,8 @@ import '../../domain/models/care_recipient.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
 import 'widgets/care_recipient_card.dart';
 import '../widgets/caregiver_page_app_bar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/widgets/alera_empty_state.dart';
 
 class CaregiverPeoplePage extends StatelessWidget {
   final List<CareRecipient> careRecipients;
@@ -22,12 +24,14 @@ class CaregiverPeoplePage extends StatelessWidget {
     required this.onCareRecipientSelected,
     this.onAddPatient,
     this.controller,
+    this.reminderSummaryFor,
   });
 
+  /// Returns a short live reminder summary for a patient, or null if unknown.
+  final String? Function(String patientId)? reminderSummaryFor;
+
   void _showMockFeedback(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showAleraSnackBar(context, message, type: AleraSnackBarType.info);
   }
 
   @override
@@ -75,19 +79,21 @@ class CaregiverPeoplePage extends StatelessWidget {
       return const _PeopleLoadingSkeleton();
     }
     if (patientController?.state == CaregiverPatientListState.error) {
-      return _PeopleMessage(
+      return AleraEmptyState(
         key: const Key('people-error'),
-        icon: Icons.cloud_off,
-        title: patientController!.errorMessage ?? 'Unable to load patients.',
+        assetPath: AleraEmptyState.errorAsset,
+        title: 'Couldn’t load patients',
+        message: patientController!.errorMessage ?? 'Unable to load patients.',
         actionLabel: 'Retry',
         onAction: patientController.load,
       );
     }
     if (patientController?.state == CaregiverPatientListState.empty) {
-      return _PeopleMessage(
+      return AleraEmptyState(
         key: const Key('people-empty'),
-        icon: Icons.people_outline,
+        icon: Icons.people,
         title: 'No patients yet',
+        message: 'Add a patient to start monitoring their care.',
         actionLabel: 'Add Patient',
         onAction: onAddPatient,
       );
@@ -129,6 +135,7 @@ class CaregiverPeoplePage extends StatelessWidget {
             return CareRecipientCard(
               careRecipient: recipient,
               onTap: () => onCareRecipientSelected(recipient),
+              reminderSummary: reminderSummaryFor?.call(recipient.id),
             );
           }
 
@@ -160,36 +167,6 @@ class _DemoBanner extends StatelessWidget {
   );
 }
 
-class _PeopleMessage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String actionLabel;
-  final VoidCallback? onAction;
-  const _PeopleMessage({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.actionLabel,
-    this.onAction,
-  });
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 44, color: AleraColors.textSecondary),
-          const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onAction, child: Text(actionLabel)),
-        ],
-      ),
-    ),
-  );
-}
-
 class _AddPatientButton extends StatelessWidget {
   final VoidCallback onPressed;
 
@@ -197,22 +174,26 @@ class _AddPatientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AleraCard(
-      padding: EdgeInsets.zero,
-      onTap: onPressed,
-      child: SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, size: 24, color: AleraColors.textSecondary),
-            const SizedBox(width: 6),
-            Text(
-              'Add Patient',
-              style: AleraTypography.label.copyWith(fontSize: 15),
-            ),
-          ],
+    return Material(
+      color: Colors.white,
+      shape: const StadiumBorder(),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onPressed,
+        child: SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add, size: 24, color: AleraColors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                'Add Patient',
+                style: AleraTypography.label.copyWith(fontSize: 15),
+              ),
+            ],
+          ),
         ),
       ),
     );

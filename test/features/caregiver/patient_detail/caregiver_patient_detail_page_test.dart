@@ -19,15 +19,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Maria Santos'), findsOneWidget);
-    expect(find.text('Care Risk'), findsOneWidget);
-    expect(find.text('Monitoring Devices'), findsOneWidget);
 
+    // Order: header, status, alerts, vitals, reminders, devices.
+    // 'Needs attention' can also be the status title, so anchor on the
+    // unique "View history" action.
     await tester.scrollUntilVisible(
-      find.text('Alert History'),
+      find.text('View history'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Alert History'), findsOneWidget);
+    expect(find.text('Needs attention'), findsWidgets);
+    expect(find.text('View history'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Vitals'),
@@ -37,11 +39,18 @@ void main() {
     expect(find.text('Vitals'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('View all Reminders'),
+      find.text('Reminders'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Reminders'), findsWidgets);
+
+    await tester.scrollUntilVisible(
+      find.text('Devices'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Devices'), findsOneWidget);
   });
 
   testWidgets('patient selection opens detail and links return to shell tabs', (
@@ -62,11 +71,11 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
 
     await tester.scrollUntilVisible(
-      find.text('View All Alerts'),
+      find.text('View history'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('View All Alerts'));
+    await tester.tap(find.text('View history'));
     await tester.pumpAndSettle();
 
     final NavigationBar navigationBar = tester.widget(

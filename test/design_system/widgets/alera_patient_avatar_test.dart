@@ -142,29 +142,12 @@ void main() {
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      Color avatarColor() {
-        final Iterable<Container> containers = tester.widgetList<Container>(
-          find.descendant(
-            of: find.byType(AleraPatientAvatar),
-            matching: find.byType(Container),
-          ),
-        );
-
-        final Container avatar = containers.singleWhere((widget) {
-          final Decoration? decoration = widget.decoration;
-          return decoration is BoxDecoration &&
-              decoration.shape == BoxShape.circle;
-        });
-
-        return (avatar.decoration! as BoxDecoration).color!;
-      }
-
-      final Color first = avatarColor();
+      final Color first = _initialsColour(tester);
 
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      final Color second = avatarColor();
+      final Color second = _initialsColour(tester);
 
       expect(first, second);
     });
@@ -184,4 +167,17 @@ void main() {
       handle.dispose();
     });
   });
+}
+
+/// The avatar paints its initials on a circular [Container]; read that colour.
+Color _initialsColour(WidgetTester tester) {
+  final Container container = tester.widget<Container>(
+    find
+        .descendant(
+          of: find.byType(AleraPatientAvatar),
+          matching: find.byType(Container),
+        )
+        .first,
+  );
+  return (container.decoration! as BoxDecoration).color!;
 }

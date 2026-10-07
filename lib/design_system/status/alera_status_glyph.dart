@@ -13,10 +13,20 @@ class AleraStatusGlyph {
   /// Material icon. Placeholder during SVG decode, or the glyph itself.
   final IconData fallbackIcon;
 
-  const AleraStatusGlyph({this.assetPath, required this.fallbackIcon});
+  /// Full-colour Figma icon drawn by `AleraStatusBadge` instead of the tinted
+  /// glyph on a solid circle. Chips ignore it and keep using [assetPath] /
+  /// [fallbackIcon].
+  final String? badgeAssetPath;
+
+  const AleraStatusGlyph({
+    this.assetPath,
+    required this.fallbackIcon,
+    this.badgeAssetPath,
+  });
 
   /// Convenience for a glyph with no authored SVG.
-  const AleraStatusGlyph.material(this.fallbackIcon) : assetPath = null;
+  const AleraStatusGlyph.material(this.fallbackIcon, {this.badgeAssetPath})
+    : assetPath = null;
 
   bool get hasAsset => assetPath != null;
 
@@ -25,9 +35,10 @@ class AleraStatusGlyph {
     if (identical(this, other)) return true;
     return other is AleraStatusGlyph &&
         other.assetPath == assetPath &&
-        other.fallbackIcon == fallbackIcon;
+        other.fallbackIcon == fallbackIcon &&
+        other.badgeAssetPath == badgeAssetPath;
   }
 
   @override
-  int get hashCode => Object.hash(assetPath, fallbackIcon);
+  int get hashCode => Object.hash(assetPath, fallbackIcon, badgeAssetPath);
 }

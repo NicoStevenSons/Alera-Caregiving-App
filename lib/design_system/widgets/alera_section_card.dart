@@ -55,7 +55,7 @@ class AleraSectionCard extends StatelessWidget {
                 TextButton(
                   onPressed: onActionPressed,
                   style: TextButton.styleFrom(
-                    foregroundColor: AleraColors.primary,
+                    foregroundColor: AleraColors.selected,
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     minimumSize: Size.zero,

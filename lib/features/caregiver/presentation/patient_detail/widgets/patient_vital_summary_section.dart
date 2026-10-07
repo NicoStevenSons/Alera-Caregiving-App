@@ -16,98 +16,89 @@ class PatientVitalSummarySection extends StatelessWidget {
     required this.onVitalTap,
   });
 
+  static const String _bg = 'alera-figma-assets/assets/icons/vitals/cards';
+  static const String _ic =
+      'alera-figma-assets/assets/icons/vitals/card_icons';
+
+  /// Two square cards share a row.
+  Widget _squarePair(Widget left, Widget right) => Row(
+    children: [
+      Expanded(child: AspectRatio(aspectRatio: 1, child: left)),
+      const SizedBox(width: 10),
+      Expanded(child: AspectRatio(aspectRatio: 1, child: right)),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     return AleraCard(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.all(14),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Vitals', style: AleraTypography.sectionTitle),
-          const SizedBox(height: 7),
-          Row(
-            children: [
-              Expanded(
-                child: _VitalCard(
-                  backgroundAsset:
-                      'alera-figma-assets/assets/icons/vitals/cards/heart_rate_background.svg',
-                  iconAsset:
-                      'alera-figma-assets/assets/icons/vitals/card_icons/heart_rate.svg',
-                  title: 'Heart Rate',
-                  value: snapshot.heartRateBpm?.toString() ?? 'Unavailable',
-                  unit: snapshot.heartRateBpm == null
-                      ? ''
-                      : snapshot.heartRateUnit ?? 'bpm',
-                  textColor: const Color(0xFFA50036),
-                  onTap: () => onVitalTap('Heart Rate'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _VitalCard(
-                  backgroundAsset:
-                      'alera-figma-assets/assets/icons/vitals/cards/spo2_background.svg',
-                  iconAsset:
-                      'alera-figma-assets/assets/icons/vitals/card_icons/spo2.svg',
-                  title: 'SpO₂',
-                  value:
-                      snapshot.spo2Percent?.toStringAsFixed(0) ?? 'Unavailable',
-                  unit: snapshot.spo2Percent == null
-                      ? ''
-                      : snapshot.spo2Unit ?? '%',
-                  textColor: const Color(0xFF3729AC),
-                  onTap: () => onVitalTap('SpO₂'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _VitalCard(
-                  backgroundAsset:
-                    'alera-figma-assets/assets/icons/vitals/cards/sleep_background.svg',
-                  iconAsset:
-                    'alera-figma-assets/assets/icons/vitals/card_icons/sleep.svg',
-                  title: 'Sleep',
-                  value: snapshot.sleepDuration == Duration.zero
-                  ? 'Unavailable'
-                  : _formatSleepDuration(
-                    snapshot.sleepDuration,
-                      ),
-                    unit: '',
-                    textColor: const Color(0xFF520EAB),
-                    onTap: () => onVitalTap('Sleep'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _UnavailableVitalCard(
-                  backgroundAsset:
-                      'alera-figma-assets/assets/icons/vitals/cards/stress_background.svg',
-                  iconAsset:
-                      'alera-figma-assets/assets/icons/vitals/card_icons/stress.svg',
-                  title: 'Stress',
-                  textColor: const Color(0xFFA02D00),
-                  onTap: () => onVitalTap('Stress'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Vitals', style: AleraTypography.sectionTitle),
+        const SizedBox(height: 12),
+        _squarePair(
           _VitalCard(
-            backgroundAsset:
-              'alera-figma-assets/assets/icons/vitals/cards/activity_background.svg',
-            iconAsset:
-                'alera-figma-assets/assets/icons/vitals/card_icons/activity.svg',
+            backgroundAsset: '$_bg/heart_rate_background.svg',
+            iconAsset: '$_ic/heart_rate.svg',
+            title: 'Heart Rate',
+            value: snapshot.heartRateBpm?.toString() ?? 'Unavailable',
+            unit: snapshot.heartRateBpm == null
+                ? ''
+                : snapshot.heartRateUnit ?? 'bpm',
+            textColor: const Color(0xFFA50036),
+            onTap: () => onVitalTap('Heart Rate'),
+          ),
+          _VitalCard(
+            backgroundAsset: '$_bg/spo2_background.svg',
+            iconAsset: '$_ic/spo2.svg',
+            title: 'SpO₂',
+            value: snapshot.spo2Percent?.toStringAsFixed(0) ?? 'Unavailable',
+            unit: snapshot.spo2Percent == null ? '' : snapshot.spo2Unit ?? '%',
+            textColor: const Color(0xFF3729AC),
+            onTap: () => onVitalTap('SpO₂'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _squarePair(
+          _VitalCard(
+            backgroundAsset: '$_bg/sleep_background.svg',
+            iconAsset: '$_ic/sleep.svg',
+            title: 'Sleep',
+            value: snapshot.sleepDuration == Duration.zero
+                ? 'Unavailable'
+                : _formatSleepDuration(snapshot.sleepDuration),
+            unit: '',
+            textColor: const Color(0xFF520EAB),
+            onTap: () => onVitalTap('Sleep'),
+          ),
+          _UnavailableVitalCard(
+            backgroundAsset: '$_bg/stress_background.svg',
+            iconAsset: '$_ic/stress.svg',
+            title: 'Stress',
+            textColor: const Color(0xFFA02D00),
+            onTap: () => onVitalTap('Stress'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Same height as the square cards above: half the row width less
+        // half the gap, so Activity is a full-width card of equal height.
+        LayoutBuilder(
+          builder: (context, constraints) => SizedBox(
+            height: (constraints.maxWidth - 10) / 2,
+            child: _VitalCard(
+            backgroundAsset: '$_bg/activity_background.svg',
+            iconAsset: '$_ic/activity.svg',
             title: 'Activity',
             value: snapshot.steps?.toString() ?? 'Unavailable',
             unit: snapshot.steps == null ? '' : 'steps',
             textColor: const Color(0xFF3C6300),
             onTap: () => onVitalTap('Activity'),
+            ),
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
@@ -129,6 +120,7 @@ class PatientVitalSummarySection extends StatelessWidget {
 
   }
 
+/// "● Connected" pill reflecting the monitoring devices feeding these vitals.
 class _UnavailableVitalCard extends StatelessWidget {
   final String backgroundAsset;
   final String iconAsset;
@@ -188,9 +180,7 @@ class _VitalCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: SizedBox(
-          height: 170,
-          child: Stack(
+        child: Stack(
             fit: StackFit.expand,
             children: [
               SvgPicture.asset(backgroundAsset, fit: BoxFit.cover),
@@ -276,7 +266,6 @@ class _VitalCard extends StatelessWidget {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../alera_colors.dart';
+
 /// App bar with only a light back chevron (no title), matching the alert
 /// detail page.
 class AleraChevronAppBar extends StatelessWidget
@@ -23,7 +25,7 @@ class AleraChevronAppBar extends StatelessWidget
         tooltip: 'Back',
         onPressed: () => Navigator.maybePop(context),
         icon: const Icon(Icons.chevron_left, size: 28),
-        color: const Color(0xFFB4AEC2),
+        color: AleraColors.selected,
       ),
     );
   }

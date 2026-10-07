@@ -1,45 +1,194 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/alera_colors.dart';
-import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/care_recipient.dart';
-import '../../../domain/models/health_snapshot.dart';
+import 'patient_summary_card.dart';
 
-class PatientCareStatusCard extends StatelessWidget {
-  final CareRecipient careRecipient;
+/// Compact one-line status summary: a coloured dot, the status, and a short
+/// plain-language reason with the active alert count.
+class PatientStatusSummaryCard extends StatelessWidget {
+  final CareStatus status;
+  final int activeAlertCount;
+  final int careRiskScore;
+  final String careRiskLabel;
 
-  const PatientCareStatusCard({super.key, required this.careRecipient});
+  const PatientStatusSummaryCard({
+    super.key,
+    required this.status,
+    required this.activeAlertCount,
+    required this.careRiskScore,
+    required this.careRiskLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final Color color = patientStatusColor(status);
     return AleraCard(
-      padding: const EdgeInsets.all(12),
+      key: const Key('patient-status-summary'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AleraCard(
-            padding: const EdgeInsets.all(8),
-            child: _StatusSection(careRecipient: careRecipient),
+          _statusRow(color),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Divider(height: 1, color: AleraColors.divider),
           ),
-          const SizedBox(height: 12),
-          AleraCard(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+          _careRisk(),
+        ],
+      ),
+    );
+  }
+
+  Widget _careRisk() {
+    final bool assessed = careRiskScore > 0;
+    final double fraction = (careRiskScore.clamp(0, 100)) / 100;
+    return Row(
+      key: const Key('patient-care-risk'),
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Care Risk',
+                style: TextStyle(
+                  color: AleraColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                assessed ? '$careRiskScore' : '--',
+                style: const TextStyle(
+                  color: AleraColors.textPrimary,
+                  fontSize: 34,
+                  height: 1.1,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                assessed ? careRiskLabel : 'Not assessed yet',
+                style: const TextStyle(
+                  color: AleraColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _RiskGauge(fraction: assessed ? fraction : 0),
+      ],
+    );
+  }
+
+  Widget _statusRow(Color color) {
+    return Row(
+        children: [
+          AleraSvgIcon(
+            assetPath: _statusAsset(status),
+            width: 44,
+            height: 44,
+            semanticLabel: patientStatusTitle(status),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _RiskDetails(careRecipient: careRecipient)),
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Unavailable',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AleraColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
+                Text(
+                  patientStatusTitle(status),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _description(status),
+                  style: const TextStyle(
+                    color: AleraColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            activeAlertCount == 1 ? '1 active alert' : '$activeAlertCount active alerts',
+            style: const TextStyle(
+              color: AleraColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+    );
+  }
+
+  /// Figma status icons. No data / Unknown use the `error.svg` placeholder
+  /// (listed in PLACEHOLDER_ICONS.md) until dedicated artwork exists.
+  String _statusAsset(CareStatus status) => switch (status) {
+    CareStatus.stable => 'alera-figma-assets/assets/icons/status/stable.svg',
+    CareStatus.warning ||
+    CareStatus.needsAttention =>
+      'alera-figma-assets/assets/icons/status/warning.svg',
+    CareStatus.critical => 'alera-figma-assets/assets/icons/status/critical.svg',
+    CareStatus.noData ||
+    CareStatus.unknown => 'alera-figma-assets/assets/icons/status/error.svg',
+  };
+
+  String _description(CareStatus status) => switch (status) {
+    CareStatus.stable => 'Readings look steady.',
+    CareStatus.warning => 'A reading needs a closer look.',
+    CareStatus.critical => 'Immediate attention may be needed.',
+    CareStatus.needsAttention => 'Something may need follow-up.',
+    CareStatus.noData => 'No recent readings.',
+    CareStatus.unknown => 'Status not available yet.',
+  };
+}
+
+/// Round fill-up gauge with a heart-shield in the middle.
+class _RiskGauge extends StatelessWidget {
+  final double fraction;
+
+  const _RiskGauge({required this.fraction});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 92,
+      height: 92,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size.square(92),
+            painter: _GaugePainter(fraction),
+          ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: const [
+                Icon(Icons.shield, size: 28, color: AleraColors.selected),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 1),
+                  child: Icon(Icons.favorite, size: 12, color: Colors.white),
                 ),
               ],
             ),
@@ -50,136 +199,51 @@ class PatientCareStatusCard extends StatelessWidget {
   }
 }
 
-class _StatusSection extends StatelessWidget {
-  final CareRecipient careRecipient;
+class _GaugePainter extends CustomPainter {
+  final double fraction;
 
-  const _StatusSection({required this.careRecipient});
-
-  @override
-  Widget build(BuildContext context) {
-    final CareStatus status = careRecipient.status;
-    final HealthSnapshot snapshot = careRecipient.healthSnapshot;
-    return Row(
-      children: [
-        AleraSvgIcon(
-          assetPath: _statusIcon(status),
-          width: 48,
-          height: 48,
-          semanticLabel: _statusTitle(status),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_statusTitle(status), style: AleraTypography.sectionTitle),
-              Text(
-                _statusDescription(status),
-                style: AleraTypography.body.copyWith(fontSize: 12),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                snapshot.hasLastCheckIn
-                    ? '◷ Last Check-in: ${_time(snapshot.lastCheckIn)}'
-                    : '◷ Last Check-in: Unavailable',
-                style: const TextStyle(color: Color(0xFFAA91DD), fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _time(DateTime value) {
-    final int hour = value.hour == 0
-        ? 12
-        : value.hour > 12
-        ? value.hour - 12
-        : value.hour;
-    return '$hour:${value.minute.toString().padLeft(2, '0')} '
-        '${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
-}
-
-class _RiskDetails extends StatelessWidget {
-  final CareRecipient careRecipient;
-
-  const _RiskDetails({required this.careRecipient});
+  _GaugePainter(this.fraction);
 
   @override
-  Widget build(BuildContext context) {
-    final HealthSnapshot snapshot = careRecipient.healthSnapshot;
-    final String label = snapshot.careRiskLabel.trim();
-    final bool available =
-        label.isNotEmpty && label.toLowerCase() != 'not assessed';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('Care Risk', style: AleraTypography.sectionTitle),
-        const SizedBox(height: 8),
-        if (available) ...[
-          Text(
-            '${snapshot.careRiskScore}',
-            style: const TextStyle(
-              color: AleraColors.textPrimary,
-              fontSize: 34,
-              height: 1,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: AleraTypography.body.copyWith(fontSize: 13)),
-          const SizedBox(height: 4),
-          const Text(
-            'Closer attention advised.',
-            style: TextStyle(color: AleraColors.textSecondary, fontSize: 11),
-          ),
-        ] else ...[
-          const Text(
-            'Not assessed',
-            style: TextStyle(
-              color: AleraColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'No risk assessment is available yet.',
-            style: AleraTypography.body.copyWith(fontSize: 12),
-          ),
-        ],
-      ],
+  void paint(Canvas canvas, Size size) {
+    const double stroke = 11;
+    final Rect rect = Rect.fromLTWH(
+      stroke / 2,
+      stroke / 2,
+      size.width - stroke,
+      size.height - stroke,
     );
+    // 270 degree dial opening at the bottom, starting bottom-left.
+    const double start = math.pi * 0.75;
+    const double sweep = math.pi * 1.5;
+
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      size.width / 2,
+      Paint()..color = AleraColors.primarySoft.withValues(alpha: 0.5),
+    );
+
+    final Paint track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round
+      ..color = AleraColors.primarySoft;
+    canvas.drawArc(rect.deflate(6), start, sweep, false, track);
+
+    if (fraction <= 0) return;
+    final Paint fill = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round
+      ..shader = const SweepGradient(
+        startAngle: 0,
+        endAngle: sweep,
+        colors: [Color(0xFFC9B2F5), AleraColors.selected],
+        transform: GradientRotation(start),
+      ).createShader(rect);
+    canvas.drawArc(rect.deflate(6), start, sweep * fraction, false, fill);
   }
+
+  @override
+  bool shouldRepaint(_GaugePainter old) => old.fraction != fraction;
 }
-
-String _statusTitle(CareStatus status) => switch (status) {
-  CareStatus.stable => 'Stable',
-  CareStatus.warning => 'Warning',
-  CareStatus.critical => 'Critical',
-  CareStatus.needsAttention => 'Needs Attention',
-  CareStatus.noData => 'No Data',
-  CareStatus.unknown => 'Unknown',
-};
-
-String _statusDescription(CareStatus status) => switch (status) {
-  CareStatus.stable => 'Everything looks steady right now.',
-  CareStatus.warning => 'One or more readings need a closer look.',
-  CareStatus.critical => 'Immediate attention may be needed.',
-  CareStatus.needsAttention => 'Something may need follow-up.',
-  CareStatus.noData => 'No recent readings are available yet.',
-  CareStatus.unknown => 'We’re checking the latest health information.',
-};
-
-String _statusIcon(CareStatus status) => switch (status) {
-  CareStatus.stable => 'alera-figma-assets/assets/icons/status/stable.svg',
-  CareStatus.warning || CareStatus.needsAttention =>
-    'alera-figma-assets/assets/icons/status/warning.svg',
-  CareStatus.critical => 'alera-figma-assets/assets/icons/status/critical.svg',
-  CareStatus.noData ||
-  CareStatus.unknown => 'alera-figma-assets/assets/icons/status/info.svg',
-};

@@ -62,7 +62,7 @@ class _HomeAlertsPreviewState extends State<HomeAlertsPreview> {
                     Text(
                       'No active alerts right now',
                       style: TextStyle(
-                        color: Color(0xFFA69BD2),
+                        color: AleraColors.emptyTitle,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),

@@ -400,7 +400,10 @@ void main() {
     expect(find.byType(CaregiverShell), findsOneWidget);
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sign out'));
+    await tester.tap(find.byKey(const Key('more-sign-out')));
+    await tester.pumpAndSettle();
+    // Confirm in the Alera dialog.
+    await tester.tap(find.text('Sign out').last);
     await tester.pumpAndSettle();
     expect(find.text('Sign out?'), findsOneWidget);
     await tester.tap(

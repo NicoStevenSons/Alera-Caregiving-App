@@ -228,10 +228,10 @@ CareRecipient patientListItemToCareRecipient(
     quickMessages: const [],
     healthSnapshot: HealthSnapshot(
       heartRateBpm: summary.latestHeartRate?.value.round(),
-      heartRateUnit: summary.latestHeartRate?.unit,
+      heartRateUnit: _displayUnit(summary.latestHeartRate?.unit),
       heartRateRecordedAt: summary.latestHeartRate?.recordedAt,
       spo2Percent: summary.latestSpo2?.value,
-      spo2Unit: summary.latestSpo2?.unit,
+      spo2Unit: _displayUnit(summary.latestSpo2?.unit),
       spo2RecordedAt: summary.latestSpo2?.recordedAt,
 
       steps: summary.todaySteps,
@@ -292,3 +292,7 @@ MonitoringDevice monitoringDeviceDtoToDomain(MonitoringDeviceDto device) {
     notWornSince: device.notWornSince,
   );
 }
+
+/// The API sends spelled-out units ("percent"); the UI shows symbols.
+String? _displayUnit(String? unit) =>
+    unit?.trim().toLowerCase() == 'percent' ? '%' : unit;

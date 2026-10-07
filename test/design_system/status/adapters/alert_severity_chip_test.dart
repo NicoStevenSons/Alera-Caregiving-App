@@ -17,7 +17,7 @@ void main() {
 
       expect(find.text('Critical'), findsOneWidget);
       final Icon icon = tester.widget<Icon>(find.byType(Icon));
-      expect(icon.icon, Icons.error);
+      expect(icon.icon, Icons.priority_high);
     });
 
     testWidgets('warning renders the warning tone and label', (
@@ -29,7 +29,7 @@ void main() {
 
       expect(find.text('Warning'), findsOneWidget);
       final Icon icon = tester.widget<Icon>(find.byType(Icon));
-      expect(icon.icon, Icons.warning_amber);
+      expect(icon.icon, Icons.warning);
     });
 
     testWidgets('describe() maps every severity to a distinct tone', (

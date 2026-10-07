@@ -4,9 +4,12 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/status/adapters/alert_severity_chip.dart';
 import '../../../../design_system/status/alera_badged_avatar.dart';
+import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_refresh_indicator.dart';
+import '../../../../design_system/widgets/alera_empty_state.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../design_system/widgets/alera_skeleton.dart';
 import '../../domain/models/care_recipient.dart';
@@ -16,6 +19,7 @@ import '../../data/alerts/caregiver_alert_controller.dart';
 import '../widgets/caregiver_alert_card.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../widgets/caregiver_page_app_bar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 enum AlertFilter {
   warning,
@@ -52,7 +56,6 @@ class CaregiverAlertsPage extends StatefulWidget {
 }
 
 class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final Set<AlertFilter> _filters = <AlertFilter>{};
   final Set<String> _expandedAlertIds = <String>{};
   String? _patientFilterId;
@@ -216,17 +219,50 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
     });
   }
 
-  void _openFilterDrawer() => _scaffoldKey.currentState?.openEndDrawer();
+  /// Slides a full-height filter panel in from the right on the root
+  /// navigator so it also covers the bottom navigation bar.
+  void _openFilterDrawer() {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close filters',
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      transitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (dialogContext, _, _) => Align(
+        alignment: Alignment.centerRight,
+        child: StatefulBuilder(
+          builder: (context, setPanel) {
+            void refresh(VoidCallback change) {
+              change();
+              setPanel(() {});
+            }
+
+            return _AlertFilterDrawer(
+              careRecipients: widget.careRecipients,
+              selectedPatientId: _patientFilterId,
+              filters: _filters,
+              resultCount: _displayedAlerts.where(_matches).length,
+              onPatientSelected: (id) => refresh(() => _selectPatient(id)),
+              onFilterToggled: (filter) =>
+                  refresh(() => _toggleFilter(filter)),
+              onClear: () => refresh(_clearFilters),
+            );
+          },
+        ),
+      ),
+      transitionBuilder: (context, animation, _, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic)),
+        child: child,
+      ),
+    );
+  }
 
   void _showDetailMessage(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Alert detail coming next'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    showAleraSnackBar(context, 'Alert detail coming next', type: AleraSnackBarType.info);
   }
 
   void _handleAlertTap(BuildContext context, CaregiverAlert alert) {
@@ -250,11 +286,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
       await _controller.acknowledge(alert.id);
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('We couldn’t update this alert. Please try again.'),
-          ),
-        );
+        showAleraSnackBar(context, 'We couldn’t update this alert. Please try again.', type: AleraSnackBarType.error);
       }
     }
   }
@@ -272,7 +304,6 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
         .toList();
 
     return Scaffold(
-      key: _scaffoldKey,
       appBar: CaregiverPageAppBar(
         title: 'Alerts',
         actions: [
@@ -282,14 +313,6 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
             icon: Icons.filter_list,
           ),
         ],
-      ),
-      endDrawer: _AlertFilterDrawer(
-        careRecipients: widget.careRecipients,
-        selectedPatientId: _patientFilterId,
-        filters: _filters,
-        onPatientSelected: _selectPatient,
-        onFilterToggled: _toggleFilter,
-        onClear: _clearFilters,
       ),
       body: Column(
         children: [
@@ -329,7 +352,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                   label: 'HR',
                   filter: AlertFilter.heartRate,
                   assetPath:
-                      'alera-figma-assets/assets/icons/mini_status/heart_rate.svg',
+                      'alera-figma-assets/assets/icons/vitals/heart_rate.svg',
                   selected: _filters.contains(AlertFilter.heartRate),
                   onTap: _toggleFilter,
                 ),
@@ -337,7 +360,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                   label: 'SpO2',
                   filter: AlertFilter.spo2,
                   assetPath:
-                      'alera-figma-assets/assets/icons/mini_status/spo2.svg',
+                      'alera-figma-assets/assets/icons/vitals/spo2.svg',
                   selected: _filters.contains(AlertFilter.spo2),
                   onTap: _toggleFilter,
                 ),
@@ -499,11 +522,13 @@ class _AlertFilterDrawer extends StatelessWidget {
   final ValueChanged<String?> onPatientSelected;
   final ValueChanged<AlertFilter> onFilterToggled;
   final VoidCallback onClear;
+  final int resultCount;
 
   const _AlertFilterDrawer({
     required this.careRecipients,
     required this.selectedPatientId,
     required this.filters,
+    required this.resultCount,
     required this.onPatientSelected,
     required this.onFilterToggled,
     required this.onClear,
@@ -514,10 +539,22 @@ class _AlertFilterDrawer extends StatelessWidget {
     final patients = [...careRecipients]
       ..sort((a, b) => a.name.compareTo(b.name));
 
-    return Drawer(
+    Widget option(String label, AlertFilter filter, String assetPath) =>
+        _DrawerFilterOption(
+      label: label,
+      assetPath: assetPath,
+      selected: filters.contains(filter),
+      onChanged: () => onFilterToggled(filter),
+    );
+
+    return Material(
       key: const Key('alerts-filter-drawer'),
-      width: MediaQuery.sizeOf(context).width * .88,
-      child: SafeArea(
+      color: AleraColors.background,
+      elevation: 16,
+      child: SizedBox(
+        width: MediaQuery.sizeOf(context).width * .88,
+        height: double.infinity,
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -527,7 +564,7 @@ class _AlertFilterDrawer extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Filter alerts',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: AleraTypography.sectionTitle,
                     ),
                   ),
                   TextButton(
@@ -543,89 +580,125 @@ class _AlertFilterDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 children: [
                   const _FilterSectionTitle('Patient'),
-                  _PatientFilterOption(
-                    key: const Key('alerts-patient-filter-all'),
-                    label: 'All Patients',
-                    selected: selectedPatientId == null,
-                    onTap: () => onPatientSelected(null),
-                  ),
-                  for (final patient in patients)
-                    _PatientFilterOption(
-                      key: ValueKey<String>(
-                        'alerts-patient-filter-${patient.id}',
+                  _FilterCard(
+                    children: [
+                      _PatientFilterOption(
+                        key: const Key('alerts-patient-filter-all'),
+                        label: 'All Patients',
+                        isAll: true,
+                        selected: selectedPatientId == null,
+                        onTap: () => onPatientSelected(null),
                       ),
-                      label: patient.name,
-                      photoUrl: patient.profilePhotoUrl,
-                      selected: selectedPatientId == patient.id,
-                      onTap: () => onPatientSelected(patient.id),
-                    ),
-                  const Divider(height: 28),
+                      for (final patient in patients)
+                        _PatientFilterOption(
+                          key: ValueKey<String>(
+                            'alerts-patient-filter-${patient.id}',
+                          ),
+                          label: patient.name,
+                          photoUrl: patient.profilePhotoUrl,
+                          selected: selectedPatientId == patient.id,
+                          onTap: () => onPatientSelected(patient.id),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Severity'),
-                  _DrawerFilterOption(
-                    label: 'Warning',
-                    selected: filters.contains(AlertFilter.warning),
-                    onChanged: () => onFilterToggled(AlertFilter.warning),
+                  _FilterCard(
+                    children: [
+                      option('Warning', AlertFilter.warning, _filterIconWarning),
+                      option('Critical', AlertFilter.critical, _filterIconCritical),
+                    ],
                   ),
-                  _DrawerFilterOption(
-                    label: 'Critical',
-                    selected: filters.contains(AlertFilter.critical),
-                    onChanged: () => onFilterToggled(AlertFilter.critical),
-                  ),
-                  const Divider(height: 28),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Metric'),
-                  _DrawerFilterOption(
-                    label: 'Heart Rate',
-                    selected: filters.contains(AlertFilter.heartRate),
-                    onChanged: () => onFilterToggled(AlertFilter.heartRate),
+                  _FilterCard(
+                    children: [
+                      option('Heart Rate', AlertFilter.heartRate, _filterIconHeartRate),
+                      option('SpO2', AlertFilter.spo2, _filterIconSpo2),
+                      option('Watch Battery', AlertFilter.watchBattery, _filterIconBattery),
+                    ],
                   ),
-                  _DrawerFilterOption(
-                    label: 'SpO2',
-                    selected: filters.contains(AlertFilter.spo2),
-                    onChanged: () => onFilterToggled(AlertFilter.spo2),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Watch Battery',
-                    selected: filters.contains(AlertFilter.watchBattery),
-                    onChanged: () => onFilterToggled(AlertFilter.watchBattery),
-                  ),
-                  const Divider(height: 28),
+                  const SizedBox(height: 16),
                   const _FilterSectionTitle('Status'),
-                  _DrawerFilterOption(
-                    label: 'Unacknowledged',
-                    selected: filters.contains(AlertFilter.unacknowledged),
-                    onChanged: () =>
-                        onFilterToggled(AlertFilter.unacknowledged),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Acknowledged',
-                    selected: filters.contains(AlertFilter.acknowledged),
-                    onChanged: () => onFilterToggled(AlertFilter.acknowledged),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'Resolved',
-                    selected: filters.contains(AlertFilter.resolved),
-                    onChanged: () => onFilterToggled(AlertFilter.resolved),
-                  ),
-                  _DrawerFilterOption(
-                    label: 'False Alarm',
-                    selected: filters.contains(AlertFilter.falseAlarm),
-                    onChanged: () => onFilterToggled(AlertFilter.falseAlarm),
+                  _FilterCard(
+                    children: [
+                      option('Unacknowledged', AlertFilter.unacknowledged, _filterIconUnacknowledged),
+                      option('Acknowledged', AlertFilter.acknowledged, _filterIconPlaceholder),
+                      option('Resolved', AlertFilter.resolved, _filterIconResolved),
+                      option('False Alarm', AlertFilter.falseAlarm, _filterIconPlaceholder),
+                    ],
                   ),
                 ],
               ),
             ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: AleraColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: AleraColors.primary.withValues(alpha: 0.10),
+                    blurRadius: 12,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
+              child: AleraButton(
+                key: const Key('alerts-filter-apply'),
+                label: resultCount == 1
+                    ? 'Show 1 alert'
+                    : 'Show $resultCount alerts',
+                height: 48,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
           ],
+        ),
         ),
       ),
     );
   }
 }
+
+/// One Alera card holding a group of options, separated by hairlines.
+class _FilterCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _FilterCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 16,
+                endIndent: 16,
+                color: AleraColors.divider,
+              ),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+const TextStyle _filterLabelStyle = TextStyle(
+  fontSize: 14,
+  fontWeight: FontWeight.w500,
+  color: AleraColors.textPrimary,
+);
 
 class _FilterSectionTitle extends StatelessWidget {
   final String label;
@@ -635,8 +708,11 @@ class _FilterSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(label, style: AleraTypography.sectionTitle),
+      padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
+      child: Text(
+        label,
+        style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+      ),
     );
   }
 }
@@ -645,49 +721,148 @@ class _PatientFilterOption extends StatelessWidget {
   final String label;
   final String? photoUrl;
   final bool selected;
+  final bool isAll;
   final VoidCallback onTap;
 
   const _PatientFilterOption({
     super.key,
     required this.label,
     this.photoUrl,
+    this.isAll = false,
     required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
-      title: Text(label),
-      trailing: selected
-          ? const Icon(Icons.check, semanticLabel: 'Selected')
-          : null,
+    return _SelectableRow(
+      selected: selected,
       onTap: onTap,
+      leading: isAll
+          ? Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: AleraColors.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.groups,
+                size: 20,
+                color: AleraColors.selected,
+              ),
+            )
+          : AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 18),
+      label: label,
     );
   }
 }
 
+/// Shared row for every filter option: leading visual, label and the same
+/// right-hand selection mark, with a faint tint when selected.
+class _SelectableRow extends StatelessWidget {
+  final Widget leading;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SelectableRow({
+    required this.leading,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          color: selected
+              ? AleraColors.selected.withValues(alpha: 0.24)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              leading,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: _filterLabelStyle.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              selected
+                  ? const Icon(
+                      Icons.check_circle,
+                      size: 24,
+                      color: AleraColors.selected,
+                      semanticLabel: 'Selected',
+                    )
+                  : Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AleraColors.mutedIcon,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Filter icons come from alera-figma-assets. Filters with no matching Figma
+// icon use status/error.svg as a placeholder (see PLACEHOLDER_ICONS.md).
+const String _filterIconWarning =
+    'alera-figma-assets/assets/icons/status/warning.svg';
+const String _filterIconCritical =
+    'alera-figma-assets/assets/icons/status/critical.svg';
+const String _filterIconHeartRate =
+    'alera-figma-assets/assets/icons/vitals/heart_rate.svg';
+const String _filterIconSpo2 =
+    'alera-figma-assets/assets/icons/vitals/spo2.svg';
+const String _filterIconBattery =
+    'alera-figma-assets/assets/icons/status/error.svg';
+const String _filterIconUnacknowledged =
+    'alera-figma-assets/assets/icons/status/alert.svg';
+const String _filterIconResolved =
+    'alera-figma-assets/assets/icons/status/stable.svg';
+const String _filterIconPlaceholder =
+    'alera-figma-assets/assets/icons/status/error.svg';
+
 class _DrawerFilterOption extends StatelessWidget {
   final String label;
+  final String assetPath;
   final bool selected;
   final VoidCallback onChanged;
 
   const _DrawerFilterOption({
     required this.label,
+    required this.assetPath,
     required this.selected,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return CheckboxListTile(
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-      value: selected,
-      title: Text(label),
-      onChanged: (_) => onChanged(),
+    return _SelectableRow(
+      selected: selected,
+      onTap: onChanged,
+      leading: AleraSvgIcon(assetPath: assetPath, width: 36, height: 36),
+      label: label,
     );
   }
 }
@@ -855,39 +1030,12 @@ class _EmptyActiveAlerts extends StatelessWidget {
   const _EmptyActiveAlerts();
 
   @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 26),
-      child: Center(
-        child: Column(
-          children: [
-            AleraSvgIcon(
-              assetPath:
-                  'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
-              width: 48,
-              height: 48,
-              semanticLabel: 'No active alerts',
-            ),
-            SizedBox(height: 10),
-            Text(
-              'No active alerts right now',
-              style: TextStyle(
-                color: Color(0xFFA69BD2),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'We’ll let you know if anything needs attention.',
-              style: TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const AleraEmptyState(
+    assetPath: 'alera-figma-assets/assets/icons/status/no-active-alerts.svg',
+    title: 'No active alerts right now',
+    message: 'We’ll let you know if anything needs attention.',
+    padding: EdgeInsets.symmetric(vertical: 26),
+  );
 }
 
 class _EmptyHistory extends StatelessWidget {
@@ -1050,7 +1198,7 @@ class _HistoryGroup extends StatelessWidget {
                       ? 'Show less'
                       : 'See more (${alerts.length - collapsedLimit})',
                   style: AleraTypography.label.copyWith(
-                    color: AleraColors.primary,
+                    color: AleraColors.selected,
                   ),
                 ),
               ),
@@ -1151,7 +1299,7 @@ class AlertListCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.expand_more, color: Color(0xFFB7B2C3)),
+              const Icon(Icons.expand_more, color: AleraColors.mutedChevron),
             ],
           ),
         ),

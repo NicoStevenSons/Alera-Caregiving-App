@@ -18,12 +18,14 @@ abstract final class AleraColors {
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
 
-  /// Deeper green that stays readable as text on a light tint
-  /// (status pills, "All done").
+  /// Deeper status accents that stay readable as text on a light tint
+  /// (status pills, "Connected", "Stable", "All done").
   static const Color successStrong = Color(0xFF05A869);
-
-  /// Deeper red for the pressed state of destructive buttons.
+  static const Color warningStrong = Color(0xFFD99A00);
   static const Color criticalStrong = Color(0xFFE04C5D);
+
+  /// Pale amber fill for warning banners.
+  static const Color warningSoft = Color(0xFFFFF1CC);
 
   /// Tint for "today" when it is not the selected day.
   static const Color todayTint = Color(0xFFE4D6FF);
@@ -52,6 +54,9 @@ abstract final class AleraColors {
 
   /// Muted grey-lavender for chevrons, back arrows and quiet secondary icons.
   static const Color mutedIcon = Color(0xFFB4AEC2);
+
+  /// Slightly lighter variant used for list-row chevrons.
+  static const Color mutedChevron = Color(0xFFB7B2C3);
 
   /// Empty-state title text (matches the faded 'No active alerts' motif).
   static const Color emptyTitle = Color(0xFFA69BD2);

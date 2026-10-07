@@ -6,6 +6,7 @@ import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
 
+/// Watch and phone on two compact rows: connection chip and battery.
 class PatientMonitoringDevicesCard extends StatelessWidget {
   final List<MonitoringDevice> devices;
 
@@ -14,22 +15,22 @@ class PatientMonitoringDevicesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AleraCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Monitoring Devices', style: AleraTypography.sectionTitle),
-          const SizedBox(height: 6),
+          Text('Devices', style: AleraTypography.sectionTitle),
+          const SizedBox(height: 8),
           _DeviceRow(
             name: 'Watch',
             assetPath:
                 'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
             device: devices.watch,
           ),
-          Divider(
-            height: 8,
+          const Divider(
+            height: 1,
             thickness: 1,
-            color: AleraColors.divider.withValues(alpha: 0.30),
+            color: AleraColors.divider,
           ),
           _DeviceRow(
             name: 'Phone',
@@ -54,117 +55,102 @@ class _DeviceRow extends StatelessWidget {
     required this.device,
   });
 
+  bool get _isWatch => name.toLowerCase() == 'watch';
+
   String get _statusLabel {
-  if (device == null) return 'Unavailable';
-
-  final isWatch = name.toLowerCase() == 'watch';
-
-  switch (device!.connectionStatus) {
-    case MonitoringDeviceConnectionStatus.disconnected:
-      return 'Disconnected';
-
-    case MonitoringDeviceConnectionStatus.unknown:
-      return 'Unknown';
-
-    case MonitoringDeviceConnectionStatus.connected:
-      if (!isWatch) {
+    final d = device;
+    if (d == null) return 'Unavailable';
+    switch (d.connectionStatus) {
+      case MonitoringDeviceConnectionStatus.disconnected:
+        return 'Disconnected';
+      case MonitoringDeviceConnectionStatus.unknown:
+        return 'Unknown';
+      case MonitoringDeviceConnectionStatus.connected:
+        if (!_isWatch) return 'Connected';
+        if (d.isWorn == false) return 'Not worn';
+        if (d.isWorn == true) return 'On wrist';
         return 'Connected';
-      }
-
-      if (device!.isWorn == false) {
-        return 'Not worn';
-      }
-
-      if (device!.isWorn == true) {
-        return 'Connected • On wrist';
-      }
-
-      return 'Connected';
+    }
   }
-}
 
   Color get _statusColor {
-  if (device == null) {
-    return AleraColors.textSecondary;
-  }
-
-  final isWatch = name.toLowerCase() == 'watch';
-
-  switch (device!.connectionStatus) {
-    case MonitoringDeviceConnectionStatus.disconnected:
-      return AleraColors.critical;
-
-    case MonitoringDeviceConnectionStatus.unknown:
-      return AleraColors.textSecondary;
-
-    case MonitoringDeviceConnectionStatus.connected:
-      if (isWatch && device!.isWorn == false) {
-        return AleraColors.warning;
-      }
-
-      return AleraColors.success;
-  }
-}
-
-  String get _batteryLabel {
-    final battery = device?.batteryPercent;
-
-    if (device == null) return 'Unavailable';
-    if (battery == null) return '--';
-
-    return '$battery%';
+    final d = device;
+    if (d == null) return AleraColors.textSecondary;
+    switch (d.connectionStatus) {
+      case MonitoringDeviceConnectionStatus.disconnected:
+        return AleraColors.critical;
+      case MonitoringDeviceConnectionStatus.unknown:
+        return AleraColors.textSecondary;
+      case MonitoringDeviceConnectionStatus.connected:
+        return _isWatch && d.isWorn == false
+            ? AleraColors.warningStrong
+            : AleraColors.successStrong;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final available = device != null;
+    final int? battery = device?.batteryPercent;
+    final Color status = _statusColor;
 
-    return Row(
-      children: [
-        AleraSvgIcon(
-          assetPath: assetPath,
-          width: 24,
-          height: 24,
-          semanticLabel: name,
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: AleraTypography.body.copyWith(fontSize: 13)),
-              Row(
-                children: [
-                  if (available) ...[
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: _statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(
-                    _statusLabel,
-                    style: AleraTypography.body.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          AleraSvgIcon(
+            assetPath: assetPath,
+            width: 28,
+            height: 28,
+            semanticLabel: name,
           ),
-        ),
-        Text(_batteryLabel, style: AleraTypography.label),
-        const SizedBox(width: 7),
-        Icon(
-          Icons.battery_5_bar,
-          color: device?.batteryPercent != null
-              ? AleraColors.primary
-              : AleraColors.textSecondary,
-          size: 20,
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: AleraTypography.label.copyWith(
+                color: AleraColors.textPrimary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: status.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              _statusLabel,
+              style: TextStyle(
+                color: status,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 74,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  device == null ? '--' : (battery == null ? '--' : '$battery%'),
+                  style: AleraTypography.label.copyWith(fontSize: 13),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.battery_5_bar,
+                  size: 20,
+                  color: battery == null
+                      ? AleraColors.mutedIcon
+                      : AleraColors.selected,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

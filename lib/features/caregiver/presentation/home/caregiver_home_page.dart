@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/alera_colors.dart';
+
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../domain/models/care_recipient.dart';
@@ -15,6 +17,7 @@ import 'widgets/home_loading_skeleton.dart';
 import 'widgets/home_insights_card.dart';
 import 'widgets/home_patient_header.dart';
 import 'widgets/home_reminders_preview.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverHomePage extends StatelessWidget {
   final CareRecipient careRecipient;
@@ -26,6 +29,7 @@ class CaregiverHomePage extends StatelessWidget {
   final VoidCallback? onRetryReminders;
   final VoidCallback onViewAllAlerts;
   final VoidCallback onViewAllReminders;
+  final ValueChanged<CaregiverReminder>? onCompleteReminder;
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final bool showDemoBanner;
@@ -46,6 +50,7 @@ class CaregiverHomePage extends StatelessWidget {
     this.onRetryReminders,
     required this.onViewAllAlerts,
     required this.onViewAllReminders,
+    this.onCompleteReminder,
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.showDemoBanner = false,
@@ -57,9 +62,7 @@ class CaregiverHomePage extends StatelessWidget {
   });
 
   void _mock(BuildContext context, String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    showAleraSnackBar(context, '$action is coming soon.', type: AleraSnackBarType.info);
   }
 
   @override
@@ -71,7 +74,7 @@ class CaregiverHomePage extends StatelessWidget {
         if (showDemoBanner)
           Container(
             key: const Key('home-demo-fallback'),
-            color: const Color(0xFFFFF1CC),
+            color: AleraColors.warningSoft,
             padding: const EdgeInsets.all(10),
             child: const Text(
               'Demo data — the patient service is currently offline.',
@@ -159,6 +162,7 @@ class CaregiverHomePage extends StatelessWidget {
                   errorMessage: remindersError,
                   onRetry: onRetryReminders,
                   onAction: (_) => onViewAllReminders(),
+                  onComplete: onCompleteReminder,
                 ),
               ],
             ),

@@ -154,7 +154,7 @@ class CaregiverAlertCard extends StatelessWidget {
                             expanded
                                 ? Icons.keyboard_arrow_up
                                 : Icons.keyboard_arrow_down,
-                            color: const Color(0xFFB7B2C3),
+                            color: AleraColors.mutedChevron,
                             size: 22,
                           ),
                         ),

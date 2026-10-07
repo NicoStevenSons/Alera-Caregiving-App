@@ -4,6 +4,8 @@ import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_dialog.dart';
+import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../services/patient_contact_actions.dart';
 import '../../domain/models/care_recipient.dart';
@@ -12,6 +14,7 @@ import '../../data/alerts/caregiver_alert_controller.dart';
 import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverAlertDetailPage extends StatefulWidget {
   final CaregiverAlert alert;
@@ -130,66 +133,47 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                key: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
-                controller: controller,
-                enabled: !submitting,
-                maxLines: 3,
-                decoration: InputDecoration(labelText: fieldLabel),
-              ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
-            ],
+        builder: (context, setDialogState) => AleraDialog(
+          icon: Icons.edit_note,
+          title: title,
+          busy: submitting,
+          errorText: error,
+          cancelLabel: 'Cancel',
+          confirmLabel: submitting ? 'Saving…' : title,
+          onCancel: () => Navigator.pop(dialogContext),
+          content: AleraTextField(
+            fieldKey: Key('${title.toLowerCase().replaceAll(' ', '-')}-field'),
+            controller: controller,
+            enabled: !submitting,
+            label: fieldLabel,
+            hint: 'Write a short note',
+            required: requiredText,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            bottomSpacing: 0,
           ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : title,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      final text = controller.text.trim();
-                      if (requiredText && text.isEmpty) {
-                        setDialogState(
-                          () => error = '$fieldLabel is required.',
-                        );
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await submit(text.isEmpty ? null : text);
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-              expand: false,
-              height: 42,
-            ),
-          ],
+          onConfirm: () async {
+            final text = controller.text.trim();
+            if (requiredText && text.isEmpty) {
+              setDialogState(() => error = '$fieldLabel is required.');
+              return;
+            }
+            setDialogState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              await submit(text.isEmpty ? null : text);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            } catch (_) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  submitting = false;
+                  error = 'We couldn’t update this alert. Please try again.';
+                });
+              }
+            }
+          },
         ),
       ),
     );
@@ -204,15 +188,27 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Log Intervention'),
+        builder: (context, setDialogState) => AleraDialog(
+          icon: Icons.medical_services,
+          title: 'Log Intervention',
+          busy: submitting,
+          errorText: error,
+          cancelLabel: 'Cancel',
+          confirmLabel: submitting ? 'Saving…' : 'Log Intervention',
+          onCancel: () => Navigator.pop(dialogContext),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const AleraFieldLabel('Intervention'),
+              const SizedBox(height: 6),
               DropdownButtonFormField<CaregiverInterventionType>(
                 key: const Key('intervention-type-field'),
                 initialValue: type,
-                decoration: const InputDecoration(labelText: 'Intervention'),
+                isExpanded: true,
+                decoration: aleraInputDecoration(hint: 'Choose one'),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
                 items: CaregiverInterventionType.values
                     .map(
                       (value) => DropdownMenuItem(
@@ -230,61 +226,44 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                       },
               ),
               const SizedBox(height: 12),
-              TextField(
-                key: const Key('intervention-note-field'),
+              AleraTextField(
+                fieldKey: const Key('intervention-note-field'),
                 controller: note,
                 enabled: !submitting,
+                label: 'Note',
+                hint: 'Write a short note',
+                required: true,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Note'),
+                textCapitalization: TextCapitalization.sentences,
+                bottomSpacing: 0,
               ),
-              if (error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  error!,
-                  style: const TextStyle(color: AleraColors.critical),
-                ),
-              ],
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            AleraButton(
-              label: submitting ? 'Saving…' : 'Log Intervention',
-              expand: false,
-              height: 42,
-              onPressed: submitting
-                  ? null
-                  : () async {
-                      if (note.text.trim().isEmpty) {
-                        setDialogState(() => error = 'Note is required.');
-                        return;
-                      }
-                      setDialogState(() {
-                        submitting = true;
-                        error = null;
-                      });
-                      try {
-                        await widget.alertController!.logIntervention(
-                          _alert.id,
-                          type,
-                          note.text.trim(),
-                        );
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      } catch (_) {
-                        if (dialogContext.mounted) {
-                          setDialogState(() {
-                            submitting = false;
-                            error =
-                                'We couldn’t update this alert. Please try again.';
-                          });
-                        }
-                      }
-                    },
-            ),
-          ],
+          onConfirm: () async {
+            if (note.text.trim().isEmpty) {
+              setDialogState(() => error = 'Note is required.');
+              return;
+            }
+            setDialogState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              await widget.alertController!.logIntervention(
+                _alert.id,
+                type,
+                note.text.trim(),
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            } catch (_) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  submitting = false;
+                  error = 'We couldn’t update this alert. Please try again.';
+                });
+              }
+            }
+          },
         ),
       ),
     );
@@ -292,9 +271,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
   }
 
   void _mock(String action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$action is mock-only for now.')));
+    showAleraSnackBar(context, '$action is coming soon.', type: AleraSnackBarType.info);
   }
 
   @override
@@ -328,7 +305,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
           tooltip: 'Back',
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.selected,
         ),
       ),
       body: SafeArea(
@@ -827,7 +804,7 @@ List<_AlertDetailFactData> _detailFacts(
           value: alert.triggerDuration == null
               ? 'Immediate'
               : _formatDuration(alert.triggerDuration!),
-          color: AleraColors.primary,
+          color: AleraColors.selected,
           icon: Icons.timer_outlined,
         ),
         _AlertDetailFactData(
@@ -939,7 +916,7 @@ List<_AlertDetailFactData> _detailFacts(
           _AlertDetailFactData(
             label: 'Duration',
             value: _formatDuration(alert.triggerDuration!),
-            color: AleraColors.primary,
+            color: AleraColors.selected,
             icon: Icons.timer_outlined,
           ),
         if (resolved != null)
@@ -1003,13 +980,13 @@ class _ContextCard extends StatelessWidget {
             runSpacing: 12,
             children: [
               _ContextMetric(
-                icon: Icons.favorite_outline,
+                assetPath: '$_contextIcons/heart_rate.svg',
                 label: 'Heart Rate',
                 value: snapshot?.heartRateBpm?.toString() ?? '--',
                 unit: snapshot?.heartRateBpm == null ? '' : 'BPM',
               ),
               _ContextMetric(
-                icon: Icons.water_drop_outlined,
+                assetPath: '$_contextIcons/spo2.svg',
                 label: 'SpO₂',
                 value: snapshot?.spo2Percent == null
                     ? '--'
@@ -1017,13 +994,13 @@ class _ContextCard extends StatelessWidget {
                 unit: snapshot?.spo2Percent == null ? '' : '%',
               ),
               _ContextMetric(
-                icon: Icons.directions_walk,
+                assetPath: '$_contextIcons/activity.svg',
                 label: 'Steps',
                 value: snapshot?.steps?.toString() ?? '--',
                 unit: '',
               ),
               _ContextMetric(
-                icon: Icons.psychology_outlined,
+                assetPath: '$_contextIcons/stress.svg',
                 label: 'Stress',
                 value: snapshot?.stressLabel.trim().isEmpty ?? true
                     ? '--'
@@ -1134,11 +1111,11 @@ class _NotesCard extends StatelessWidget {
               ),
               hintText: 'Add a note about this alert...',
               hintStyle: const TextStyle(
-                color: Color(0xFFB5A6DB),
+                color: AleraColors.fieldHint,
                 fontSize: 13,
               ),
               filled: true,
-              fillColor: const Color(0xFFF7F3FF),
+              fillColor: AleraColors.fieldFill,
 
               // 3. Constrains the suffix container size
               suffixIconConstraints: const BoxConstraints(
@@ -1171,12 +1148,12 @@ class _NotesCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(
                   20,
                 ), // Reduced border radius to match smaller height
-                borderSide: const BorderSide(color: Color(0xFFE0D6F5)),
+                borderSide: const BorderSide(color: AleraColors.fieldBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide: const BorderSide(
-                  color: AleraColors.primary,
+                  color: AleraColors.selected,
                   width: 1.5,
                 ),
               ),
@@ -1214,14 +1191,17 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+const String _contextIcons =
+    'alera-figma-assets/assets/icons/vitals/card_icons';
+
 class _ContextMetric extends StatelessWidget {
-  final IconData icon;
+  final String assetPath;
   final String label;
   final String value;
   final String unit;
 
   const _ContextMetric({
-    required this.icon,
+    required this.assetPath,
     required this.label,
     required this.value,
     required this.unit,
@@ -1235,7 +1215,7 @@ class _ContextMetric extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: AleraColors.primary),
+          AleraSvgIcon(assetPath: assetPath, width: 22, height: 22),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
@@ -1455,7 +1435,7 @@ String _confirmationDescription(CaregiverAlert alert, DateTime confirmedAt) {
 Color _statusColor(CaregiverAlertStatus status) {
   return switch (status) {
     CaregiverAlertStatus.active => AleraColors.textSecondary,
-    CaregiverAlertStatus.acknowledged => AleraColors.primary,
+    CaregiverAlertStatus.acknowledged => AleraColors.selected,
     CaregiverAlertStatus.resolved => AleraColors.success,
     CaregiverAlertStatus.falseAlarm => AleraColors.textSecondary,
   };
