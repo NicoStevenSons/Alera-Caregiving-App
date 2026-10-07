@@ -148,7 +148,10 @@ void main() {
     await openDetail(tester);
 
     expect(find.byKey(const Key('reminder-timeline-error')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('reminder-timeline-retry')));
+    final retry = find.byKey(const Key('reminder-timeline-retry'));
+    await tester.ensureVisible(retry);
+    await tester.pumpAndSettle();
+    await tester.tap(retry);
     await tester.pumpAndSettle();
     expect(find.text('Created'), findsOneWidget);
   });
