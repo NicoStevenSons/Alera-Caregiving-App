@@ -200,7 +200,10 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
                   if (i > 0) const Divider(height: 1, indent: 72),
                   ListTile(
                     key: Key('dnd-${c.name}'),
-                    leading: Icon(_alertIcon(c), color: AleraColors.primary),
+                    leading: Icon(
+                      _alertIcon(c),
+                      color: AleraColors.primaryMid,
+                    ),
                     title: Text(c.channelName),
                     subtitle: const Text('Let through Do Not Disturb'),
                     trailing: const Icon(Icons.chevron_right),
@@ -272,14 +275,14 @@ class _SoundRow extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: selected
-                    ? AleraColors.primary
+                    ? AleraColors.primaryMid
                     : AleraColors.primarySoft,
                 borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
               ),
               child: Icon(
                 icon,
                 size: 24,
-                color: selected ? Colors.white : AleraColors.primary,
+                color: selected ? Colors.white : AleraColors.primaryMid,
               ),
             ),
             const SizedBox(width: 12),
@@ -304,14 +307,14 @@ class _SoundRow extends StatelessWidget {
                 onPressed: onPreview,
                 icon: Icon(
                   playing ? Icons.volume_up : Icons.play_circle_filled,
-                  color: AleraColors.primary,
+                  color: AleraColors.primaryMid,
                   size: 30,
                 ),
               ),
             if (showSelection)
               Icon(
                 selected ? Icons.check_circle : Icons.circle_outlined,
-                color: selected ? AleraColors.primary : AleraColors.divider,
+                color: selected ? AleraColors.primaryMid : AleraColors.divider,
                 size: 26,
               ),
           ],
