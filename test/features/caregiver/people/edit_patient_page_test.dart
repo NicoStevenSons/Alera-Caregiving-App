@@ -82,6 +82,13 @@ void main() {
     expect(find.byKey(const Key('relationship-other-field')), findsNothing);
     expect(
       tester
+          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
+          .initialValue,
+      'Mother',
+    );
+    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
+    expect(
+      tester
           .widget<TextField>(find.byKey(const Key('edit-birth-day-field')))
           .controller!
           .text,
