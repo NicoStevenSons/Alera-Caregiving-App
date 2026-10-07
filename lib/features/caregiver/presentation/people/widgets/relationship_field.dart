@@ -50,7 +50,8 @@ class RelationshipField extends StatelessWidget {
                   ChoiceChip(
                     key: Key('relationship-suggestion-$suggestion'),
                     label: Text(suggestion),
-                    selected: current?.toLowerCase() == suggestion.toLowerCase(),
+                    selected:
+                        current?.toLowerCase() == suggestion.toLowerCase(),
                     showCheckmark: false,
                     labelStyle: const TextStyle(
                       fontSize: 12,

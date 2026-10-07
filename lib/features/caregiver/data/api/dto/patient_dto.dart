@@ -13,6 +13,7 @@ class CreatePatientRequest {
   final num? baselineHeartRate;
   final num? baselineSpo2;
   final String? monitoringNotes;
+
   /// Caregiver-specific label for this patient; see relationship_label.dart.
   final String? relationshipLabel;
 
@@ -70,6 +71,7 @@ class UpdatePatientRequest {
   final String? knownConditions;
   final String? medications;
   final String? monitoringNotes;
+
   /// Belongs to the current caregiver's assignment to this patient.
   final String? relationshipLabel;
 
@@ -284,7 +286,6 @@ class CurrentHealthSummaryDto {
     required this.stepsUpdatedAt,
     required this.latestSleepDurationSeconds,
     required this.latestSleepDate,
-    
   });
 
   factory CurrentHealthSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -300,11 +301,13 @@ class CurrentHealthSummaryDto {
       latestHeartRate: _readingOrNull(json['latest_heart_rate']),
       latestSpo2: _readingOrNull(json['latest_spo2']),
 
-      todaySteps: _nullableInt(json['today_steps'],'today_steps',),
-      stepsUpdatedAt: _utcOrNull(json['steps_updated_at'],),
-      latestSleepDurationSeconds: _nullableInt(json['latest_sleep_duration_seconds'],'latest_sleep_duration_seconds',),
-      latestSleepDate: _dateOrNull(json['latest_sleep_date'],),
-
+      todaySteps: _nullableInt(json['today_steps'], 'today_steps'),
+      stepsUpdatedAt: _utcOrNull(json['steps_updated_at']),
+      latestSleepDurationSeconds: _nullableInt(
+        json['latest_sleep_duration_seconds'],
+        'latest_sleep_duration_seconds',
+      ),
+      latestSleepDate: _dateOrNull(json['latest_sleep_date']),
 
       lastCheckIn: _utcOrNull(json['last_check_in']),
       activeAlertCount: _requiredInt(
@@ -382,6 +385,7 @@ class PatientListItemDto {
   final String accountStatus;
   final DateTime createdAt;
   final CurrentHealthSummaryDto currentSummary;
+
   /// The signed-in caregiver's label for this patient (per assignment).
   final String? relationshipLabel;
 

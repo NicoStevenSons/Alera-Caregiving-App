@@ -59,10 +59,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  String text(WidgetTester tester, String key) => tester
-      .widget<TextFormField>(find.byKey(Key(key)))
-      .controller!
-      .text;
+  String text(WidgetTester tester, String key) =>
+      tester.widget<TextFormField>(find.byKey(Key(key))).controller!.text;
 
   testWidgets('pre-fills the existing patient information', (tester) async {
     await pumpPage(tester, relationship: 'Mother');
@@ -77,15 +75,24 @@ void main() {
     expect(text(tester, 'edit-notes-field'), 'Morning checks');
     expect(text(tester, 'relationship-field'), 'Mother');
     expect(
-      tester.widget<TextField>(find.byKey(const Key('edit-birth-day-field'))).controller!.text,
+      tester
+          .widget<TextField>(find.byKey(const Key('edit-birth-day-field')))
+          .controller!
+          .text,
       '03',
     );
     expect(
-      tester.widget<TextField>(find.byKey(const Key('edit-birth-month-field'))).controller!.text,
+      tester
+          .widget<TextField>(find.byKey(const Key('edit-birth-month-field')))
+          .controller!
+          .text,
       '02',
     );
     expect(
-      tester.widget<TextField>(find.byKey(const Key('edit-birth-year-field'))).controller!.text,
+      tester
+          .widget<TextField>(find.byKey(const Key('edit-birth-year-field')))
+          .controller!
+          .text,
       '1950',
     );
     // No monitoring thresholds in the general form.
@@ -105,7 +112,10 @@ void main() {
 
   testWidgets('rejects an invalid birthdate', (tester) async {
     await pumpPage(tester);
-    await tester.enterText(find.byKey(const Key('edit-birth-month-field')), '13');
+    await tester.enterText(
+      find.byKey(const Key('edit-birth-month-field')),
+      '13',
+    );
     await tester.tap(find.byKey(const Key('edit-patient-save')));
     await tester.pump();
 
@@ -115,7 +125,10 @@ void main() {
 
   testWidgets('saves normalized values and returns the result', (tester) async {
     await pumpPage(tester);
-    await tester.enterText(find.byKey(const Key('edit-name-field')), '  Maria S.  ');
+    await tester.enterText(
+      find.byKey(const Key('edit-name-field')),
+      '  Maria S.  ',
+    );
     await tester.enterText(
       find.byKey(const Key('relationship-field')),
       '  Grand   mother ',
@@ -166,14 +179,19 @@ void main() {
     expect(text(tester, 'relationship-field').length, 50);
   });
 
-  testWidgets('shows saving state and blocks double submission', (tester) async {
+  testWidgets('shows saving state and blocks double submission', (
+    tester,
+  ) async {
     edit.gate = Completer<void>();
     await pumpPage(tester);
     await tester.tap(find.byKey(const Key('edit-patient-save')));
     await tester.pump();
 
     expect(find.text('Saving…'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('edit-patient-save')), warnIfMissed: false);
+    await tester.tap(
+      find.byKey(const Key('edit-patient-save')),
+      warnIfMissed: false,
+    );
     await tester.pump();
     expect(edit.requests, hasLength(1));
 
@@ -187,8 +205,14 @@ void main() {
   ) async {
     edit.failure = const CaregiverPatientApiFailure('Server is busy.');
     await pumpPage(tester);
-    await tester.enterText(find.byKey(const Key('edit-name-field')), 'Maria Edited');
-    await tester.enterText(find.byKey(const Key('edit-notes-field')), 'New notes');
+    await tester.enterText(
+      find.byKey(const Key('edit-name-field')),
+      'Maria Edited',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-notes-field')),
+      'New notes',
+    );
     await tester.tap(find.byKey(const Key('edit-patient-save')));
     await tester.pumpAndSettle();
 
@@ -230,8 +254,9 @@ void main() {
   testWidgets('photo errors are shown without losing the form', (tester) async {
     await pumpPage(
       tester,
-      pickPhoto: () async =>
-          throw const PatientPhotoException('Choose a JPEG, PNG, or WebP image.'),
+      pickPhoto: () async => throw const PatientPhotoException(
+        'Choose a JPEG, PNG, or WebP image.',
+      ),
     );
     await tester.tap(find.byKey(const Key('edit-choose-photo')));
     await tester.pump();
@@ -241,10 +266,73 @@ void main() {
 }
 
 final Uint8List _tinyPng = Uint8List.fromList(const <int>[
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-  0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0xF8, 0xFF, 0xFF, 0x3F,
-  0x00, 0x05, 0xFE, 0x02, 0xFE, 0xA7, 0x35, 0x81, 0x84, 0x00, 0x00, 0x00,
-  0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0xF8,
+  0xFF,
+  0xFF,
+  0x3F,
+  0x00,
+  0x05,
+  0xFE,
+  0x02,
+  0xFE,
+  0xA7,
+  0x35,
+  0x81,
+  0x84,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
 ]);

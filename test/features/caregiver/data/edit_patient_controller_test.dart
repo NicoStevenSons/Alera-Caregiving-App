@@ -27,12 +27,18 @@ void main() {
     addTearDown(controller.dispose);
 
     final future = controller.save(
-      const UpdatePatientRequest(fullName: 'Maria', relationshipLabel: 'Mother'),
+      const UpdatePatientRequest(
+        fullName: 'Maria',
+        relationshipLabel: 'Mother',
+      ),
     );
     await Future<void>.delayed(Duration.zero);
     expect(controller.status, EditPatientStatus.saving);
     // A second tap while saving is ignored.
-    expect(await controller.save(const UpdatePatientRequest(fullName: 'x')), false);
+    expect(
+      await controller.save(const UpdatePatientRequest(fullName: 'x')),
+      false,
+    );
     expect(edit.requests, hasLength(1));
 
     edit.gate!.complete();
@@ -71,23 +77,29 @@ void main() {
     addTearDown(controller.dispose);
 
     await controller.save(const UpdatePatientRequest(fullName: 'Maria'));
-    expect(controller.errorMessage, 'Unable to save changes. Please try again.');
-  });
-
-  test('the unavailable default fails clearly instead of guessing a URL', () async {
-    final controller = EditPatientController(
-      patientId: 'patient-1',
-      editDataSource: const UnavailablePatientEditDataSource(),
-      photoDataSource: FakePhotoDataSource(),
-    );
-    addTearDown(controller.dispose);
-
     expect(
-      await controller.save(const UpdatePatientRequest(fullName: 'Maria')),
-      isFalse,
+      controller.errorMessage,
+      'Unable to save changes. Please try again.',
     );
-    expect(controller.errorMessage, contains('isn’t available yet'));
   });
+
+  test(
+    'the unavailable default fails clearly instead of guessing a URL',
+    () async {
+      final controller = EditPatientController(
+        patientId: 'patient-1',
+        editDataSource: const UnavailablePatientEditDataSource(),
+        photoDataSource: FakePhotoDataSource(),
+      );
+      addTearDown(controller.dispose);
+
+      expect(
+        await controller.save(const UpdatePatientRequest(fullName: 'Maria')),
+        isFalse,
+      );
+      expect(controller.errorMessage, contains('isn’t available yet'));
+    },
+  );
 
   PatientPhotoUpload photo() => PatientPhotoUpload(
     bytes: Uint8List.fromList([1, 2, 3]),

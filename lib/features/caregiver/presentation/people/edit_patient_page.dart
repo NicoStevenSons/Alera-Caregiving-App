@@ -367,7 +367,9 @@ class _EditPatientPageState extends State<EditPatientPage> {
           photo == null
               ? AleraPatientAvatar(
                   key: const Key('edit-patient-photo-current'),
-                  name: _name.text.isEmpty ? widget.patient.fullName : _name.text,
+                  name: _name.text.isEmpty
+                      ? widget.patient.fullName
+                      : _name.text,
                   photoUrl: widget.patient.profilePhotoUrl,
                   radius: 46,
                 )
