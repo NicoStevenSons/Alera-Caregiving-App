@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_spacing.dart';
 import '../../data/api/caregiver_help_request_api_data_source.dart';
+import '../../../notifications/presentation/reminder_sound_page.dart';
 import '../help_requests/caregiver_help_request_history_page.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 
@@ -50,6 +51,23 @@ class CaregiverMorePage extends StatelessWidget {
                         ),
                       );
                     },
+            ),
+          ),
+          const SizedBox(height: AleraSpacing.medium),
+          Card(
+            child: ListTile(
+              key: const Key('more-reminder-sound'),
+              leading: const Icon(Icons.notifications_active),
+              title: const Text('Reminder sound'),
+              subtitle: const Text(
+                'Choose how reminders sound on this phone.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ReminderSoundPage(),
+                ),
+              ),
             ),
           ),
           if (onSignOut != null) ...[

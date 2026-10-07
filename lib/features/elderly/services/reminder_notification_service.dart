@@ -2,6 +2,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../../services/notification_sounds/reminder_sound_store.dart';
+import '../../../services/notification_sounds/notification_channels.dart';
+import '../../../services/notification_sounds/notification_sound_catalog.dart';
 import '../domain/models/elderly_reminder.dart';
 
 class ReminderNotificationService {
@@ -40,21 +43,23 @@ class ReminderNotificationService {
 
     final tz.TZDateTime scheduledTime = tz.TZDateTime.from(dueAt, tz.local);
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'alera_reminders',
-          'Alera Reminders',
-          channelDescription: 'Reminder alerts for elderly patients',
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: true,
-          enableVibration: true,
-          category: AndroidNotificationCategory.alarm,
-          fullScreenIntent: true,
-        );
+    // Uses the user's chosen reminder sound. A reminder scheduled earlier
+    // keeps the sound that was selected when it was scheduled.
+    final ReminderSound sound = await reminderSoundStore.read();
+    await ensureReminderChannel(
+      _notifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >(),
+      sound,
+    );
 
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
+    final NotificationDetails details = NotificationDetails(
+      android: reminderAndroidDetails(
+        sound,
+        notificationCategory: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+      ),
     );
 
     await _notifications.zonedSchedule(

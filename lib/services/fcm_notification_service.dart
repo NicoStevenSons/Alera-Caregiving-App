@@ -6,6 +6,9 @@ import 'alert_notification.dart';
 import 'help_request_notification.dart';
 import 'patient_nudge_notification.dart';
 import 'reminder_due_notification.dart';
+import 'notification_sounds/notification_channels.dart';
+import 'notification_sounds/notification_sound_catalog.dart';
+import 'notification_sounds/reminder_sound_store.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -21,33 +24,28 @@ const String _snoozeReminderAction = 'snooze_reminder';
 const String _smallNotificationIcon = 'ic_stat_alera';
 const String _largeNotificationIcon = 'alera_notification_logo';
 
-const AndroidNotificationDetails _reminderNotificationDetails =
-    AndroidNotificationDetails(
-      'alera_patient_reminders_v2',
-      'Patient reminders',
-      channelDescription: 'Time-sensitive reminders for patients',
-      importance: Importance.max,
-      priority: Priority.max,
-      category: AndroidNotificationCategory.alarm,
-      icon: _smallNotificationIcon,
-      largeIcon: DrawableResourceAndroidBitmap(_largeNotificationIcon),
-      playSound: true,
-      enableVibration: true,
-      actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          _completeReminderAction,
-          'Complete',
-          showsUserInterface: false,
-          cancelNotification: true,
-        ),
-        AndroidNotificationAction(
-          _snoozeReminderAction,
-          'Snooze',
-          showsUserInterface: false,
-          cancelNotification: true,
-        ),
-      ],
-    );
+const List<AndroidNotificationAction> _reminderActions =
+    <AndroidNotificationAction>[
+      AndroidNotificationAction(
+        _completeReminderAction,
+        'Complete',
+        showsUserInterface: false,
+        cancelNotification: true,
+      ),
+      AndroidNotificationAction(
+        _snoozeReminderAction,
+        'Snooze',
+        showsUserInterface: false,
+        cancelNotification: true,
+      ),
+    ];
+
+AndroidFlutterLocalNotificationsPlugin? _androidPlugin(
+  FlutterLocalNotificationsPlugin local,
+) => local
+    .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin
+    >();
 
 String _reminderTitle(Map<String, dynamic> data) =>
     data['title'] as String? ?? 'Alera reminder';
@@ -132,17 +130,13 @@ Future<void> _showAlertNotification(
     title: title,
     body: body,
     notificationDetails: NotificationDetails(
-      android: AndroidNotificationDetails(
-        'alera_alerts',
-        'Alera alerts',
-        channelDescription: 'Caregiver health alerts',
-        importance: Importance.high,
-        priority: Priority.high,
+      android: alertAndroidDetails(
+        AlertSoundCategory.fromPayload(data) ?? AlertSoundCategory.warningAlert,
         icon: _smallNotificationIcon,
         largeIcon: const DrawableResourceAndroidBitmap(_largeNotificationIcon),
         styleInformation: messagingStyle,
         visibility: NotificationVisibility.private,
-        category: AndroidNotificationCategory.message,
+        notificationCategory: AndroidNotificationCategory.message,
       ),
     ),
     payload: jsonEncode(data),
@@ -153,13 +147,22 @@ Future<void> _showActionableReminder(
   FlutterLocalNotificationsPlugin local, {
   required int id,
   required Map<String, dynamic> data,
-}) {
-  return local.show(
+}) async {
+  final ReminderSound sound = await reminderSoundStore.read();
+  await ensureReminderChannel(_androidPlugin(local), sound);
+
+  await local.show(
     id: id,
     title: _reminderTitle(data),
     body: _reminderBody(data),
-    notificationDetails: const NotificationDetails(
-      android: _reminderNotificationDetails,
+    notificationDetails: NotificationDetails(
+      android: reminderAndroidDetails(
+        sound,
+        icon: _smallNotificationIcon,
+        largeIcon: const DrawableResourceAndroidBitmap(_largeNotificationIcon),
+        actions: _reminderActions,
+        notificationCategory: AndroidNotificationCategory.alarm,
+      ),
     ),
     payload: jsonEncode(data),
   );
@@ -189,6 +192,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       android: AndroidInitializationSettings(_smallNotificationIcon),
     ),
   );
+  // The app may be launching cold from this message, so make sure the
+  // channels (and their sounds) exist before showing anything.
+  await ensureAlertChannels(_androidPlugin(local));
 
   if (type == 'REMINDER_DUE') {
     await _showReminderNotification(local, message);
@@ -285,44 +291,20 @@ class FcmNotificationService {
           notificationActionBackgroundHandler,
     );
 
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_alerts',
-            'Alera alerts',
-            description: 'Caregiver health alerts',
-            importance: Importance.high,
-          ),
-        );
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_patient_reminders_v2',
-            'Patient reminders',
-            description: 'Time-sensitive reminders for patients',
-            importance: Importance.max,
-            playSound: true,
-            enableVibration: true,
-          ),
-        );
-    await _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'alera_nudges',
-            'Alera reminders',
-            description: 'Caregiver reminders for patients',
-            importance: Importance.high,
-          ),
-        );
+    final android = _androidPlugin(_local);
+    await ensureAlertChannels(android);
+    await ensureReminderChannel(android, await reminderSoundStore.read());
+    // Legacy reminder channel, kept for payloads from older backends.
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        legacyPatientRemindersChannelId,
+        'Patient reminders',
+        description: 'Time-sensitive reminders for patients',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ),
+    );
     FirebaseMessaging.onMessage.listen(_foreground);
     FirebaseMessaging.onMessageOpenedApp.listen(_handle);
     final initialMessage = await _messaging.getInitialMessage();
@@ -431,17 +413,15 @@ class FcmNotificationService {
         id: m.data['help_request_id']?.hashCode ?? m.hashCode,
         title: data['title'] as String? ?? 'Alera help request',
         body: data['body'] as String? ?? 'A help-request status has changed.',
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'alera_help_requests',
-            'Help requests',
-            channelDescription: 'Urgent patient help-request updates',
-            importance: Importance.high,
-            priority: Priority.high,
+        notificationDetails: NotificationDetails(
+          android: alertAndroidDetails(
+            AlertSoundCategory.helpRequest,
             icon: _smallNotificationIcon,
-            largeIcon: DrawableResourceAndroidBitmap(_largeNotificationIcon),
+            largeIcon: const DrawableResourceAndroidBitmap(
+              _largeNotificationIcon,
+            ),
             visibility: NotificationVisibility.private,
-            category: AndroidNotificationCategory.message,
+            notificationCategory: AndroidNotificationCategory.message,
           ),
         ),
         payload: jsonEncode(data),
