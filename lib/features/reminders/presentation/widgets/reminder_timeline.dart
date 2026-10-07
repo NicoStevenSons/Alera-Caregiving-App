@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
+import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
-import '../../../../design_system/widgets/alera_card.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
+import '../reminder_category_style.dart';
 import '../reminder_formatters.dart';
 
 const _cardPadding = 12.0;
@@ -18,9 +19,10 @@ bool reminderIsActionable(ReminderOccurrenceStatus status) => switch (status) {
   _ => false,
 };
 
-/// A day's reminders laid out on a vertical rail, one time label per hour
-/// that actually has reminders (empty hours are not shown).
-class ReminderTimeline extends StatelessWidget {
+/// A day's reminders laid out on a vertical rail. Runs of two or more empty
+/// hours collapse into an "N empty hours hidden · Expand" row, and when
+/// [now] is given a "NOW" marker sits at the current time.
+class ReminderTimeline extends StatefulWidget {
   const ReminderTimeline({
     super.key,
     required this.occurrences,
@@ -28,6 +30,7 @@ class ReminderTimeline extends StatelessWidget {
     required this.isBusy,
     required this.onComplete,
     required this.onOpen,
+    this.now,
   });
 
   /// Already filtered to one day and sorted by time.
@@ -37,26 +40,315 @@ class ReminderTimeline extends StatelessWidget {
   final ValueChanged<ReminderOccurrence> onComplete;
   final ValueChanged<ReminderOccurrence> onOpen;
 
+  /// Local "current time" marker; null hides it (days other than today).
+  final DateTime? now;
+
+  @override
+  State<ReminderTimeline> createState() => _ReminderTimelineState();
+}
+
+sealed class _Entry {
+  const _Entry();
+}
+
+class _ItemEntry extends _Entry {
+  const _ItemEntry(this.occurrence, this.showHour);
+  final ReminderOccurrence occurrence;
+  final bool showHour;
+}
+
+class _NowEntry extends _Entry {
+  const _NowEntry(this.time);
+  final DateTime time;
+}
+
+class _GapEntry extends _Entry {
+  const _GapEntry(this.fromHour, this.toHour);
+  final int fromHour; // inclusive
+  final int toHour; // inclusive
+  int get count => toHour - fromHour + 1;
+}
+
+class _ReminderTimelineState extends State<ReminderTimeline> {
+  List<_Entry> _entries() {
+    final items = widget.occurrences;
+    final now = widget.now;
+    // Merge items and the NOW marker in time order.
+    final timed = <({DateTime time, ReminderOccurrence? item})>[
+      for (final o in items) (time: o.scheduledAt.toLocal(), item: o),
+    ];
+    if (now != null) {
+      var at = timed.length;
+      for (var i = 0; i < timed.length; i++) {
+        if (timed[i].time.isAfter(now)) {
+          at = i;
+          break;
+        }
+      }
+      timed.insert(at, (time: now, item: null));
+    }
+
+    final entries = <_Entry>[];
+    var previousHour = -1;
+    var previousItemHour = -1;
+    for (final t in timed) {
+      final hour = t.time.hour;
+      final emptyFrom = previousHour + 1;
+      final emptyTo = hour - 1;
+      if (emptyTo - emptyFrom + 1 >= 2) {
+        entries.add(_GapEntry(emptyFrom, emptyTo));
+      }
+      if (t.item == null) {
+        entries.add(_NowEntry(t.time));
+      } else {
+        entries.add(_ItemEntry(t.item!, hour != previousItemHour));
+        previousItemHour = hour;
+      }
+      previousHour = hour;
+    }
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final templateById = {for (final t in templates) t.id: t};
+    final templateById = {for (final t in widget.templates) t.id: t};
+    final entries = _entries();
+    // First actionable item gets the "lifted" next-up treatment.
+    final nextId = widget.occurrences
+        .where(
+          (o) =>
+              reminderIsActionable(o.status) &&
+              (widget.now == null ||
+                  !o.scheduledAt.toLocal().isBefore(widget.now!)),
+        )
+        .map((o) => o.id)
+        .firstOrNull;
     return Column(
       children: [
-        for (var i = 0; i < occurrences.length; i++)
-          _TimelineRow(
-            occurrence: occurrences[i],
-            template: templateById[occurrences[i].templateId],
-            showHour:
-                i == 0 ||
-                occurrences[i].scheduledAt.toLocal().hour !=
-                    occurrences[i - 1].scheduledAt.toLocal().hour,
-            isFirst: i == 0,
-            isLast: i == occurrences.length - 1,
-            busy: isBusy(occurrences[i].id),
-            onComplete: () => onComplete(occurrences[i]),
-            onOpen: () => onOpen(occurrences[i]),
-          ),
+        for (var i = 0; i < entries.length; i++)
+          switch (entries[i]) {
+            _ItemEntry(:final occurrence, :final showHour) => _TimelineRow(
+              occurrence: occurrence,
+              template: templateById[occurrence.templateId],
+              showHour: showHour,
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+              isNext: occurrence.id == nextId,
+              busy: widget.isBusy(occurrence.id),
+              onComplete: () => widget.onComplete(occurrence),
+              onOpen: () => widget.onOpen(occurrence),
+            ),
+            _NowEntry(:final time) => _NowRow(
+              time: time,
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+            ),
+            _GapEntry() => _GapRow(
+              gap: entries[i] as _GapEntry,
+              isFirst: i == 0,
+              isLast: i == entries.length - 1,
+            ),
+          },
       ],
+    );
+  }
+}
+
+/// Rail segment for rows that aren't reminder cards: a continuous line with
+/// [node] drawn at [nodeTop].
+class _SimpleRail extends StatelessWidget {
+  const _SimpleRail({
+    required this.isFirst,
+    required this.isLast,
+    required this.node,
+    this.nodeTop = 8,
+    this.nodeSize = 14,
+  });
+
+  final bool isFirst;
+  final bool isLast;
+  final Widget node;
+  final double nodeTop;
+  final double nodeSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final centre = nodeTop + nodeSize / 2;
+    return SizedBox(
+      width: 24,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: isFirst ? centre : 0,
+            bottom: isLast ? null : 0,
+            height: isLast ? centre : null,
+            child: isFirst && isLast
+                ? const SizedBox.shrink()
+                : Container(width: 2, color: AleraColors.primarySoft),
+          ),
+          Positioned(top: nodeTop, child: node),
+        ],
+      ),
+    );
+  }
+}
+
+class _NowRow extends StatelessWidget {
+  const _NowRow({
+    required this.time,
+    required this.isFirst,
+    required this.isLast,
+  });
+
+  final DateTime time;
+  final bool isFirst;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(width: 44),
+          _SimpleRail(
+            isFirst: isFirst,
+            isLast: isLast,
+            nodeTop: 9,
+            nodeSize: 12,
+            node: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: AleraColors.selected,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10, top: 2),
+              child: Row(
+                children: [
+                  Container(
+                    key: const Key('reminder-now-marker'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AleraColors.selected,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'NOW · ${reminderClock(time)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(child: _DashedLine()),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashedLine extends StatelessWidget {
+  const _DashedLine();
+
+  // CustomPaint (not LayoutBuilder): this sits inside an IntrinsicHeight row,
+  // which cannot measure a LayoutBuilder and would throw.
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 2,
+    child: CustomPaint(
+      painter: _DashPainter(AleraColors.selected.withValues(alpha: 0.6)),
+      size: const Size(double.infinity, 2),
+    ),
+  );
+}
+
+class _DashPainter extends CustomPainter {
+  _DashPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawRect(Rect.fromLTWH(x, 0, 4, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashPainter old) => old.color != color;
+}
+
+/// A quiet, non-interactive marker for a stretch with nothing scheduled.
+class _GapRow extends StatelessWidget {
+  const _GapRow({
+    required this.gap,
+    required this.isFirst,
+    required this.isLast,
+  });
+
+  final _GapEntry gap;
+  final bool isFirst;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(width: 44),
+          _SimpleRail(
+            isFirst: isFirst,
+            isLast: isLast,
+            nodeTop: 6,
+            nodeSize: 12,
+            node: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.bedtime,
+                size: 10,
+                color: AleraColors.mutedIcon,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10, top: 2),
+              child: Text(
+                '${gap.count} empty hours · '
+                '${reminderHourLabel(gap.fromHour)} to '
+                '${reminderHourLabel(gap.toHour)}',
+                key: ValueKey('reminder-gap-${gap.fromHour}'),
+                style: AleraTypography.body.copyWith(
+                  fontSize: 11,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -68,6 +360,7 @@ class _TimelineRow extends StatelessWidget {
     required this.showHour,
     required this.isFirst,
     required this.isLast,
+    required this.isNext,
     required this.busy,
     required this.onComplete,
     required this.onOpen,
@@ -78,6 +371,7 @@ class _TimelineRow extends StatelessWidget {
   final bool showHour;
   final bool isFirst;
   final bool isLast;
+  final bool isNext;
   final bool busy;
   final VoidCallback onComplete;
   final VoidCallback onOpen;
@@ -131,6 +425,7 @@ class _TimelineRow extends StatelessWidget {
               child: _ReminderCard(
                 occurrence: occurrence,
                 repeatLabel: reminderRepeatLabel(template),
+                isNext: isNext,
                 busy: busy,
                 onComplete: onComplete,
                 onOpen: onOpen,
@@ -185,7 +480,7 @@ class _Rail extends StatelessWidget {
         status == ReminderOccurrenceStatus.completedLate;
     if (done) {
       return _circle(
-        fill: AleraColors.primary,
+        fill: AleraColors.selected,
         child: const Icon(Icons.check, size: 11, color: Colors.white),
       );
     }
@@ -200,12 +495,12 @@ class _Rail extends StatelessWidget {
     }
     final night = hour < 6 || hour >= 21;
     return _circle(
-      border: AleraColors.primary,
+      border: AleraColors.selected,
       child: night
           ? const Icon(
               Icons.nightlight_round,
               size: 10,
-              color: AleraColors.primary,
+              color: AleraColors.selected,
             )
           : null,
     );
@@ -227,6 +522,7 @@ class _ReminderCard extends StatelessWidget {
   const _ReminderCard({
     required this.occurrence,
     required this.repeatLabel,
+    required this.isNext,
     required this.busy,
     required this.onComplete,
     required this.onOpen,
@@ -234,6 +530,7 @@ class _ReminderCard extends StatelessWidget {
 
   final ReminderOccurrence occurrence;
   final String? repeatLabel;
+  final bool isNext;
   final bool busy;
   final VoidCallback onComplete;
   final VoidCallback onOpen;
@@ -255,104 +552,136 @@ class _ReminderCard extends StatelessWidget {
     final status = _statusLabel;
     final muted = occurrence.status == ReminderOccurrenceStatus.canceled;
 
-    return AleraCard(
-      key: ValueKey('reminder-occurrence-${occurrence.id}'),
-      padding: const EdgeInsets.all(_cardPadding),
-      onTap: actionable ? onOpen : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: _iconTile,
-            child: Row(
-              children: [
-                Container(
-                  width: _iconTile,
-                  height: _iconTile,
-                  decoration: BoxDecoration(
-                    color: AleraColors.primarySoft.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Opacity(
-                      opacity: muted ? 0.5 : 1,
-                      child: AleraSvgIcon(
-                        assetPath: reminderCategoryAsset(occurrence.category),
-                        width: 28,
-                        height: 28,
-                      ),
+    final done =
+        occurrence.status == ReminderOccurrenceStatus.completed ||
+        occurrence.status == ReminderOccurrenceStatus.completedLate;
+    final missed = occurrence.status == ReminderOccurrenceStatus.missed;
+    final accent = reminderCategoryColor(occurrence.category);
+    final background = muted
+        ? Colors.white
+        : missed
+        ? Color.alphaBlend(
+            AleraColors.critical.withValues(alpha: 0.10),
+            Colors.white,
+          )
+        : reminderCategoryWash(
+            occurrence.category,
+            strength: done ? 0.04 : 0.08,
+          );
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: _iconTile,
+          child: Row(
+            children: [
+              Container(
+                width: _iconTile,
+                height: _iconTile,
+                decoration: BoxDecoration(
+                  color: muted
+                      ? AleraColors.primarySoft.withValues(alpha: 0.6)
+                      : reminderCategoryTile(occurrence.category),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Opacity(
+                    opacity: muted ? 0.5 : 1,
+                    child: AleraSvgIcon(
+                      assetPath: reminderCategoryAsset(occurrence.category),
+                      width: 28,
+                      height: 28,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        occurrence.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AleraTypography.sectionTitle.copyWith(
-                          fontSize: 15,
-                          decoration: muted ? TextDecoration.lineThrough : null,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AleraTypography.body.copyWith(
-                          fontSize: 12,
-                          color: AleraColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _Trailing(
-                  occurrence: occurrence,
-                  busy: busy,
-                  onComplete: onComplete,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 14,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _Meta(
-                icon: Icons.schedule,
-                text: reminderClock(occurrence.scheduledAt),
               ),
-              if (repeatLabel != null)
-                _Meta(icon: Icons.repeat, text: repeatLabel!),
-              if (status != null)
-                AleraPill(label: status, variant: AleraPillVariant.label),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      occurrence.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.sectionTitle.copyWith(
+                        fontSize: 15,
+                        decoration: muted ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AleraTypography.body.copyWith(
+                        fontSize: 12,
+                        color: AleraColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _Trailing(
+                occurrence: occurrence,
+                busy: busy,
+                onComplete: onComplete,
+              ),
             ],
           ),
-        ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 14,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _Meta(
+              icon: Icons.schedule,
+              text: reminderClock(occurrence.scheduledAt),
+              color: accent,
+            ),
+            if (repeatLabel != null)
+              _Meta(icon: Icons.repeat, text: repeatLabel!, color: accent),
+            if (status != null)
+              AleraPill(label: status, variant: AleraPillVariant.label),
+          ],
+        ),
+      ],
+    );
+    return Material(
+      key: ValueKey('reminder-occurrence-${occurrence.id}'),
+      color: background,
+      elevation: 0,
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: actionable ? onOpen : null,
+        child: Opacity(
+          opacity: done ? 0.78 : 1,
+          child: Padding(
+            padding: const EdgeInsets.all(_cardPadding),
+            child: content,
+          ),
+        ),
       ),
     );
   }
 }
 
 class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.text});
+  const _Meta({required this.icon, required this.text, required this.color});
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14, color: AleraColors.primary),
+      Icon(icon, size: 14, color: color),
       const SizedBox(width: 4),
       Text(
         text,
@@ -394,7 +723,14 @@ class _Trailing extends StatelessWidget {
       return const Icon(
         Icons.check_circle,
         size: 30,
-        color: AleraColors.primary,
+        color: AleraColors.successStrong,
+      );
+    }
+    if (occurrence.status == ReminderOccurrenceStatus.missed) {
+      return const Icon(
+        Icons.notifications_active,
+        size: 28,
+        color: AleraColors.critical,
       );
     }
     if (!reminderIsActionable(occurrence.status)) {

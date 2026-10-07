@@ -1,5 +1,6 @@
 import 'package:alera/features/caregiver/domain/models/care_recipient.dart';
 import 'package:alera/features/caregiver/domain/models/health_snapshot.dart';
+import 'package:alera/design_system/widgets/alera_button.dart';
 import 'package:alera/features/reminders/data/reminder_api_data_source.dart';
 import 'package:alera/features/reminders/data/reminder_controller.dart';
 import 'package:alera/features/reminders/domain/reminder_models.dart';
@@ -35,17 +36,36 @@ void main() {
       ]),
     );
 
-    expect(find.text('Lola Rosa’s daily reminders'), findsOneWidget);
+    expect(find.text('Lola Rosa'), findsOneWidget);
     expect(find.text('Tuesday, September 22'), findsOneWidget);
-    expect(find.text('Morning pills'), findsOneWidget);
+    // Also shown in the summary card's "Next" chip.
+    expect(find.text('Morning pills'), findsWidgets);
     expect(find.text('Tomorrow walk'), findsNothing);
     expect(find.byKey(const Key('reminder-patient-picker')), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('reminder-day-2026-09-23')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Tomorrow walk'), findsOneWidget);
+    expect(find.text('Tomorrow walk'), findsWidgets);
     expect(find.text('Morning pills'), findsNothing);
+  });
+
+  testWidgets('today shows summary, NOW marker and collapsed empty hours', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      _FakeSource([
+        _occurrence('a', 'Morning pills', DateTime(2026, 9, 22, 8, 30)),
+        _occurrence('b', 'Evening pills', DateTime(2026, 9, 22, 18)),
+      ]),
+    );
+
+    expect(find.byKey(const Key('reminder-summary-card')), findsOneWidget);
+    expect(find.text('left today'), findsOneWidget);
+    expect(find.byKey(const Key('reminder-now-marker')), findsOneWidget);
+    expect(find.textContaining('empty hours'), findsWidgets);
+    expect(find.text('Tuesday, September 22'), findsOneWidget);
   });
 
   testWidgets('empty day shows the muted empty state', (tester) async {
@@ -69,7 +89,7 @@ void main() {
       find.byKey(const Key('reminder-action-note')),
       'Given at bedside',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Complete'));
+    await tester.tap(find.widgetWithText(AleraButton, 'Complete'));
     await tester.pumpAndSettle();
 
     expect(source.completedOnBehalf, ['a']);
