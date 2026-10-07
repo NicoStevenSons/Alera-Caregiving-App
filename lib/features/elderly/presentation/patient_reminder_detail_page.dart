@@ -18,11 +18,7 @@ class PatientReminderDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminder details'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('Reminder details')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

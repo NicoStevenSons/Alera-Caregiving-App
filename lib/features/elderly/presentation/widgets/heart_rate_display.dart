@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../models/heart_rate_data.dart';
 import '../../../../Services/upload_queue_service.dart';
 import '../../../../interfaces/pages/records/heart_rate_history_page.dart';
+import 'elderly_widgets.dart';
 
 class HeartRateDisplay extends StatelessWidget {
   const HeartRateDisplay({
@@ -17,67 +18,20 @@ class HeartRateDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasReading = heartRateData.bpm != null && heartRateData.bpm! > 0;
-    final value = hasReading ? '${heartRateData.bpm} BPM' : '-- BPM';
 
-    return SizedBox(
-      height: 154,
-      child: Card(
-        elevation: 2,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) => HeartRateHistoryPage(
-                  uploadQueueService: uploadQueueService,
-                ),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.favorite_rounded, color: Color(0xFFFF6467), size: 28),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Heart Rate',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  hasReading
-                      ? heartRateData.displayedStatus
-                      : 'Waiting for watch',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
+    return ElderlyVitalTile(
+      backgroundAsset: ElderlyVitalTile.heartBackground,
+      iconAsset: ElderlyVitalTile.heartIcon,
+      title: 'Heart Rate',
+      value: hasReading ? '${heartRateData.bpm}' : '--',
+      unit: 'BPM',
+      caption: hasReading ? heartRateData.displayedStatus : 'Waiting for watch',
+      textColor: ElderlyVitalTile.heartColor,
+      onTap: () => Navigator.push(
+        context,
+        elderlyRoute<void>(
+          context,
+          (_) => HeartRateHistoryPage(uploadQueueService: uploadQueueService),
         ),
       ),
     );

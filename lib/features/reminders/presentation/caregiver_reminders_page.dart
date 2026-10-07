@@ -593,7 +593,7 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickTime,
-                    icon: const Icon(Icons.schedule),
+                    icon: const Icon(Icons.access_time_filled),
                     label: Text(_time.format(context)),
                   ),
                 ),

@@ -8,6 +8,7 @@ import '../domain/models/elderly_reminder.dart';
 import '../../../design_system/alera_colors.dart';
 import 'elderly_reminder_style.dart';
 import 'widgets/elderly_help_request_card.dart';
+import 'widgets/elderly_widgets.dart';
 import 'widgets/heart_rate_display.dart';
 import 'widgets/sleep_display.dart';
 import 'widgets/spo2_display.dart';
@@ -66,7 +67,7 @@ class ElderlyHomePage extends StatelessWidget {
           onRetry: onRetryHelpRequest,
         ),
         const SizedBox(height: 28),
-        const _SectionTitle('Today\'s health'),
+        const ElderlySectionTitle('Today\'s health'),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -85,10 +86,14 @@ class ElderlyHomePage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        StepsDisplay(stepsData: state.steps),
-        const SizedBox(height: 16),
-        SleepDisplay(sleepData: state.sleep),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: StepsDisplay(stepsData: state.steps)),
+            const SizedBox(width: 12),
+            Expanded(child: SleepDisplay(sleepData: state.sleep)),
+          ],
+        ),
       ],
     );
   }
@@ -137,41 +142,40 @@ class _MonitoringStatusCard extends StatelessWidget {
       _ => const Color(0xFFD99A00),
     };
 
-    return Card(
-      key: const Key('elderly-monitoring-status'),
-      child: ListTile(
-        onTap: actionable ? onOpenDeviceStatus : null,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        key: const Key('elderly-monitoring-status'),
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(30),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: actionable ? onOpenDeviceStatus : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                ),
+                if (actionable) ...[
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded, color: color, size: 24),
+                ],
+              ],
+            ),
           ),
-          child: Icon(icon, color: color, size: 28),
         ),
-        title: Text(title),
-        subtitle: Text(message),
-        trailing: actionable ? const Icon(Icons.chevron_right_rounded) : null,
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w800,
-        color: AleraColors.textPrimary,
       ),
     );
   }
@@ -200,7 +204,7 @@ class _NextReminderCard extends StatelessWidget {
       return const Card(
         key: Key('elderly-next-reminder-loading'),
         child: ListTile(
-          leading: Icon(Icons.schedule_rounded),
+          leading: Icon(Icons.access_time_filled),
           title: Text('Loading next reminder…'),
         ),
       );
@@ -245,15 +249,7 @@ class _NextReminderCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: style.color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(style.icon, color: style.color, size: 36),
-              ),
+              ElderlyIconTile(icon: style.icon, color: style.color, size: 64),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

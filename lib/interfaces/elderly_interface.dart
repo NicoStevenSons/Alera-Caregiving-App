@@ -458,10 +458,13 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   Future<void> _showReminderDetails(ElderlyReminder reminder) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => PatientReminderDetailPage(
-          reminder: reminder,
-          onComplete: () => _completeReminder(reminder),
-          onSnooze: () => _snoozeReminder(reminder),
+        builder: (_) => Theme(
+          data: AleraElderlyTheme.build(Theme.of(context)),
+          child: PatientReminderDetailPage(
+            reminder: reminder,
+            onComplete: () => _completeReminder(reminder),
+            onSnooze: () => _snoozeReminder(reminder),
+          ),
         ),
       ),
     );
@@ -595,7 +598,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
               label: 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.schedule),
+              icon: Icon(Icons.access_time_filled),
               label: 'Reminders',
             ),
             NavigationDestination(icon: Icon(Icons.menu), label: 'More'),

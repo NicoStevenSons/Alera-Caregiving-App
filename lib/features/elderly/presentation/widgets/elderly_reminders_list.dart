@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/elderly_reminder.dart';
 import 'elderly_reminder_card.dart';
+import 'elderly_widgets.dart';
 
 class ElderlyRemindersList extends StatelessWidget {
   final bool isLoading;
@@ -80,10 +81,22 @@ class ElderlyRemindersList extends StatelessWidget {
       );
     }
 
+    const Set<String> finished = {'COMPLETED', 'COMPLETED_LATE', 'CANCELED'};
+    final List<ElderlyReminder> todo = reminders
+        .where((r) => !finished.contains(r.status))
+        .toList();
+    final List<ElderlyReminder> done = reminders
+        .where((r) => finished.contains(r.status))
+        .toList();
+
     return Column(
-      children: reminders
-          .map(
-            (reminder) => Padding(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (todo.isNotEmpty) ...[
+          const ElderlySectionTitle('To do'),
+          const SizedBox(height: 12),
+          for (final reminder in todo)
+            Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: ElderlyReminderCard(
                 reminder: reminder,
@@ -93,8 +106,21 @@ class ElderlyRemindersList extends StatelessWidget {
                 onSnooze: () => onSnooze?.call(reminder),
               ),
             ),
-          )
-          .toList(),
+        ],
+        if (done.isNotEmpty) ...[
+          SizedBox(height: todo.isEmpty ? 0 : 16),
+          const ElderlySectionTitle('Done'),
+          const SizedBox(height: 12),
+          for (final reminder in done)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ElderlyDoneReminderRow(
+                reminder: reminder,
+                onTap: () => onTap?.call(reminder),
+              ),
+            ),
+        ],
+      ],
     );
   }
 }

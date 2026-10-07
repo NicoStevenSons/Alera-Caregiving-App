@@ -731,8 +731,8 @@ class _CaregiverShellState extends State<CaregiverShell>
                       label: 'Alerts',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.schedule_outlined),
-                      selectedIcon: Icon(Icons.schedule),
+                      icon: Icon(Icons.access_time_filled),
+                      selectedIcon: Icon(Icons.access_time_filled),
                       label: 'Reminders',
                     ),
                     NavigationDestination(
