@@ -38,11 +38,10 @@ class ElderlyHelpRequestCard extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           height: 64,
-          child: FilledButton.icon(
+          child: FilledButton(
             key: const Key('elderly-request-help'),
             onPressed: onRequestHelp,
-            icon: const Icon(Icons.sos_rounded, size: 32),
-            label: const Text(
+            child: const Text(
               'Request Help',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
             ),

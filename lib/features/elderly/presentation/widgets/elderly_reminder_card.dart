@@ -101,12 +101,12 @@ class ElderlyReminderCard extends StatelessWidget {
                         : const Text('Complete'),
                   ),
                 ),
-                if (reminder.snoozeAllowed) ...[
+                if (reminder.snoozeAllowed && _canSnooze) ...[
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _canSnooze && !busy ? onSnooze : null,
+                      onPressed: busy ? null : onSnooze,
                       child: Text('Snooze ${reminder.defaultSnoozeMinutes} min'),
                     ),
                   ),
@@ -172,9 +172,11 @@ class ElderlyReminderCard extends StatelessWidget {
 }
 
 
-/// Compact row for reminders that are finished (completed or canceled).
+/// Compact tappable row. Finished reminders show a check/cross; open ones
+/// (missed, later today) show an arrow and open the full card on tap.
 class ElderlyDoneReminderRow extends StatelessWidget {
   const ElderlyDoneReminderRow({super.key, required this.reminder, this.onTap});
+
 
   final ElderlyReminder reminder;
   final VoidCallback? onTap;
@@ -186,6 +188,9 @@ class ElderlyDoneReminderRow extends StatelessWidget {
     );
     final Color statusColor = ElderlyReminderStyle.statusColor(reminder.status);
     final bool canceled = reminder.status == 'CANCELED';
+    final bool finished = canceled ||
+        reminder.status == 'COMPLETED' ||
+        reminder.status == 'COMPLETED_LATE';
 
     return Card(
       child: InkWell(
@@ -219,20 +224,29 @@ class ElderlyDoneReminderRow extends StatelessWidget {
                     Text(
                       '${ElderlyReminderCard._formatDateTime(reminder.dueAt)} · '
                       '${ElderlyReminderCard._formatStatus(reminder.status)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AleraColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        color: finished
+                            ? AleraColors.textSecondary
+                            : statusColor,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                canceled ? Icons.cancel : Icons.check_circle,
-                color: statusColor,
-                size: 28,
-              ),
+              if (finished)
+                Icon(
+                  canceled ? Icons.cancel : Icons.check_circle,
+                  color: statusColor,
+                  size: 28,
+                )
+              else
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 20,
+                  color: AleraColors.textSecondary,
+                ),
             ],
           ),
         ),

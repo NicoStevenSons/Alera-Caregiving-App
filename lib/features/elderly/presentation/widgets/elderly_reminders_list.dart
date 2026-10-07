@@ -82,45 +82,67 @@ class ElderlyRemindersList extends StatelessWidget {
     }
 
     const Set<String> finished = {'COMPLETED', 'COMPLETED_LATE', 'CANCELED'};
-    final List<ElderlyReminder> todo = reminders
+    final List<ElderlyReminder> open = reminders
         .where((r) => !finished.contains(r.status))
         .toList();
     final List<ElderlyReminder> done = reminders
         .where((r) => finished.contains(r.status))
         .toList();
+    final List<ElderlyReminder> missed = open
+        .where((r) => r.status == 'MISSED')
+        .toList();
+    final List<ElderlyReminder> active = open
+        .where((r) => r.status != 'MISSED')
+        .toList();
+
+    // Only the single most urgent reminder gets action buttons; everything
+    // else is a compact row that opens the full card.
+    ElderlyReminder? primary;
+    for (final r in active) {
+      if (r.status == 'DUE') {
+        primary = r;
+        break;
+      }
+    }
+    primary ??= active.isEmpty ? null : active.first;
+    final List<ElderlyReminder> later = active
+        .where((r) => r != primary)
+        .toList();
+
+    Widget row(ElderlyReminder r) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ElderlyDoneReminderRow(reminder: r, onTap: () => onTap?.call(r)),
+    );
+
+    final List<Widget> children = [];
+    void section(String title, List<Widget> items) {
+      if (items.isEmpty) return;
+      if (children.isNotEmpty) children.add(const SizedBox(height: 12));
+      children
+        ..add(ElderlySectionTitle(title))
+        ..add(const SizedBox(height: 12))
+        ..addAll(items);
+    }
+
+    if (primary != null) {
+      final ElderlyReminder p = primary!;
+      section(p.status == 'DUE' ? 'Due now' : 'Up next', [
+        ElderlyReminderCard(
+          reminder: p,
+          busy: busyOccurrenceIds.contains(p.occurrenceId),
+          onTap: () => onTap?.call(p),
+          onComplete: () => onComplete?.call(p),
+          onSnooze: () => onSnooze?.call(p),
+        ),
+      ]);
+    }
+    section('Missed', missed.map(row).toList());
+    section('Later today', later.map(row).toList());
+    section('Done', done.map(row).toList());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (todo.isNotEmpty) ...[
-          const ElderlySectionTitle('To do'),
-          const SizedBox(height: 12),
-          for (final reminder in todo)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ElderlyReminderCard(
-                reminder: reminder,
-                busy: busyOccurrenceIds.contains(reminder.occurrenceId),
-                onTap: () => onTap?.call(reminder),
-                onComplete: () => onComplete?.call(reminder),
-                onSnooze: () => onSnooze?.call(reminder),
-              ),
-            ),
-        ],
-        if (done.isNotEmpty) ...[
-          SizedBox(height: todo.isEmpty ? 0 : 16),
-          const ElderlySectionTitle('Done'),
-          const SizedBox(height: 12),
-          for (final reminder in done)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ElderlyDoneReminderRow(
-                reminder: reminder,
-                onTap: () => onTap?.call(reminder),
-              ),
-            ),
-        ],
-      ],
+      children: children,
     );
   }
 }
