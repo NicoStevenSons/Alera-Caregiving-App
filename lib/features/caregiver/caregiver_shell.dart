@@ -111,6 +111,7 @@ class _CaregiverShellState extends State<CaregiverShell>
   bool _appResumed = true;
   Timer? _patientPollTimer;
   late final ReminderController _reminderController;
+  ReminderEventsDataSource? _reminderEventsSource;
   HomeReminderController? _homeReminderController;
   CaregiverHelpRequestController? _helpRequestController;
 
@@ -267,6 +268,9 @@ class _CaregiverShellState extends State<CaregiverShell>
     )..addListener(_alertsChanged);
     final reminderSource = widget.reminderDataSource ?? ReminderApiDataSource();
     _reminderController = ReminderController(dataSource: reminderSource);
+    _reminderEventsSource = reminderSource is ReminderEventsDataSource
+        ? reminderSource
+        : null;
     if (reminderSource is ReminderDateRangeDataSource) {
       _homeReminderController = HomeReminderController(
         dataSource: reminderSource as ReminderDateRangeDataSource,
@@ -797,6 +801,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       controller: _reminderController,
       patients: patients.where((patient) => patient.backendBacked).toList(),
       initialPatientId: _selectedPatientId,
+      eventsDataSource: _reminderEventsSource,
     );
 
     final controller = _patientController;

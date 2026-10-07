@@ -6,8 +6,10 @@ import 'package:http/http.dart' as http;
 
 import '../../../config/app_config.dart';
 import '../../caregiver/data/auth/caregiver_session_controller.dart';
+import '../domain/reminder_event.dart';
 import '../domain/reminder_models.dart';
 import 'reminder_dto.dart';
+import 'reminder_event_dto.dart';
 
 class ReminderApiFailure implements Exception {
   const ReminderApiFailure(this.message, {this.statusCode});
@@ -64,8 +66,23 @@ abstract interface class ReminderDateRangeDataSource {
   });
 }
 
+/// Read-only history of one reminder occurrence. Shared by the caregiver and
+/// elderly-patient apps: the bearer token of whichever role is signed in
+/// decides what the backend lets through.
+abstract interface class ReminderEventsDataSource {
+  /// `GET /api/v1/reminders/{occurrence_id}/events`, oldest event first.
+  Future<ReminderPage<ReminderEvent>> fetchEvents(
+    String occurrenceId, {
+    int limit = 50,
+    int offset = 0,
+  });
+}
+
 class ReminderApiDataSource
-    implements ReminderDataSource, ReminderDateRangeDataSource {
+    implements
+        ReminderDataSource,
+        ReminderDateRangeDataSource,
+        ReminderEventsDataSource {
   ReminderApiDataSource({
     http.Client? client,
     CaregiverSession? session,
@@ -103,6 +120,24 @@ class ReminderApiDataSource
       decoded,
       (json) => ReminderOccurrenceDto.fromJson(json).value,
     );
+  }
+
+  @override
+  Future<ReminderPage<ReminderEvent>> fetchEvents(
+    String occurrenceId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final decoded = await _request(
+      'GET',
+      '/api/v1/reminders/${Uri.encodeComponent(occurrenceId)}/events',
+      query: {'limit': '$limit', 'offset': '$offset'},
+    );
+    try {
+      return parseReminderEventPage(decoded);
+    } on FormatException {
+      throw const ReminderApiFailure('The reminder history was invalid.');
+    }
   }
 
   Future<ReminderOccurrence> fetchOccurrence(String occurrenceId) async {

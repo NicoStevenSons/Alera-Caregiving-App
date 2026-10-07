@@ -7,11 +7,13 @@ import '../../../design_system/widgets/alera_pill.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
+import '../data/reminder_api_data_source.dart';
 import '../data/reminder_controller.dart';
 import '../domain/reminder_models.dart';
 import 'create_reminder_sheet.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
+import 'reminder_occurrence_detail_page.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
 import 'widgets/reminder_timeline.dart';
@@ -25,12 +27,17 @@ class CaregiverRemindersPage extends StatefulWidget {
     required this.controller,
     required this.patients,
     this.initialPatientId,
+    this.eventsDataSource,
     this.now,
   });
 
   final ReminderController controller;
   final List<CareRecipient> patients;
   final String? initialPatientId;
+
+  /// Where the occurrence timeline is read from. Defaults to the real API
+  /// when not injected (tests inject a fake).
+  final ReminderEventsDataSource? eventsDataSource;
 
   /// Overridable clock for tests.
   final DateTime Function()? now;
@@ -289,60 +296,21 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     );
   }
 
-  /// Card tap: the less common actions (snooze / cancel) live in a sheet so
-  /// the card itself stays as clean as the mock.
+  /// Card tap: opens the occurrence detail page (info, actions, timeline).
   Future<void> _openActions(ReminderOccurrence occurrence) async {
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${occurrence.title} · ${reminderClock(occurrence.scheduledAt)}',
-                  style: AleraTypography.sectionTitle,
-                ),
-              ),
-            ),
-            ListTile(
-              key: const Key('reminder-action-complete'),
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Mark complete'),
-              onTap: () => Navigator.pop(context, 'complete'),
-            ),
-            if (occurrence.snoozeAllowed)
-              ListTile(
-                key: const Key('reminder-action-snooze'),
-                leading: const Icon(Icons.snooze),
-                title: Text(
-                  'Snooze ${occurrence.defaultSnoozeMinutes} minutes',
-                ),
-                onTap: () => Navigator.pop(context, 'snooze'),
-              ),
-            ListTile(
-              key: const Key('reminder-action-cancel'),
-              leading: const Icon(Icons.event_busy_outlined),
-              title: const Text('Cancel this reminder'),
-              onTap: () => Navigator.pop(context, 'cancel'),
-            ),
-          ],
+    final events = widget.eventsDataSource ?? ReminderApiDataSource();
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ReminderOccurrenceDetailPage(
+          occurrence: occurrence,
+          controller: widget.controller,
+          eventsDataSource: events,
+          onComplete: _complete,
+          onSnooze: _snooze,
+          onCancel: _cancel,
         ),
       ),
     );
-    if (!mounted) return;
-    switch (action) {
-      case 'complete':
-        await _complete(occurrence);
-      case 'snooze':
-        await _snooze(occurrence);
-      case 'cancel':
-        await _cancel(occurrence);
-    }
   }
 
   Future<String?> _askForNote({

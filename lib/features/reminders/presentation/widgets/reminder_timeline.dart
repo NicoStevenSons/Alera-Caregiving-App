@@ -251,14 +251,13 @@ class _ReminderCard extends StatelessWidget {
     final subtitle =
         occurrence.instructions ??
         reminderTitleCase(occurrence.category.apiValue);
-    final actionable = reminderIsActionable(occurrence.status);
     final status = _statusLabel;
     final muted = occurrence.status == ReminderOccurrenceStatus.canceled;
 
     return AleraCard(
       key: ValueKey('reminder-occurrence-${occurrence.id}'),
       padding: const EdgeInsets.all(_cardPadding),
-      onTap: actionable ? onOpen : null,
+      onTap: onOpen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -461,6 +461,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           reminder: reminder,
           onComplete: () => _completeReminder(reminder),
           onSnooze: () => _snoozeReminder(reminder),
+          eventsDataSource: reminderService,
         ),
       ),
     );
