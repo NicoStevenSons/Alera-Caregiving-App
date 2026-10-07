@@ -78,20 +78,6 @@ void main() {
     expect(find.byKey(const Key('relationship-other-field')), findsNothing);
     expect(
       tester
-          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
-          .initialValue,
-      'Mother',
-    );
-    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
-    expect(
-      tester
-          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
-          .initialValue,
-      'Mother',
-    );
-    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
-    expect(
-      tester
           .widget<TextField>(find.byKey(const Key('edit-birth-day-field')))
           .controller!
           .text,
@@ -141,7 +127,10 @@ void main() {
 
   testWidgets('saves normalized values and returns the result', (tester) async {
     await pumpPage(tester);
-    await tester.enterText(find.byKey(const Key('edit-name-field')), '  Maria S.  ');
+    await tester.enterText(
+      find.byKey(const Key('edit-name-field')),
+      '  Maria S.  ',
+    );
     await pickRelationship(tester, 'Other');
     await tester.enterText(
       find.byKey(const Key('relationship-other-field')),
@@ -159,9 +148,7 @@ void main() {
     expect(find.byKey(const Key('edit-patient-form')), findsNothing);
   });
 
-  testWidgets('tapping a relationship tile saves it', (
-    tester,
-  ) async {
+  testWidgets('tapping a relationship tile saves it', (tester) async {
     await pumpPage(tester);
     // One compact control: no second text box until "Other" is tapped.
     expect(find.byKey(const Key('relationship-other-field')), findsNothing);
@@ -195,7 +182,9 @@ void main() {
     expect(relationshipSelected(tester, 'Other'), isTrue);
   });
 
-  testWidgets('tapping the selected tile clears the relationship', (tester) async {
+  testWidgets('tapping the selected tile clears the relationship', (
+    tester,
+  ) async {
     await pumpPage(tester, relationship: 'Mother');
     await pickRelationship(tester, 'Mother');
     expect(relationshipSelected(tester, 'Mother'), isFalse);
