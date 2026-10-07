@@ -21,6 +21,7 @@ import '../../data/api/dto/patient_dto.dart';
 import 'patient_access_setup_page.dart';
 import 'widgets/patient_access_views.dart';
 import 'widgets/patient_setup_widgets.dart';
+import 'widgets/relationship_field.dart';
 
 export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
@@ -76,6 +77,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       hr = TextEditingController(),
       spo2 = TextEditingController(),
       notes = TextEditingController(),
+      relationship = TextEditingController(),
       hrMin = TextEditingController(text: '60'),
       hrMax = TextEditingController(text: '100'),
       spo2Min = TextEditingController(text: '95'),
@@ -155,6 +157,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       hrMax,
       spo2Min,
       spo2Max,
+      relationship,
     ]) {
       x.dispose();
     }
@@ -273,6 +276,7 @@ class _AddPatientPageState extends State<AddPatientPage>
     baselineHeartRate: num.tryParse(hr.text),
     baselineSpo2: num.tryParse(spo2.text),
     monitoringNotes: notes.text,
+    relationshipLabel: relationship.text,
   );
   UpdateMonitoringSettingsRequest get settings =>
       UpdateMonitoringSettingsRequest(
@@ -877,6 +881,7 @@ class _AddPatientPageState extends State<AddPatientPage>
             field(address, 'Address', 'Enter patient’s address or room'),
             birthdateField(),
             sexField(),
+            RelationshipField(controller: relationship),
           ],
         ),
       ],

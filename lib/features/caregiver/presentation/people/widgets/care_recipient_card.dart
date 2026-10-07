@@ -48,6 +48,20 @@ class CareRecipientCard extends StatelessWidget {
                     height: 1.05,
                   ),
                 ),
+                if (careRecipient.relationship != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    careRecipient.relationship!,
+                    key: Key('person-relationship-${careRecipient.id}'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AleraTypography.body.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AleraColors.primary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 2),
                 if (careRecipient.addressOrRoom != null) ...[
                   Text(

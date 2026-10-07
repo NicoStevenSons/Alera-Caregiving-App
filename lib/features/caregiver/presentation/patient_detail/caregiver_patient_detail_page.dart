@@ -12,7 +12,11 @@ import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
 import '../../domain/models/caregiver_reminder.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
+import '../../data/api/caregiver_patient_edit_data_source.dart';
+import '../../data/patients/edit_patient_controller.dart';
+import '../people/edit_patient_page.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
+import '../../data/api/dto/monitoring_device_dto.dart';
 import '../../data/api/dto/patient_dto.dart';
 import '../people/patient_access_setup_page.dart';
 import 'widgets/care_status_card.dart';
@@ -34,6 +38,9 @@ class CaregiverPatientDetailPage extends StatelessWidget {
   final VoidCallback? onPatientAccessAction;
   final ValueChanged<String>? onVitalTap;
 
+  /// Shows the Edit patient action in the app bar when provided.
+  final VoidCallback? onEdit;
+
   const CaregiverPatientDetailPage({
     super.key,
     required this.careRecipient,
@@ -46,6 +53,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
     this.patientAccessStatus,
     this.onPatientAccessAction,
     this.onVitalTap,
+    this.onEdit,
   });
 
   void _showFeedback(BuildContext context, String message) {
@@ -111,6 +119,16 @@ class CaregiverPatientDetailPage extends StatelessWidget {
           icon: const Icon(Icons.chevron_left, size: 28),
           color: const Color(0xFFB4AEC2),
         ),
+        actions: [
+          if (onEdit != null)
+            IconButton(
+              key: const Key('edit-patient-button'),
+              tooltip: 'Edit patient',
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit, size: 22),
+              color: AleraColors.primary,
+            ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -185,6 +203,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert> onAlertTap;
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final CaregiverPatientDataSource? patientDataSource;
+  final CaregiverPatientEditDataSource? patientEditDataSource;
   final ValueChanged<String>? onVitalTap;
 
   const CaregiverPatientDetailLoaderPage({
@@ -198,6 +217,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     required this.onAlertTap,
     this.onMarkAsSeen,
     this.patientDataSource,
+    this.patientEditDataSource,
     this.onVitalTap,
   });
 
@@ -209,6 +229,8 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
 class _CaregiverPatientDetailLoaderPageState
     extends State<CaregiverPatientDetailLoaderPage> {
   CareRecipient? _patient;
+  PatientDetailDto? _detail;
+  List<MonitoringDeviceDto> _devices = const [];
   PatientAccessStatus? _patientAccessStatus;
   CaregiverPatientApiFailure? _failure;
   Timer? _refreshTimer;
@@ -249,6 +271,8 @@ class _CaregiverPatientDetailLoaderPageState
 
       if (mounted) {
         setState(() {
+          _detail = detail;
+          _devices = devices;
           _patient = patientDetailToCareRecipient(
             detail,
             monitoringDevices: devices,
@@ -259,6 +283,44 @@ class _CaregiverPatientDetailLoaderPageState
     } on CaregiverPatientApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
     }
+  }
+
+  Future<void> _openEdit() async {
+    final detail = _detail;
+    final photoSource = widget.patientDataSource;
+    if (detail == null || photoSource == null) return;
+    final result = await Navigator.of(context).push<EditPatientResult>(
+      MaterialPageRoute<EditPatientResult>(
+        builder: (_) => EditPatientPage(
+          patient: detail,
+          editDataSource:
+              widget.patientEditDataSource ??
+              const UnavailablePatientEditDataSource(),
+          photoDataSource: photoSource,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    // Show the saved values straight away, then let the People list follow.
+    setState(() {
+      _detail = result.patient;
+      _patient = patientDetailToCareRecipient(
+        result.patient,
+        monitoringDevices: _devices,
+      );
+    });
+    widget.controller.applyPatientUpdate(result.patient);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            result.photoFailed
+                ? 'Changes saved, but the new photo could not be uploaded.'
+                : 'Patient updated.',
+          ),
+        ),
+      );
   }
 
   @override
@@ -275,6 +337,7 @@ class _CaregiverPatientDetailLoaderPageState
         patientAccessStatus: _patientAccessStatus,
         onPatientAccessAction: _openPatientAccess,
         onVitalTap: widget.onVitalTap,
+        onEdit: widget.patientDataSource == null ? null : _openEdit,
       );
     }
     final failure = _failure;
