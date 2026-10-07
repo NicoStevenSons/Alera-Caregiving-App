@@ -24,7 +24,7 @@ class ElderlyMorePage extends StatelessWidget {
       footer: onSignOut == null
           ? null
           : Padding(
-              padding: const EdgeInsets.only(top: 56),
+              padding: const EdgeInsets.only(top: 24),
               child: TextButton.icon(
                 key: const Key('elderly-sign-out'),
                 onPressed: onSignOut,

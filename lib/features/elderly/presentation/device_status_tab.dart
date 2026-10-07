@@ -115,7 +115,7 @@ class DeviceStatusTab extends StatelessWidget {
                     value: data.displayedBattery,
                     detail: data.displayedCharging,
                   ),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: AleraColors.divider),
                   _StatusRow(
                     icon: connected == false
                         ? Icons.link_off_rounded
@@ -129,7 +129,7 @@ class DeviceStatusTab extends StatelessWidget {
                         ? 'Watch link is active'
                         : 'Waiting for watch',
                   ),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: AleraColors.divider),
                   _StatusRow(
                     icon: isWorn == false
                         ? Icons.watch_off_rounded
@@ -170,13 +170,13 @@ class DeviceStatusTab extends StatelessWidget {
                     label: 'Model',
                     value: data.deviceModel ?? '--',
                   ),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: AleraColors.divider),
                   _DetailRow(
                     icon: Icons.smartphone_rounded,
                     label: 'Paired phone',
                     value: data.displayedPhoneName,
                   ),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: AleraColors.divider),
                   _DetailRow(
                     icon: Icons.access_time_filled,
                     label: 'Last update',
