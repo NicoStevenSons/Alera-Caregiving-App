@@ -23,6 +23,10 @@ class PatientAccessSetupPage extends StatefulWidget {
   final CaregiverPatientDataSource dataSource;
   final Future<PatientDetailDto> Function(String patientId) loadPatientDetail;
 
+  /// Issue a code as soon as the page opens (the caller already confirmed),
+  /// showing a short loading state instead of the intermediate status view.
+  final bool issueOnOpen;
+
   const PatientAccessSetupPage({
     super.key,
     required this.patientId,
@@ -30,6 +34,7 @@ class PatientAccessSetupPage extends StatefulWidget {
     required this.patientAccess,
     required this.dataSource,
     required this.loadPatientDetail,
+    this.issueOnOpen = false,
   });
 
   @override
@@ -48,6 +53,12 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
   bool _connected = false;
   String? _error;
 
+  /// connectedAt of a connection that existed before this page issued a new
+  /// code. A re-issue for an already-connected patient must not be treated
+  /// as "connected" until the patient actually signs in again.
+  DateTime? _baselineConnectedAt;
+  bool _hadConnection = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +66,19 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     _expired = _pendingExpired;
     WidgetsBinding.instance.addObserver(this);
     _startPolling();
+    if (widget.issueOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _issue(replacing: false);
+      });
+    }
+  }
+
+  bool _isNewConnection(PatientAccessStatus status) {
+    if (status.status != PatientAccessState.connected) return false;
+    if (!_hadConnection) return true;
+    final at = status.connectedAt;
+    final base = _baselineConnectedAt;
+    return at != null && (base == null || at.isAfter(base));
   }
 
   @override
@@ -109,7 +133,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       final detail = await widget.loadPatientDetail(widget.patientId);
       if (!mounted) return;
       _status = detail.patientAccessStatus;
-      if (_status.status == PatientAccessState.connected) {
+      if (_isNewConnection(_status)) {
         _stopPolling();
         setState(() => _connected = true);
       } else if (_pendingExpired) {
@@ -147,6 +171,10 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         confirmLabel: alreadyConnected ? 'Generate code' : 'Replace invitation',
       );
       if (confirmed != true || !mounted) return;
+    }
+    if (_status.status == PatientAccessState.connected && !_hadConnection) {
+      _hadConnection = true;
+      _baselineConnectedAt = _status.connectedAt;
     }
     setState(() {
       _issuing = true;
@@ -200,7 +228,14 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     final List<Widget> content;
     Widget? action;
 
-    if (_connected) {
+    if (widget.issueOnOpen && _issuing && _issued == null) {
+      content = const [
+        Padding(
+          padding: EdgeInsets.only(top: 120),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    } else if (_connected) {
       content = [
         PatientAccessNoticeContent(
           iconAsset:
