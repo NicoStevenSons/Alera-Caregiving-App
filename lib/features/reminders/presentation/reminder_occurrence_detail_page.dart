@@ -267,7 +267,7 @@ class ReminderActionRow extends StatelessWidget {
 }
 
 class ReminderActionDivider extends StatelessWidget {
-  const ReminderActionDivider();
+  const ReminderActionDivider({super.key});
 
   @override
   Widget build(BuildContext context) => const Divider(
