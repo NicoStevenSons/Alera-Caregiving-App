@@ -397,6 +397,14 @@ void main() {
     expect(find.byType(CaregiverShell), findsOneWidget);
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('caregiver-sign-out')),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const PageStorageKey<String>('caregiver-more')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     await tester.tap(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
     expect(find.text('Sign out?'), findsOneWidget);

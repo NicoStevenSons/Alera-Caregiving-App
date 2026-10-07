@@ -151,6 +151,7 @@ void main() {
     await tester.pump();
     expect(find.text('Help request history is coming soon.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
