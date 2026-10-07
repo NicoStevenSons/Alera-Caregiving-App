@@ -33,8 +33,6 @@ void main() {
 
       expect(find.text('MS'), findsOneWidget);
       expect(find.byType(Image), findsNothing);
-
-
     });
 
     testWidgets('renders initials when photoUrl is empty', (
@@ -67,9 +65,7 @@ void main() {
         ),
       );
 
-      final Image image = tester.widget<Image>(
-        find.byType(Image),
-      );
+      final Image image = tester.widget<Image>(find.byType(Image));
 
       expect(image.image, isA<NetworkImage>());
       expect(
@@ -97,7 +93,6 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('MS'), findsOneWidget);
-
       }, createHttpClient: (SecurityContext? context) => _FailingHttpClient());
     });
 
@@ -131,14 +126,12 @@ void main() {
 
         // Immediately after the URL changes, the widget should attempt the
         // photo again rather than staying stuck on the earlier failure.
-        final Image image = tester.widget<Image>(
-          find.byType(Image),
-      );
+        final Image image = tester.widget<Image>(find.byType(Image));
 
-      expect(image.image, isA<NetworkImage>());
-      expect(
-        (image.image as NetworkImage).url,
-        'https://example.com/still-broken.png',
+        expect(image.image, isA<NetworkImage>());
+        expect(
+          (image.image as NetworkImage).url,
+          'https://example.com/still-broken.png',
         );
       }, createHttpClient: (SecurityContext? context) => _FailingHttpClient());
     });
@@ -149,16 +142,29 @@ void main() {
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      final Color first = tester
-          .widget<CircleAvatar>(find.byType(CircleAvatar))
-          .backgroundColor!;
+      Color avatarColor() {
+        final Iterable<Container> containers = tester.widgetList<Container>(
+          find.descendant(
+            of: find.byType(AleraPatientAvatar),
+            matching: find.byType(Container),
+          ),
+        );
+
+        final Container avatar = containers.singleWhere((widget) {
+          final Decoration? decoration = widget.decoration;
+          return decoration is BoxDecoration &&
+              decoration.shape == BoxShape.circle;
+        });
+
+        return (avatar.decoration! as BoxDecoration).color!;
+      }
+
+      final Color first = avatarColor();
 
       await tester.pumpWidget(
         _host(const AleraPatientAvatar(name: 'Maria Santos')),
       );
-      final Color second = tester
-          .widget<CircleAvatar>(find.byType(CircleAvatar))
-          .backgroundColor!;
+      final Color second = avatarColor();
 
       expect(first, second);
     });

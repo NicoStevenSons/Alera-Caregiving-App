@@ -80,6 +80,8 @@ void main() {
     navigation = tester.widget(find.byType(NavigationBar));
     expect(navigation.selectedIndex, 2);
 
+    await tester.ensureVisible(find.byKey(const Key('elderly-sign-out')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('elderly-sign-out')));
     await tester.pump();
 

@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
+import '../../../design_system/widgets/alera_date_picker.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_pill.dart';
+import '../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../design_system/widgets/alera_text_field.dart';
 import '../domain/reminder_models.dart';
 import 'reminder_formatters.dart';
 import 'reminder_repeat.dart';
 import 'reminder_time_picker.dart';
+import '../../../design_system/alera_sheet_animation.dart';
 
 /// Pull-up "New reminder" drawer, laid out like the phone's New alarm
 /// screen: a live "Reminds in…" line, the time wheel, a repeat selector,
@@ -22,9 +25,9 @@ Future<ReminderTemplateDraft?> showCreateReminderSheet(
   DateTime Function()? now,
 }) => showModalBottomSheet<ReminderTemplateDraft>(
   context: context,
+  sheetAnimationStyle: aleraSheetAnimation,
   isScrollControlled: true,
   useSafeArea: true,
-  showDragHandle: true,
   backgroundColor: AleraColors.background,
   shape: const RoundedRectangleBorder(
     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -181,6 +184,8 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                _categoryGrid(),
+                const SizedBox(height: 12),
                 AleraCard(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -201,21 +206,12 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                             ),
                             const SizedBox(width: 8),
                             const Icon(
-                              Icons.calendar_today_outlined,
+                              Icons.calendar_month,
                               size: 16,
-                              color: AleraColors.primary,
+                              color: AleraColors.selected,
                             ),
                           ],
                         ),
-                      ),
-                      const _RowDivider(),
-                      _dropdownRow<ReminderCategory>(
-                        fieldKey: const Key('reminder-category-field'),
-                        label: 'Category',
-                        value: _category,
-                        values: ReminderCategory.values,
-                        text: (v) => reminderTitleCase(v.apiValue),
-                        onChanged: (v) => setState(() => _category = v),
                       ),
                       const _RowDivider(),
                       _dropdownRow<ReminderPriority>(
@@ -264,24 +260,60 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     color: AleraColors.textPrimary,
   );
 
+  /// Tap-to-select icon tiles, three per row, replacing the old dropdown.
+  Widget _categoryGrid() {
+    return AleraCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Category', style: AleraTypography.sectionTitle),
+          const SizedBox(height: 12),
+          GridView.count(
+            key: const Key('reminder-category-field'),
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 1.3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              for (final category in ReminderCategory.values)
+                _CategoryTile(
+                  key: Key('reminder-category-${category.apiValue}'),
+                  category: category,
+                  selected: category == _category,
+                  onTap: () => setState(() => _category = category),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _repeatPills() {
     Widget pill(String label, ReminderRepeatMode mode, Key key) => Expanded(
-      child: Center(
-        child: AleraPill(
-          key: key,
-          label: label,
-          variant: AleraPillVariant.filter,
-          selected: _repeat.mode == mode,
-          onTap: () => setState(() {
-            _repeat = _repeat.copyWith(mode: mode);
-            _customDaysError = false;
-          }),
-        ),
+      child: AleraPill(
+        key: key,
+        label: label,
+        variant: AleraPillVariant.filter,
+        expand: true,
+        selected: _repeat.mode == mode,
+        onTap: () => setState(() {
+          _repeat = _repeat.copyWith(mode: mode);
+          _customDaysError = false;
+        }),
       ),
     );
     return Row(
+      spacing: 8,
       children: [
-        pill('Once', ReminderRepeatMode.once, const Key('reminder-repeat-once')),
+        pill(
+          'Once',
+          ReminderRepeatMode.once,
+          const Key('reminder-repeat-once'),
+        ),
         pill(
           'Weekdays',
           ReminderRepeatMode.weekdays,
@@ -338,6 +370,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     required T value,
     required List<T> values,
     required String Function(T) text,
+    Widget Function(T)? leading,
     required ValueChanged<T> onChanged,
   }) => _SettingRow(
     label: label,
@@ -355,9 +388,34 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(12),
         style: _valueStyle,
+        selectedItemBuilder: leading == null
+            ? null
+            : (context) => [
+                for (final v in values)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      leading(v),
+                      const SizedBox(width: 8),
+                      Text(text(v), style: _valueStyle),
+                    ],
+                  ),
+              ],
         items: [
           for (final v in values)
-            DropdownMenuItem(value: v, child: Text(text(v))),
+            DropdownMenuItem(
+              value: v,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (leading != null) ...[
+                    leading(v),
+                    const SizedBox(width: 12),
+                  ],
+                  Text(text(v)),
+                ],
+              ),
+            ),
         ],
         onChanged: (v) {
           if (v != null) onChanged(v);
@@ -367,8 +425,8 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
   );
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await showAleraDatePicker(
+      context,
       initialDate: _date,
       firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
@@ -465,7 +523,7 @@ class _DayDot extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: selected ? AleraColors.primary : AleraColors.primarySoft,
+        color: selected ? AleraColors.selected : AleraColors.primarySoft,
       ),
       child: Text(
         letter,
@@ -477,4 +535,79 @@ class _DayDot extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A category's Figma icon (see `alera-figma-assets/PLACEHOLDER_ICONS.md`).
+class _CategoryIcon extends StatelessWidget {
+  final ReminderCategory category;
+
+  const _CategoryIcon(this.category);
+
+  @override
+  Widget build(BuildContext context) => AleraSvgIcon(
+    assetPath: reminderCategoryAsset(category),
+    width: 28,
+    height: 28,
+  );
+}
+
+/// One selectable category tile: icon above a short label.
+class _CategoryTile extends StatelessWidget {
+  final ReminderCategory category;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryTile({
+    super.key,
+    required this.category,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: reminderTitleCase(category.apiValue),
+      child: Material(
+        color: selected
+            ? AleraColors.selected.withValues(alpha: 0.14)
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: selected ? AleraColors.selected : AleraColors.divider,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _CategoryIcon(category),
+                const SizedBox(height: 6),
+                Text(
+                  reminderTitleCase(category.apiValue),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? AleraColors.textPrimary
+                        : AleraColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

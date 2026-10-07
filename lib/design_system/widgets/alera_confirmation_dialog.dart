@@ -21,10 +21,15 @@ Future<bool?> showAleraConfirmationDialog(
   required String message,
   required String cancelLabel,
   required String confirmLabel,
+  bool large = false,
+  Key? dialogKey,
+  Key? cancelKey,
+  Key? confirmKey,
 }) {
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => Dialog(
+      key: dialogKey,
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -35,22 +40,22 @@ Future<bool?> showAleraConfirmationDialog(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: large ? 72 : 56,
+              height: large ? 72 : 56,
               decoration: const BoxDecoration(
                 color: AleraColors.primarySoft,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 28, color: AleraColors.primary),
+              child: Icon(icon, size: large ? 36 : 28, color: AleraColors.primary),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+              style: TextStyle(
+                fontSize: large ? 24 : 18,
+                fontWeight: large ? FontWeight.w800 : FontWeight.w700,
                 color: AleraColors.textPrimary,
                 height: 1.25,
               ),
@@ -59,8 +64,8 @@ Future<bool?> showAleraConfirmationDialog(
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
+              style: TextStyle(
+                fontSize: large ? 18 : 13,
                 height: 1.4,
                 color: AleraColors.textSecondary,
               ),
@@ -70,18 +75,20 @@ Future<bool?> showAleraConfirmationDialog(
               children: [
                 Expanded(
                   child: AleraButton(
+                    key: cancelKey,
                     label: cancelLabel,
                     variant: AleraButtonVariant.lightPill,
-                    height: 44,
+                    height: large ? 56 : 44,
                     onPressed: () => Navigator.pop(dialogContext),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: AleraButton(
+                    key: confirmKey,
                     label: confirmLabel,
                     variant: AleraButtonVariant.pill,
-                    height: 44,
+                    height: large ? 56 : 44,
                     onPressed: () => Navigator.pop(dialogContext, true),
                   ),
                 ),

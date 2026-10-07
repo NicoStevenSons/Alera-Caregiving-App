@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract final class AleraColors {
   static const Color primary = Color(0xFF8B5DE7);
+
   /// The resting colour of primary buttons: a shade brighter than [primary].
   static const Color primaryMid = Color(0xFFAE8BEA);
   static const Color primarySoft = Color(0xFFE8DDFB);
@@ -16,6 +17,16 @@ abstract final class AleraColors {
   static const Color critical = Color(0xFFFF6474);
   static const Color information = Color(0xFF55A5FF);
   static const Color battery = Color(0xFFA684FF);
+
+  /// Deeper green that stays readable as text on a light tint
+  /// (status pills, "All done").
+  static const Color successStrong = Color(0xFF05A869);
+
+  /// Deeper red for the pressed state of destructive buttons.
+  static const Color criticalStrong = Color(0xFFE04C5D);
+
+  /// Tint for "today" when it is not the selected day.
+  static const Color todayTint = Color(0xFFE4D6FF);
 
   // Form + setup-flow tokens (sampled from the Add Patient Figma frames).
   // Everywhere else a card fill, border, heading or body colour was needed,
@@ -38,4 +49,10 @@ abstract final class AleraColors {
   // Softer purple for "selected / active" chrome: the nav bar's current tab,
   // the picked day on Reminders, and the new-reminder button.
   static const Color selected = Color(0xFFAE8BEA);
+
+  /// Muted grey-lavender for chevrons, back arrows and quiet secondary icons.
+  static const Color mutedIcon = Color(0xFFB4AEC2);
+
+  /// Empty-state title text (matches the faded 'No active alerts' motif).
+  static const Color emptyTitle = Color(0xFFA69BD2);
 }

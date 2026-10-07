@@ -5,7 +5,10 @@ import '../data/elderly_help_request_controller.dart';
 import '../domain/elderly_home_view_state.dart';
 import '../../help_requests/domain/help_request.dart';
 import '../domain/models/elderly_reminder.dart';
+import '../../../design_system/alera_colors.dart';
+import 'elderly_reminder_style.dart';
 import 'widgets/elderly_help_request_card.dart';
+import 'widgets/elderly_widgets.dart';
 import 'widgets/heart_rate_display.dart';
 import 'widgets/sleep_display.dart';
 import 'widgets/spo2_display.dart';
@@ -48,6 +51,14 @@ class ElderlyHomePage extends StatelessWidget {
           onOpenDeviceStatus: onOpenDeviceStatus,
         ),
         const SizedBox(height: 16),
+        _NextReminderCard(
+          loading: state.remindersLoading,
+          errorMessage: state.remindersError,
+          reminder: state.nextReminder,
+          onTap: onReminderTap,
+          onRetry: onRetryReminders,
+        ),
+        const SizedBox(height: 16),
         ElderlyHelpRequestCard(
           state: helpRequestState,
           activeRequest: activeHelpRequest,
@@ -55,7 +66,9 @@ class ElderlyHomePage extends StatelessWidget {
           onRequestHelp: onRequestHelp,
           onRetry: onRetryHelpRequest,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
+        const ElderlySectionTitle('Today\'s health'),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -64,7 +77,7 @@ class ElderlyHomePage extends StatelessWidget {
                 uploadQueueService: uploadQueueService,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(
               child: SpO2Display(
                 spo2Data: state.spo2,
@@ -73,17 +86,13 @@ class ElderlyHomePage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        StepsDisplay(stepsData: state.steps),
-        const SizedBox(height: 16),
-        SleepDisplay(sleepData: state.sleep),
-        const SizedBox(height: 16),
-        _NextReminderCard(
-          loading: state.remindersLoading,
-          errorMessage: state.remindersError,
-          reminder: state.nextReminder,
-          onTap: onReminderTap,
-          onRetry: onRetryReminders,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: StepsDisplay(stepsData: state.steps)),
+            const SizedBox(width: 12),
+            Expanded(child: SleepDisplay(sleepData: state.sleep)),
+          ],
         ),
       ],
     );
@@ -127,14 +136,45 @@ class _MonitoringStatusCard extends StatelessWidget {
     final actionable =
         state != ElderlyMonitoringState.connected && onOpenDeviceStatus != null;
 
-    return Card(
-      key: const Key('elderly-monitoring-status'),
-      child: ListTile(
-        onTap: actionable ? onOpenDeviceStatus : null,
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(message),
-        trailing: actionable ? const Icon(Icons.chevron_right_rounded) : null,
+    final Color color = switch (state) {
+      ElderlyMonitoringState.connected => const Color(0xFF05A869),
+      ElderlyMonitoringState.waitingForWatch => AleraColors.information,
+      _ => const Color(0xFFD99A00),
+    };
+
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        key: const Key('elderly-monitoring-status'),
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(30),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: actionable ? onOpenDeviceStatus : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                ),
+                if (actionable) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right_rounded, color: color, size: 24),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -162,9 +202,23 @@ class _NextReminderCard extends StatelessWidget {
     if (loading) {
       return const Card(
         key: Key('elderly-next-reminder-loading'),
-        child: ListTile(
-          leading: Icon(Icons.schedule_rounded),
-          title: Text('Loading next reminder…'),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Loading next reminder…',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -172,14 +226,49 @@ class _NextReminderCard extends StatelessWidget {
     if (errorMessage != null) {
       return Card(
         key: const Key('elderly-next-reminder-error'),
-        child: ListTile(
-          leading: const Icon(Icons.cloud_off_rounded),
-          title: const Text('Unable to load reminders'),
-          subtitle: Text(errorMessage!),
-          trailing: TextButton(
-            key: const Key('elderly-retry-reminders'),
-            onPressed: onRetry,
-            child: const Text('Retry'),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  ElderlyIconTile(
+                    icon: Icons.cloud_off_rounded,
+                    color: Color(0xFFE04C5D),
+                    size: 56,
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Unable to load reminders',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AleraColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                errorMessage!,
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  key: const Key('elderly-retry-reminders'),
+                  onPressed: onRetry,
+                  child: const Text('Retry'),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -188,21 +277,88 @@ class _NextReminderCard extends StatelessWidget {
     if (item == null) {
       return const Card(
         key: Key('elderly-next-reminder-empty'),
-        child: ListTile(
-          leading: Icon(Icons.event_available_rounded),
-          title: Text('No upcoming reminders'),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: [
+              ElderlyIconTile(
+                icon: Icons.event_available_rounded,
+                color: Color(0xFF05A869),
+                size: 56,
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'No upcoming reminders',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AleraColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
+    final ElderlyReminderStyle style = ElderlyReminderStyle.forCategory(
+      item.category,
+    );
+
     return Card(
       key: const Key('elderly-next-reminder'),
-      child: ListTile(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap == null ? null : () => onTap!(item),
-        leading: const Icon(Icons.schedule_rounded),
-        title: Text(item.title),
-        subtitle: Text(_time(item.scheduledAt)),
-        trailing: const Icon(Icons.chevron_right_rounded),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              ElderlyIconTile(icon: style.icon, color: style.color, size: 64),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Next reminder',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AleraColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AleraColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _time(item.scheduledAt),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: style.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 20,
+                color: AleraColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

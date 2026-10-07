@@ -1,274 +1,261 @@
 import 'package:flutter/material.dart';
 
-import '../../../../models/device_status_data.dart';
+import '../../../models/device_status_data.dart';
+import '../../../design_system/alera_colors.dart';
+import 'widgets/elderly_widgets.dart';
+
+const Color _good = Color(0xFF05A869);
+const Color _warn = Color(0xFFD99A00);
+const Color _bad = Color(0xFFE04C5D);
 
 class DeviceStatusTab extends StatelessWidget {
   final DeviceStatusData deviceStatusData;
 
-  const DeviceStatusTab({super.key, required this.deviceStatusData});
+  /// Optional content placed at the very end of the scrolling page.
+  final Widget? footer;
+
+  const DeviceStatusTab({
+    super.key,
+    required this.deviceStatusData,
+    this.footer,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bool? connected = deviceStatusData.connectedToPhone;
-    final bool? charging = deviceStatusData.isCharging;
-    final int? battery = deviceStatusData.batteryPercent;
-    final bool? isWorn = deviceStatusData.isWorn;
+    final DeviceStatusData data = deviceStatusData;
+    final bool? connected = data.connectedToPhone;
+    final bool? charging = data.isCharging;
+    final int? battery = data.batteryPercent;
+    final bool? isWorn = data.isWorn;
+
+    final Color connectionColor = connected == true
+        ? _good
+        : connected == false
+        ? _bad
+        : AleraColors.textSecondary;
+
+    final Color batteryColor = charging == true
+        ? _good
+        : battery == null
+        ? AleraColors.textSecondary
+        : battery <= 20
+        ? _bad
+        : battery <= 40
+        ? _warn
+        : _good;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DeviceHeroCard(data: deviceStatusData, connected: connected),
-
-          if (isWorn == false) ...[
-            const SizedBox(height: 16),
-            const _WatchNotWornCard(),
-          ],
-
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _StatusTile(
-                  icon: charging == true
-                      ? Icons.battery_charging_full_rounded
-                      : Icons.battery_std_rounded,
-                  label: 'Battery',
-                  value: deviceStatusData.displayedBattery,
-                  supportingText: deviceStatusData.displayedCharging,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatusTile(
-                  icon: connected == true
-                      ? Icons.link_rounded
-                      : Icons.link_off_rounded,
-                  label: 'Connection',
-                  value: deviceStatusData.displayedConnection,
-                  supportingText: connected == true
-                      ? 'Watch link is active'
-                      : 'Waiting for watch',
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Expanded(
-                child: _StatusTile(
-                  icon: isWorn == true
-                      ? Icons.watch_rounded
-                      : isWorn == false
-                      ? Icons.watch_off_rounded
-                      : Icons.help_outline_rounded,
-                  label: 'Wear status',
-                  value: deviceStatusData.displayedWearStatus,
-                  supportingText: isWorn == true
-                      ? 'Watch is being worn'
-                      : isWorn == false
-                      ? 'Watch is currently off wrist'
-                      : 'Waiting for wear status',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _BatteryCard(battery: battery, isCharging: charging),
-          const SizedBox(height: 16),
-          _DetailsCard(data: deviceStatusData),
-          const SizedBox(height: 16),
-          _LastUpdateCard(measuredAt: deviceStatusData.measuredAt),
-        ],
-      ),
-    );
-  }
-}
-
-class _DeviceHeroCard extends StatelessWidget {
-  final DeviceStatusData data;
-  final bool? connected;
-
-  const _DeviceHeroCard({required this.data, required this.connected});
-
-  @override
-  Widget build(BuildContext context) {
-    final Color statusColor = connected == true
-        ? Colors.green
-        : connected == false
-        ? Colors.redAccent
-        : Colors.grey;
-
-    return Card(
-      elevation: 0,
-      color: Colors.purple.shade50,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Row(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Icon(
-                connected == false
-                    ? Icons.watch_off_rounded
-                    : Icons.watch_rounded,
-                size: 38,
-                color: Colors.purple.shade700,
-              ),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
                 children: [
-                  Text(
-                    data.displayedDeviceName,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  ElderlyIconTile(
+                    icon: connected == false
+                        ? Icons.watch_off_rounded
+                        : Icons.watch_rounded,
+                    color: connectionColor == AleraColors.textSecondary
+                        ? AleraColors.primary
+                        : connectionColor,
+                    size: 64,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data.displayedDeviceName,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AleraColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ElderlyStatusChip(
+                          label: data.displayedConnection,
+                          color: connectionColor,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.deviceModel ?? 'Smartwatch',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        data.displayedConnection,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
+          ),
+          if (isWorn == false) ...[
+            const SizedBox(height: 12),
+            _Notice(
+              icon: Icons.watch_off_rounded,
+              color: _warn,
+              title: 'Watch not worn',
+              message:
+                  'Put the watch back on to keep activity monitoring accurate.',
+            ),
           ],
-        ),
+          const SizedBox(height: 24),
+          const ElderlySectionTitle('Watch status'),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  _StatusRow(
+                    icon: charging == true
+                        ? Icons.battery_charging_full_rounded
+                        : Icons.battery_std_rounded,
+                    color: batteryColor,
+                    label: 'Battery',
+                    value: data.displayedBattery,
+                    detail: data.displayedCharging,
+                  ),
+                  const Divider(height: 1, color: AleraColors.divider),
+                  _StatusRow(
+                    icon: connected == false
+                        ? Icons.link_off_rounded
+                        : Icons.link_rounded,
+                    color: connectionColor == AleraColors.textSecondary
+                        ? AleraColors.primary
+                        : connectionColor,
+                    label: 'Connection',
+                    value: data.displayedConnection,
+                    detail: connected == true
+                        ? 'Watch link is active'
+                        : 'Waiting for watch',
+                  ),
+                  const Divider(height: 1, color: AleraColors.divider),
+                  _StatusRow(
+                    icon: isWorn == false
+                        ? Icons.watch_off_rounded
+                        : Icons.watch_rounded,
+                    color: isWorn == true
+                        ? _good
+                        : isWorn == false
+                        ? _warn
+                        : AleraColors.primary,
+                    label: 'Wear status',
+                    value: data.displayedWearStatus,
+                    detail: isWorn == true
+                        ? 'Watch is being worn'
+                        : isWorn == false
+                        ? 'Watch is off wrist'
+                        : 'Waiting for wear status',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _BatteryCard(
+            battery: battery,
+            isCharging: charging,
+            color: batteryColor,
+          ),
+          const SizedBox(height: 24),
+          const ElderlySectionTitle('Device details'),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  _DetailRow(
+                    icon: Icons.memory_rounded,
+                    label: 'Model',
+                    value: data.deviceModel ?? '--',
+                  ),
+                  const Divider(height: 1, color: AleraColors.divider),
+                  _DetailRow(
+                    icon: Icons.smartphone_rounded,
+                    label: 'Paired phone',
+                    value: data.displayedPhoneName,
+                  ),
+                  const Divider(height: 1, color: AleraColors.divider),
+                  _DetailRow(
+                    icon: Icons.access_time_filled,
+                    label: 'Last update',
+                    value: _formatLastUpdate(data.measuredAt),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ?footer,
+        ],
       ),
     );
   }
+
+  static String _formatLastUpdate(String? measuredAt) {
+    if (measuredAt == null || measuredAt.isEmpty) return 'No update yet';
+    final DateTime? parsed = DateTime.tryParse(measuredAt);
+    if (parsed == null) return measuredAt;
+    final DateTime local = parsed.toLocal();
+    final int hour = local.hour == 0
+        ? 12
+        : local.hour > 12
+        ? local.hour - 12
+        : local.hour;
+    final String minute = local.minute.toString().padLeft(2, '0');
+    final String period = local.hour >= 12 ? 'PM' : 'AM';
+    return '${local.month}/${local.day}  $hour:$minute $period';
+  }
 }
 
-class _StatusTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String supportingText;
-
-  const _StatusTile({
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
     required this.icon,
+    required this.color,
     required this.label,
     required this.value,
-    required this.supportingText,
+    required this.detail,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: Colors.purple.shade600),
-            const SizedBox(height: 14),
-            Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              value,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              supportingText,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WatchNotWornCard extends StatelessWidget {
-  const _WatchNotWornCard();
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  final String detail;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.orange.shade100,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.watch_off_rounded, color: Colors.orange.shade800),
-          ),
+          ElderlyIconTile(icon: icon, color: color),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Watch not worn',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.orange.shade900,
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AleraColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  'Put the watch back on to keep '
-                  'activity monitoring accurate.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.orange.shade900,
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AleraColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AleraColors.textSecondary,
                   ),
                 ),
               ],
@@ -281,10 +268,15 @@ class _WatchNotWornCard extends StatelessWidget {
 }
 
 class _BatteryCard extends StatelessWidget {
+  const _BatteryCard({
+    required this.battery,
+    required this.isCharging,
+    required this.color,
+  });
+
   final int? battery;
   final bool? isCharging;
-
-  const _BatteryCard({required this.battery, required this.isCharging});
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +284,7 @@ class _BatteryCard extends StatelessWidget {
         ? null
         : battery!.clamp(0, 100).toDouble() / 100;
 
-    String message;
+    final String message;
     if (isCharging == true) {
       message = 'Your watch is currently charging.';
     } else if (battery == null) {
@@ -305,11 +297,6 @@ class _BatteryCard extends StatelessWidget {
     }
 
     return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(20),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -317,97 +304,43 @@ class _BatteryCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  isCharging == true
-                      ? Icons.bolt_rounded
-                      : Icons.battery_5_bar_rounded,
-                  color: Colors.purple.shade600,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Watch battery',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                const Expanded(
+                  child: Text(
+                    'Watch battery',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AleraColors.textPrimary,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 Text(
                   battery == null ? '--' : '$battery%',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: color,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(
-              value: progress,
-              minHeight: 9,
-              borderRadius: BorderRadius.circular(20),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress ?? 0,
+                minHeight: 14,
+                color: color,
+                backgroundColor: color.withValues(alpha: 0.15),
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailsCard extends StatelessWidget {
-  final DeviceStatusData data;
-
-  const _DetailsCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Device details',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            _DetailRow(
-              icon: Icons.watch_rounded,
-              label: 'Device',
-              value: data.displayedDeviceName,
-            ),
-            const Divider(height: 24),
-            _DetailRow(
-              icon: Icons.memory_rounded,
-              label: 'Model',
-              value: data.deviceModel ?? '--',
-            ),
-            const Divider(height: 24),
-            _DetailRow(
-              icon: Icons.smartphone_rounded,
-              label: 'Paired phone',
-              value: data.displayedPhoneName,
-            ),
-            const Divider(height: 24),
-            _DetailRow(
-              icon: data.isCharging == true
-                  ? Icons.battery_charging_full_rounded
-                  : Icons.power_rounded,
-              label: 'Power',
-              value: data.displayedCharging,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AleraColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -417,82 +350,98 @@ class _DetailsCard extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
   const _DetailRow({
     required this.icon,
     required this.label,
     required this.value,
   });
 
+  final IconData icon;
+  final String label;
+  final String value;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 21, color: Colors.purple.shade500),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(label, style: const TextStyle(color: Colors.black54)),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 26, color: AleraColors.primary),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 17,
+                color: AleraColors.textSecondary,
+              ),
+            ),
           ),
-        ),
-      ],
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AleraColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _LastUpdateCard extends StatelessWidget {
-  final String? measuredAt;
+class _Notice extends StatelessWidget {
+  const _Notice({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.message,
+  });
 
-  const _LastUpdateCard({required this.measuredAt});
-
-  String _formatLastUpdate() {
-    if (measuredAt == null || measuredAt!.isEmpty) {
-      return 'No device update received yet';
-    }
-
-    final DateTime? parsed = DateTime.tryParse(measuredAt!);
-    if (parsed == null) {
-      return measuredAt!;
-    }
-
-    final DateTime local = parsed.toLocal();
-    final String month = local.month.toString().padLeft(2, '0');
-    final String day = local.day.toString().padLeft(2, '0');
-    final String hour = local.hour.toString().padLeft(2, '0');
-    final String minute = local.minute.toString().padLeft(2, '0');
-
-    return '${local.year}-$month-$day  $hour:$minute';
-  }
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.schedule_rounded, size: 20, color: Colors.black54),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Last device update: ${_formatLastUpdate()}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ElderlyIconTile(icon: icon, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: AleraColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AleraColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -53,11 +53,7 @@ class _PatientReminderDetailPageState extends State<PatientReminderDetailPage> {
   Widget build(BuildContext context) {
     final history = _history;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminder details'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('Reminder details')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

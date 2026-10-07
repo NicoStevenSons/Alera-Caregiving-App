@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
-import '../../../design_system/widgets/alera_pill.dart';
+import '../../../design_system/widgets/alera_date_picker.dart';
+import '../../../design_system/widgets/alera_empty_state.dart';
+import '../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../design_system/widgets/alera_skeleton.dart';
 import '../../caregiver/domain/models/care_recipient.dart';
 import '../../caregiver/presentation/widgets/caregiver_page_app_bar.dart';
@@ -13,20 +15,24 @@ import '../domain/reminder_models.dart';
 import 'create_reminder_sheet.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
+import 'reminder_note_dialog.dart';
 import 'reminder_occurrence_detail_page.dart';
 import 'reminder_schedules_page.dart';
 import 'widgets/reminder_date_strip.dart';
+import 'widgets/reminder_date_header.dart';
+import 'widgets/reminder_summary_card.dart';
 import 'widgets/reminder_timeline.dart';
 
 /// Day-by-day reminder timeline for the patient selected in the caregiver
-/// shell. There is no patient picker here: the shell (and the dashboard) own
-/// patient selection, and this page just follows it.
+/// shell. The shell owns patient selection; the patient chip at the top just
+/// opens its switcher when there is more than one patient.
 class CaregiverRemindersPage extends StatefulWidget {
   const CaregiverRemindersPage({
     super.key,
     required this.controller,
     required this.patients,
     this.initialPatientId,
+    this.onSwitchPatient,
     this.eventsDataSource,
     this.now,
   });
@@ -35,6 +41,8 @@ class CaregiverRemindersPage extends StatefulWidget {
   final List<CareRecipient> patients;
   final String? initialPatientId;
 
+  /// Opens the shell's patient switcher; null when there is only one patient.
+  final VoidCallback? onSwitchPatient;
   /// Where the occurrence timeline is read from. Defaults to the real API
   /// when not injected (tests inject a fake).
   final ReminderEventsDataSource? eventsDataSource;
@@ -91,6 +99,13 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
     });
   }
 
+  String? get _patientPhoto {
+    for (final patient in widget.patients) {
+      if (patient.id == _patientId) return patient.profilePhotoUrl;
+    }
+    return null;
+  }
+
   String? get _patientName {
     for (final patient in widget.patients) {
       if (patient.id == _patientId) return patient.name;
@@ -109,7 +124,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           caregiverPageAction(
             tooltip: 'Manage schedules',
             onPressed: patientId == null ? () {} : _openSchedules,
-            icon: Icons.event_repeat_outlined,
+            icon: Icons.event_repeat,
           ),
           caregiverPageAction(
             tooltip: 'Refresh reminders',
@@ -131,7 +146,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             ),
       body: widget.patients.isEmpty
           ? const _MutedState(
-              icon: Icons.person_search_outlined,
+              icon: Icons.person_search,
               title: 'No patient selected',
               message: 'Add or connect a patient before creating reminders.',
             )
@@ -161,47 +176,40 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(top: 12, bottom: 104),
         children: [
-          if (name != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '$name’s daily reminders',
-                key: const Key('reminder-patient-subtitle'),
-                style: AleraTypography.body.copyWith(
-                  color: AleraColors.textSecondary,
-                ),
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                if (name != null)
+                  Expanded(
+                    child: _PatientChip(
+                      name: name,
+                      photoUrl: _patientPhoto,
+                      onTap: widget.onSwitchPatient,
+                    ),
+                  )
+                else
+                  const Spacer(),
+                const SizedBox(width: 10),
+                _CalendarButton(onTap: _pickDate),
+              ],
             ),
+          ),
           const SizedBox(height: 8),
           ReminderDateStrip(
             today: _today,
             selected: _selectedDay,
+            markedDays: byDay.keys.toSet(),
             onSelected: (day) => setState(() => _selectedDay = day),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    reminderLongDate(_selectedDay),
-                    key: const Key('reminder-selected-date'),
-                    style: AleraTypography.pageTitle.copyWith(fontSize: 20),
-                  ),
-                ),
-                AleraPill(
-                  key: const Key('reminder-today-pill'),
-                  label: 'Today',
-                  variant: isToday
-                      ? AleraPillVariant.label
-                      : AleraPillVariant.action,
-                  onTap: isToday
-                      ? null
-                      : () => setState(() => _selectedDay = _today),
-                ),
-              ],
+          if (!(controller.loading && controller.occurrences.isEmpty))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: ReminderSummaryCard(
+                occurrences: dayItems,
+                isToday: isToday,
+              ),
             ),
-          ),
           if (controller.errorMessage case final message?)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -209,7 +217,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _timeline(controller, dayItems),
+            child: _timeline(controller, dayItems, isToday),
           ),
         ],
       ),
@@ -219,24 +227,58 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   Widget _timeline(
     ReminderController controller,
     List<ReminderOccurrence> dayItems,
+    bool isToday,
   ) {
+    final Widget content;
     if (controller.loading && controller.occurrences.isEmpty) {
-      return const _TimelineSkeleton(key: Key('reminder-loading'));
-    }
-    if (dayItems.isEmpty) {
-      return const _MutedState(
+      content = const _TimelineSkeleton(key: Key('reminder-loading'));
+    } else if (dayItems.isEmpty) {
+      content = const _MutedState(
         key: Key('reminder-occurrences-empty'),
-        icon: Icons.alarm_off_outlined,
+        icon: Icons.alarm_off,
         title: 'No reminders for this day',
         message: 'Tap + to add one.',
       );
+    } else {
+      content = ReminderTimeline(
+        occurrences: dayItems,
+        templates: controller.templates,
+        isBusy: controller.isBusy,
+        onComplete: _complete,
+        onOpen: _openActions,
+        now: isToday ? (widget.now ?? DateTime.now)() : null,
+      );
     }
-    return ReminderTimeline(
-      occurrences: dayItems,
-      templates: controller.templates,
-      isBusy: controller.isBusy,
-      onComplete: _complete,
-      onOpen: _openActions,
+    return AleraCard(
+      key: const Key('reminder-list-card'),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: ReminderDateHeader(
+              date: _selectedDay,
+              isToday: isToday,
+              onToday: () => setState(() => _selectedDay = _today),
+            ),
+          ),
+          content,
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showAleraDatePicker(
+      context,
+      initialDate: _selectedDay,
+      firstDate: _today.subtract(const Duration(days: 365)),
+      lastDate: _today.add(const Duration(days: 365 * 2)),
+    );
+    if (picked == null || !mounted) return;
+    setState(
+      () => _selectedDay = DateTime(picked.year, picked.month, picked.day),
     );
   }
 
@@ -253,6 +295,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _complete(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
+      icon: Icons.check_circle,
       title: 'Complete for patient',
       hint: 'Why are you completing this on their behalf?',
       actionLabel: 'Complete',
@@ -266,6 +309,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _snooze(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
+      icon: Icons.snooze,
       title: 'Snooze for patient',
       hint: 'Why does the patient need more time?',
       actionLabel: 'Snooze',
@@ -285,7 +329,8 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
 
   Future<void> _cancel(ReminderOccurrence occurrence) async {
     final note = await _askForNote(
-      title: 'Cancel occurrence',
+      icon: Icons.event_busy,
+      title: 'Cancel reminder',
       hint: 'Reason for cancellation',
       actionLabel: 'Cancel reminder',
     );
@@ -314,13 +359,16 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
   }
 
   Future<String?> _askForNote({
+    required IconData icon,
     required String title,
     required String hint,
     required String actionLabel,
-  }) => showDialog<String>(
-    context: context,
-    builder: (context) =>
-        _ReminderNoteDialog(title: title, hint: hint, actionLabel: actionLabel),
+  }) => showReminderNoteDialog(
+    context,
+    icon: icon,
+    title: title,
+    hint: hint,
+    actionLabel: actionLabel,
   );
 
   Future<void> _showCreateReminder(String patientId) async {
@@ -337,62 +385,6 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
       () => widget.controller.createTemplate(draft),
       success: 'Reminder created.',
     );
-  }
-}
-
-class _ReminderNoteDialog extends StatefulWidget {
-  const _ReminderNoteDialog({
-    required this.title,
-    required this.hint,
-    required this.actionLabel,
-  });
-
-  final String title;
-  final String hint;
-  final String actionLabel;
-
-  @override
-  State<_ReminderNoteDialog> createState() => _ReminderNoteDialogState();
-}
-
-class _ReminderNoteDialogState extends State<_ReminderNoteDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
-    content: TextField(
-      key: const Key('reminder-action-note'),
-      controller: _controller,
-      autofocus: true,
-      maxLines: 3,
-      decoration: InputDecoration(labelText: widget.hint),
-      onSubmitted: (_) => _submit(),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Back'),
-      ),
-      FilledButton(onPressed: _submit, child: Text(widget.actionLabel)),
-    ],
-  );
-
-  void _submit() {
-    final note = _controller.text.trim();
-    if (note.isNotEmpty) Navigator.pop(context, note);
   }
 }
 
@@ -420,7 +412,7 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) => AleraCard(
     child: Row(
       children: [
-        const Icon(Icons.error_outline, color: AleraColors.critical),
+        const Icon(Icons.error, color: AleraColors.critical),
         const SizedBox(width: 12),
         Expanded(child: Text(message, style: AleraTypography.body)),
         TextButton(onPressed: onRetry, child: const Text('Retry')),
@@ -443,31 +435,82 @@ class _MutedState extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 24),
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) =>
+      AleraEmptyState(icon: icon, title: title, message: message);
+}
+
+/// "Who these reminders are for": avatar + name, with a dropdown arrow and tap
+/// to switch when the caregiver has more than one patient.
+class _PatientChip extends StatelessWidget {
+  const _PatientChip({required this.name, this.photoUrl, this.onTap});
+
+  final String name;
+  final String? photoUrl;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      key: const Key('reminder-patient-chip'),
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+      child: Row(
         children: [
-          Icon(icon, size: 48, color: const Color(0xFFCFC7E8)),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFA69BD2),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+          AleraPatientAvatar(name: name, photoUrl: photoUrl, radius: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              key: const Key('reminder-patient-subtitle'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFB5AADB), fontSize: 12),
-          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 20,
+              color: AleraColors.selected,
+            ),
+          ],
         ],
       ),
-    ),
-  );
+    );
+  }
+}
+
+/// Opens the calendar to jump to any date (e.g. to book ahead).
+class _CalendarButton extends StatelessWidget {
+  const _CalendarButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AleraCard(
+      key: const Key('reminder-pick-date'),
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: const SizedBox(
+        height: 40,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_month, size: 20, color: AleraColors.selected),
+            SizedBox(width: 6),
+            Text(
+              'Calendar',
+              style: TextStyle(
+                color: AleraColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

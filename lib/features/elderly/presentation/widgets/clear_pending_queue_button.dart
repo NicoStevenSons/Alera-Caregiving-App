@@ -1,47 +1,35 @@
 import 'package:flutter/material.dart';
 
 import '../../../../Services/upload_queue_service.dart';
+import '../../../../design_system/alera_colors.dart';
+import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 
 class ClearPendingQueueButton extends StatelessWidget {
   final UploadQueueService uploadQueueService;
   final String? metricType;
+  final VoidCallback? onCleared;
 
   const ClearPendingQueueButton({
     super.key,
     required this.uploadQueueService,
     this.metricType,
+    this.onCleared,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return TextButton.icon(
       onPressed: () async {
-        final bool? confirmed = await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Clear Pending Queue?'),
-              content: const Text(
-                'This will permanently delete all '
-                'health readings currently waiting '
-                'to be uploaded.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: const Text('Clear'),
-                ),
-              ],
-            );
-          },
+        final bool? confirmed = await showAleraConfirmationDialog(
+          context,
+          large: true,
+          icon: Icons.delete,
+          title: 'Clear unsent readings?',
+          message:
+              'This will permanently delete the health readings that are '
+              'still waiting to be sent to your caregiver.',
+          cancelLabel: 'Cancel',
+          confirmLabel: 'Clear',
         );
 
         if (confirmed != true) {
@@ -63,6 +51,8 @@ class ClearPendingQueueButton extends StatelessWidget {
           'queue items.',
         );
 
+        onCleared?.call();
+
         if (!context.mounted) {
           return;
         }
@@ -76,7 +66,11 @@ class ClearPendingQueueButton extends StatelessWidget {
           ),
         );
       },
-      child: const Text('Clear Pending Queue'),
+      icon: const Icon(Icons.delete),
+      label: const Text('Clear unsent readings'),
+      style: TextButton.styleFrom(
+        foregroundColor: AleraColors.textSecondary,
+      ),
     );
   }
 }

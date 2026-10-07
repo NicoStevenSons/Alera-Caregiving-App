@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
-import '../../../design_system/widgets/alera_button.dart';
 import '../../../design_system/widgets/alera_card.dart';
 import '../../../design_system/widgets/alera_svg_icon.dart';
 import '../data/reminder_api_data_source.dart';
@@ -148,26 +147,35 @@ class _ReminderOccurrenceDetailPageState
         ),
         if (actionable) ...[
           const SizedBox(height: 12),
-          AleraButton(
-            key: const Key('reminder-action-complete'),
-            label: 'Mark complete',
-            onPressed: () => _run(widget.onComplete),
-          ),
-          if (occurrence.snoozeAllowed) ...[
-            const SizedBox(height: 8),
-            AleraButton(
-              key: const Key('reminder-action-snooze'),
-              label: 'Snooze ${occurrence.defaultSnoozeMinutes} minutes',
-              variant: AleraButtonVariant.lightPill,
-              onPressed: () => _run(widget.onSnooze),
+          AleraCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                ReminderActionRow(
+                  key: const Key('reminder-action-complete'),
+                  icon: Icons.check_circle,
+                  label: 'Mark complete',
+                  onTap: () => _run(widget.onComplete),
+                ),
+                if (occurrence.snoozeAllowed) ...[
+                  const ReminderActionDivider(),
+                  ReminderActionRow(
+                    key: const Key('reminder-action-snooze'),
+                    icon: Icons.snooze,
+                    label: 'Snooze ${occurrence.defaultSnoozeMinutes} minutes',
+                    onTap: () => _run(widget.onSnooze),
+                  ),
+                ],
+                const ReminderActionDivider(),
+                ReminderActionRow(
+                  key: const Key('reminder-action-cancel'),
+                  icon: Icons.event_busy,
+                  label: 'Cancel this reminder',
+                  destructive: true,
+                  onTap: () => _run(widget.onCancel),
+                ),
+              ],
             ),
-          ],
-          const SizedBox(height: 8),
-          AleraButton(
-            key: const Key('reminder-action-cancel'),
-            label: 'Cancel this reminder',
-            variant: AleraButtonVariant.lightPill,
-            onPressed: () => _run(widget.onCancel),
           ),
         ],
         const SizedBox(height: 24),
@@ -203,5 +211,70 @@ class _Fact extends StatelessWidget {
         Expanded(child: Text(value, style: AleraTypography.body)),
       ],
     ),
+  );
+}
+
+class ReminderActionRow extends StatelessWidget {
+  const ReminderActionRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? AleraColors.critical : AleraColors.selected;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.12),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: destructive
+                      ? AleraColors.critical
+                      : AleraColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ReminderActionDivider extends StatelessWidget {
+  const ReminderActionDivider();
+
+  @override
+  Widget build(BuildContext context) => const Divider(
+    height: 1,
+    thickness: 1,
+    indent: 16,
+    endIndent: 16,
+    color: AleraColors.divider,
   );
 }
