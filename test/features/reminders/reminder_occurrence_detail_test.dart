@@ -49,7 +49,10 @@ void main() {
   testWidgets('tapping a reminder opens its detail with a Timeline', (
     tester,
   ) async {
-    await pump(tester);
+    await pump(
+      tester,
+      reminder: occurrence(status: ReminderOccurrenceStatus.upcoming),
+    );
     await openDetail(tester);
 
     expect(find.byKey(const Key('reminder-detail')), findsOneWidget);
@@ -59,6 +62,13 @@ void main() {
     expect(find.text('Take with water'), findsOneWidget);
     expect(find.text('Scheduled'), findsOneWidget);
     expect(find.text('Due'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('reminder-detail-status')),
+        matching: find.text('Upcoming'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Timeline'), findsOneWidget);
     expect(find.text('Created'), findsOneWidget);
     expect(find.text('Notification sent'), findsOneWidget);
