@@ -39,7 +39,6 @@ import 'presentation/more/caregiver_more_page.dart';
 import 'presentation/alerts/caregiver_alerts_page.dart';
 import 'presentation/alerts/caregiver_alert_detail_page.dart';
 import 'presentation/patient_detail/caregiver_patient_detail_page.dart';
-import 'presentation/more/caregiver_more_page.dart';
 import 'presentation/people/caregiver_people_page.dart';
 import 'presentation/people/add_patient_page.dart';
 import '../../services/alert_notification.dart';

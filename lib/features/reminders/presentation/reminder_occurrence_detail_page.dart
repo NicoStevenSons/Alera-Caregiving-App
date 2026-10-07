@@ -39,7 +39,7 @@ class ReminderOccurrenceDetailPage extends StatefulWidget {
   final ReminderOccurrenceAction onSnooze;
   final ReminderOccurrenceAction onCancel;
 
-  /// Shown as "For <name>" under the title when known.
+  /// Shown as `For <name>` under the title when known.
   final String? patientName;
 
   @override
@@ -299,9 +299,7 @@ class _ReminderOccurrenceDetailPageState
     if (d.inMinutes < 60) return '${d.inMinutes} min';
     if (d.inHours < 24) {
       final minutes = d.inMinutes % 60;
-      return minutes == 0
-          ? '${d.inHours} hr'
-          : '${d.inHours} hr $minutes min';
+      return minutes == 0 ? '${d.inHours} hr' : '${d.inHours} hr $minutes min';
     }
     return '${d.inDays} ${d.inDays == 1 ? 'day' : 'days'}';
   }
@@ -314,13 +312,31 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color color, IconData icon) = switch (status) {
-      ReminderOccurrenceStatus.upcoming => (AleraColors.selected, Icons.schedule),
+      ReminderOccurrenceStatus.upcoming => (
+        AleraColors.selected,
+        Icons.schedule,
+      ),
       ReminderOccurrenceStatus.due => (AleraColors.warningStrong, Icons.alarm),
-      ReminderOccurrenceStatus.snoozed => (AleraColors.warningStrong, Icons.snooze),
-      ReminderOccurrenceStatus.completed => (AleraColors.successStrong, Icons.check_circle),
-      ReminderOccurrenceStatus.completedLate => (AleraColors.successStrong, Icons.check_circle),
-      ReminderOccurrenceStatus.missed => (AleraColors.criticalStrong, Icons.error),
-      ReminderOccurrenceStatus.canceled => (AleraColors.textSecondary, Icons.cancel),
+      ReminderOccurrenceStatus.snoozed => (
+        AleraColors.warningStrong,
+        Icons.snooze,
+      ),
+      ReminderOccurrenceStatus.completed => (
+        AleraColors.successStrong,
+        Icons.check_circle,
+      ),
+      ReminderOccurrenceStatus.completedLate => (
+        AleraColors.successStrong,
+        Icons.check_circle,
+      ),
+      ReminderOccurrenceStatus.missed => (
+        AleraColors.criticalStrong,
+        Icons.error,
+      ),
+      ReminderOccurrenceStatus.canceled => (
+        AleraColors.textSecondary,
+        Icons.cancel,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

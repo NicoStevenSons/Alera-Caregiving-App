@@ -17,6 +17,10 @@ void main() {
   late FakeEventsSource events;
 
   Future<void> pump(WidgetTester tester, {ReminderOccurrence? reminder}) async {
+    // Tall screen: the detail page has several cards now.
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     source = _Source([reminder ?? occurrence()]);
     events = FakeEventsSource([
       event(id: 'a', type: ReminderEventType.created),
