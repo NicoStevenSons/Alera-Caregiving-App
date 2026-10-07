@@ -147,16 +147,20 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const Key('more-help-request-history')));
-    await tester.pump();
-    expect(find.text('Help request history is coming soon.'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 6));
-    await tester.pumpAndSettle();
-
+    // Sign out first: the "coming soon" toast floats over the bottom row.
     await tester.ensureVisible(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('caregiver-sign-out')));
     await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const Key('more-help-request-history')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('more-help-request-history')));
+    await tester.pump();
+    expect(find.text('Help request history is coming soon.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 6));
 
     expect(signedOut, isTrue);
   });
