@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/alera_colors.dart';
+
 import '../../../../design_system/widgets/alera_card.dart';
 import '../../data/api/caregiver_vital_trend_api_data_source.dart';
 import '../../data/api/dto/vital_trend_dto.dart';
@@ -112,7 +114,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
           tooltip: 'Back',
           onPressed: () => Navigator.maybePop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.mutedIcon,
         ),
       ),
       body: RefreshIndicator(

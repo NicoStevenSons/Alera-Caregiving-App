@@ -9,6 +9,7 @@ import '../data/reminder_api_data_source.dart';
 import '../data/reminder_controller.dart';
 import '../data/reminder_timeline_controller.dart';
 import '../domain/reminder_models.dart';
+import 'reminder_category_style.dart';
 import 'reminder_formatters.dart';
 import 'widgets/reminder_history_section.dart';
 import 'widgets/reminder_timeline.dart' show reminderIsActionable;
@@ -27,6 +28,7 @@ class ReminderOccurrenceDetailPage extends StatefulWidget {
     required this.onComplete,
     required this.onSnooze,
     required this.onCancel,
+    this.patientName,
   });
 
   /// Snapshot used until [controller] reports a fresher copy.
@@ -36,6 +38,9 @@ class ReminderOccurrenceDetailPage extends StatefulWidget {
   final ReminderOccurrenceAction onComplete;
   final ReminderOccurrenceAction onSnooze;
   final ReminderOccurrenceAction onCancel;
+
+  /// Shown as "For <name>" under the title when known.
+  final String? patientName;
 
   @override
   State<ReminderOccurrenceDetailPage> createState() =>
@@ -87,54 +92,147 @@ class _ReminderOccurrenceDetailPageState
 
   Widget _content(BuildContext context, ReminderOccurrence occurrence) {
     final actionable = reminderIsActionable(occurrence.status);
+    final relative = _relative(occurrence, DateTime.now());
     return ListView(
       key: const Key('reminder-detail'),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         AleraCard(
+          color: reminderCategoryWash(occurrence.category, strength: 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  AleraSvgIcon(
-                    assetPath: reminderCategoryAsset(occurrence.category),
-                    width: 32,
-                    height: 32,
+                  Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: reminderCategoryTile(occurrence.category),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: AleraSvgIcon(
+                      assetPath: reminderCategoryAsset(occurrence.category),
+                      width: 34,
+                      height: 34,
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: Text(
-                      occurrence.title,
-                      key: const Key('reminder-detail-title'),
-                      style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 20,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          occurrence.title,
+                          key: const Key('reminder-detail-title'),
+                          style: AleraTypography.sectionTitle.copyWith(
+                            fontSize: 20,
+                            height: 1.2,
+                          ),
+                        ),
+                        if (widget.patientName case final name?)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'For $name',
+                              key: const Key('reminder-detail-patient'),
+                              style: AleraTypography.body.copyWith(
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
+              Row(
+                children: [
+                  _StatusPill(
+                    key: const Key('reminder-detail-status'),
+                    status: occurrence.status,
+                  ),
+                  if (relative != null) ...[
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        relative,
+                        key: const Key('reminder-detail-relative'),
+                        style: AleraTypography.body.copyWith(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AleraCard(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Details', style: AleraTypography.sectionTitle),
+              const SizedBox(height: 10),
               _Fact(
+                icon: Icons.schedule,
+                label: 'Scheduled',
+                value: _when(occurrence.scheduledAt),
+              ),
+              _Fact(
+                icon: Icons.alarm,
+                label: 'Due',
+                value: _when(occurrence.dueAt),
+              ),
+              if (occurrence.missedAfterMinutes > 0)
+                _Fact(
+                  icon: Icons.event_busy,
+                  label: 'Missed after',
+                  value: '${occurrence.missedAfterMinutes} min',
+                ),
+              _Fact(
+                icon: Icons.snooze,
+                label: 'Snooze',
+                value: occurrence.snoozeAllowed
+                    ? '${occurrence.defaultSnoozeMinutes} min at a time'
+                    : 'Not allowed',
+              ),
+              _Fact(
+                icon: Icons.category,
                 label: 'Category',
                 value: reminderTitleCase(occurrence.category.apiValue),
               ),
               _Fact(
-                key: const Key('reminder-detail-status'),
-                label: 'Status',
-                value: reminderTitleCase(occurrence.status.apiValue),
+                icon: Icons.flag,
+                label: 'Priority',
+                value: reminderTitleCase(occurrence.priority.apiValue),
               ),
-              _Fact(label: 'Scheduled', value: _when(occurrence.scheduledAt)),
-              _Fact(label: 'Due', value: _when(occurrence.dueAt)),
-              if (occurrence.instructions case final text?)
-                _Fact(
-                  key: const Key('reminder-detail-instructions'),
-                  label: 'Instructions',
-                  value: text,
-                ),
             ],
           ),
         ),
+        if (occurrence.instructions case final text?) ...[
+          const SizedBox(height: 12),
+          AleraCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Instructions', style: AleraTypography.sectionTitle),
+                const SizedBox(height: 8),
+                Text(
+                  text,
+                  key: const Key('reminder-detail-instructions'),
+                  style: AleraTypography.body.copyWith(
+                    color: AleraColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         if (actionable) ...[
           const SizedBox(height: 12),
           AleraCard(
@@ -168,7 +266,7 @@ class _ReminderOccurrenceDetailPageState
             ),
           ),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         ReminderHistorySection(controller: _timeline),
       ],
     );
@@ -176,29 +274,125 @@ class _ReminderOccurrenceDetailPageState
 
   static String _when(DateTime value) =>
       '${reminderShortDate(value.toLocal())} · ${reminderClock(value)}';
+
+  /// "In 2 hr 10 min" / "3 hr ago" for reminders still in play or missed;
+  /// null once the reminder is finished or canceled.
+  static String? _relative(ReminderOccurrence occurrence, DateTime now) {
+    switch (occurrence.status) {
+      case ReminderOccurrenceStatus.completed:
+      case ReminderOccurrenceStatus.completedLate:
+      case ReminderOccurrenceStatus.canceled:
+        return null;
+      case ReminderOccurrenceStatus.upcoming:
+      case ReminderOccurrenceStatus.due:
+      case ReminderOccurrenceStatus.snoozed:
+      case ReminderOccurrenceStatus.missed:
+        final diff = occurrence.scheduledAt.difference(now);
+        final span = _span(diff.abs());
+        if (span == null) return 'Right now';
+        return diff.isNegative ? '$span ago' : 'In $span';
+    }
+  }
+
+  static String? _span(Duration d) {
+    if (d.inMinutes < 1) return null;
+    if (d.inMinutes < 60) return '${d.inMinutes} min';
+    if (d.inHours < 24) {
+      final minutes = d.inMinutes % 60;
+      return minutes == 0
+          ? '${d.inHours} hr'
+          : '${d.inHours} hr $minutes min';
+    }
+    return '${d.inDays} ${d.inDays == 1 ? 'day' : 'days'}';
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({super.key, required this.status});
+  final ReminderOccurrenceStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (Color color, IconData icon) = switch (status) {
+      ReminderOccurrenceStatus.upcoming => (AleraColors.selected, Icons.schedule),
+      ReminderOccurrenceStatus.due => (AleraColors.warningStrong, Icons.alarm),
+      ReminderOccurrenceStatus.snoozed => (AleraColors.warningStrong, Icons.snooze),
+      ReminderOccurrenceStatus.completed => (AleraColors.successStrong, Icons.check_circle),
+      ReminderOccurrenceStatus.completedLate => (AleraColors.successStrong, Icons.check_circle),
+      ReminderOccurrenceStatus.missed => (AleraColors.criticalStrong, Icons.error),
+      ReminderOccurrenceStatus.canceled => (AleraColors.textSecondary, Icons.cancel),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 5),
+          Text(
+            reminderTitleCase(status.apiValue),
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Fact extends StatelessWidget {
-  const _Fact({super.key, required this.label, required this.value});
+  const _Fact({required this.icon, required this.label, required this.value});
+  final IconData icon;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.only(bottom: 12),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AleraColors.selected.withValues(alpha: 0.12),
+          ),
+          child: Icon(icon, size: 16, color: AleraColors.selected),
+        ),
+        const SizedBox(width: 12),
         SizedBox(
-          width: 96,
-          child: Text(
-            label,
-            style: AleraTypography.body.copyWith(
-              color: AleraColors.textSecondary,
+          width: 92,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Text(
+              label,
+              style: AleraTypography.body.copyWith(
+                color: AleraColors.textSecondary,
+              ),
             ),
           ),
         ),
-        Expanded(child: Text(value, style: AleraTypography.body)),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Text(
+              value,
+              style: AleraTypography.body.copyWith(
+                color: AleraColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
       ],
     ),
   );

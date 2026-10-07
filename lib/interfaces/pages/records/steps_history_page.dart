@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../design_system/widgets/alera_back_button.dart';
+
 import '../../../features/elderly/presentation/widgets/elderly_widgets.dart';
 import '../../../models/steps_data.dart';
 
@@ -13,7 +15,10 @@ class StepsHistoryPage extends StatelessWidget {
     final int sessions = stepsData.sessions.length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Activity')),
+      appBar: AppBar(
+        leading: const AleraBackButton(size: 32),
+        title: const Text('Activity'),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [

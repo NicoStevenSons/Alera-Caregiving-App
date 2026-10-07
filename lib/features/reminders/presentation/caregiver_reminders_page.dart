@@ -354,6 +354,7 @@ class _CaregiverRemindersPageState extends State<CaregiverRemindersPage> {
           onComplete: _complete,
           onSnooze: _snooze,
           onCancel: _cancel,
+          patientName: _patientName,
         ),
       ),
     );

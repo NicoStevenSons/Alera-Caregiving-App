@@ -653,7 +653,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: const Color(0xFFB4AEC2),
+          color: AleraColors.mutedIcon,
           onPressed: back,
         ),
       ),

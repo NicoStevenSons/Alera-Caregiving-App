@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../design_system/widgets/alera_back_button.dart';
+
 import '../../../features/elderly/presentation/widgets/elderly_widgets.dart';
 import '../../../models/sleep_data.dart';
 
@@ -14,7 +16,10 @@ class SleepHistoryPage extends StatelessWidget {
     final SleepSessionData? latest = sessions.isEmpty ? null : sessions.first;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sleep')),
+      appBar: AppBar(
+        leading: const AleraBackButton(size: 32),
+        title: const Text('Sleep'),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [

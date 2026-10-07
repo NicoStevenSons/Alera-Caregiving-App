@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../design_system/widgets/alera_back_button.dart';
+
 import '../../reminders/data/reminder_api_data_source.dart';
 import '../../reminders/data/reminder_timeline_controller.dart';
 import '../../reminders/presentation/widgets/reminder_history_section.dart';
@@ -53,7 +55,10 @@ class _PatientReminderDetailPageState extends State<PatientReminderDetailPage> {
   Widget build(BuildContext context) {
     final history = _history;
     return Scaffold(
-      appBar: AppBar(title: const Text('Reminder details')),
+      appBar: AppBar(
+        leading: const AleraBackButton(size: 32),
+        title: const Text('Reminder details'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

@@ -328,7 +328,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: AleraColors.selected,
+          color: AleraColors.mutedIcon,
           onPressed: () => Navigator.maybePop(context),
         ),
       ),

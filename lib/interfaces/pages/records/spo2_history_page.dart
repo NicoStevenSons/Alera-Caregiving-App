@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../../design_system/widgets/alera_back_button.dart';
+
 import '../../../Services/upload_queue_service.dart';
 import '../../../features/elderly/presentation/widgets/clear_pending_queue_button.dart';
 import '../../../features/elderly/presentation/widgets/elderly_widgets.dart';
@@ -62,7 +64,10 @@ class _SpO2HistoryPageState extends State<SpO2HistoryPage> {
     final _Reading? latest = readings.isEmpty ? null : readings.first;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('SpO₂')),
+      appBar: AppBar(
+        leading: const AleraBackButton(size: 32),
+        title: const Text('SpO₂'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(

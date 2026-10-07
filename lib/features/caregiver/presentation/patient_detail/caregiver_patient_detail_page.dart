@@ -131,7 +131,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
           tooltip: 'Back',
           onPressed: () => Navigator.maybePop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: AleraColors.selected,
+          color: AleraColors.mutedIcon,
         ),
         actions: [
           if (onEdit != null)
@@ -384,7 +384,7 @@ class _CaregiverPatientDetailLoaderPageState
           tooltip: 'Back',
           onPressed: () => Navigator.maybePop(context),
           icon: const Icon(Icons.chevron_left, size: 28),
-          color: AleraColors.selected,
+          color: AleraColors.mutedIcon,
         ),
       ),
       body: failure == null
