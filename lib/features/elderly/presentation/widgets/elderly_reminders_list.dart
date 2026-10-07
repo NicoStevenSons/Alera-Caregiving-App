@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/elderly_reminder.dart';
 import 'elderly_reminder_card.dart';
+import '../../../../design_system/alera_colors.dart';
 import 'elderly_widgets.dart';
 
-class ElderlyRemindersList extends StatelessWidget {
+class ElderlyRemindersList extends StatefulWidget {
   final bool isLoading;
   final String? errorMessage;
   final List<ElderlyReminder> reminders;
@@ -25,6 +26,26 @@ class ElderlyRemindersList extends StatelessWidget {
     this.onTap,
     this.onRetry,
   });
+
+  static const int collapsedCount = 3;
+
+  @override
+  State<ElderlyRemindersList> createState() => _ElderlyRemindersListState();
+}
+
+class _ElderlyRemindersListState extends State<ElderlyRemindersList> {
+  final Set<String> _expanded = <String>{};
+
+  bool get isLoading => widget.isLoading;
+  String? get errorMessage => widget.errorMessage;
+  List<ElderlyReminder> get reminders => widget.reminders;
+  Set<String> get busyOccurrenceIds => widget.busyOccurrenceIds;
+  void Function(ElderlyReminder reminder)? get onTap => widget.onTap;
+  Future<void> Function(ElderlyReminder reminder)? get onComplete =>
+      widget.onComplete;
+  Future<void> Function(ElderlyReminder reminder)? get onSnooze =>
+      widget.onSnooze;
+  VoidCallback? get onRetry => widget.onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -115,30 +136,70 @@ class ElderlyRemindersList extends StatelessWidget {
     );
 
     final List<Widget> children = [];
-    void section(String title, List<Widget> items) {
+    void section(String title, List<ElderlyReminder> items) {
       if (items.isEmpty) return;
+      final bool expanded = _expanded.contains(title);
+      final bool capped =
+          items.length > ElderlyRemindersList.collapsedCount;
+      final List<ElderlyReminder> shown = capped && !expanded
+          ? items.take(ElderlyRemindersList.collapsedCount).toList()
+          : items;
       if (children.isNotEmpty) children.add(const SizedBox(height: 12));
       children
-        ..add(ElderlySectionTitle(title))
+        ..add(
+          Row(
+            children: [
+              Expanded(child: ElderlySectionTitle(title)),
+              if (capped)
+                Text(
+                  '${items.length}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AleraColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        )
         ..add(const SizedBox(height: 12))
-        ..addAll(items);
+        ..addAll(shown.map(row));
+      if (capped) {
+        children.add(
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              key: Key('elderly-reminders-toggle-$title'),
+              onPressed: () => setState(() {
+                expanded ? _expanded.remove(title) : _expanded.add(title);
+              }),
+              child: Text(
+                expanded ? 'Show less' : 'Show all ${items.length}',
+              ),
+            ),
+          ),
+        );
+      }
     }
 
     if (primary != null) {
       final ElderlyReminder p = primary!;
-      section(p.status == 'DUE' ? 'Due now' : 'Up next', [
-        ElderlyReminderCard(
-          reminder: p,
-          busy: busyOccurrenceIds.contains(p.occurrenceId),
-          onTap: () => onTap?.call(p),
-          onComplete: () => onComplete?.call(p),
-          onSnooze: () => onSnooze?.call(p),
-        ),
-      ]);
+      children
+        ..add(ElderlySectionTitle(p.status == 'DUE' ? 'Due now' : 'Up next'))
+        ..add(const SizedBox(height: 12))
+        ..add(
+          ElderlyReminderCard(
+            reminder: p,
+            busy: busyOccurrenceIds.contains(p.occurrenceId),
+            onTap: () => onTap?.call(p),
+            onComplete: () => onComplete?.call(p),
+            onSnooze: () => onSnooze?.call(p),
+          ),
+        );
     }
-    section('Missed', missed.map(row).toList());
-    section('Later today', later.map(row).toList());
-    section('Done', done.map(row).toList());
+    section('Missed', missed);
+    section('Later today', later);
+    section('Done', done);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

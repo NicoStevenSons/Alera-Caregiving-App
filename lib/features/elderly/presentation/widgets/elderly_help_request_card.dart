@@ -24,12 +24,23 @@ class ElderlyHelpRequestCard extends StatelessWidget {
     return switch (state) {
       ElderlyHelpRequestState.initialLoading => const Card(
         key: Key('elderly-help-loading'),
-        child: ListTile(
-          leading: SizedBox.square(
-            dimension: 24,
-            child: CircularProgressIndicator(strokeWidth: 3),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Checking help-request status…',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ),
-          title: Text('Checking help-request status…'),
         ),
       ),
       ElderlyHelpRequestState.available => Semantics(

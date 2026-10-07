@@ -142,8 +142,8 @@ class _MonitoringStatusCard extends StatelessWidget {
       _ => const Color(0xFFD99A00),
     };
 
-    return Align(
-      alignment: Alignment.centerLeft,
+    return SizedBox(
+      width: double.infinity,
       child: Material(
         key: const Key('elderly-monitoring-status'),
         color: color.withValues(alpha: 0.14),
@@ -152,13 +152,12 @@ class _MonitoringStatusCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           onTap: actionable ? onOpenDeviceStatus : null,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, color: color, size: 24),
-                const SizedBox(width: 8),
-                Flexible(
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
@@ -169,7 +168,7 @@ class _MonitoringStatusCard extends StatelessWidget {
                   ),
                 ),
                 if (actionable) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Icon(Icons.chevron_right_rounded, color: color, size: 24),
                 ],
               ],
