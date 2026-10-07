@@ -92,12 +92,16 @@ class _RelationshipFieldState extends State<RelationshipField> {
       children: [
         const AleraFieldLabel('Your relationship (optional)'),
         const SizedBox(height: 8),
-        GridView.count(
+        GridView(
           key: const Key('relationship-grid'),
-          crossAxisCount: 3,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 1.45,
+          // Fixed tile height (not an aspect ratio) so every tile has the
+          // same top and bottom padding around its icon and label.
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 80,
+          ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -174,7 +178,7 @@ class RelationshipTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -189,6 +193,7 @@ class RelationshipTile extends StatelessWidget {
                         ? AleraColors.textPrimary
                         : AleraColors.textSecondary,
                     fontSize: 12,
+                    height: 1.2,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
