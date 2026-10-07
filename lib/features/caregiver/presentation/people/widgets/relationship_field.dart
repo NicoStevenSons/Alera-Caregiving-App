@@ -2,16 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../../design_system/widgets/alera_text_field.dart';
 import '../../../domain/relationship_label.dart';
 
+const String _iconDir = 'alera-figma-assets/assets/icons/relationships';
+
+/// Icon file for a relationship choice. Every file is currently a copy of
+/// status/error.svg; replace the SVGs to change the artwork (see
+/// alera-figma-assets/PLACEHOLDER_ICONS.md).
+String relationshipIconAsset(String label) =>
+    '$_iconDir/${label.toLowerCase()}.svg';
+
 /// Optional "how are you related to this person" input shared by Add Patient
-/// and Edit Patient.
+/// and Edit Patient: tap-to-select icon tiles, three per row, like the
+/// reminder categories. Tapping the selected tile again clears it. "Other"
+/// reveals a text box for a custom label.
 ///
-/// One dropdown with the common choices; a text box appears only when the
-/// caregiver picks "Other…" (or the saved label isn't one of the choices), so
-/// there is never a second control repeating the first. The value is read from
-/// and written to [controller], which callers normalize on submit.
+/// The value is read from and written to [controller], which callers
+/// normalize on submit.
 class RelationshipField extends StatefulWidget {
   final TextEditingController controller;
   final bool enabled;
@@ -27,9 +36,6 @@ class RelationshipField extends StatefulWidget {
 }
 
 class _RelationshipFieldState extends State<RelationshipField> {
-  static const String _other = '__other__';
-  static const String _none = '__none__';
-
   late bool _otherMode;
 
   @override
@@ -47,78 +53,72 @@ class _RelationshipFieldState extends State<RelationshipField> {
     return null;
   }
 
-  String? get _selection {
-    if (_otherMode) return _other;
-    return _suggestionFor(normalizeRelationshipLabel(widget.controller.text));
+  String? get _selectedSuggestion => _otherMode
+      ? null
+      : _suggestionFor(normalizeRelationshipLabel(widget.controller.text));
+
+  void _tapSuggestion(String suggestion) {
+    setState(() {
+      _otherMode = false;
+      if (_selectedSuggestion == suggestion) {
+        widget.controller.clear();
+      } else {
+        widget.controller.text = suggestion;
+      }
+    });
   }
 
-  void _choose(String? value) {
+  void _tapOther() {
     setState(() {
-      if (value == _other) {
+      if (_otherMode) {
+        _otherMode = false;
+        widget.controller.clear();
+      } else {
         _otherMode = true;
-        // Don't carry a previously picked suggestion into the free-text box.
+        // Don't carry a picked suggestion into the free-text box.
         if (_suggestionFor(normalizeRelationshipLabel(widget.controller.text)) !=
             null) {
           widget.controller.clear();
         }
-      } else if (value == null || value == _none) {
-        _otherMode = false;
-        widget.controller.clear();
-      } else {
-        _otherMode = false;
-        widget.controller.text = value;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final selection = _selection;
+    final selected = _selectedSuggestion;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: _otherMode ? 12 : 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AleraFieldLabel('Your relationship (optional)'),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                // A new key re-reads initialValue when the choice is changed
-                // from code (for example clearing it).
-                key: ValueKey<String?>(selection),
-                initialValue: selection,
-                isExpanded: true,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 20,
-                  color: AleraColors.fieldHint,
-                ),
-                dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AleraColors.textPrimary,
-                ),
-                decoration: aleraInputDecoration(
-                  hint: 'e.g. Mother, Client',
-                ),
-                items: [
-                  if (selection != null)
-                    const DropdownMenuItem(
-                      value: _none,
-                      child: Text('Not set'),
-                    ),
-                  for (final suggestion in relationshipLabelSuggestions)
-                    DropdownMenuItem(value: suggestion, child: Text(suggestion)),
-                  const DropdownMenuItem(value: _other, child: Text('Other…')),
-                ],
-                onChanged: widget.enabled ? _choose : null,
+        const AleraFieldLabel('Your relationship (optional)'),
+        const SizedBox(height: 8),
+        GridView.count(
+          key: const Key('relationship-grid'),
+          crossAxisCount: 3,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1.45,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (final suggestion in relationshipLabelSuggestions)
+              RelationshipTile(
+                key: Key('relationship-$suggestion'),
+                label: suggestion,
+                iconAsset: relationshipIconAsset(suggestion),
+                selected: selected == suggestion,
+                onTap: widget.enabled ? () => _tapSuggestion(suggestion) : null,
               ),
-            ],
-          ),
+            RelationshipTile(
+              key: const Key('relationship-Other'),
+              label: 'Other',
+              iconAsset: relationshipIconAsset('other'),
+              selected: _otherMode,
+              onTap: widget.enabled ? _tapOther : null,
+            ),
+          ],
         ),
+        SizedBox(height: _otherMode ? 12 : 20),
         if (_otherMode)
           AleraTextField(
             controller: widget.controller,
@@ -133,6 +133,70 @@ class _RelationshipFieldState extends State<RelationshipField> {
             validator: validateRelationshipLabel,
           ),
       ],
+    );
+  }
+}
+
+/// One selectable tile: icon above a short label. Same look as the reminder
+/// category tiles.
+class RelationshipTile extends StatelessWidget {
+  final String label;
+  final String iconAsset;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const RelationshipTile({
+    super.key,
+    required this.label,
+    required this.iconAsset,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected
+            ? AleraColors.selected.withValues(alpha: 0.14)
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: selected ? AleraColors.selected : AleraColors.divider,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AleraSvgIcon(assetPath: iconAsset, width: 28, height: 28),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? AleraColors.textPrimary
+                        : AleraColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

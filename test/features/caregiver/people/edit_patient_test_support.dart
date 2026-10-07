@@ -118,19 +118,15 @@ class FakePhotoDataSource implements CaregiverPatientDataSource {
   ) => throw UnimplementedError();
 }
 
-/// The relationship dropdown (the Sex dropdown is also a
-/// DropdownButtonFormField, so scope to the relationship field).
-Finder get relationshipDropdown => find.descendant(
-  of: find.byType(RelationshipField),
-  matching: find.byType(DropdownButtonFormField<String>),
-);
-
-/// Opens the relationship dropdown and picks [label] ("Mother", "Other…",
-/// "Not set", ...).
+/// Taps the relationship tile for [label] ("Mother", "Other", ...). Tapping
+/// the selected tile again clears the relationship.
 Future<void> pickRelationship(WidgetTester tester, String label) async {
-  await tester.ensureVisible(relationshipDropdown);
-  await tester.tap(relationshipDropdown);
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label).last);
+  final tile = find.byKey(Key('relationship-$label'));
+  await tester.ensureVisible(tile);
+  await tester.tap(tile);
   await tester.pumpAndSettle();
 }
+
+bool relationshipSelected(WidgetTester tester, String label) => tester
+    .widget<RelationshipTile>(find.byKey(Key('relationship-$label')))
+    .selected;
