@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 abstract final class AleraColors {
-  static const Color primary = Color(0xFF8B5DE7);
+  /// The brand purple: buttons, focus outlines, links and accents. Same
+  /// value as [primaryMid] and [selected] so the app has one softer purple.
+  static const Color primary = Color(0xFFAE8BEA);
 
-  /// The resting colour of primary buttons: a shade brighter than [primary].
+  /// The resting colour of primary buttons (same as [primary]).
   static const Color primaryMid = Color(0xFFAE8BEA);
   static const Color primarySoft = Color(0xFFE8DDFB);
   static const Color background = Color(0xFFF7F4FF);

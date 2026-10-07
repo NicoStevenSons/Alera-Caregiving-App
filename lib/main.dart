@@ -124,7 +124,7 @@ class _StartupErrorScreen extends StatelessWidget {
                 Icon(
                   Icons.error_outline_rounded,
                   size: 42,
-                  color: Color(0xFF8B5DE7),
+                  color: Color(0xFFAE8BEA),
                 ),
                 SizedBox(height: 20),
                 Text(
