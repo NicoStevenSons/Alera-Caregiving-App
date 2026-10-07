@@ -37,7 +37,8 @@ class AlertSeverityChip extends StatelessWidget {
         tone: AleraStatusTone.critical,
         glyph: const AleraStatusGlyph.material(
           Icons.priority_high,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/critical.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/critical.svg',
         ),
         label: labels.alertCritical,
       ),
@@ -45,7 +46,8 @@ class AlertSeverityChip extends StatelessWidget {
         tone: AleraStatusTone.warning,
         glyph: const AleraStatusGlyph.material(
           Icons.warning,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/warning.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/warning.svg',
         ),
         label: labels.alertWarning,
       ),

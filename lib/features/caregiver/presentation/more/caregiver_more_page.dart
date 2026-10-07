@@ -242,10 +242,7 @@ class _MoreRow extends StatelessWidget {
             ),
             if (soon)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AleraColors.primarySoft,
                   borderRadius: BorderRadius.circular(12),
@@ -260,10 +257,7 @@ class _MoreRow extends StatelessWidget {
                 ),
               )
             else if (chevron)
-              const Icon(
-                Icons.chevron_right,
-                color: AleraColors.mutedChevron,
-              ),
+              const Icon(Icons.chevron_right, color: AleraColors.mutedChevron),
           ],
         ),
       ),

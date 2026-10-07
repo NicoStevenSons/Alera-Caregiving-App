@@ -27,11 +27,7 @@ class PatientMonitoringDevicesCard extends StatelessWidget {
                 'alera-figma-assets/assets/icons/devices/watch-monitoring.svg',
             device: devices.watch,
           ),
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: AleraColors.divider,
-          ),
+          const Divider(height: 1, thickness: 1, color: AleraColors.divider),
           _DeviceRow(
             name: 'Phone',
             assetPath:
@@ -135,7 +131,9 @@ class _DeviceRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  device == null ? '--' : (battery == null ? '--' : '$battery%'),
+                  device == null
+                      ? '--'
+                      : (battery == null ? '--' : '$battery%'),
                   style: AleraTypography.label.copyWith(fontSize: 13),
                 ),
                 const SizedBox(width: 4),

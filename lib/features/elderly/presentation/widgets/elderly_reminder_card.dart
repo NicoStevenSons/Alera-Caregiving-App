@@ -40,7 +40,11 @@ class ElderlyReminderCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ElderlyIconTile(icon: style.icon, color: style.color, size: 56),
+                  ElderlyIconTile(
+                    icon: style.icon,
+                    color: style.color,
+                    size: 56,
+                  ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -107,7 +111,9 @@ class ElderlyReminderCard extends StatelessWidget {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: busy ? null : onSnooze,
-                      child: Text('Snooze ${reminder.defaultSnoozeMinutes} min'),
+                      child: Text(
+                        'Snooze ${reminder.defaultSnoozeMinutes} min',
+                      ),
                     ),
                   ),
                 ],
@@ -171,12 +177,10 @@ class ElderlyReminderCard extends StatelessWidget {
   }
 }
 
-
 /// Compact tappable row. Finished reminders show a check/cross; open ones
 /// (missed, later today) show an arrow and open the full card on tap.
 class ElderlyDoneReminderRow extends StatelessWidget {
   const ElderlyDoneReminderRow({super.key, required this.reminder, this.onTap});
-
 
   final ElderlyReminder reminder;
   final VoidCallback? onTap;
@@ -188,7 +192,8 @@ class ElderlyDoneReminderRow extends StatelessWidget {
     );
     final Color statusColor = ElderlyReminderStyle.statusColor(reminder.status);
     final bool canceled = reminder.status == 'CANCELED';
-    final bool finished = canceled ||
+    final bool finished =
+        canceled ||
         reminder.status == 'COMPLETED' ||
         reminder.status == 'COMPLETED_LATE';
 

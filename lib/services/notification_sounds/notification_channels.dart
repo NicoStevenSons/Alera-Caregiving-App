@@ -118,7 +118,9 @@ AndroidNotificationDetails reminderAndroidDetails(
     importance: sound == ReminderSound.silent
         ? Importance.defaultImportance
         : Importance.max,
-    priority: sound == ReminderSound.silent ? Priority.defaultPriority : Priority.max,
+    priority: sound == ReminderSound.silent
+        ? Priority.defaultPriority
+        : Priority.max,
     playSound: sound.playsSound,
     sound: sound.rawResource == null
         ? null

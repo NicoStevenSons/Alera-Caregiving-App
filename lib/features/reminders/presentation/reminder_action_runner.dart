@@ -15,6 +15,10 @@ Future<void> runReminderAction(
     showAleraSnackBarOn(messenger, success, type: AleraSnackBarType.success);
   } on ReminderApiFailure catch (error) {
     if (error.statusCode == 401) return;
-    showAleraSnackBarOn(messenger, error.message, type: AleraSnackBarType.error);
+    showAleraSnackBarOn(
+      messenger,
+      error.message,
+      type: AleraSnackBarType.error,
+    );
   }
 }

@@ -105,32 +105,27 @@ class WatchPayloadService {
   }
 
   Future<bool> requestWatchStatus() async {
-  try {
-    final bool? requested =
-        await _watchStatusChannel.invokeMethod<bool>(
-      'requestWatchStatus',
-    );
+    try {
+      final bool? requested = await _watchStatusChannel.invokeMethod<bool>(
+        'requestWatchStatus',
+      );
 
-    debugPrint(
-      'Watch status request sent: ${requested ?? false}',
-    );
+      debugPrint('Watch status request sent: ${requested ?? false}');
 
-    return requested ?? false;
-  } on PlatformException catch (error) {
-    debugPrint(
-      'Failed to request watch status: '
-      '${error.code} ${error.message}',
-    );
+      return requested ?? false;
+    } on PlatformException catch (error) {
+      debugPrint(
+        'Failed to request watch status: '
+        '${error.code} ${error.message}',
+      );
 
-    return false;
-  } catch (error) {
-    debugPrint(
-      'Failed to request watch status: $error',
-    );
+      return false;
+    } catch (error) {
+      debugPrint('Failed to request watch status: $error');
 
-    return false;
+      return false;
+    }
   }
-}
 
   Future<void> dispose() async {
     await _subscription?.cancel();

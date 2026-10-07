@@ -42,6 +42,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
 
   /// Shows the Edit patient action in the app bar when provided.
   final VoidCallback? onEdit;
+
   /// Opens the create-reminder drawer for this patient. Null on the mock
   /// repository path, where "Reminder" falls back to the mock snackbar.
   final VoidCallback? onNewReminder;
@@ -191,7 +192,8 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               reminders: reminders,
               onViewAll: onViewAllReminders,
               onCompleteReminder: onCompleteReminder,
-              onNewReminder: onNewReminder ??
+              onNewReminder:
+                  onNewReminder ??
                   () => _showFeedback(
                     context,
                     'Reminders are coming soon for this patient.',
@@ -543,8 +545,18 @@ class _PatientAccessStatusCard extends StatelessWidget {
 
 String _dateTime(DateTime value) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final local = value.toLocal();
   final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;

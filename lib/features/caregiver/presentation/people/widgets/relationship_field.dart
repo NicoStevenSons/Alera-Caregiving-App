@@ -76,7 +76,9 @@ class _RelationshipFieldState extends State<RelationshipField> {
       } else {
         _otherMode = true;
         // Don't carry a picked suggestion into the free-text box.
-        if (_suggestionFor(normalizeRelationshipLabel(widget.controller.text)) !=
+        if (_suggestionFor(
+              normalizeRelationshipLabel(widget.controller.text),
+            ) !=
             null) {
           widget.controller.clear();
         }

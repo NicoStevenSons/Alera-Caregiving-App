@@ -152,14 +152,15 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
                 for (int i = 0; i < AlertSoundCategory.values.length; i++) ...[
                   if (i > 0) const Divider(height: 1, indent: 72),
                   _SoundRow(
-                    key: Key('alert-sound-${AlertSoundCategory.values[i].name}'),
+                    key: Key(
+                      'alert-sound-${AlertSoundCategory.values[i].name}',
+                    ),
                     icon: _alertIcon(AlertSoundCategory.values[i]),
                     title: AlertSoundCategory.values[i].channelName,
                     subtitle: AlertSoundCategory.values[i].description,
                     selected: false,
                     showSelection: false,
-                    playing:
-                        _playing == AlertSoundCategory.values[i].channelId,
+                    playing: _playing == AlertSoundCategory.values[i].channelId,
                     onTap: () => _play(
                       AlertSoundCategory.values[i].channelId,
                       AlertSoundCategory.values[i].rawResource,
@@ -186,18 +187,16 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Column(
               children: [
-                for (final (int i, AlertSoundCategory c) in <AlertSoundCategory>[
-                  AlertSoundCategory.criticalAlert,
-                  AlertSoundCategory.helpRequest,
-                  AlertSoundCategory.missedReminder,
-                ].indexed) ...[
+                for (final (int i, AlertSoundCategory c)
+                    in <AlertSoundCategory>[
+                      AlertSoundCategory.criticalAlert,
+                      AlertSoundCategory.helpRequest,
+                      AlertSoundCategory.missedReminder,
+                    ].indexed) ...[
                   if (i > 0) const Divider(height: 1, indent: 72),
                   ListTile(
                     key: Key('dnd-${c.name}'),
-                    leading: Icon(
-                      _alertIcon(c),
-                      color: AleraColors.primaryMid,
-                    ),
+                    leading: Icon(_alertIcon(c), color: AleraColors.primaryMid),
                     title: Text(c.channelName),
                     subtitle: const Text('Let through Do Not Disturb'),
                     trailing: const Icon(Icons.chevron_right),

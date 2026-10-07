@@ -27,10 +27,8 @@ Future<bool> runAleraSignOutFlow(
     context: context,
     useRootNavigator: true,
     barrierDismissible: false,
-    builder: (_) => PopScope(
-      canPop: false,
-      child: _SignOutProgressDialog(large: large),
-    ),
+    builder: (_) =>
+        PopScope(canPop: false, child: _SignOutProgressDialog(large: large)),
   );
 
   try {

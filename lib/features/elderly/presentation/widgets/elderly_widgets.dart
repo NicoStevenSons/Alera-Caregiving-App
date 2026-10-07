@@ -9,8 +9,10 @@ import '../../../../design_system/widgets/alera_svg_icon.dart';
 Route<T> elderlyRoute<T>(BuildContext context, WidgetBuilder builder) {
   final ThemeData theme = Theme.of(context);
   return MaterialPageRoute<T>(
-    builder: (BuildContext routeContext) =>
-        Theme(data: theme, child: Builder(builder: builder)),
+    builder: (BuildContext routeContext) => Theme(
+      data: theme,
+      child: Builder(builder: builder),
+    ),
   );
 }
 
@@ -61,7 +63,11 @@ class ElderlySectionTitle extends StatelessWidget {
 
 /// Small coloured status label ("Due", "Completed", ...).
 class ElderlyStatusChip extends StatelessWidget {
-  const ElderlyStatusChip({super.key, required this.label, required this.color});
+  const ElderlyStatusChip({
+    super.key,
+    required this.label,
+    required this.color,
+  });
 
   final String label;
   final Color color;
@@ -103,13 +109,15 @@ class ElderlyVitalTile extends StatelessWidget {
 
   static const String _vitals = 'alera-figma-assets/assets/icons/vitals';
 
-  static const String heartBackground = '$_vitals/cards/heart_rate_background.svg';
+  static const String heartBackground =
+      '$_vitals/cards/heart_rate_background.svg';
   static const String heartIcon = '$_vitals/card_icons/heart_rate.svg';
   static const String spo2Background = '$_vitals/cards/spo2_background.svg';
   static const String spo2Icon = '$_vitals/card_icons/spo2.svg';
   static const String sleepBackground = '$_vitals/cards/sleep_background.svg';
   static const String sleepIcon = '$_vitals/card_icons/sleep.svg';
-  static const String activityBackground = '$_vitals/cards/activity_background.svg';
+  static const String activityBackground =
+      '$_vitals/cards/activity_background.svg';
   static const String activityIcon = '$_vitals/card_icons/activity.svg';
 
   static const Color heartColor = Color(0xFFA50036);
@@ -221,7 +229,6 @@ class ElderlyVitalTile extends StatelessWidget {
     );
   }
 }
-
 
 /// Centered icon + title + message (+ optional action) for loading-failed
 /// and empty situations.
@@ -342,8 +349,18 @@ String elderlyFriendlyDateTime(DateTime? value) {
   final DateTime day = DateTime(local.year, local.month, local.day);
   final int diff = today.difference(day).inDays;
   const List<String> months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final String date = diff == 0
       ? 'Today'

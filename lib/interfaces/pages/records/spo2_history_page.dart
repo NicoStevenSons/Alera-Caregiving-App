@@ -92,7 +92,8 @@ class _SpO2HistoryPageState extends State<SpO2HistoryPage> {
               const ElderlyStateMessage(
                 icon: Icons.water_drop,
                 title: 'No readings yet',
-                message: 'New readings will appear here once your watch sends them.',
+                message:
+                    'New readings will appear here once your watch sends them.',
               )
             else
               for (final _Reading reading in readings)

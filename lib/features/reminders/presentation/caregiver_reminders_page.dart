@@ -43,6 +43,7 @@ class CaregiverRemindersPage extends StatefulWidget {
 
   /// Opens the shell's patient switcher; null when there is only one patient.
   final VoidCallback? onSwitchPatient;
+
   /// Where the occurrence timeline is read from. Defaults to the real API
   /// when not injected (tests inject a fake).
   final ReminderEventsDataSource? eventsDataSource;

@@ -503,96 +503,96 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     return Theme(
       data: theme,
       child: Scaffold(
-      appBar: AppBar(title: const Text('Alera')),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          TickerMode(
-            enabled: _selectedIndex == 0,
-            child: AnimatedBuilder(
-              animation: helpRequestController,
-              builder: (context, _) => ElderlyHomePage(
-                state: ElderlyHomeViewState(
-                  heartRate: heartRateData,
-                  spo2: spo2Data,
-                  steps: stepsData,
-                  sleep: sleepData,
-                  deviceStatus: deviceStatusData,
-                  reminders: reminders,
-                  remindersLoading: remindersLoading,
-                  remindersError: remindersError,
+        appBar: AppBar(title: const Text('Alera')),
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            TickerMode(
+              enabled: _selectedIndex == 0,
+              child: AnimatedBuilder(
+                animation: helpRequestController,
+                builder: (context, _) => ElderlyHomePage(
+                  state: ElderlyHomeViewState(
+                    heartRate: heartRateData,
+                    spo2: spo2Data,
+                    steps: stepsData,
+                    sleep: sleepData,
+                    deviceStatus: deviceStatusData,
+                    reminders: reminders,
+                    remindersLoading: remindersLoading,
+                    remindersError: remindersError,
+                  ),
+                  uploadQueueService: uploadQueueService,
+                  helpRequestState: helpRequestController.state,
+                  activeHelpRequest: helpRequestController.activeRequest,
+                  helpRequestError: helpRequestController.errorMessage,
+                  onRequestHelp: helpRequestController.canRequestHelp
+                      ? _confirmHelpRequest
+                      : null,
+                  onRetryHelpRequest: helpRequestController.retry,
+                  onReminderTap: _showReminderDetails,
+                  onRetryReminders: _loadReminders,
+                  onOpenDeviceStatus: () {
+                    if (_selectedIndex == 2) return;
+                    setState(() => _selectedIndex = 2);
+                  },
                 ),
-                uploadQueueService: uploadQueueService,
-                helpRequestState: helpRequestController.state,
-                activeHelpRequest: helpRequestController.activeRequest,
-                helpRequestError: helpRequestController.errorMessage,
-                onRequestHelp: helpRequestController.canRequestHelp
-                    ? _confirmHelpRequest
-                    : null,
-                onRetryHelpRequest: helpRequestController.retry,
-                onReminderTap: _showReminderDetails,
-                onRetryReminders: _loadReminders,
-                onOpenDeviceStatus: () {
-                  if (_selectedIndex == 2) return;
-                  setState(() => _selectedIndex = 2);
-                },
               ),
             ),
-          ),
-          TickerMode(
-            enabled: _selectedIndex == 1,
-            child: ElderlyRemindersPage(
-              isLoading: remindersLoading,
-              errorMessage: remindersError,
-              reminders: reminders,
-              busyOccurrenceIds: _busyReminderIds,
-              onOpen: _showReminderDetails,
-              onComplete: _completeReminder,
-              onSnooze: _snoozeReminder,
-              onRetry: _loadReminders,
+            TickerMode(
+              enabled: _selectedIndex == 1,
+              child: ElderlyRemindersPage(
+                isLoading: remindersLoading,
+                errorMessage: remindersError,
+                reminders: reminders,
+                busyOccurrenceIds: _busyReminderIds,
+                onOpen: _showReminderDetails,
+                onComplete: _completeReminder,
+                onSnooze: _snoozeReminder,
+                onRetry: _loadReminders,
+              ),
             ),
-          ),
-          TickerMode(
-            enabled: _selectedIndex == 2,
-            child: ElderlyMorePage(
-              deviceStatusData: deviceStatusData,
-              onSignOut: widget.onSignOut,
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 5,
-              offset: const Offset(0, -3),
+            TickerMode(
+              enabled: _selectedIndex == 2,
+              child: ElderlyMorePage(
+                deviceStatusData: deviceStatusData,
+                onSignOut: widget.onSignOut,
+              ),
             ),
           ],
         ),
-        child: NavigationBar(
-          elevation: 0,
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) {
-            if (_selectedIndex == index) return;
-            setState(() => _selectedIndex = index);
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.grid_view_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.access_time_filled),
-              label: 'Reminders',
-            ),
-            NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
-          ],
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 5,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: NavigationBar(
+            elevation: 0,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              if (_selectedIndex == index) return;
+              setState(() => _selectedIndex = index);
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.grid_view_rounded),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.access_time_filled),
+                label: 'Reminders',
+              ),
+              NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

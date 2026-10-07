@@ -28,7 +28,6 @@ class WatchListenerController {
   final void Function(StepsData data) onStepsUpdated;
   final void Function(DeviceStatusData data) onDeviceStatusUpdated;
   final void Function(SleepData data) onSleepUpdated;
-  
 
   WatchListenerController({
     required this.watchPayloadService,
@@ -50,9 +49,7 @@ class WatchListenerController {
       onSpO2Received: _handleSpO2,
 
       onStepsReceived: (StepsData data) {
-        unawaited(
-        _handleSteps(data),
-        );
+        unawaited(_handleSteps(data));
       },
 
       onDeviceStatusReceived: (DeviceStatusData data) {
@@ -60,9 +57,7 @@ class WatchListenerController {
       },
 
       onSleepReceived: (SleepData data) {
-        unawaited(
-        _handleSleep(data),
-        );
+        unawaited(_handleSleep(data));
       },
 
       onError: (Object error) {
@@ -71,98 +66,80 @@ class WatchListenerController {
     );
   }
 
-  Future<void> _handleSteps(
-  StepsData data,
-) async {
-  onStepsUpdated(data);
+  Future<void> _handleSteps(StepsData data) async {
+    onStepsUpdated(data);
 
-  if (!AppConfig.enableBackend) {
-    return;
-  }
+    if (!AppConfig.enableBackend) {
+      return;
+    }
 
-  final Map<String, dynamic>
-      backendPayload =
-      ActivityDataMapper.mapSteps(
-        patientId:
-            activityDataApiService.patientId,
-        data: data,
-      );
-
-  debugPrint(
-    'Uploading steps activity: '
-    'total=${data.totalSteps}, '
-    'sessions=${data.sessions.length}',
-  );
-
-  final bool uploaded =
-      await activityDataApiService
-          .sendActivityData(
-            backendPayload,
-          );
-
-  if (uploaded) {
-    debugPrint(
-      'Steps activity uploaded successfully.',
+    final Map<String, dynamic> backendPayload = ActivityDataMapper.mapSteps(
+      patientId: activityDataApiService.patientId,
+      data: data,
     );
-  } else {
+
     debugPrint(
-      'Steps activity upload failed. '
-      'Next refresh will retry '
-      'with the latest daily snapshot.',
+      'Uploading steps activity: '
+      'total=${data.totalSteps}, '
+      'sessions=${data.sessions.length}',
     );
-  }
-}
 
-  Future<void> _handleSleep(
-  SleepData data,
-) async {
-  onSleepUpdated(data);
-
-  if (!AppConfig.enableBackend) {
-    return;
-  }
-
-  if (data.sessions.isEmpty) {
-    debugPrint(
-      'No sleep sessions to upload.',
+    final bool uploaded = await activityDataApiService.sendActivityData(
+      backendPayload,
     );
-    return;
-  }
-
-  final List<Map<String, dynamic>>
-      payloads =
-      ActivityDataMapper.mapSleep(
-        patientId:
-            activityDataApiService.patientId,
-        data: data,
-      );
-
-  debugPrint(
-    'Uploading sleep activity: '
-    '${data.sessions.length} sessions '
-    'across ${payloads.length} day(s).',
-  );
-
-  for (final payload in payloads) {
-    final bool uploaded =
-        await activityDataApiService
-            .sendActivityData(
-              payload,
-            );
 
     if (uploaded) {
-      debugPrint(
-        'Sleep activity uploaded: '
-        '${payload['activity_date']}',
-      );
+      debugPrint('Steps activity uploaded successfully.');
     } else {
       debugPrint(
-        'Sleep activity upload failed: '
-        '${payload['activity_date']}',
+        'Steps activity upload failed. '
+        'Next refresh will retry '
+        'with the latest daily snapshot.',
       );
     }
   }
-}
+
+  Future<void> _handleSleep(SleepData data) async {
+    onSleepUpdated(data);
+
+    if (!AppConfig.enableBackend) {
+      return;
+    }
+
+    if (data.sessions.isEmpty) {
+      debugPrint('No sleep sessions to upload.');
+      return;
+    }
+
+    final List<Map<String, dynamic>> payloads = ActivityDataMapper.mapSleep(
+      patientId: activityDataApiService.patientId,
+      data: data,
+    );
+
+    debugPrint(
+      'Uploading sleep activity: '
+      '${data.sessions.length} sessions '
+      'across ${payloads.length} day(s).',
+    );
+
+    for (final payload in payloads) {
+      final bool uploaded = await activityDataApiService.sendActivityData(
+        payload,
+      );
+
+      if (uploaded) {
+        debugPrint(
+          'Sleep activity uploaded: '
+          '${payload['activity_date']}',
+        );
+      } else {
+        debugPrint(
+          'Sleep activity upload failed: '
+          '${payload['activity_date']}',
+        );
+      }
+    }
+  }
 
   Future<void> _handleHeartRate(HeartRateData data) async {
     onHeartRateUpdated(data);

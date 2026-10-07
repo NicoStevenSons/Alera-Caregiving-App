@@ -14,13 +14,19 @@ class ElderlyReminderStyle {
       case 'MEDICATION':
         return const ElderlyReminderStyle(Icons.medication, Color(0xFF8B5DE7));
       case 'HEALTH_CHECK':
-        return const ElderlyReminderStyle(Icons.monitor_heart, Color(0xFFE0607E));
+        return const ElderlyReminderStyle(
+          Icons.monitor_heart,
+          Color(0xFFE0607E),
+        );
       case 'HYDRATION':
         return const ElderlyReminderStyle(Icons.water_drop, Color(0xFF3F9BE8));
       case 'MEAL':
         return const ElderlyReminderStyle(Icons.restaurant, Color(0xFFF08A2E));
       case 'MOBILITY':
-        return const ElderlyReminderStyle(Icons.directions_walk, Color(0xFF3DB872));
+        return const ElderlyReminderStyle(
+          Icons.directions_walk,
+          Color(0xFF3DB872),
+        );
       case 'APPOINTMENT':
         return const ElderlyReminderStyle(Icons.event, Color(0xFF1FAFA9));
       case 'CHECK_IN':

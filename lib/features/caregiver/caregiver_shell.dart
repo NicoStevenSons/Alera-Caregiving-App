@@ -533,7 +533,11 @@ class _CaregiverShellState extends State<CaregiverShell>
   void _notificationUnavailable() {
     Navigator.of(context).popUntil((route) => route.isFirst);
     _selectDestination(2);
-    showAleraSnackBar(context, 'This alert is no longer available.', type: AleraSnackBarType.error);
+    showAleraSnackBar(
+      context,
+      'This alert is no longer available.',
+      type: AleraSnackBarType.error,
+    );
   }
 
   void _openCareRecipient(BuildContext context, CareRecipient careRecipient) {
@@ -549,33 +553,36 @@ class _CaregiverShellState extends State<CaregiverShell>
           builder: (context) {
             Widget page(List<CaregiverReminder> liveReminders) =>
                 CaregiverPatientDetailLoaderPage(
-            patientId: careRecipient.id,
-            controller: _patientController!,
-            patientDataSource:
-                widget.patientDataSource is CaregiverPatientDataSource
-                ? widget.patientDataSource as CaregiverPatientDataSource
-                : null,
-            patientEditDataSource: widget.patientEditDataSource,
-            alerts: _alertController.alerts
-                .where((alert) => alert.careRecipientId == careRecipient.id)
-                .toList(),
-            reminders: liveReminders,
-            onViewAllAlerts: () {
-              Navigator.pop(context);
-              _selectDestination(2);
-            },
-            onViewAllReminders: () {
-              Navigator.pop(context);
-              _selectDestination(3);
-            },
-            onAlertTap: (alert) => _openAlertDetail(context, alert),
-            onMarkAsSeen: _markAsSeen,
-            onVitalTap: (metric) =>
-                _openVitalTrend(context, careRecipient, metric),
-            onNewReminder: () => _createReminderFor(context, careRecipient),
-            onCompleteReminder: (reminder) =>
-                _completeHomeReminder(context, reminder),
-          );
+                  patientId: careRecipient.id,
+                  controller: _patientController!,
+                  patientDataSource:
+                      widget.patientDataSource is CaregiverPatientDataSource
+                      ? widget.patientDataSource as CaregiverPatientDataSource
+                      : null,
+                  patientEditDataSource: widget.patientEditDataSource,
+                  alerts: _alertController.alerts
+                      .where(
+                        (alert) => alert.careRecipientId == careRecipient.id,
+                      )
+                      .toList(),
+                  reminders: liveReminders,
+                  onViewAllAlerts: () {
+                    Navigator.pop(context);
+                    _selectDestination(2);
+                  },
+                  onViewAllReminders: () {
+                    Navigator.pop(context);
+                    _selectDestination(3);
+                  },
+                  onAlertTap: (alert) => _openAlertDetail(context, alert),
+                  onMarkAsSeen: _markAsSeen,
+                  onVitalTap: (metric) =>
+                      _openVitalTrend(context, careRecipient, metric),
+                  onNewReminder: () =>
+                      _createReminderFor(context, careRecipient),
+                  onCompleteReminder: (reminder) =>
+                      _completeHomeReminder(context, reminder),
+                );
             final reminders = _homeReminderController;
             if (reminders == null) return page(const []);
             return ListenableBuilder(
@@ -650,14 +657,10 @@ class _CaregiverShellState extends State<CaregiverShell>
       initialDate: DateTime.now(),
     );
     if (draft == null || !context.mounted) return;
-    await runReminderAction(
-      context,
-      () async {
-        await _reminderController.createTemplate(draft);
-        await _homeReminderController?.refresh();
-      },
-      success: 'Reminder created.',
-    );
+    await runReminderAction(context, () async {
+      await _reminderController.createTemplate(draft);
+      await _homeReminderController?.refresh();
+    }, success: 'Reminder created.');
   }
 
   void _openAddPatient(BuildContext context) {
@@ -870,7 +873,11 @@ class _CaregiverShellState extends State<CaregiverShell>
       await _alertController.acknowledge(alert.id);
     } catch (_) {
       if (mounted) {
-        showAleraSnackBar(context, 'We couldn’t update this alert. Please try again.', type: AleraSnackBarType.error);
+        showAleraSnackBar(
+          context,
+          'We couldn’t update this alert. Please try again.',
+          type: AleraSnackBarType.error,
+        );
       }
     }
   }
@@ -897,7 +904,9 @@ class _CaregiverShellState extends State<CaregiverShell>
 
   Widget _buildReminders() {
     Widget buildPage(List<CareRecipient> patients) {
-      final backed = patients.where((patient) => patient.backendBacked).toList();
+      final backed = patients
+          .where((patient) => patient.backendBacked)
+          .toList();
       return CaregiverRemindersPage(
         controller: _reminderController,
         patients: backed,
@@ -1043,13 +1052,25 @@ class _CaregiverShellState extends State<CaregiverShell>
     try {
       await source.sendNudge(patient.id, type);
       if (!mounted) return;
-      showAleraSnackBar(context, '${type.label} sent to ${patient.name}.', type: AleraSnackBarType.success);
+      showAleraSnackBar(
+        context,
+        '${type.label} sent to ${patient.name}.',
+        type: AleraSnackBarType.success,
+      );
     } on CaregiverNudgeFailure catch (failure) {
       if (!mounted || failure.statusCode == 401) return;
-      showAleraSnackBar(context, failure.message, type: AleraSnackBarType.error);
+      showAleraSnackBar(
+        context,
+        failure.message,
+        type: AleraSnackBarType.error,
+      );
     } catch (_) {
       if (!mounted) return;
-      showAleraSnackBar(context, 'Unable to send the reminder. Please try again.', type: AleraSnackBarType.error);
+      showAleraSnackBar(
+        context,
+        'Unable to send the reminder. Please try again.',
+        type: AleraSnackBarType.error,
+      );
     } finally {
       if (mounted) setState(() => _sendingNudge = false);
     }
@@ -1080,7 +1101,10 @@ class _CaregiverShellState extends State<CaregiverShell>
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 12),
-                child: Text('Switch patient', style: AleraTypography.sectionTitle),
+                child: Text(
+                  'Switch patient',
+                  style: AleraTypography.sectionTitle,
+                ),
               ),
               for (final patient in patients) ...[
                 AleraCard(

@@ -47,7 +47,11 @@ Future<bool?> showAleraConfirmationDialog(
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: large ? 36 : 28, color: AleraColors.primary),
+              child: Icon(
+                icon,
+                size: large ? 36 : 28,
+                color: AleraColors.primary,
+              ),
             ),
             const SizedBox(height: 16),
             Text(

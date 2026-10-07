@@ -42,13 +42,11 @@ class ReminderRepeat {
 
   bool allows(DateTime day) => !repeats || days.contains(day.weekday);
 
-  ReminderRepeat copyWith({
-    ReminderRepeatMode? mode,
-    Set<int>? customDays,
-  }) => ReminderRepeat(
-    mode: mode ?? this.mode,
-    customDays: customDays ?? this.customDays,
-  );
+  ReminderRepeat copyWith({ReminderRepeatMode? mode, Set<int>? customDays}) =>
+      ReminderRepeat(
+        mode: mode ?? this.mode,
+        customDays: customDays ?? this.customDays,
+      );
 }
 
 DateTime _at(DateTime day, TimeOfDay time) =>

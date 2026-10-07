@@ -89,7 +89,9 @@ String? reminderRepeatLabel(ReminderTemplate? template) {
       ..sort((a, b) => codes.indexOf(a).compareTo(codes.indexOf(b)));
     if (days.join(',') == 'MO,TU,WE,TH,FR') return 'Weekdays';
     if (days.isNotEmpty) {
-      return days.map((d) => _weekdays[codes.indexOf(d)].substring(0, 3)).join(', ');
+      return days
+          .map((d) => _weekdays[codes.indexOf(d)].substring(0, 3))
+          .join(', ');
     }
   }
   if (upper.contains('WEEKLY')) return 'Weekly';

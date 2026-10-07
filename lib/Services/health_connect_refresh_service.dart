@@ -8,10 +8,7 @@ class HealthConnectRefreshService {
 
   Future<bool> refreshSteps() async {
     try {
-      final bool? refreshed =
-          await _channel.invokeMethod<bool>(
-        'refreshSteps',
-      );
+      final bool? refreshed = await _channel.invokeMethod<bool>('refreshSteps');
 
       debugPrint(
         'Health Connect steps refresh completed: '
@@ -27,9 +24,7 @@ class HealthConnectRefreshService {
 
       return false;
     } catch (error) {
-      debugPrint(
-        'Unexpected steps refresh error: $error',
-      );
+      debugPrint('Unexpected steps refresh error: $error');
 
       return false;
     }
@@ -37,10 +32,7 @@ class HealthConnectRefreshService {
 
   Future<bool> refreshSleep() async {
     try {
-      final bool? refreshed =
-          await _channel.invokeMethod<bool>(
-        'refreshSleep',
-      );
+      final bool? refreshed = await _channel.invokeMethod<bool>('refreshSleep');
 
       debugPrint(
         'Health Connect sleep refresh completed: '
@@ -56,9 +48,7 @@ class HealthConnectRefreshService {
 
       return false;
     } catch (error) {
-      debugPrint(
-        'Unexpected sleep refresh error: $error',
-      );
+      debugPrint('Unexpected sleep refresh error: $error');
 
       return false;
     }

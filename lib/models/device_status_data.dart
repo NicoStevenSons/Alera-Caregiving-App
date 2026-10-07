@@ -89,14 +89,12 @@ class DeviceStatusData {
   }
 
   String get displayedWearStatus {
-  if (isWorn == null) {
-    return 'Unknown';
-  }
+    if (isWorn == null) {
+      return 'Unknown';
+    }
 
-  return isWorn == true
-      ? 'On wrist'
-      : 'Not worn';
-}
+    return isWorn == true ? 'On wrist' : 'Not worn';
+  }
 
   String get displayedBattery {
     if (batteryPercent == null) {

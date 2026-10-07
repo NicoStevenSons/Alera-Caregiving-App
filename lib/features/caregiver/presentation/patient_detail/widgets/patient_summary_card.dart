@@ -79,7 +79,9 @@ class PatientDetailSummaryCard extends StatelessWidget {
                   color: AleraColors.selected,
                   borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+                    borderRadius: BorderRadius.circular(
+                      AleraSpacing.cardRadius,
+                    ),
                     onTap: () => onAction('Call'),
                     child: const SizedBox(
                       height: 44,
@@ -228,8 +230,7 @@ class PatientStatusPill extends StatelessWidget {
 /// Readable-on-tint accent for each care status.
 Color patientStatusColor(CareStatus status) => switch (status) {
   CareStatus.stable => AleraColors.successStrong,
-  CareStatus.warning ||
-  CareStatus.needsAttention => AleraColors.warningStrong,
+  CareStatus.warning || CareStatus.needsAttention => AleraColors.warningStrong,
   CareStatus.critical => AleraColors.criticalStrong,
   CareStatus.noData || CareStatus.unknown => AleraColors.textSecondary,
 };

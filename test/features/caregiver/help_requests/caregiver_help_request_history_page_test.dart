@@ -12,11 +12,13 @@ void main() {
       final source = _HistorySource();
 
       await tester.pumpWidget(
-        MaterialApp(home: CaregiverMorePage(
-          helpRequestDataSource: source,
-          onManagePatients: () {},
-          onAddPatient: () {},
-        )),
+        MaterialApp(
+          home: CaregiverMorePage(
+            helpRequestDataSource: source,
+            onManagePatients: () {},
+            onAddPatient: () {},
+          ),
+        ),
       );
 
       expect(
@@ -91,11 +93,13 @@ void main() {
     final source = _HistorySource();
 
     await tester.pumpWidget(
-      MaterialApp(home: CaregiverMorePage(
+      MaterialApp(
+        home: CaregiverMorePage(
           helpRequestDataSource: source,
           onManagePatients: () {},
           onAddPatient: () {},
-        )),
+        ),
+      ),
     );
 
     await tester.tap(find.byKey(const Key('more-help-request-history')));

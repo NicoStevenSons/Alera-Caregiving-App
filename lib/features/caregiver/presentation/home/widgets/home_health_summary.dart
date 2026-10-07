@@ -95,9 +95,7 @@ class HomeHealthSummary extends StatelessWidget {
                   label: snapshot.steps == null
                       ? 'Activity — not available'
                       : '${snapshot.steps} steps',
-                      timestamp: _timestamp(
-                        snapshot.stepsUpdatedAt,
-                          ),
+                  timestamp: _timestamp(snapshot.stepsUpdatedAt),
                   color: const Color(0xFF73C838),
                   onTap: () => onMetricTap('Activity'),
                 ),

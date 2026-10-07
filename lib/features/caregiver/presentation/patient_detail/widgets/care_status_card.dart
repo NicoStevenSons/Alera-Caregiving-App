@@ -90,48 +90,50 @@ class PatientStatusSummaryCard extends StatelessWidget {
 
   Widget _statusRow(Color color) {
     return Row(
-        children: [
-          AleraSvgIcon(
-            assetPath: _statusAsset(status),
-            width: 44,
-            height: 44,
-            semanticLabel: patientStatusTitle(status),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  patientStatusTitle(status),
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+      children: [
+        AleraSvgIcon(
+          assetPath: _statusAsset(status),
+          width: 44,
+          height: 44,
+          semanticLabel: patientStatusTitle(status),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                patientStatusTitle(status),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _description(status),
-                  style: const TextStyle(
-                    color: AleraColors.textSecondary,
-                    fontSize: 12,
-                    height: 1.3,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _description(status),
+                style: const TextStyle(
+                  color: AleraColors.textSecondary,
+                  fontSize: 12,
+                  height: 1.3,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            activeAlertCount == 1 ? '1 active alert' : '$activeAlertCount active alerts',
-            style: const TextStyle(
-              color: AleraColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          activeAlertCount == 1
+              ? '1 active alert'
+              : '$activeAlertCount active alerts',
+          style: const TextStyle(
+            color: AleraColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
+      ],
     );
   }
 
@@ -139,10 +141,10 @@ class PatientStatusSummaryCard extends StatelessWidget {
   /// (listed in PLACEHOLDER_ICONS.md) until dedicated artwork exists.
   String _statusAsset(CareStatus status) => switch (status) {
     CareStatus.stable => 'alera-figma-assets/assets/icons/status/stable.svg',
-    CareStatus.warning ||
-    CareStatus.needsAttention =>
+    CareStatus.warning || CareStatus.needsAttention =>
       'alera-figma-assets/assets/icons/status/warning.svg',
-    CareStatus.critical => 'alera-figma-assets/assets/icons/status/critical.svg',
+    CareStatus.critical =>
+      'alera-figma-assets/assets/icons/status/critical.svg',
     CareStatus.noData ||
     CareStatus.unknown => 'alera-figma-assets/assets/icons/status/error.svg',
   };

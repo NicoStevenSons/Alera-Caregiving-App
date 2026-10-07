@@ -335,10 +335,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sign out?'), findsOneWidget);
     await tester.tap(
-      find.descendant(
-        of: find.byType(Dialog),
-        matching: find.text('Sign out'),
-      ),
+      find.descendant(of: find.byType(Dialog), matching: find.text('Sign out')),
     );
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Alera'), findsOneWidget);
@@ -407,10 +404,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sign out?'), findsOneWidget);
     await tester.tap(
-      find.descendant(
-        of: find.byType(Dialog),
-        matching: find.text('Sign out'),
-      ),
+      find.descendant(of: find.byType(Dialog), matching: find.text('Sign out')),
     );
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Alera'), findsOneWidget);

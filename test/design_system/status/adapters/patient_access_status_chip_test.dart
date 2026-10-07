@@ -21,17 +21,13 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          const PatientAccessStatusChip(PatientAccessState.invitePending),
-        ),
+        _host(const PatientAccessStatusChip(PatientAccessState.invitePending)),
       );
 
       expect(find.text('Pending access'), findsOneWidget);
     });
 
-    testWidgets('notConnected renders "Inactive"', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('notConnected renders "Inactive"', (WidgetTester tester) async {
       await tester.pumpWidget(
         _host(const PatientAccessStatusChip(PatientAccessState.notConnected)),
       );

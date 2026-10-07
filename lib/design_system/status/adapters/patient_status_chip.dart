@@ -43,7 +43,8 @@ class PatientStatusChip extends StatelessWidget {
         tone: AleraStatusTone.critical,
         glyph: const AleraStatusGlyph.material(
           Icons.priority_high,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/critical.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/critical.svg',
         ),
         label: labels.patientStatusCritical,
       ),
@@ -51,7 +52,8 @@ class PatientStatusChip extends StatelessWidget {
         tone: AleraStatusTone.warning,
         glyph: const AleraStatusGlyph.material(
           Icons.warning,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/warning.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/warning.svg',
         ),
         label: labels.patientStatusWarning,
       ),
@@ -59,7 +61,8 @@ class PatientStatusChip extends StatelessWidget {
         tone: AleraStatusTone.warning,
         glyph: const AleraStatusGlyph.material(
           Icons.flag,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/flag.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/flag.svg',
         ),
         label: labels.patientStatusNeedsAttention,
       ),
@@ -67,7 +70,8 @@ class PatientStatusChip extends StatelessWidget {
         tone: AleraStatusTone.success,
         glyph: const AleraStatusGlyph.material(
           Icons.check,
-          badgeAssetPath: 'alera-figma-assets/assets/icons/mini_status/stable.svg',
+          badgeAssetPath:
+              'alera-figma-assets/assets/icons/mini_status/stable.svg',
         ),
         label: labels.patientStatusStable,
       ),

@@ -243,26 +243,32 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
               filters: _filters,
               resultCount: _displayedAlerts.where(_matches).length,
               onPatientSelected: (id) => refresh(() => _selectPatient(id)),
-              onFilterToggled: (filter) =>
-                  refresh(() => _toggleFilter(filter)),
+              onFilterToggled: (filter) => refresh(() => _toggleFilter(filter)),
               onClear: () => refresh(_clearFilters),
             );
           },
         ),
       ),
       transitionBuilder: (context, animation, _, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic,
-            reverseCurve: Curves.easeInCubic)),
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              ),
+            ),
         child: child,
       ),
     );
   }
 
   void _showDetailMessage(BuildContext context) {
-    showAleraSnackBar(context, 'Alert detail coming next', type: AleraSnackBarType.info);
+    showAleraSnackBar(
+      context,
+      'Alert detail coming next',
+      type: AleraSnackBarType.info,
+    );
   }
 
   void _handleAlertTap(BuildContext context, CaregiverAlert alert) {
@@ -286,7 +292,11 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
       await _controller.acknowledge(alert.id);
     } catch (_) {
       if (context.mounted) {
-        showAleraSnackBar(context, 'We couldn’t update this alert. Please try again.', type: AleraSnackBarType.error);
+        showAleraSnackBar(
+          context,
+          'We couldn’t update this alert. Please try again.',
+          type: AleraSnackBarType.error,
+        );
       }
     }
   }
@@ -359,8 +369,7 @@ class _CaregiverAlertsPageState extends State<CaregiverAlertsPage> {
                 _FilterChip(
                   label: 'SpO2',
                   filter: AlertFilter.spo2,
-                  assetPath:
-                      'alera-figma-assets/assets/icons/vitals/spo2.svg',
+                  assetPath: 'alera-figma-assets/assets/icons/vitals/spo2.svg',
                   selected: _filters.contains(AlertFilter.spo2),
                   onTap: _toggleFilter,
                 ),
@@ -541,11 +550,11 @@ class _AlertFilterDrawer extends StatelessWidget {
 
     Widget option(String label, AlertFilter filter, String assetPath) =>
         _DrawerFilterOption(
-      label: label,
-      assetPath: assetPath,
-      selected: filters.contains(filter),
-      onChanged: () => onFilterToggled(filter),
-    );
+          label: label,
+          assetPath: assetPath,
+          selected: filters.contains(filter),
+          onChanged: () => onFilterToggled(filter),
+        );
 
     return Material(
       key: const Key('alerts-filter-drawer'),
@@ -555,110 +564,142 @@ class _AlertFilterDrawer extends StatelessWidget {
         width: MediaQuery.sizeOf(context).width * .88,
         height: double.infinity,
         child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Filter alerts',
-                      style: AleraTypography.sectionTitle,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: onClear,
-                    child: const Text('Clear all'),
-                  ),
-                  IconButton(
-                    key: const Key('alerts-filter-close'),
-                    tooltip: 'Close filters',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                children: [
-                  const _FilterSectionTitle('Patient'),
-                  _FilterCard(
-                    children: [
-                      _PatientFilterOption(
-                        key: const Key('alerts-patient-filter-all'),
-                        label: 'All Patients',
-                        isAll: true,
-                        selected: selectedPatientId == null,
-                        onTap: () => onPatientSelected(null),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Filter alerts',
+                        style: AleraTypography.sectionTitle,
                       ),
-                      for (final patient in patients)
+                    ),
+                    TextButton(
+                      onPressed: onClear,
+                      child: const Text('Clear all'),
+                    ),
+                    IconButton(
+                      key: const Key('alerts-filter-close'),
+                      tooltip: 'Close filters',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  children: [
+                    const _FilterSectionTitle('Patient'),
+                    _FilterCard(
+                      children: [
                         _PatientFilterOption(
-                          key: ValueKey<String>(
-                            'alerts-patient-filter-${patient.id}',
-                          ),
-                          label: patient.name,
-                          photoUrl: patient.profilePhotoUrl,
-                          selected: selectedPatientId == patient.id,
-                          onTap: () => onPatientSelected(patient.id),
+                          key: const Key('alerts-patient-filter-all'),
+                          label: 'All Patients',
+                          isAll: true,
+                          selected: selectedPatientId == null,
+                          onTap: () => onPatientSelected(null),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const _FilterSectionTitle('Severity'),
-                  _FilterCard(
-                    children: [
-                      option('Warning', AlertFilter.warning, _filterIconWarning),
-                      option('Critical', AlertFilter.critical, _filterIconCritical),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const _FilterSectionTitle('Metric'),
-                  _FilterCard(
-                    children: [
-                      option('Heart Rate', AlertFilter.heartRate, _filterIconHeartRate),
-                      option('SpO2', AlertFilter.spo2, _filterIconSpo2),
-                      option('Watch Battery', AlertFilter.watchBattery, _filterIconBattery),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const _FilterSectionTitle('Status'),
-                  _FilterCard(
-                    children: [
-                      option('Unacknowledged', AlertFilter.unacknowledged, _filterIconUnacknowledged),
-                      option('Acknowledged', AlertFilter.acknowledged, _filterIconPlaceholder),
-                      option('Resolved', AlertFilter.resolved, _filterIconResolved),
-                      option('False Alarm', AlertFilter.falseAlarm, _filterIconPlaceholder),
-                    ],
-                  ),
-                ],
+                        for (final patient in patients)
+                          _PatientFilterOption(
+                            key: ValueKey<String>(
+                              'alerts-patient-filter-${patient.id}',
+                            ),
+                            label: patient.name,
+                            photoUrl: patient.profilePhotoUrl,
+                            selected: selectedPatientId == patient.id,
+                            onTap: () => onPatientSelected(patient.id),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const _FilterSectionTitle('Severity'),
+                    _FilterCard(
+                      children: [
+                        option(
+                          'Warning',
+                          AlertFilter.warning,
+                          _filterIconWarning,
+                        ),
+                        option(
+                          'Critical',
+                          AlertFilter.critical,
+                          _filterIconCritical,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const _FilterSectionTitle('Metric'),
+                    _FilterCard(
+                      children: [
+                        option(
+                          'Heart Rate',
+                          AlertFilter.heartRate,
+                          _filterIconHeartRate,
+                        ),
+                        option('SpO2', AlertFilter.spo2, _filterIconSpo2),
+                        option(
+                          'Watch Battery',
+                          AlertFilter.watchBattery,
+                          _filterIconBattery,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const _FilterSectionTitle('Status'),
+                    _FilterCard(
+                      children: [
+                        option(
+                          'Unacknowledged',
+                          AlertFilter.unacknowledged,
+                          _filterIconUnacknowledged,
+                        ),
+                        option(
+                          'Acknowledged',
+                          AlertFilter.acknowledged,
+                          _filterIconPlaceholder,
+                        ),
+                        option(
+                          'Resolved',
+                          AlertFilter.resolved,
+                          _filterIconResolved,
+                        ),
+                        option(
+                          'False Alarm',
+                          AlertFilter.falseAlarm,
+                          _filterIconPlaceholder,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
-                color: AleraColors.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: AleraColors.primary.withValues(alpha: 0.10),
-                    blurRadius: 12,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                decoration: BoxDecoration(
+                  color: AleraColors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AleraColors.primary.withValues(alpha: 0.10),
+                      blurRadius: 12,
+                      offset: const Offset(0, -3),
+                    ),
+                  ],
+                ),
+                child: AleraButton(
+                  key: const Key('alerts-filter-apply'),
+                  label: resultCount == 1
+                      ? 'Show 1 alert'
+                      : 'Show $resultCount alerts',
+                  height: 48,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ),
-              child: AleraButton(
-                key: const Key('alerts-filter-apply'),
-                label: resultCount == 1
-                    ? 'Show 1 alert'
-                    : 'Show $resultCount alerts',
-                height: 48,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );

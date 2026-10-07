@@ -16,10 +16,7 @@ void main() {
   late _Source source;
   late FakeEventsSource events;
 
-  Future<void> pump(
-    WidgetTester tester, {
-    ReminderOccurrence? reminder,
-  }) async {
+  Future<void> pump(WidgetTester tester, {ReminderOccurrence? reminder}) async {
     source = _Source([reminder ?? occurrence()]);
     events = FakeEventsSource([
       event(id: 'a', type: ReminderEventType.created),

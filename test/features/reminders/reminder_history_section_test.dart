@@ -163,7 +163,10 @@ void main() {
     await pump(tester, source, pageSize: 2);
 
     expect(find.text('Completed'), findsNothing);
-    expect(find.byKey(const Key('reminder-timeline-load-more')), findsOneWidget);
+    expect(
+      find.byKey(const Key('reminder-timeline-load-more')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('reminder-timeline-load-more')));
     await tester.pumpAndSettle();

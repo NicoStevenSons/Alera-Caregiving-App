@@ -9,14 +9,20 @@ void main() {
   group('AlertSoundCategory.fromPayload', () {
     test('critical severity maps to the critical alert sound', () {
       expect(
-        AlertSoundCategory.fromPayload({'type': 'ALERT', 'severity': 'CRITICAL'}),
+        AlertSoundCategory.fromPayload({
+          'type': 'ALERT',
+          'severity': 'CRITICAL',
+        }),
         AlertSoundCategory.criticalAlert,
       );
     });
 
     test('warning and missing severity map to the warning alert sound', () {
       expect(
-        AlertSoundCategory.fromPayload({'type': 'ALERT', 'severity': 'WARNING'}),
+        AlertSoundCategory.fromPayload({
+          'type': 'ALERT',
+          'severity': 'WARNING',
+        }),
         AlertSoundCategory.warningAlert,
       );
       expect(
@@ -141,9 +147,18 @@ void main() {
     });
 
     test('critical categories use maximum importance', () {
-      expect(alertChannel(AlertSoundCategory.criticalAlert).importance, Importance.max);
-      expect(alertChannel(AlertSoundCategory.helpRequest).importance, Importance.max);
-      expect(alertChannel(AlertSoundCategory.deviceStatus).importance, Importance.high);
+      expect(
+        alertChannel(AlertSoundCategory.criticalAlert).importance,
+        Importance.max,
+      );
+      expect(
+        alertChannel(AlertSoundCategory.helpRequest).importance,
+        Importance.max,
+      );
+      expect(
+        alertChannel(AlertSoundCategory.deviceStatus).importance,
+        Importance.high,
+      );
     });
 
     test('reminder channels follow the selected sound', () {

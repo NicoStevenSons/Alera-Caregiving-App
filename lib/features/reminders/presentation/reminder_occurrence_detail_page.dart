@@ -124,10 +124,7 @@ class _ReminderOccurrenceDetailPageState
                 label: 'Status',
                 value: reminderTitleCase(occurrence.status.apiValue),
               ),
-              _Fact(
-                label: 'Scheduled',
-                value: _when(occurrence.scheduledAt),
-              ),
+              _Fact(label: 'Scheduled', value: _when(occurrence.scheduledAt)),
               _Fact(label: 'Due', value: _when(occurrence.dueAt)),
               if (occurrence.instructions case final text?)
                 _Fact(

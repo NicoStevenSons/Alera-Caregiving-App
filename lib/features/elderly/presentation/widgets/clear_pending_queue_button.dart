@@ -68,9 +68,7 @@ class ClearPendingQueueButton extends StatelessWidget {
       },
       icon: const Icon(Icons.delete),
       label: const Text('Clear unsent readings'),
-      style: TextButton.styleFrom(
-        foregroundColor: AleraColors.textSecondary,
-      ),
+      style: TextButton.styleFrom(foregroundColor: AleraColors.textSecondary),
     );
   }
 }

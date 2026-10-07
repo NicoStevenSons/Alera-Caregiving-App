@@ -173,8 +173,12 @@ class _EventRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = elderly ? elderlyEventLabel(event) : caregiverEventLabel(event);
-    final actor = elderly ? elderlyEventActor(event) : caregiverEventActor(event);
+    final label = elderly
+        ? elderlyEventLabel(event)
+        : caregiverEventLabel(event);
+    final actor = elderly
+        ? elderlyEventActor(event)
+        : caregiverEventActor(event);
     final details = elderly
         ? elderlyEventDetails(event)
         : caregiverEventDetails(event);

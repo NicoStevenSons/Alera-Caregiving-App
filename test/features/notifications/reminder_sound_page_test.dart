@@ -37,7 +37,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      MaterialApp(home: ReminderSoundPage(store: store, preview: preview)),
+      MaterialApp(
+        home: ReminderSoundPage(store: store, preview: preview),
+      ),
     );
     await tester.pump();
   }

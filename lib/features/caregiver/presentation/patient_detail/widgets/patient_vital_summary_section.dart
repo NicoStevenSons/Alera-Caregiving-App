@@ -17,8 +17,7 @@ class PatientVitalSummarySection extends StatelessWidget {
   });
 
   static const String _bg = 'alera-figma-assets/assets/icons/vitals/cards';
-  static const String _ic =
-      'alera-figma-assets/assets/icons/vitals/card_icons';
+  static const String _ic = 'alera-figma-assets/assets/icons/vitals/card_icons';
 
   /// Two square cards share a row.
   Widget _squarePair(Widget left, Widget right) => Row(
@@ -34,71 +33,73 @@ class PatientVitalSummarySection extends StatelessWidget {
     return AleraCard(
       padding: const EdgeInsets.all(14),
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Vitals', style: AleraTypography.sectionTitle),
-        const SizedBox(height: 12),
-        _squarePair(
-          _VitalCard(
-            backgroundAsset: '$_bg/heart_rate_background.svg',
-            iconAsset: '$_ic/heart_rate.svg',
-            title: 'Heart Rate',
-            value: snapshot.heartRateBpm?.toString() ?? 'Unavailable',
-            unit: snapshot.heartRateBpm == null
-                ? ''
-                : snapshot.heartRateUnit ?? 'bpm',
-            textColor: const Color(0xFFA50036),
-            onTap: () => onVitalTap('Heart Rate'),
-          ),
-          _VitalCard(
-            backgroundAsset: '$_bg/spo2_background.svg',
-            iconAsset: '$_ic/spo2.svg',
-            title: 'SpO₂',
-            value: snapshot.spo2Percent?.toStringAsFixed(0) ?? 'Unavailable',
-            unit: snapshot.spo2Percent == null ? '' : snapshot.spo2Unit ?? '%',
-            textColor: const Color(0xFF3729AC),
-            onTap: () => onVitalTap('SpO₂'),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _squarePair(
-          _VitalCard(
-            backgroundAsset: '$_bg/sleep_background.svg',
-            iconAsset: '$_ic/sleep.svg',
-            title: 'Sleep',
-            value: snapshot.sleepDuration == Duration.zero
-                ? 'Unavailable'
-                : _formatSleepDuration(snapshot.sleepDuration),
-            unit: '',
-            textColor: const Color(0xFF520EAB),
-            onTap: () => onVitalTap('Sleep'),
-          ),
-          _UnavailableVitalCard(
-            backgroundAsset: '$_bg/stress_background.svg',
-            iconAsset: '$_ic/stress.svg',
-            title: 'Stress',
-            textColor: const Color(0xFFA02D00),
-            onTap: () => onVitalTap('Stress'),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Same height as the square cards above: half the row width less
-        // half the gap, so Activity is a full-width card of equal height.
-        LayoutBuilder(
-          builder: (context, constraints) => SizedBox(
-            height: (constraints.maxWidth - 10) / 2,
-            child: _VitalCard(
-            backgroundAsset: '$_bg/activity_background.svg',
-            iconAsset: '$_ic/activity.svg',
-            title: 'Activity',
-            value: snapshot.steps?.toString() ?? 'Unavailable',
-            unit: snapshot.steps == null ? '' : 'steps',
-            textColor: const Color(0xFF3C6300),
-            onTap: () => onVitalTap('Activity'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Vitals', style: AleraTypography.sectionTitle),
+          const SizedBox(height: 12),
+          _squarePair(
+            _VitalCard(
+              backgroundAsset: '$_bg/heart_rate_background.svg',
+              iconAsset: '$_ic/heart_rate.svg',
+              title: 'Heart Rate',
+              value: snapshot.heartRateBpm?.toString() ?? 'Unavailable',
+              unit: snapshot.heartRateBpm == null
+                  ? ''
+                  : snapshot.heartRateUnit ?? 'bpm',
+              textColor: const Color(0xFFA50036),
+              onTap: () => onVitalTap('Heart Rate'),
+            ),
+            _VitalCard(
+              backgroundAsset: '$_bg/spo2_background.svg',
+              iconAsset: '$_ic/spo2.svg',
+              title: 'SpO₂',
+              value: snapshot.spo2Percent?.toStringAsFixed(0) ?? 'Unavailable',
+              unit: snapshot.spo2Percent == null
+                  ? ''
+                  : snapshot.spo2Unit ?? '%',
+              textColor: const Color(0xFF3729AC),
+              onTap: () => onVitalTap('SpO₂'),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          _squarePair(
+            _VitalCard(
+              backgroundAsset: '$_bg/sleep_background.svg',
+              iconAsset: '$_ic/sleep.svg',
+              title: 'Sleep',
+              value: snapshot.sleepDuration == Duration.zero
+                  ? 'Unavailable'
+                  : _formatSleepDuration(snapshot.sleepDuration),
+              unit: '',
+              textColor: const Color(0xFF520EAB),
+              onTap: () => onVitalTap('Sleep'),
+            ),
+            _UnavailableVitalCard(
+              backgroundAsset: '$_bg/stress_background.svg',
+              iconAsset: '$_ic/stress.svg',
+              title: 'Stress',
+              textColor: const Color(0xFFA02D00),
+              onTap: () => onVitalTap('Stress'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Same height as the square cards above: half the row width less
+          // half the gap, so Activity is a full-width card of equal height.
+          LayoutBuilder(
+            builder: (context, constraints) => SizedBox(
+              height: (constraints.maxWidth - 10) / 2,
+              child: _VitalCard(
+                backgroundAsset: '$_bg/activity_background.svg',
+                iconAsset: '$_ic/activity.svg',
+                title: 'Activity',
+                value: snapshot.steps?.toString() ?? 'Unavailable',
+                unit: snapshot.steps == null ? '' : 'steps',
+                textColor: const Color(0xFF3C6300),
+                onTap: () => onVitalTap('Activity'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -107,18 +108,17 @@ class PatientVitalSummarySection extends StatelessWidget {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
 
-   if (hours > 0 && minutes > 0) {
-     return '${hours}h ${minutes}m';
+    if (hours > 0 && minutes > 0) {
+      return '${hours}h ${minutes}m';
     }
 
     if (hours > 0) {
-     return '${hours}h';
+      return '${hours}h';
     }
 
-   return '${minutes}m';
+    return '${minutes}m';
   }
-
-  }
+}
 
 /// "● Connected" pill reflecting the monitoring devices feeding these vitals.
 class _UnavailableVitalCard extends StatelessWidget {
@@ -181,91 +181,87 @@ class _VitalCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Stack(
-            fit: StackFit.expand,
-            children: [
-              SvgPicture.asset(backgroundAsset, fit: BoxFit.cover),
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+          fit: StackFit.expand,
+          children: [
+            SvgPicture.asset(backgroundAsset, fit: BoxFit.cover),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      AleraSvgIcon(
+                        assetPath: iconAsset,
+                        width: 20,
+                        height: 20,
+                        semanticLabel: title,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 26),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
-                        AleraSvgIcon(
-                          assetPath: iconAsset,
-                          width: 20,
-                          height: 20,
-                          semanticLabel: title,
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 26),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Flexible(
-                            child: Transform.translate(
-                              // Offsets ONLY the "Unavailable" text upward by 3 pixels
-                              offset: Offset(0, isUnavailable ? -3 : 0),
-                              child: Text(
-                                value,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: isUnavailable ? 16 : 30,
-                                  height: 1.1,
-                                  fontWeight: FontWeight.w600,
-                                  textBaseline: TextBaseline.alphabetic,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (!isUnavailable && unit.isNotEmpty) ...[
-                            const SizedBox(width: 4),
-                            Text(
-                              unit,
+                        Flexible(
+                          child: Transform.translate(
+                            // Offsets ONLY the "Unavailable" text upward by 3 pixels
+                            offset: Offset(0, isUnavailable ? -3 : 0),
+                            child: Text(
+                              value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: secondaryColor,
-                                fontSize: 16,
+                                color: textColor,
+                                fontSize: isUnavailable ? 16 : 30,
                                 height: 1.1,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 textBaseline: TextBaseline.alphabetic,
                               ),
                             ),
-                          ],
+                          ),
+                        ),
+                        if (!isUnavailable && unit.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            unit,
+                            style: TextStyle(
+                              color: secondaryColor,
+                              fontSize: 16,
+                              height: 1.1,
+                              fontWeight: FontWeight.w500,
+                              textBaseline: TextBaseline.alphabetic,
+                            ),
+                          ),
                         ],
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Positioned(
-                right: 14,
-                bottom: 14,
-                child: Icon(
-                  Icons.chevron_right,
-                  color: secondaryColor,
-                  size: 22,
-                ),
-              ),
-            ],
+            ),
+            Positioned(
+              right: 14,
+              bottom: 14,
+              child: Icon(Icons.chevron_right, color: secondaryColor, size: 22),
+            ),
+          ],
         ),
       ),
     );

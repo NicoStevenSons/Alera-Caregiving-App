@@ -219,10 +219,7 @@ void main() {
     }
 
     test('loads the first page oldest-first', () async {
-      final source = FakeEventsSource([
-        event(id: 'a'),
-        event(id: 'b'),
-      ]);
+      final source = FakeEventsSource([event(id: 'a'), event(id: 'b')]);
       final controller = make(source);
       final future = controller.load();
       expect(controller.loading, isTrue);
