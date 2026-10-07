@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 abstract final class AleraColors {
   static const Color primary = Color(0xFF8B5DE7);
+  /// The resting colour of primary buttons: a shade brighter than [primary].
+  static const Color primaryMid = Color(0xFFAE8BEA);
   static const Color primarySoft = Color(0xFFE8DDFB);
   static const Color background = Color(0xFFF7F4FF);
   static const Color surface = Colors.white;

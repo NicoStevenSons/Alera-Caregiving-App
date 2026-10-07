@@ -365,6 +365,8 @@ override fun configureFlutterEngine(
         flutterEngine
     )
 
+    NotificationSoundPreviewBridge(applicationContext).register(flutterEngine)
+
     EventChannel(
         flutterEngine.dartExecutor.binaryMessenger,
         PAYLOAD_CHANNEL

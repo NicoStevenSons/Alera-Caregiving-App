@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification sounds are referenced by name from Dart/FCM channels, so
+     resource shrinking must not strip them. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/alera_*" />
