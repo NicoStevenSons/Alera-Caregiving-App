@@ -162,14 +162,43 @@ class CaregiverSessionController extends ChangeNotifier
     await _serialize(_tokenStore.clearSession);
   }
 
+  /// Signs out while the current session stays visible, so a blocking
+  /// "signing out" dialog can sit over the user's own page. The app only
+  /// switches to the login screen once everything below has finished.
+  /// Cleanup that can be slow (push unregister, server logout) runs in
+  /// parallel with a short cap; local credentials are always cleared, and a
+  /// server-side logout failure is reported afterwards.
   Future<void> logout() async {
     final session = _session;
+    ++_revision;
 
-    await _clearLocalSession();
+    Object? serverFailure;
 
-    if (session?.type == SessionType.elderlyPatient) {
-      await _patientAuthApi.logout(accessToken: session!.token);
+    Future<void> unregisterPush() async {
+      try {
+        await FcmNotificationService.instance
+            .unregister(this)
+            .timeout(const Duration(seconds: 4), onTimeout: () {});
+      } catch (_) {}
     }
+
+    Future<void> serverLogout() async {
+      if (session?.type != SessionType.elderlyPatient) return;
+      try {
+        await _patientAuthApi.logout(accessToken: session!.token);
+      } catch (error) {
+        serverFailure = error;
+      }
+    }
+
+    await Future.wait([unregisterPush(), serverLogout()]);
+    await _serialize(_tokenStore.clearSession);
+
+    _session = null;
+    _status = CaregiverSessionStatus.unauthenticated;
+    notifyListeners();
+
+    if (serverFailure != null) throw serverFailure!;
   }
 
   @override

@@ -1,3 +1,4 @@
+import '../../../../design_system/widgets/alera_sign_out_flow.dart';
 import '../../../reminders/data/reminder_api_data_source.dart';
 import '../../data/patients/caregiver_patient_selection_store.dart';
 import 'package:flutter/material.dart';
@@ -245,11 +246,13 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
     }
   }
 
-  Future<void> _signOut() async {
-    try {
-      await _session.logout();
-    } catch (_) {
-      if (mounted) {
+  Future<void> _signOut() {
+    return runAleraSignOutFlow(
+      context,
+      large: _session.sessionType == SessionType.elderlyPatient,
+      signOut: _session.logout,
+      onError: (_) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             action: SnackBarAction(label: 'Retry', onPressed: _signOut),
@@ -258,8 +261,8 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
             ),
           ),
         );
-      }
-    }
+      },
+    );
   }
 
   @override

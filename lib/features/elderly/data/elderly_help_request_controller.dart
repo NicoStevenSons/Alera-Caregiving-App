@@ -47,9 +47,18 @@ class ElderlyHelpRequestController extends ChangeNotifier {
 
     final revision = ++_revision;
 
-    _state = ElderlyHelpRequestState.initialLoading;
-    _errorMessage = null;
-    _notify();
+    // Refreshes (app resume, notifications) keep showing the current state
+    // instead of flashing the loading card; only a first load or a retry
+    // after an error shows it.
+    final bool silent =
+        _state == ElderlyHelpRequestState.available ||
+        _state == ElderlyHelpRequestState.active;
+
+    if (!silent) {
+      _state = ElderlyHelpRequestState.initialLoading;
+      _errorMessage = null;
+      _notify();
+    }
 
     try {
       final request = await dataSource.fetchActive();
@@ -63,12 +72,14 @@ class ElderlyHelpRequestController extends ChangeNotifier {
           : ElderlyHelpRequestState.active;
     } on ElderlyHelpRequestApiFailure catch (error) {
       if (_disposed || revision != _revision) return;
+      if (silent) return;
 
       _activeRequest = null;
       _errorMessage = error.message;
       _state = ElderlyHelpRequestState.error;
     } catch (_) {
       if (_disposed || revision != _revision) return;
+      if (silent) return;
 
       _activeRequest = null;
       _errorMessage =

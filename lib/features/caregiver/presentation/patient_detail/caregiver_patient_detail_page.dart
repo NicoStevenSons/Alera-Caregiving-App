@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
 import '../../../../design_system/widgets/alera_button.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../design_system/widgets/alera_skeleton.dart';
@@ -399,6 +400,20 @@ class _CaregiverPatientDetailLoaderPageState
     final patient = _patient;
     final source = widget.patientDataSource;
     if (status == null || patient == null || source == null) return;
+    final bool regenerate = status.status == PatientAccessState.connected;
+    if (regenerate) {
+      final confirmed = await showAleraConfirmationDialog(
+        context,
+        icon: Icons.autorenew,
+        title: 'Generate a new login code?',
+        message:
+            'Use this when ${patient.name} needs to sign in on a new or '
+            'reset phone. Any older unused code will stop working.',
+        cancelLabel: 'Cancel',
+        confirmLabel: 'Generate code',
+      );
+      if (confirmed != true || !mounted) return;
+    }
     final result = await Navigator.push<PatientAccessSetupResult>(
       context,
       MaterialPageRoute(
@@ -408,6 +423,7 @@ class _CaregiverPatientDetailLoaderPageState
           patientAccess: status,
           dataSource: source,
           loadPatientDetail: widget.controller.loadDetail,
+          issueOnOpen: regenerate,
         ),
       ),
     );

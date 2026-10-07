@@ -1,3 +1,4 @@
+import '../design_system/widgets/alera_confirmation_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import '../Services/watch_listener_controller.dart';
 import '../Services/watch_payload_service.dart';
 
 import '../config/app_config.dart';
+import '../design_system/alera_elderly_theme.dart';
 
 import '../features/elderly/domain/elderly_home_view_state.dart';
 import '../features/elderly/domain/models/elderly_reminder.dart';
@@ -457,42 +459,30 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   Future<void> _showReminderDetails(ElderlyReminder reminder) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => PatientReminderDetailPage(
-          reminder: reminder,
-          onComplete: () => _completeReminder(reminder),
-          onSnooze: () => _snoozeReminder(reminder),
+        builder: (_) => Theme(
+          data: AleraElderlyTheme.build(Theme.of(context)),
+          child: PatientReminderDetailPage(
+            reminder: reminder,
+            onComplete: () => _completeReminder(reminder),
+            onSnooze: () => _snoozeReminder(reminder),
+          ),
         ),
       ),
     );
   }
 
   Future<void> _confirmHelpRequest() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        key: const Key('elderly-help-confirmation'),
-        title: const Text('Request help?'),
-        content: const Text(
-          'Your caregiver will be notified that you need assistance.',
-        ),
-        actions: [
-          TextButton(
-            key: const Key('elderly-help-cancel'),
-            onPressed: () {
-              Navigator.of(dialogContext).pop(false);
-            },
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            key: const Key('elderly-help-confirm'),
-            onPressed: () {
-              Navigator.of(dialogContext).pop(true);
-            },
-            icon: const Icon(Icons.sos_rounded),
-            label: const Text('Request Help'),
-          ),
-        ],
-      ),
+    final confirmed = await showAleraConfirmationDialog(
+      context,
+      large: true,
+      dialogKey: const Key('elderly-help-confirmation'),
+      cancelKey: const Key('elderly-help-cancel'),
+      confirmKey: const Key('elderly-help-confirm'),
+      icon: Icons.notifications_active,
+      title: 'Request help?',
+      message: 'Your caregiver will be notified that you need assistance.',
+      cancelLabel: 'Cancel',
+      confirmLabel: 'Request Help',
     );
 
     if (confirmed != true || !mounted) return;
@@ -508,7 +498,10 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final ThemeData theme = AleraElderlyTheme.build(Theme.of(context));
+    return Theme(
+      data: theme,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Alera')),
       body: IndexedStack(
         index: _selectedIndex,
@@ -569,7 +562,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: theme.colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -580,7 +573,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
         ),
         child: NavigationBar(
           elevation: 0,
-          height: 68,
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
             if (_selectedIndex == index) return;
@@ -588,19 +580,18 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
           },
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded),
+              icon: Icon(Icons.grid_view_rounded),
               label: 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.schedule_outlined),
-              selectedIcon: Icon(Icons.schedule),
+              icon: Icon(Icons.access_time_filled),
               label: 'Reminders',
             ),
             NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
           ],
         ),
       ),
+    ),
     );
   }
 }
