@@ -66,7 +66,17 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
       return;
     }
     if (mounted) setState(() => _playing = key);
-    await _preview.playResource(resource);
+    final bool played = await _preview.playResource(resource);
+    if (!played && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Couldn't play the preview. Fully restart the app (not hot "
+            'reload) and check your phone volume.',
+          ),
+        ),
+      );
+    }
     // Previews are short; clear the "playing" state shortly after.
     await Future<void>.delayed(const Duration(milliseconds: 1500));
     if (mounted && _playing == key) setState(() => _playing = null);

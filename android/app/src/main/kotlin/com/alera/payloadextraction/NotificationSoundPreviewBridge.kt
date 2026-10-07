@@ -3,6 +3,7 @@ package com.alera.payloadextraction
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.util.Log
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -13,6 +14,7 @@ import io.flutter.plugin.common.MethodChannel
 class NotificationSoundPreviewBridge(private val context: Context) {
 
     companion object {
+        private const val TAG = "AleraSoundPreview"
         private const val CHANNEL = "com.alera.payloadextraction/notification_sounds"
     }
 
@@ -38,12 +40,15 @@ class NotificationSoundPreviewBridge(private val context: Context) {
     private fun preview(name: String): Boolean {
         stop()
         val id = context.resources.getIdentifier(name, "raw", context.packageName)
-        if (id == 0) return false
+        if (id == 0) {
+            Log.w(TAG, "raw resource not found: $name")
+            return false
+        }
         return try {
             val mp = MediaPlayer()
             mp.setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build()
             )
@@ -55,7 +60,8 @@ class NotificationSoundPreviewBridge(private val context: Context) {
             mp.start()
             player = mp
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "preview failed for $name", e)
             stop()
             false
         }
