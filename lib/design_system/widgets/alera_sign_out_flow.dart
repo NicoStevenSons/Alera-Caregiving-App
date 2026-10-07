@@ -140,27 +140,29 @@ class _SignOutProgressDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 48),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      constraints: BoxConstraints(minWidth: 0, maxWidth: large ? 260 : 220),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox.square(
-              dimension: large ? 48 : 36,
+              dimension: large ? 30 : 24,
               child: const CircularProgressIndicator(
-                strokeWidth: 4,
+                strokeWidth: 3.5,
                 color: AleraColors.primary,
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Signing out…',
-              style: TextStyle(
-                fontSize: large ? 22 : 16,
-                fontWeight: FontWeight.w800,
-                color: AleraColors.textPrimary,
+            const SizedBox(width: 16),
+            Flexible(
+              child: Text(
+                'Signing out…',
+                style: TextStyle(
+                  fontSize: large ? 20 : 16,
+                  fontWeight: FontWeight.w800,
+                  color: AleraColors.textPrimary,
+                ),
               ),
             ),
           ],
