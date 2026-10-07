@@ -12,7 +12,11 @@ void main() {
       final source = _HistorySource();
 
       await tester.pumpWidget(
-        MaterialApp(home: CaregiverMorePage(helpRequestDataSource: source)),
+        MaterialApp(home: CaregiverMorePage(
+          helpRequestDataSource: source,
+          onManagePatients: () {},
+          onAddPatient: () {},
+        )),
       );
 
       expect(
@@ -87,7 +91,11 @@ void main() {
     final source = _HistorySource();
 
     await tester.pumpWidget(
-      MaterialApp(home: CaregiverMorePage(helpRequestDataSource: source)),
+      MaterialApp(home: CaregiverMorePage(
+          helpRequestDataSource: source,
+          onManagePatients: () {},
+          onAddPatient: () {},
+        )),
     );
 
     await tester.tap(find.byKey(const Key('more-help-request-history')));
@@ -128,19 +136,22 @@ void main() {
       MaterialApp(
         home: CaregiverMorePage(
           helpRequestDataSource: null,
+          onManagePatients: () {},
+          onAddPatient: () {},
           onSignOut: () => signedOut = true,
         ),
       ),
     );
 
-    final historyTile = tester.widget<ListTile>(
-      find.byKey(const Key('more-help-request-history')),
-    );
-
-    expect(historyTile.enabled, isFalse);
-    expect(historyTile.onTap, isNull);
+    await tester.tap(find.byKey(const Key('more-help-request-history')));
+    await tester.pump();
+    expect(find.text('Help request history is coming soon.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 6));
 
     await tester.tap(find.byKey(const Key('caregiver-sign-out')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign out').last);
+    await tester.pumpAndSettle();
 
     expect(signedOut, isTrue);
   });

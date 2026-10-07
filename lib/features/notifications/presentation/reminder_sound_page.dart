@@ -5,6 +5,7 @@ import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_spacing.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
+import '../../../design_system/widgets/alera_chevron_app_bar.dart';
 import '../../../services/notification_sounds/notification_sound_catalog.dart';
 import '../../../services/notification_sounds/notification_sound_preview.dart';
 import '../../../services/notification_sounds/reminder_sound_store.dart';
@@ -101,14 +102,7 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
 
     return Scaffold(
       backgroundColor: AleraColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text('Reminder sound'),
-      ),
+      appBar: const AleraChevronAppBar(),
       body: ListView(
         padding: const EdgeInsets.all(AleraSpacing.large),
         children: [

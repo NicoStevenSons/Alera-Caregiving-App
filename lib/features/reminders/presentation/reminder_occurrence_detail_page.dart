@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
 import '../../../design_system/widgets/alera_card.dart';
+import '../../../design_system/widgets/alera_chevron_app_bar.dart';
 import '../../../design_system/widgets/alera_svg_icon.dart';
 import '../data/reminder_api_data_source.dart';
 import '../data/reminder_controller.dart';
@@ -76,15 +77,7 @@ class _ReminderOccurrenceDetailPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AleraColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        foregroundColor: AleraColors.primarySoft,
-        titleSpacing: 0,
-        title: const Text('Reminder', style: AleraTypography.pageTitle),
-      ),
+      appBar: const AleraChevronAppBar(),
       body: AnimatedBuilder(
         animation: widget.controller,
         builder: (context, _) => _content(context, _current),

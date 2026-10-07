@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_card.dart';
 import '../../data/reminder_timeline_controller.dart';
 import '../../domain/reminder_event.dart';
 import '../reminder_event_text.dart';
+import '../reminder_formatters.dart';
 
 /// The chronological history of one reminder occurrence (oldest first), with
 /// loading, empty, retryable-error and "Load more" states. Used by the
@@ -24,20 +26,26 @@ class ReminderHistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
-      builder: (context, _) => Column(
+      builder: (context, _) => AleraCard(
         key: const Key('reminder-timeline'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            elderly ? 'History' : 'Timeline',
-            key: const Key('reminder-timeline-title'),
-            style: elderly
-                ? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)
-                : AleraTypography.sectionTitle,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                elderly ? 'History' : 'Timeline',
+                key: const Key('reminder-timeline-title'),
+                style: elderly
+                    ? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)
+                    : AleraTypography.sectionTitle,
+              ),
+              SizedBox(height: elderly ? 14 : 10),
+              _body(context),
+            ],
           ),
-          SizedBox(height: elderly ? 14 : 10),
-          _body(context),
-        ],
+        ),
       ),
     );
   }
@@ -150,6 +158,8 @@ class _Message extends StatelessWidget {
   );
 }
 
+/// One timeline entry, laid out like the alert detail timeline: dot with a
+/// connector, the time on the left, then a bold title with a lighter line.
 class _EventRow extends StatelessWidget {
   const _EventRow({
     required this.event,
@@ -168,54 +178,53 @@ class _EventRow extends StatelessWidget {
     final details = elderly
         ? elderlyEventDetails(event)
         : caregiverEventDetails(event);
-    final titleSize = elderly ? 20.0 : 15.0;
-    final bodySize = elderly ? 17.0 : 13.0;
-    final secondary = TextStyle(
-      fontSize: bodySize,
-      color: AleraColors.textSecondary,
-    );
+    final local = event.occurredAt.toLocal();
+    final titleSize = elderly ? 19.0 : 14.0;
+    final bodySize = elderly ? 16.0 : 12.0;
+    final secondary = AleraTypography.body.copyWith(fontSize: bodySize);
+    const accent = AleraColors.selected;
     return IntrinsicHeight(
       key: Key('reminder-event-${event.id}'),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: 24,
-            child: Column(
-              children: [
-                const SizedBox(height: 6),
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: AleraColors.selected,
-                    shape: BoxShape.circle,
+          Column(
+            children: [
+              const Icon(Icons.circle, color: accent, size: 16),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: accent.withValues(alpha: 0.20),
                   ),
                 ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, color: AleraColors.divider),
-                  ),
-              ],
+            ],
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: elderly ? 92 : 72,
+            child: Text(
+              reminderClock(local),
+              style: AleraTypography.body.copyWith(
+                fontSize: elderly ? 16 : null,
+              ),
             ),
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: elderly ? 20 : 14),
+              padding: EdgeInsets.only(bottom: elderly ? 18 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
+                    style: AleraTypography.label.copyWith(
                       fontSize: titleSize,
-                      fontWeight: FontWeight.w700,
                       color: AleraColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
-                    [reminderEventWhen(event.occurredAt), ?actor].join(' · '),
+                    [reminderShortDate(local), ?actor].join(' · '),
                     style: secondary,
                   ),
                   for (final line in details) Text(line, style: secondary),
@@ -224,8 +233,7 @@ class _EventRow extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         note,
-                        style: TextStyle(
-                          fontSize: bodySize,
+                        style: secondary.copyWith(
                           color: AleraColors.textPrimary,
                         ),
                       ),

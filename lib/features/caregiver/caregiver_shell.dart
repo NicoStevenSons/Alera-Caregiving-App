@@ -693,6 +693,8 @@ class _CaregiverShellState extends State<CaregiverShell>
                     _buildReminders(),
                     CaregiverMorePage(
                       helpRequestDataSource: widget.helpRequestDataSource,
+                      onManagePatients: () => _selectDestination(1),
+                      onAddPatient: () => _openAddPatient(context),
                       onSignOut: widget.onSignOut,
                     ),
                   ],
@@ -739,12 +741,13 @@ class _CaregiverShellState extends State<CaregiverShell>
                       label: 'Alerts',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.access_time_filled),
+                      icon: Icon(Icons.access_time),
                       selectedIcon: Icon(Icons.access_time_filled),
                       label: 'Reminders',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.menu),
+                      selectedIcon: Icon(Icons.menu),
                       label: 'More',
                     ),
                   ],
