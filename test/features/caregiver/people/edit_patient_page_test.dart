@@ -89,6 +89,13 @@ void main() {
     expect(find.byKey(const Key('relationship-other-field')), findsNothing);
     expect(
       tester
+          .widget<DropdownButtonFormField<String>>(relationshipDropdown)
+          .initialValue,
+      'Mother',
+    );
+    expect(find.byKey(const Key('relationship-other-field')), findsNothing);
+    expect(
+      tester
           .widget<TextField>(find.byKey(const Key('edit-birth-day-field')))
           .controller!
           .text,
@@ -138,10 +145,7 @@ void main() {
 
   testWidgets('saves normalized values and returns the result', (tester) async {
     await pumpPage(tester);
-    await tester.enterText(
-      find.byKey(const Key('edit-name-field')),
-      '  Maria S.  ',
-    );
+    await tester.enterText(find.byKey(const Key('edit-name-field')), '  Maria S.  ');
     await pickRelationship(tester, 'Other…');
     await tester.enterText(
       find.byKey(const Key('relationship-other-field')),

@@ -57,9 +57,7 @@ class _RelationshipFieldState extends State<RelationshipField> {
       if (value == _other) {
         _otherMode = true;
         // Don't carry a previously picked suggestion into the free-text box.
-        if (_suggestionFor(
-              normalizeRelationshipLabel(widget.controller.text),
-            ) !=
+        if (_suggestionFor(normalizeRelationshipLabel(widget.controller.text)) !=
             null) {
           widget.controller.clear();
         }
@@ -103,7 +101,9 @@ class _RelationshipFieldState extends State<RelationshipField> {
                   fontSize: 13,
                   color: AleraColors.textPrimary,
                 ),
-                decoration: aleraInputDecoration(hint: 'e.g. Mother, Client'),
+                decoration: aleraInputDecoration(
+                  hint: 'e.g. Mother, Client',
+                ),
                 items: [
                   if (selection != null)
                     const DropdownMenuItem(
@@ -111,10 +111,7 @@ class _RelationshipFieldState extends State<RelationshipField> {
                       child: Text('Not set'),
                     ),
                   for (final suggestion in relationshipLabelSuggestions)
-                    DropdownMenuItem(
-                      value: suggestion,
-                      child: Text(suggestion),
-                    ),
+                    DropdownMenuItem(value: suggestion, child: Text(suggestion)),
                   const DropdownMenuItem(value: _other, child: Text('Other…')),
                 ],
                 onChanged: widget.enabled ? _choose : null,
