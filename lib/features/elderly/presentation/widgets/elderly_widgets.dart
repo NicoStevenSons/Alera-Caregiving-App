@@ -97,7 +97,8 @@ class ElderlyVitalTile extends StatelessWidget {
     this.unit = '',
     required this.caption,
     required this.textColor,
-    required this.onTap,
+    this.onTap,
+    this.height = 176,
   });
 
   static const String _vitals = 'alera-figma-assets/assets/icons/vitals';
@@ -123,7 +124,8 @@ class ElderlyVitalTile extends StatelessWidget {
   final String unit;
   final String caption;
   final Color textColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +136,7 @@ class ElderlyVitalTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 176,
+          height: height,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -218,4 +220,146 @@ class ElderlyVitalTile extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// Centered icon + title + message (+ optional action) for loading-failed
+/// and empty situations.
+class ElderlyStateMessage extends StatelessWidget {
+  const ElderlyStateMessage({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.message,
+    this.color = AleraColors.primary,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final Color color;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElderlyIconTile(icon: icon, color: color, size: 72),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AleraColors.textPrimary,
+              ),
+            ),
+            if (message != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+            ],
+            if (action != null) ...[const SizedBox(height: 20), action!],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One reading/session in a history list.
+class ElderlyReadingRow extends StatelessWidget {
+  const ElderlyReadingRow({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.caption,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            ElderlyIconTile(icon: icon, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AleraColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    caption,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AleraColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Today, 9:41 AM" / "Oct 6, 9:41 AM" style label for history rows.
+String elderlyFriendlyDateTime(DateTime? value) {
+  if (value == null) return '--';
+  final DateTime local = value.toLocal();
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime day = DateTime(local.year, local.month, local.day);
+  final int diff = today.difference(day).inDays;
+  const List<String> months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final String date = diff == 0
+      ? 'Today'
+      : diff == 1
+      ? 'Yesterday'
+      : '${months[local.month - 1]} ${local.day}';
+  return '$date, ${elderlyTime(local)}';
+}
+
+String elderlyTime(DateTime value) {
+  final DateTime local = value.toLocal();
+  final int hour = local.hour == 0
+      ? 12
+      : local.hour > 12
+      ? local.hour - 12
+      : local.hour;
+  final String minute = local.minute.toString().padLeft(2, '0');
+  return '$hour:$minute ${local.hour >= 12 ? 'PM' : 'AM'}';
 }

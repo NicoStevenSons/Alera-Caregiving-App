@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/alera_colors.dart';
 import '../../data/elderly_help_request_controller.dart';
+import 'elderly_widgets.dart';
 import '../../../help_requests/domain/help_request.dart';
 
 class ElderlyHelpRequestCard extends StatelessWidget {
@@ -74,24 +76,94 @@ class ElderlyHelpRequestCard extends StatelessWidget {
       ),
       ElderlyHelpRequestState.active => Card(
         key: const Key('elderly-help-active'),
-        child: ListTile(
-          leading: const Icon(Icons.check_circle_rounded),
-          title: Text(_activeTitle),
-          subtitle: Text(_activeMessage),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              const ElderlyIconTile(
+                icon: Icons.check_circle,
+                color: Color(0xFF05A869),
+                size: 56,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _activeTitle,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AleraColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _activeMessage,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        color: AleraColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       ElderlyHelpRequestState.error => Card(
         key: const Key('elderly-help-error'),
-        child: ListTile(
-          leading: const Icon(Icons.cloud_off_rounded),
-          title: const Text('Unable to update help status'),
-          subtitle: Text(
-            errorMessage ?? 'Something went wrong. Please try again.',
-          ),
-          trailing: TextButton(
-            key: const Key('elderly-help-retry'),
-            onPressed: onRetry,
-            child: const Text('Retry'),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const ElderlyIconTile(
+                    icon: Icons.cloud_off_rounded,
+                    color: Color(0xFFE04C5D),
+                    size: 56,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Unable to update help status',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AleraColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          errorMessage ??
+                              'Something went wrong. Please try again.',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            color: AleraColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  key: const Key('elderly-help-retry'),
+                  onPressed: onRetry,
+                  child: const Text('Retry'),
+                ),
+              ),
+            ],
           ),
         ),
       ),

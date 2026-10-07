@@ -1,3 +1,4 @@
+import '../design_system/widgets/alera_confirmation_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -471,32 +472,17 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   }
 
   Future<void> _confirmHelpRequest() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        key: const Key('elderly-help-confirmation'),
-        title: const Text('Request help?'),
-        content: const Text(
-          'Your caregiver will be notified that you need assistance.',
-        ),
-        actions: [
-          TextButton(
-            key: const Key('elderly-help-cancel'),
-            onPressed: () {
-              Navigator.of(dialogContext).pop(false);
-            },
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            key: const Key('elderly-help-confirm'),
-            onPressed: () {
-              Navigator.of(dialogContext).pop(true);
-            },
-            icon: const Icon(Icons.sos_rounded),
-            label: const Text('Request Help'),
-          ),
-        ],
-      ),
+    final confirmed = await showAleraConfirmationDialog(
+      context,
+      large: true,
+      dialogKey: const Key('elderly-help-confirmation'),
+      cancelKey: const Key('elderly-help-cancel'),
+      confirmKey: const Key('elderly-help-confirm'),
+      icon: Icons.notifications_active,
+      title: 'Request help?',
+      message: 'Your caregiver will be notified that you need assistance.',
+      cancelLabel: 'Cancel',
+      confirmLabel: 'Request Help',
     );
 
     if (confirmed != true || !mounted) return;

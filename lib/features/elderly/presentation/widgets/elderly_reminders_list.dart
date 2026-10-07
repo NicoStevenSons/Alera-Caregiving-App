@@ -50,54 +50,38 @@ class _ElderlyRemindersListState extends State<ElderlyRemindersList> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(
+      return const Padding(
         key: Key('elderly-reminders-loading'),
-        child: CircularProgressIndicator(),
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (errorMessage != null) {
-      return Center(
+      return KeyedSubtree(
         key: const Key('elderly-reminders-error'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_rounded, size: 40),
-              const SizedBox(height: 12),
-              const Text(
-                'Unable to load reminders',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(errorMessage!, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              FilledButton.tonalIcon(
-                key: const Key('elderly-reminders-retry'),
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
-              ),
-            ],
+        child: ElderlyStateMessage(
+          icon: Icons.cloud_off_rounded,
+          color: const Color(0xFFE04C5D),
+          title: 'Unable to load reminders',
+          message: errorMessage,
+          action: FilledButton.icon(
+            key: const Key('elderly-reminders-retry'),
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
           ),
         ),
       );
     }
 
     if (reminders.isEmpty) {
-      return const Center(
+      return const KeyedSubtree(
         key: Key('elderly-reminders-empty'),
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.event_available_rounded, size: 40),
-              SizedBox(height: 12),
-              Text('No reminders right now'),
-            ],
-          ),
+        child: ElderlyStateMessage(
+          icon: Icons.event_available_rounded,
+          title: 'No reminders right now',
+          message: 'When your caregiver adds a reminder, it will show up here.',
         ),
       );
     }

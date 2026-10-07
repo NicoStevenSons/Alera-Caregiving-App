@@ -202,9 +202,23 @@ class _NextReminderCard extends StatelessWidget {
     if (loading) {
       return const Card(
         key: Key('elderly-next-reminder-loading'),
-        child: ListTile(
-          leading: Icon(Icons.access_time_filled),
-          title: Text('Loading next reminder…'),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Loading next reminder…',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -212,14 +226,49 @@ class _NextReminderCard extends StatelessWidget {
     if (errorMessage != null) {
       return Card(
         key: const Key('elderly-next-reminder-error'),
-        child: ListTile(
-          leading: const Icon(Icons.cloud_off_rounded),
-          title: const Text('Unable to load reminders'),
-          subtitle: Text(errorMessage!),
-          trailing: TextButton(
-            key: const Key('elderly-retry-reminders'),
-            onPressed: onRetry,
-            child: const Text('Retry'),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  ElderlyIconTile(
+                    icon: Icons.cloud_off_rounded,
+                    color: Color(0xFFE04C5D),
+                    size: 56,
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Unable to load reminders',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AleraColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                errorMessage!,
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: AleraColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  key: const Key('elderly-retry-reminders'),
+                  onPressed: onRetry,
+                  child: const Text('Retry'),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -228,9 +277,28 @@ class _NextReminderCard extends StatelessWidget {
     if (item == null) {
       return const Card(
         key: Key('elderly-next-reminder-empty'),
-        child: ListTile(
-          leading: Icon(Icons.event_available_rounded),
-          title: Text('No upcoming reminders'),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Row(
+            children: [
+              ElderlyIconTile(
+                icon: Icons.event_available_rounded,
+                color: Color(0xFF05A869),
+                size: 56,
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'No upcoming reminders',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AleraColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

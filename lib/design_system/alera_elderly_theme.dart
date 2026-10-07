@@ -125,11 +125,17 @@ abstract final class AleraElderlyTheme {
         ),
       ),
       snackBarTheme: base.snackBarTheme.copyWith(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AleraColors.textPrimary,
+        elevation: 4,
+        insetPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         contentTextStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AleraColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
         ),
+        actionTextColor: AleraColors.primarySoft,
       ),
     );
   }
