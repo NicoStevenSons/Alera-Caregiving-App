@@ -6,6 +6,10 @@ class CareRecipient {
   final String id;
   final String name;
   final String relationshipLabel;
+
+  /// The current caregiver's own label for this patient ("Mother"), if set.
+  /// Distinct from [relationshipLabel], which is a display fallback.
+  final String? relationship;
   final String? addressOrRoom;
   final String? phoneNumber;
   final String? profilePhotoUrl;
@@ -21,6 +25,7 @@ class CareRecipient {
     required this.id,
     required this.name,
     required this.relationshipLabel,
+    this.relationship,
     this.addressOrRoom,
     this.phoneNumber,
     this.profilePhotoUrl,

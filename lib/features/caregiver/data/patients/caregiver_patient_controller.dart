@@ -132,6 +132,32 @@ class CaregiverPatientController extends ChangeNotifier {
     }
   }
 
+  /// Reflects a saved edit in the People list right away, without waiting for
+  /// the next poll. Keeps the existing live health summary.
+  void applyPatientUpdate(PatientDetailDto updated) {
+    final index = patients.indexWhere((p) => p.patientId == updated.patientId);
+    if (index < 0) return;
+    final current = patients[index];
+    final next = List<PatientListItemDto>.of(patients);
+    next[index] = PatientListItemDto(
+      patientId: current.patientId,
+      userId: current.userId,
+      householdId: current.householdId,
+      fullName: updated.fullName,
+      birthdate: updated.birthdate,
+      sex: updated.sex,
+      phoneNumber: updated.phoneNumber,
+      addressOrRoom: updated.addressOrRoom,
+      profilePhotoUrl: updated.profilePhotoUrl ?? current.profilePhotoUrl,
+      accountStatus: current.accountStatus,
+      createdAt: current.createdAt,
+      currentSummary: current.currentSummary,
+      relationshipLabel: updated.relationshipLabel,
+    );
+    patients = List.unmodifiable(next);
+    notifyListeners();
+  }
+
   Future<PatientDetailDto> loadDetail(String patientId) =>
       dataSource.fetchPatient(patientId);
 
@@ -184,6 +210,7 @@ CareRecipient patientListItemToCareRecipient(
     id: patient.patientId,
     name: patient.fullName,
     relationshipLabel: 'Under your care',
+    relationship: patient.relationshipLabel,
     addressOrRoom: patient.addressOrRoom,
     phoneNumber: patient.phoneNumber,
     profilePhotoUrl: patient.profilePhotoUrl,

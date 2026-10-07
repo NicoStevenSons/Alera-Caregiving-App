@@ -1,3 +1,5 @@
+import '../../../domain/relationship_label.dart';
+
 class CreatePatientRequest {
   final String fullName;
   final DateTime? birthdate;
@@ -12,6 +14,9 @@ class CreatePatientRequest {
   final num? baselineSpo2;
   final String? monitoringNotes;
 
+  /// Caregiver-specific label for this patient; see relationship_label.dart.
+  final String? relationshipLabel;
+
   const CreatePatientRequest({
     required this.fullName,
     this.birthdate,
@@ -25,6 +30,7 @@ class CreatePatientRequest {
     this.baselineHeartRate,
     this.baselineSpo2,
     this.monitoringNotes,
+    this.relationshipLabel,
   });
 
   Map<String, Object?> toJson() => {
@@ -44,6 +50,61 @@ class CreatePatientRequest {
     'baseline_heart_rate': baselineHeartRate,
     'baseline_spo2': baselineSpo2,
     'monitoring_notes': _trimmedOrNull(monitoringNotes),
+    // Only sent when set, so creating a patient without a label keeps the
+    // exact payload older backends already accept.
+    if (normalizeRelationshipLabel(relationshipLabel) != null)
+      'relationship_label': normalizeRelationshipLabel(relationshipLabel),
+  };
+}
+
+/// Full replacement of the editable profile fields (PATCH semantics: an
+/// explicit null clears the stored value). Monitoring thresholds and baseline
+/// readings are deliberately absent; they live in Monitoring Settings.
+class UpdatePatientRequest {
+  final String fullName;
+  final DateTime? birthdate;
+  final String? sex;
+  final String? phoneNumber;
+  final String? addressOrRoom;
+  final String? emergencyContactName;
+  final String? emergencyContactPhone;
+  final String? knownConditions;
+  final String? medications;
+  final String? monitoringNotes;
+
+  /// Belongs to the current caregiver's assignment to this patient.
+  final String? relationshipLabel;
+
+  const UpdatePatientRequest({
+    required this.fullName,
+    this.birthdate,
+    this.sex,
+    this.phoneNumber,
+    this.addressOrRoom,
+    this.emergencyContactName,
+    this.emergencyContactPhone,
+    this.knownConditions,
+    this.medications,
+    this.monitoringNotes,
+    this.relationshipLabel,
+  });
+
+  Map<String, Object?> toJson() => {
+    'full_name': fullName.trim(),
+    'birthdate': birthdate == null
+        ? null
+        : '${birthdate!.year.toString().padLeft(4, '0')}-'
+              '${birthdate!.month.toString().padLeft(2, '0')}-'
+              '${birthdate!.day.toString().padLeft(2, '0')}',
+    'sex': sex,
+    'phone_number': _trimmedOrNull(phoneNumber),
+    'address_or_room': _trimmedOrNull(addressOrRoom),
+    'emergency_contact_name': _trimmedOrNull(emergencyContactName),
+    'emergency_contact_phone': _trimmedOrNull(emergencyContactPhone),
+    'known_conditions': _trimmedOrNull(knownConditions),
+    'medications': _trimmedOrNull(medications),
+    'monitoring_notes': _trimmedOrNull(monitoringNotes),
+    'relationship_label': normalizeRelationshipLabel(relationshipLabel),
   };
 }
 
@@ -225,7 +286,6 @@ class CurrentHealthSummaryDto {
     required this.stepsUpdatedAt,
     required this.latestSleepDurationSeconds,
     required this.latestSleepDate,
-    
   });
 
   factory CurrentHealthSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -241,11 +301,13 @@ class CurrentHealthSummaryDto {
       latestHeartRate: _readingOrNull(json['latest_heart_rate']),
       latestSpo2: _readingOrNull(json['latest_spo2']),
 
-      todaySteps: _nullableInt(json['today_steps'],'today_steps',),
-      stepsUpdatedAt: _utcOrNull(json['steps_updated_at'],),
-      latestSleepDurationSeconds: _nullableInt(json['latest_sleep_duration_seconds'],'latest_sleep_duration_seconds',),
-      latestSleepDate: _dateOrNull(json['latest_sleep_date'],),
-
+      todaySteps: _nullableInt(json['today_steps'], 'today_steps'),
+      stepsUpdatedAt: _utcOrNull(json['steps_updated_at']),
+      latestSleepDurationSeconds: _nullableInt(
+        json['latest_sleep_duration_seconds'],
+        'latest_sleep_duration_seconds',
+      ),
+      latestSleepDate: _dateOrNull(json['latest_sleep_date']),
 
       lastCheckIn: _utcOrNull(json['last_check_in']),
       activeAlertCount: _requiredInt(
@@ -324,6 +386,9 @@ class PatientListItemDto {
   final DateTime createdAt;
   final CurrentHealthSummaryDto currentSummary;
 
+  /// The signed-in caregiver's label for this patient (per assignment).
+  final String? relationshipLabel;
+
   const PatientListItemDto({
     required this.patientId,
     required this.userId,
@@ -337,6 +402,7 @@ class PatientListItemDto {
     required this.accountStatus,
     required this.createdAt,
     required this.currentSummary,
+    this.relationshipLabel,
   });
 
   factory PatientListItemDto.fromJson(Map<String, dynamic> json) =>
@@ -357,6 +423,11 @@ class PatientListItemDto {
         createdAt: _requiredUtc(json['created_at'], 'created_at'),
         currentSummary: CurrentHealthSummaryDto.fromJson(
           _requiredMap(json['current_summary'], 'current_summary'),
+        ),
+        relationshipLabel: normalizeRelationshipLabel(
+          json['relationship_label'] is String
+              ? json['relationship_label'] as String
+              : null,
         ),
       );
 }
@@ -421,6 +492,7 @@ class PatientDetailDto extends PatientListItemDto {
     required super.accountStatus,
     required super.createdAt,
     required super.currentSummary,
+    super.relationshipLabel,
     required this.patientAccessStatus,
     required this.emergencyContactName,
     required this.emergencyContactPhone,
@@ -462,6 +534,7 @@ class PatientDetailDto extends PatientListItemDto {
       accountStatus: base.accountStatus,
       createdAt: base.createdAt,
       currentSummary: base.currentSummary,
+      relationshipLabel: base.relationshipLabel,
       patientAccessStatus: patientAccess,
       emergencyContactName: json['emergency_contact_name'] as String?,
       emergencyContactPhone: json['emergency_contact_phone'] as String?,
@@ -484,6 +557,39 @@ class PatientDetailDto extends PatientListItemDto {
       thresholdModeValue: thresholdMode,
     );
   }
+
+  /// This patient with a new profile photo URL, everything else unchanged.
+  PatientDetailDto withProfilePhotoUrl(String url) => PatientDetailDto(
+    patientId: patientId,
+    userId: userId,
+    householdId: householdId,
+    fullName: fullName,
+    birthdate: birthdate,
+    sex: sex,
+    phoneNumber: phoneNumber,
+    addressOrRoom: addressOrRoom,
+    profilePhotoUrl: url,
+    accountStatus: accountStatus,
+    createdAt: createdAt,
+    currentSummary: currentSummary,
+    relationshipLabel: relationshipLabel,
+    patientAccessStatus: patientAccessStatus,
+    emergencyContactName: emergencyContactName,
+    emergencyContactPhone: emergencyContactPhone,
+    knownConditions: knownConditions,
+    medications: medications,
+    baselineHeartRate: baselineHeartRate,
+    baselineSpo2: baselineSpo2,
+    monitoringNotes: monitoringNotes,
+    archivedAt: archivedAt,
+    assignment: assignment,
+    normalHrMin: normalHrMin,
+    normalHrMax: normalHrMax,
+    usualSpo2Min: usualSpo2Min,
+    usualSpo2Max: usualSpo2Max,
+    thresholdMode: thresholdMode,
+    thresholdModeValue: thresholdModeValue,
+  );
 }
 
 /// Patient-app access is distinct from smartwatch/device connectivity.

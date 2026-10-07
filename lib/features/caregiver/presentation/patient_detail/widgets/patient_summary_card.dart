@@ -53,7 +53,8 @@ class PatientDetailSummaryCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         child: Text(
-                          careRecipient.relationshipLabel,
+                          careRecipient.relationship ??
+                              careRecipient.relationshipLabel,
                           style: const TextStyle(
                             color: AleraColors.primary,
                             fontSize: 10,
