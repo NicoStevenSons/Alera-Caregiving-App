@@ -11,7 +11,14 @@ const Color _bad = Color(0xFFE04C5D);
 class DeviceStatusTab extends StatelessWidget {
   final DeviceStatusData deviceStatusData;
 
-  const DeviceStatusTab({super.key, required this.deviceStatusData});
+  /// Optional content placed at the very end of the scrolling page.
+  final Widget? footer;
+
+  const DeviceStatusTab({
+    super.key,
+    required this.deviceStatusData,
+    this.footer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +186,7 @@ class DeviceStatusTab extends StatelessWidget {
               ),
             ),
           ),
+          if (footer != null) footer!,
         ],
       ),
     );

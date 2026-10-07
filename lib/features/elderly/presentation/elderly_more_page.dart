@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../design_system/alera_colors.dart';
 import '../../../models/device_status_data.dart';
 import 'device_status_tab.dart';
 
@@ -15,28 +16,25 @@ class ElderlyMorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return DeviceStatusTab(
       key: const PageStorageKey<String>('elderly-more'),
-      children: [
-        Expanded(child: DeviceStatusTab(deviceStatusData: deviceStatusData)),
-        if (onSignOut != null)
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  key: const Key('elderly-sign-out'),
-                  onPressed: onSignOut,
-                  icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Sign out'),
+      deviceStatusData: deviceStatusData,
+      // Deliberately at the very end of the page, away from the main
+      // content, so it can't be hit by accident.
+      footer: onSignOut == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 56),
+              child: TextButton.icon(
+                key: const Key('elderly-sign-out'),
+                onPressed: onSignOut,
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text('Sign out'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AleraColors.textSecondary,
                 ),
               ),
             ),
-          ),
-      ],
     );
   }
 }

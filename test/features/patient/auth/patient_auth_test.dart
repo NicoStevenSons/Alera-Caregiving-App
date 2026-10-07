@@ -329,7 +329,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byKey(const Key('elderly-sign-out')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('elderly-sign-out')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('elderly-sign-out')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out?'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.text('Sign out'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Alera'), findsOneWidget);
     expect(await store.readSession(), isNull);
@@ -391,6 +401,14 @@ void main() {
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out?'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.text('Sign out'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Alera'), findsOneWidget);
     expect(await store.readSession(), isNull);
