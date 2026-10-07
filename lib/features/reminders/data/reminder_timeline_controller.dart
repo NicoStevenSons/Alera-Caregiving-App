@@ -7,10 +7,10 @@ import 'reminder_api_data_source.dart';
 /// in the order the backend returns them (oldest first); "load more" appends.
 class ReminderTimelineController extends ChangeNotifier {
   ReminderTimelineController({
-    required ReminderEventsDataSource dataSource,
+    required this._dataSource,
     required this.occurrenceId,
     this.pageSize = 50,
-  }) : _dataSource = dataSource;
+  });
 
   final ReminderEventsDataSource _dataSource;
   final String occurrenceId;

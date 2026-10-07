@@ -41,10 +41,7 @@ List<String> caregiverEventDetails(ReminderEvent event) {
     if (until != null) lines.add('Until ${reminderClock(until)}');
   }
   if (event.type == ReminderEventType.notificationSent) {
-    final parts = [
-      if (_audience(event.audience) case final audience?) audience,
-      if (_channel(event.channel) case final channel?) channel,
-    ];
+    final parts = [?_audience(event.audience), ?_channel(event.channel)];
     if (parts.isNotEmpty) lines.add(parts.join(' · '));
   }
   return lines;
