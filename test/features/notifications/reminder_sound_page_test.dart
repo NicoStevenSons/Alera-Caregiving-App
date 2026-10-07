@@ -17,6 +17,14 @@ class _FakePreview implements NotificationSoundPreview {
 
   @override
   Future<void> stop() async => stops++;
+
+  final List<String> opened = [];
+
+  @override
+  Future<bool> openChannelSettings(String channelId) async {
+    opened.add(channelId);
+    return true;
+  }
 }
 
 void main() {
@@ -111,6 +119,21 @@ void main() {
 
     expect(preview.played, ['alera_alert_critical']);
     expect(await store.read(), ReminderSound.chime);
-    expect(find.text('Critical alerts'), findsOneWidget);
+    expect(find.text('Critical alerts'), findsWidgets);
+  });
+
+  testWidgets('urgent alerts link to their system channel settings', (
+    tester,
+  ) async {
+    final store = MemoryReminderSoundStore(ReminderSound.chime);
+    final preview = _FakePreview();
+    await pumpPage(tester, store, preview);
+
+    await tester.ensureVisible(find.byKey(const Key('dnd-criticalAlert')));
+    await tester.tap(find.byKey(const Key('dnd-criticalAlert')));
+    await tester.pump();
+
+    expect(preview.opened, ['alera_alert_critical_v1']);
+    expect(preview.played, isEmpty);
   });
 }

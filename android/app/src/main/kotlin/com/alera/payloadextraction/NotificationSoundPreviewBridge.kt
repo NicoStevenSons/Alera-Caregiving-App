@@ -1,6 +1,8 @@
 package com.alera.payloadextraction
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
@@ -32,9 +34,28 @@ class NotificationSoundPreviewBridge(private val context: Context) {
                         stop()
                         result.success(null)
                     }
+                    "openChannelSettings" -> {
+                        val id = call.argument<String>("channelId")
+                        result.success(if (id == null) false else openChannelSettings(id))
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /** Opens the system page where the user can let a channel bypass DND. */
+    private fun openChannelSettings(channelId: String): Boolean {
+        return try {
+            val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "could not open channel settings for $channelId", e)
+            false
+        }
     }
 
     private fun preview(name: String): Boolean {

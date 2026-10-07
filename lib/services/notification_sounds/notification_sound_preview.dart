@@ -5,6 +5,10 @@ abstract interface class NotificationSoundPreview {
   /// Plays the bundled `res/raw` sound [resource]; false if it could not play.
   Future<bool> playResource(String resource);
   Future<void> stop();
+
+  /// Opens the Android system settings page for [channelId], where the user
+  /// can allow it to override Do Not Disturb. False if it could not open.
+  Future<bool> openChannelSettings(String channelId);
 }
 
 class PlatformNotificationSoundPreview implements NotificationSoundPreview {
@@ -36,6 +40,20 @@ class PlatformNotificationSoundPreview implements NotificationSoundPreview {
       // Not on Android (tests, desktop): nothing to stop.
     } on PlatformException {
       // Ignore.
+    }
+  }
+
+  @override
+  Future<bool> openChannelSettings(String channelId) async {
+    try {
+      return await _channel.invokeMethod<bool>('openChannelSettings', {
+            'channelId': channelId,
+          }) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
     }
   }
 }

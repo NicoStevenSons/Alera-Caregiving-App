@@ -82,6 +82,19 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
     if (mounted && _playing == key) setState(() => _playing = null);
   }
 
+  Future<void> _openDndSettings(AlertSoundCategory category) async {
+    final bool opened = await _preview.openChannelSettings(category.channelId);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Open Settings > Apps > Alera > Notifications to change this.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ReminderSound? selected = _selected;
@@ -161,6 +174,37 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
                       AlertSoundCategory.values[i].channelId,
                       AlertSoundCategory.values[i].rawResource,
                     ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: AleraSpacing.large),
+          Text('Do Not Disturb', style: AleraTypography.sectionTitle),
+          const SizedBox(height: 4),
+          Text(
+            'Android only lets you decide this. Open an alert below and turn '
+            'on “Override Do Not Disturb” so it still makes sound.',
+            style: AleraTypography.body,
+          ),
+          const SizedBox(height: AleraSpacing.medium),
+          AleraCard(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              children: [
+                for (final (int i, AlertSoundCategory c) in <AlertSoundCategory>[
+                  AlertSoundCategory.criticalAlert,
+                  AlertSoundCategory.helpRequest,
+                  AlertSoundCategory.missedReminder,
+                ].indexed) ...[
+                  if (i > 0) const Divider(height: 1, indent: 72),
+                  ListTile(
+                    key: Key('dnd-${c.name}'),
+                    leading: Icon(_alertIcon(c), color: AleraColors.primary),
+                    title: Text(c.channelName),
+                    subtitle: const Text('Let through Do Not Disturb'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _openDndSettings(c),
                   ),
                 ],
               ],
