@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'alera_colors.dart';
 import 'status/alera_status_tone.dart';
 import 'alera_spacing.dart';
+import 'alera_typography.dart';
 
 abstract final class AleraTheme {
   static ThemeData caregiver(ThemeData parent) {
@@ -32,11 +33,7 @@ abstract final class AleraTheme {
         backgroundColor: AleraColors.surface,
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.cardRadius)),
-        contentTextStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AleraColors.textPrimary,
-        ),
+        contentTextStyle: AleraTypography.bodyStrong,
         actionTextColor: AleraColors.primary,
       ),
       // Controls use the same purple as the app's buttons (not the deeper

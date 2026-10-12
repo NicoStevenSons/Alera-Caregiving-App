@@ -37,18 +37,13 @@ class AleraStartupScreen extends StatelessWidget {
                             Text(
                               'Welcome to Alera',
                               textAlign: TextAlign.center,
-                              style: AleraTypography.pageTitle.copyWith(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AleraTypography.cardTitle,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Connect with your household.',
                               textAlign: TextAlign.center,
-                              style: AleraTypography.body.copyWith(
-                                fontSize: 12,
-                              ),
+                              style: AleraTypography.caption,
                             ),
                           ],
                         ),

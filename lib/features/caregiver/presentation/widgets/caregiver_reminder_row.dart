@@ -74,9 +74,7 @@ class CaregiverReminderRow extends StatelessWidget {
                       reminder.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 15,
-                      ),
+                      style: AleraTypography.rowTitle,
                     ),
                     const SizedBox(height: 2),
                     Row(
@@ -89,10 +87,7 @@ class CaregiverReminderRow extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           _time(reminder.scheduledAt),
-                          style: AleraTypography.body.copyWith(
-                            fontSize: 12,
-                            color: AleraColors.textSecondary,
-                          ),
+                          style: AleraTypography.caption,
                         ),
                         if (missed || done) ...[
                           const SizedBox(width: 8),

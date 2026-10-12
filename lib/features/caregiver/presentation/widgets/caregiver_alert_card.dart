@@ -139,9 +139,7 @@ class CaregiverAlertCard extends StatelessWidget {
                                       ? displayData.detectedAt
                                       : '${displayData.reading} • ${displayData.relativeTime}',
                                   key: ValueKey(expanded),
-                                  style: AleraTypography.body.copyWith(
-                                    fontSize: 11,
-                                  ),
+                                  style: AleraTypography.micro,
                                 ),
                               ),
                             ],
@@ -487,7 +485,7 @@ class _Detail extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        Text(value, style: AleraTypography.body.copyWith(fontSize: 11)),
+        Text(value, style: AleraTypography.micro),
       ],
     );
   }

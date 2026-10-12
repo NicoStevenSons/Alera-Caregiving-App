@@ -599,15 +599,15 @@ class _SummaryCard extends StatelessWidget {
                       const SizedBox(height: 5),
                       Text(
                         alert.title,
-                        style: AleraTypography.pageTitle.copyWith(fontSize: 22),
+                        style: AleraTypography.heading,
                       ),
                       Text(
                         '$patientName • Triggered ${_relative(alert.detectedAt)}',
-                        style: AleraTypography.body.copyWith(fontSize: 13),
+                        style: AleraTypography.bodySmall,
                       ),
                       Text(
                         _dateTime(alert.detectedAt),
-                        style: AleraTypography.body.copyWith(fontSize: 13),
+                        style: AleraTypography.bodySmall,
                       ),
                     ],
                   ),
@@ -762,7 +762,7 @@ class _AlertImpact extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: AleraTypography.body.copyWith(fontSize: 12),
+                  style: AleraTypography.caption,
                 ),
               ],
             ),
@@ -975,7 +975,7 @@ class _ContextCard extends StatelessWidget {
             snapshot == null
                 ? 'Latest patient readings are unavailable.'
                 : 'Latest available • ${_dateTime(snapshot.lastCheckIn)}',
-            style: AleraTypography.body.copyWith(fontSize: 11),
+            style: AleraTypography.micro,
           ),
           const SizedBox(height: 8),
           Text('Evaluation reason', style: AleraTypography.label),
@@ -1068,7 +1068,7 @@ class _TimelineCard extends StatelessWidget {
                       ),
                       Text(
                         entries[index].description,
-                        style: AleraTypography.body.copyWith(fontSize: 12),
+                        style: AleraTypography.caption,
                       ),
                     ],
                   ),
@@ -1226,7 +1226,7 @@ class _ContextMetric extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: AleraTypography.body.copyWith(fontSize: 11)),
+                Text(label, style: AleraTypography.micro),
                 Text(
                   value,
                   style: AleraTypography.sectionTitle.copyWith(fontSize: 18),
@@ -1234,7 +1234,7 @@ class _ContextMetric extends StatelessWidget {
                 if (unit.isNotEmpty)
                   Text(
                     unit,
-                    style: AleraTypography.body.copyWith(fontSize: 10),
+                    style: AleraTypography.micro,
                   ),
               ],
             ),

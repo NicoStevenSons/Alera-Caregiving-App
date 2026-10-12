@@ -341,10 +341,7 @@ class _GapRow extends StatelessWidget {
                 '${reminderHourLabel(gap.fromHour)} to '
                 '${reminderHourLabel(gap.toHour)}',
                 key: ValueKey('reminder-gap-${gap.fromHour}'),
-                style: AleraTypography.body.copyWith(
-                  fontSize: 11,
-                  color: AleraColors.textSecondary,
-                ),
+                style: AleraTypography.micro,
               ),
             ),
           ),
@@ -400,10 +397,7 @@ class _TimelineRow extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             reminderHourLabel(local.hour),
-                            style: AleraTypography.body.copyWith(
-                              fontSize: 12,
-                              color: AleraColors.textSecondary,
-                            ),
+                            style: AleraTypography.caption,
                           ),
                         )
                       : null,
@@ -614,10 +608,7 @@ class _ReminderCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AleraTypography.body.copyWith(
-                        fontSize: 12,
-                        color: AleraColors.textSecondary,
-                      ),
+                      style: AleraTypography.caption,
                     ),
                   ],
                 ),
@@ -682,10 +673,7 @@ class _Meta extends StatelessWidget {
       const SizedBox(width: 4),
       Text(
         text,
-        style: AleraTypography.body.copyWith(
-          fontSize: 12,
-          color: AleraColors.textSecondary,
-        ),
+        style: AleraTypography.caption,
       ),
     ],
   );

@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/api/dto/vital_trend_dto.dart';
+import '../../../../../design_system/alera_typography.dart';
 
 class VitalTrendChart extends StatelessWidget {
   final VitalTrendDto trend;
@@ -105,10 +106,7 @@ class VitalTrendChart extends StatelessWidget {
                         space: 6,
                         child: Text(
                           value.toStringAsFixed(0),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },
@@ -129,10 +127,7 @@ class VitalTrendChart extends StatelessWidget {
                         space: 8,
                         child: Text(
                           _axisLabel(time),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },

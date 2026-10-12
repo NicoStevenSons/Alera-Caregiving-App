@@ -753,7 +753,7 @@ class _FilterSectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
       child: Text(
         label,
-        style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+        style: AleraTypography.cardTitle,
       ),
     );
   }
@@ -1223,7 +1223,7 @@ class _HistoryGroup extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+                style: AleraTypography.cardTitle,
               ),
             ),
             if (canExpand)
@@ -1336,7 +1336,7 @@ class AlertListCard extends StatelessWidget {
                     ),
                     Text(
                       '${alert.reading.toStringAsFixed(0)} ${alert.unit} • ${_relativeTime(alert.detectedAt)}',
-                      style: AleraTypography.body.copyWith(fontSize: 10),
+                      style: AleraTypography.micro,
                     ),
                   ],
                 ),

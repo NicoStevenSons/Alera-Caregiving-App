@@ -1141,16 +1141,12 @@ class _CaregiverShellState extends State<CaregiverShell>
                               patient.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AleraTypography.sectionTitle.copyWith(
-                                fontSize: 15,
-                              ),
+                              style: AleraTypography.rowTitle,
                             ),
                             const SizedBox(height: 2),
                             Text(
                               patient.relationshipLabel,
-                              style: AleraTypography.body.copyWith(
-                                fontSize: 12,
-                              ),
+                              style: AleraTypography.caption,
                             ),
                           ],
                         ),

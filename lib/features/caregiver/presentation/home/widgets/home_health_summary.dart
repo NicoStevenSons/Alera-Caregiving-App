@@ -45,7 +45,7 @@ class HomeHealthSummary extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             _statusDescription(careRecipient.status),
-            style: AleraTypography.body.copyWith(fontSize: 11),
+            style: AleraTypography.micro,
           ),
           const SizedBox(height: 9),
           Row(

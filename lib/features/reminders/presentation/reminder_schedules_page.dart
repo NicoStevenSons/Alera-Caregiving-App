@@ -54,7 +54,7 @@ class ReminderSchedulesPage extends StatelessWidget {
             children: [
               Text(
                 'Manage schedules',
-                style: AleraTypography.pageTitle.copyWith(fontSize: 22),
+                style: AleraTypography.heading,
               ),
               if (patientName != null) ...[
                 const SizedBox(height: 4),
@@ -176,17 +176,14 @@ class _ScheduleCard extends StatelessWidget {
                   template.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+                  style: AleraTypography.rowTitle,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Starts ${template.startDate} at '
                   '${template.startTime.substring(0, 5)}'
                   '${repeat == null ? '' : ' • $repeat'}',
-                  style: AleraTypography.body.copyWith(
-                    fontSize: 12,
-                    color: AleraColors.textSecondary,
-                  ),
+                  style: AleraTypography.caption,
                 ),
                 if (archived) ...[
                   const SizedBox(height: 6),

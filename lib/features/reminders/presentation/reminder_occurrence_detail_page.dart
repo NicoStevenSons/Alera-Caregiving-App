@@ -139,9 +139,7 @@ class _ReminderOccurrenceDetailPageState
                             child: Text(
                               'For $name',
                               key: const Key('reminder-detail-patient'),
-                              style: AleraTypography.body.copyWith(
-                                fontSize: 13,
-                              ),
+                              style: AleraTypography.bodySmall,
                             ),
                           ),
                       ],
@@ -162,7 +160,7 @@ class _ReminderOccurrenceDetailPageState
                       child: Text(
                         relative,
                         key: const Key('reminder-detail-relative'),
-                        style: AleraTypography.body.copyWith(fontSize: 13),
+                        style: AleraTypography.bodySmall,
                       ),
                     ),
                   ],

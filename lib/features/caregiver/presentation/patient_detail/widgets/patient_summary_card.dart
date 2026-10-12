@@ -60,7 +60,7 @@ class PatientDetailSummaryCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AleraTypography.body.copyWith(fontSize: 12),
+                      style: AleraTypography.caption,
                     ),
                     const SizedBox(height: 8),
                     Wrap(

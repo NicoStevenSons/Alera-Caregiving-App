@@ -37,16 +37,13 @@ class VitalTrendRangeHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+                style: AleraTypography.cardTitle,
               ),
               const SizedBox(height: 2),
               Text(
                 '${formatTrendLongDate(fromDate)} – '
                 '${formatTrendLongDate(toDate)}',
-                style: AleraTypography.body.copyWith(
-                  fontSize: 11,
-                  color: AleraColors.textSecondary,
-                ),
+                style: AleraTypography.micro,
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../alera_colors.dart';
 import 'alera_button.dart';
 import '../alera_spacing.dart';
+import '../alera_typography.dart';
 
 /// The one Alera dialog: white rounded surface, round icon, centred title and
 /// message, optional [content] (form fields), inline [errorText], and the
@@ -110,10 +111,7 @@ class AleraDialog extends StatelessWidget {
               Text(
                 errorText!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AleraColors.critical,
-                ),
+                style: AleraTypography.errorText,
               ),
             ],
             const SizedBox(height: 20),

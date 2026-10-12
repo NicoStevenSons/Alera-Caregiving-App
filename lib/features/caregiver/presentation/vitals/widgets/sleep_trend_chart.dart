@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/api/dto/sleep_trend_dto.dart';
+import '../../../../../design_system/alera_typography.dart';
 
 class SleepTrendChart extends StatelessWidget {
   final SleepTrendDto trend;
@@ -64,10 +65,7 @@ class SleepTrendChart extends StatelessWidget {
                         space: 6,
                         child: Text(
                           '${_formatHoursAxis(value)}h',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },
@@ -92,10 +90,7 @@ class SleepTrendChart extends StatelessWidget {
                         space: 8,
                         child: Text(
                           _axisDate(dates[index]),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },
@@ -265,7 +260,7 @@ class _SleepChartLegendItem extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF756E80), fontSize: 11),
+          style: AleraTypography.micro,
         ),
       ],
     );

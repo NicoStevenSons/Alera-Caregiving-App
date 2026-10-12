@@ -11,6 +11,7 @@ import '../../data/api/dto/patient_dto.dart';
 import 'widgets/patient_access_views.dart';
 import 'widgets/patient_setup_widgets.dart';
 import '../../../../design_system/widgets/alera_loader.dart';
+import '../../../../design_system/alera_typography.dart';
 
 export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
@@ -354,10 +355,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
                         _error!,
                         key: const Key('patient-access-error'),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AleraColors.critical,
-                        ),
+                        style: AleraTypography.errorText,
                       ),
                     ),
                   if (action != null) ...[action, const SizedBox(height: 12)],

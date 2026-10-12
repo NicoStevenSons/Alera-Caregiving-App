@@ -71,7 +71,7 @@ class CareRecipientCard extends StatelessWidget {
                 if (careRecipient.addressOrRoom != null) ...[
                   Text(
                     careRecipient.addressOrRoom!,
-                    style: AleraTypography.body.copyWith(fontSize: 12),
+                    style: AleraTypography.caption,
                   ),
                   const SizedBox(height: 2),
                 ],

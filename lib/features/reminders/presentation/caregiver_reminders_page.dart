@@ -466,7 +466,7 @@ class _PatientChip extends StatelessWidget {
               key: const Key('reminder-patient-subtitle'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+              style: AleraTypography.rowTitle,
             ),
           ),
           if (onTap != null) ...[

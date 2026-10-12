@@ -706,7 +706,7 @@ class _AddPatientPageState extends State<AddPatientPage>
   Widget get err => Text(
     error!,
     key: const Key('patient-error'),
-    style: const TextStyle(fontSize: 12, color: AleraColors.critical),
+    style: AleraTypography.errorText,
   );
 
   Widget primaryButton(String label, VoidCallback? onPressed) => AleraButton(
@@ -849,10 +849,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                         _profilePhotoError!,
                         key: const Key('patient-photo-error'),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AleraColors.critical,
-                        ),
+                        style: AleraTypography.errorText,
                       ),
                     ),
                 ],
@@ -948,10 +945,7 @@ class _AddPatientPageState extends State<AddPatientPage>
               child: Text(
                 state.errorText!,
                 key: const Key('birthdate-error'),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AleraColors.critical,
-                ),
+                style: AleraTypography.errorText,
               ),
             ),
         ],
@@ -1211,11 +1205,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                     children: const [
                       Text(
                         'Critical safety limits',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AleraColors.textPrimary,
-                        ),
+                        style: AleraTypography.bodyStrong,
                       ),
                       SizedBox(height: 2),
                       Text(
@@ -1323,7 +1313,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           Expanded(
             child: Text(
               title,
-              style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+              style: AleraTypography.cardTitle,
             ),
           ),
           if (actionLabel != null)
@@ -1477,7 +1467,7 @@ class _AddPatientPageState extends State<AddPatientPage>
             const SizedBox(height: 2),
             Text(
               monitoringRangeSummary,
-              style: AleraTypography.body.copyWith(fontSize: 13),
+              style: AleraTypography.bodySmall,
             ),
           ],
         ),
@@ -1550,10 +1540,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                 Text(
                   _profilePhotoError!,
                   key: const Key('patient-photo-upload-error'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AleraColors.critical,
-                  ),
+                  style: AleraTypography.errorText,
                 ),
               const SizedBox(height: 12),
               AleraButton(
@@ -1805,11 +1792,7 @@ class _IntroRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AleraColors.textPrimary,
-                  ),
+                  style: AleraTypography.bodyStrong,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1893,16 +1876,12 @@ class _CreatedRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AleraColors.textPrimary,
-                ),
+                style: AleraTypography.bodyStrong,
               ),
               if (subtitle != null)
                 Text(
                   subtitle!,
-                  style: AleraTypography.body.copyWith(fontSize: 12),
+                  style: AleraTypography.caption,
                 ),
             ],
           ),

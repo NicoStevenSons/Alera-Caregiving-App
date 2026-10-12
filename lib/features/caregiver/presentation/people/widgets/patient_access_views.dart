@@ -127,7 +127,7 @@ class PatientAccessCodeContent extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'Expires $expiry',
-          style: AleraTypography.body.copyWith(fontSize: 13),
+          style: AleraTypography.bodySmall,
         ),
         const SizedBox(height: 16),
         Center(
@@ -151,7 +151,7 @@ class PatientAccessCodeContent extends StatelessWidget {
           child: Text(
             'Scan this QR code or enter the code manually.',
             textAlign: TextAlign.center,
-            style: AleraTypography.body.copyWith(fontSize: 12),
+            style: AleraTypography.caption,
           ),
         ),
         const SizedBox(height: 16),
@@ -250,7 +250,7 @@ class PatientAccessNoticeContent extends StatelessWidget {
                   Text(
                     detail!,
                     textAlign: TextAlign.center,
-                    style: AleraTypography.body.copyWith(fontSize: 12),
+                    style: AleraTypography.caption,
                   ),
                 ],
               ],
@@ -297,11 +297,7 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AleraColors.textPrimary,
-                  ),
+                  style: AleraTypography.bodyStrong,
                 ),
                 const SizedBox(height: 2),
                 Text(

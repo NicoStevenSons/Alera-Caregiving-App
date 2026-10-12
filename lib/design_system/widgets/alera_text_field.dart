@@ -153,7 +153,7 @@ InputDecoration aleraInputDecoration({
     fillColor: AleraColors.fieldFill,
     isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-    errorStyle: const TextStyle(fontSize: 11, color: AleraColors.critical),
+    errorStyle: AleraTypography.errorText,
     border: border(AleraColors.fieldBorder),
     enabledBorder: border(AleraColors.fieldBorder),
     focusedBorder: border(AleraColors.primary, 1.5),

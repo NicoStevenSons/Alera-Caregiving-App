@@ -500,18 +500,13 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                             Text(
                               'Welcome to Alera',
                               textAlign: TextAlign.center,
-                              style: AleraTypography.pageTitle.copyWith(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AleraTypography.cardTitle,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Connect with your household.',
                               textAlign: TextAlign.center,
-                              style: AleraTypography.body.copyWith(
-                                fontSize: 12,
-                              ),
+                              style: AleraTypography.caption,
                             ),
                           ],
                         ),
@@ -578,10 +573,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: AleraTypography.sectionTitle.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AleraTypography.cardTitle,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -632,10 +624,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                 Text(
                   'Connect to your care household',
                   textAlign: TextAlign.center,
-                  style: AleraTypography.pageTitle.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AleraTypography.cardTitle,
                 ),
                 const SizedBox(height: 10),
                 Padding(
@@ -693,10 +682,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                 Text(
                   'Your patient code can only be used once.',
                   textAlign: TextAlign.center,
-                  style: AleraTypography.label.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: AleraTypography.micro,
                 ),
               ],
             ),
@@ -729,10 +715,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   Text(
                     'Enter your patient code',
                     textAlign: TextAlign.center,
-                    style: AleraTypography.pageTitle.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AleraTypography.cardTitle,
                   ),
                   const SizedBox(height: 28),
                   TextFormField(
@@ -784,10 +767,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   Text(
                     'Don’t have a code? Contact your care administrator.',
                     textAlign: TextAlign.center,
-                    style: AleraTypography.label.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: AleraTypography.micro,
                   ),
                 ],
               ),
@@ -905,10 +885,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   Text(
                     'Sign in to ${_householdName ?? 'your'} household',
                     textAlign: TextAlign.center,
-                    style: AleraTypography.pageTitle.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AleraTypography.cardTitle,
                   ),
                   const SizedBox(height: 16),
                   _householdSummary(),
@@ -951,10 +928,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   Text(
                     'Your account is created by your care administrator.',
                     textAlign: TextAlign.center,
-                    style: AleraTypography.label.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: AleraTypography.micro,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
@@ -1064,9 +1038,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                                 Text(
                                   title,
                                   textAlign: TextAlign.center,
-                                  style: AleraTypography.sectionTitle.copyWith(
-                                    fontSize: 16,
-                                  ),
+                                  style: AleraTypography.cardTitle,
                                 ),
                                 const SizedBox(height: 30),
                                 _roleCard(
@@ -1123,10 +1095,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                                 Text(
                                   'Enter your Household code',
                                   textAlign: TextAlign.center,
-                                  style: AleraTypography.pageTitle.copyWith(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: AleraTypography.cardTitle,
                                 ),
                                 const SizedBox(height: 28),
                                 Form(
@@ -1160,10 +1129,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                                 Text(
                                   'Don’t have a code? Contact your care administrator.',
                                   textAlign: TextAlign.center,
-                                  style: AleraTypography.label.copyWith(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w400,
-                                  ),
+                                  style: AleraTypography.micro,
                                 ),
                               ],
                             ),

@@ -69,7 +69,7 @@ class ReminderSummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     headline,
-                    style: AleraTypography.sectionTitle.copyWith(fontSize: 15),
+                    style: AleraTypography.rowTitle,
                   ),
                   if (subline != null)
                     Text(

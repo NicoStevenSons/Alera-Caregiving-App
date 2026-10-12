@@ -512,14 +512,12 @@ class _PatientAccessStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       'Patient app access',
-                      style: AleraTypography.sectionTitle.copyWith(
-                        fontSize: 15,
-                      ),
+                      style: AleraTypography.rowTitle,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       detail == null ? label : '$label · $detail',
-                      style: AleraTypography.body.copyWith(fontSize: 12),
+                      style: AleraTypography.caption,
                     ),
                   ],
                 ),

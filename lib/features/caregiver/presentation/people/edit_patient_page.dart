@@ -13,6 +13,7 @@ import 'widgets/patient_photo_picker.dart';
 import 'widgets/patient_setup_widgets.dart';
 import 'widgets/relationship_field.dart';
 import '../../../../design_system/alera_spacing.dart';
+import '../../../../design_system/alera_typography.dart';
 
 /// Edits an existing patient's profile and the signed-in caregiver's
 /// relationship label. Monitoring thresholds are intentionally not here; they
@@ -317,10 +318,7 @@ class _EditPatientPageState extends State<EditPatientPage> {
                       child: Text(
                         error,
                         key: const Key('edit-patient-error'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AleraColors.critical,
-                        ),
+                        style: AleraTypography.errorText,
                       ),
                     ),
                   Row(
@@ -397,10 +395,7 @@ class _EditPatientPageState extends State<EditPatientPage> {
                 _photoError!,
                 key: const Key('edit-photo-error'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AleraColors.critical,
-                ),
+                style: AleraTypography.errorText,
               ),
             ),
         ],
@@ -461,10 +456,7 @@ class _EditPatientPageState extends State<EditPatientPage> {
               child: Text(
                 state.errorText!,
                 key: const Key('edit-birthdate-error'),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AleraColors.critical,
-                ),
+                style: AleraTypography.errorText,
               ),
             ),
         ],

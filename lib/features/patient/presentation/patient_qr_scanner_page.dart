@@ -147,10 +147,7 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
               Text(
                 'Scan your patient QR code',
                 textAlign: TextAlign.center,
-                style: AleraTypography.pageTitle.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AleraTypography.cardTitle,
               ),
               const SizedBox(height: 10),
               Padding(

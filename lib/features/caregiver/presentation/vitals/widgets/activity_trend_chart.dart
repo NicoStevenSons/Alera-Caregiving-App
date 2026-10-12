@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/api/dto/activity_trend_dto.dart';
+import '../../../../../design_system/alera_typography.dart';
 
 class ActivityTrendChart extends StatelessWidget {
   final ActivityTrendDto trend;
@@ -65,10 +66,7 @@ class ActivityTrendChart extends StatelessWidget {
                         space: 6,
                         child: Text(
                           _compactSteps(value),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },
@@ -93,10 +91,7 @@ class ActivityTrendChart extends StatelessWidget {
                         space: 8,
                         child: Text(
                           _axisDate(dates[index]),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF8E8895),
-                          ),
+                          style: AleraTypography.micro,
                         ),
                       );
                     },
@@ -266,7 +261,7 @@ class _ChartLegendItem extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF756E80), fontSize: 11),
+          style: AleraTypography.micro,
         ),
       ],
     );

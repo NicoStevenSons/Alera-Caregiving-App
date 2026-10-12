@@ -87,11 +87,7 @@ class SetupOptionCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AleraColors.textPrimary,
-                  ),
+                  style: AleraTypography.bodyStrong,
                 ),
                 const SizedBox(height: 2),
                 for (final line in lines)
@@ -204,7 +200,7 @@ class SetupLabeledValue extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AleraTypography.body.copyWith(fontSize: 12)),
+        Text(label, style: AleraTypography.caption),
         const SizedBox(height: 2),
         Text(
           has ? value!.trim() : emptyText,

@@ -27,7 +27,7 @@ class ReminderDateHeader extends StatelessWidget {
             reminderLongDate(date),
             key: const Key('reminder-selected-date'),
             overflow: TextOverflow.ellipsis,
-            style: AleraTypography.pageTitle.copyWith(fontSize: 17),
+            style: AleraTypography.sectionTitle,
           ),
         ),
         AleraPill(

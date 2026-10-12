@@ -110,7 +110,7 @@ class _Insight extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: AleraTypography.body.copyWith(fontSize: 10),
+                style: AleraTypography.micro,
               ),
             ],
           ),

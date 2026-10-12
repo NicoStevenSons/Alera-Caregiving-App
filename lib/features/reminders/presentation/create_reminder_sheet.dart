@@ -113,7 +113,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                 child: Text(
                   'New reminder',
                   textAlign: TextAlign.center,
-                  style: AleraTypography.sectionTitle.copyWith(fontSize: 16),
+                  style: AleraTypography.cardTitle,
                 ),
               ),
               TextButton(
@@ -142,7 +142,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                   until,
                   key: const Key('reminder-time-until'),
                   textAlign: TextAlign.center,
-                  style: AleraTypography.body.copyWith(fontSize: 13),
+                  style: AleraTypography.bodySmall,
                 ),
                 const SizedBox(height: 10),
                 ReminderTimeWheel(
@@ -357,7 +357,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
             const Text(
               'Pick at least one day.',
               key: Key('reminder-custom-days-error'),
-              style: TextStyle(fontSize: 11, color: AleraColors.critical),
+              style: AleraTypography.errorText,
             ),
           ],
         ],
@@ -480,11 +480,7 @@ class _SettingRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AleraColors.textPrimary,
-              ),
+              style: AleraTypography.bodyStrong,
             ),
           ),
           child,
