@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../../../config/app_config.dart';
 import '../auth/caregiver_session_controller.dart';
+import 'caregiver_patient_edit_data_source.dart';
 import 'dto/patient_dto.dart';
 import 'dto/monitoring_device_dto.dart';
 
@@ -34,7 +35,10 @@ abstract interface class CaregiverPatientReadDataSource {
 }
 
 class CaregiverPatientApiDataSource
-    implements CaregiverPatientDataSource, CaregiverPatientReadDataSource {
+    implements
+        CaregiverPatientDataSource,
+        CaregiverPatientReadDataSource,
+        CaregiverPatientEditDataSource {
   final http.Client _client;
   final CaregiverSession _session;
   final Duration timeout;
@@ -209,6 +213,34 @@ class CaregiverPatientApiDataSource
     return _parse(
       () => MonitoringSettingsResponse.fromJson(_jsonObject(response)),
     );
+  }
+
+  /// `PATCH /api/v1/patients/{patient_id}`: full replacement of the editable
+  /// profile fields (explicit nulls clear a value) plus the signed-in
+  /// caregiver's own `relationship_label`. Returns the refreshed patient
+  /// detail. Monitoring thresholds and baselines are not part of this call.
+  @override
+  Future<PatientDetailDto> updatePatient(
+    String patientId,
+    UpdatePatientRequest request,
+  ) async {
+    final http.Response response;
+    try {
+      response = await _patch(
+        '/api/v1/patients/${Uri.encodeComponent(patientId)}',
+        request.toJson(),
+      );
+    } on CaregiverPatientApiFailure catch (failure) {
+      if (failure.kind == CaregiverPatientFailureKind.forbidden) {
+        throw const CaregiverPatientApiFailure(
+          'You do not have permission to edit this patient.',
+          kind: CaregiverPatientFailureKind.forbidden,
+          statusCode: 403,
+        );
+      }
+      rethrow;
+    }
+    return _parse(() => PatientDetailDto.fromJson(_jsonObject(response)));
   }
 
   Future<http.Response> _post(String path, Map<String, Object?> body) =>

@@ -268,6 +268,7 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    final patientApi = CaregiverPatientApiDataSource(session: _session);
     final Widget page = switch (_session.status) {
       CaregiverSessionStatus.restoring => const AleraStartupScreen(),
       CaregiverSessionStatus.unauthenticated => Theme(
@@ -286,9 +287,8 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
                 loadNotificationAlert: CaregiverAlertApiDataSource(
                   session: _session,
                 ).fetchAlert,
-                patientDataSource: CaregiverPatientApiDataSource(
-                  session: _session,
-                ),
+                patientDataSource: patientApi,
+                patientEditDataSource: patientApi,
                 nudgeDataSource: CaregiverNudgeApiDataSource(session: _session),
                 reminderDataSource: ReminderApiDataSource(session: _session),
                 helpRequestDataSource: CaregiverHelpRequestApiDataSource(
