@@ -157,10 +157,7 @@ class _CaregiverHelpRequestDetailPageState
             ),
           ),
           const SizedBox(height: AleraSpacing.large),
-          Text(
-            'Caregiver notes',
-            style: AleraTypography.sectionTitle,
-          ),
+          Text('Caregiver notes', style: AleraTypography.sectionTitle),
           const SizedBox(height: AleraSpacing.small),
           Text(
             'Private to assigned caregivers.',

@@ -108,10 +108,7 @@ class _Insight extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: AleraTypography.micro,
-              ),
+              Text(subtitle, style: AleraTypography.micro),
             ],
           ),
         ),

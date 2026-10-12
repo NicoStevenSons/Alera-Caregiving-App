@@ -811,10 +811,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                         style: TextButton.styleFrom(
                           foregroundColor: AleraColors.primary,
                         ),
-                        icon: const Icon(
-                          Icons.photo_library,
-                          size: 18,
-                        ),
+                        icon: const Icon(Icons.photo_library, size: 18),
                         label: Text(
                           _profilePhotoBytes == null
                               ? 'Choose photo'
@@ -1193,11 +1190,7 @@ class _AddPatientPageState extends State<AddPatientPage>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info,
-                  size: 22,
-                  color: AleraColors.primary,
-                ),
+                const Icon(Icons.info, size: 22, color: AleraColors.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -1310,12 +1303,7 @@ class _AddPatientPageState extends State<AddPatientPage>
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: AleraTypography.cardTitle,
-            ),
-          ),
+          Expanded(child: Text(title, style: AleraTypography.cardTitle)),
           if (actionLabel != null)
             TextButton(
               onPressed: onActionPressed,
@@ -1465,10 +1453,7 @@ class _AddPatientPageState extends State<AddPatientPage>
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              monitoringRangeSummary,
-              style: AleraTypography.bodySmall,
-            ),
+            Text(monitoringRangeSummary, style: AleraTypography.bodySmall),
           ],
         ),
       ),
@@ -1790,10 +1775,7 @@ class _IntroRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AleraTypography.bodyStrong,
-                ),
+                Text(title, style: AleraTypography.bodyStrong),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
@@ -1874,15 +1856,9 @@ class _CreatedRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: AleraTypography.bodyStrong,
-              ),
+              Text(title, style: AleraTypography.bodyStrong),
               if (subtitle != null)
-                Text(
-                  subtitle!,
-                  style: AleraTypography.caption,
-                ),
+                Text(subtitle!, style: AleraTypography.caption),
             ],
           ),
         ),

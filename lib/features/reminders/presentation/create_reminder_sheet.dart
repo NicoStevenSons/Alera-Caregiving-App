@@ -31,7 +31,9 @@ Future<ReminderTemplateDraft?> showCreateReminderSheet(
   useSafeArea: true,
   backgroundColor: AleraColors.background,
   shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(AleraSpacing.radiusLarge)),
+    borderRadius: BorderRadius.vertical(
+      top: Radius.circular(AleraSpacing.radiusLarge),
+    ),
   ),
   builder: (context) => FractionallySizedBox(
     heightFactor: 0.94,
@@ -477,12 +479,7 @@ class _SettingRow extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 52),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: AleraTypography.bodyStrong,
-            ),
-          ),
+          Expanded(child: Text(label, style: AleraTypography.bodyStrong)),
           child,
         ],
       ),

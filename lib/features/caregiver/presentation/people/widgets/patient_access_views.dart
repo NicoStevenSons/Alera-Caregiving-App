@@ -125,10 +125,7 @@ class PatientAccessCodeContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          'Expires $expiry',
-          style: AleraTypography.bodySmall,
-        ),
+        Text('Expires $expiry', style: AleraTypography.bodySmall),
         const SizedBox(height: 16),
         Center(
           child: Container(
@@ -295,10 +292,7 @@ class _InfoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AleraTypography.bodyStrong,
-                ),
+                Text(title, style: AleraTypography.bodyStrong),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,

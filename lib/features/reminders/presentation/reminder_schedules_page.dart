@@ -52,10 +52,7 @@ class ReminderSchedulesPage extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              Text(
-                'Manage schedules',
-                style: AleraTypography.heading,
-              ),
+              Text('Manage schedules', style: AleraTypography.heading),
               if (patientName != null) ...[
                 const SizedBox(height: 4),
                 Text(

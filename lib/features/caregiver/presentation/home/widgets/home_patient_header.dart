@@ -32,7 +32,9 @@ class HomePatientHeader extends StatelessWidget {
             AleraColors.primarySoft, // Bottom: Light Pale Lavender
           ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(AleraSpacing.radiusLarge)),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(AleraSpacing.radiusLarge),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),

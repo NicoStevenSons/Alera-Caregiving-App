@@ -67,10 +67,7 @@ class ReminderSummaryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    headline,
-                    style: AleraTypography.rowTitle,
-                  ),
+                  Text(headline, style: AleraTypography.rowTitle),
                   if (subline != null)
                     Text(
                       subline,

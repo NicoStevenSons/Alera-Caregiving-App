@@ -751,10 +751,7 @@ class _FilterSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
-      child: Text(
-        label,
-        style: AleraTypography.cardTitle,
-      ),
+      child: Text(label, style: AleraTypography.cardTitle),
     );
   }
 }
@@ -1220,12 +1217,7 @@ class _HistoryGroup extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              child: Text(
-                label,
-                style: AleraTypography.cardTitle,
-              ),
-            ),
+            Expanded(child: Text(label, style: AleraTypography.cardTitle)),
             if (canExpand)
               TextButton(
                 onPressed: onToggleGroup,

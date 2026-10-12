@@ -577,7 +577,9 @@ class _SummaryCard extends StatelessWidget {
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: statusColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+                                borderRadius: BorderRadius.circular(
+                                  AleraSpacing.cardRadius,
+                                ),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -597,10 +599,7 @@ class _SummaryCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 5),
-                      Text(
-                        alert.title,
-                        style: AleraTypography.heading,
-                      ),
+                      Text(alert.title, style: AleraTypography.heading),
                       Text(
                         '$patientName • Triggered ${_relative(alert.detectedAt)}',
                         style: AleraTypography.bodySmall,
@@ -760,10 +759,7 @@ class _AlertImpact extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  message,
-                  style: AleraTypography.caption,
-                ),
+                Text(message, style: AleraTypography.caption),
               ],
             ),
           ),
@@ -1231,11 +1227,7 @@ class _ContextMetric extends StatelessWidget {
                   value,
                   style: AleraTypography.sectionTitle.copyWith(fontSize: 18),
                 ),
-                if (unit.isNotEmpty)
-                  Text(
-                    unit,
-                    style: AleraTypography.micro,
-                  ),
+                if (unit.isNotEmpty) Text(unit, style: AleraTypography.micro),
               ],
             ),
           ),

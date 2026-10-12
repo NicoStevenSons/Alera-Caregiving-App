@@ -61,7 +61,9 @@ class AleraDialog extends StatelessWidget {
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
+      ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         child: Column(
@@ -118,17 +120,17 @@ class AleraDialog extends StatelessWidget {
             Row(
               children: [
                 if (showCancel) ...[
-                Expanded(
-                  child: AleraButton(
-                    label: cancelLabel,
-                    variant: AleraButtonVariant.lightPill,
-                    height: 44,
-                    onPressed: busy
-                        ? null
-                        : (onCancel ?? () => Navigator.pop(context)),
+                  Expanded(
+                    child: AleraButton(
+                      label: cancelLabel,
+                      variant: AleraButtonVariant.lightPill,
+                      height: 44,
+                      onPressed: busy
+                          ? null
+                          : (onCancel ?? () => Navigator.pop(context)),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
                 ],
                 Expanded(
                   child: AleraButton(

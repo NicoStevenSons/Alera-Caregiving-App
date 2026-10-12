@@ -85,10 +85,7 @@ class SetupOptionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AleraTypography.bodyStrong,
-                ),
+                Text(title, style: AleraTypography.bodyStrong),
                 const SizedBox(height: 2),
                 for (final line in lines)
                   Text(

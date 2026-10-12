@@ -510,10 +510,7 @@ class _PatientAccessStatusCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Patient app access',
-                      style: AleraTypography.rowTitle,
-                    ),
+                    Text('Patient app access', style: AleraTypography.rowTitle),
                     const SizedBox(height: 2),
                     Text(
                       detail == null ? label : '$label · $detail',

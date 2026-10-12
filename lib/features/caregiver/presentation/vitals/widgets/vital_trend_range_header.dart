@@ -35,10 +35,7 @@ class VitalTrendRangeHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: AleraTypography.cardTitle,
-              ),
+              Text(title, style: AleraTypography.cardTitle),
               const SizedBox(height: 2),
               Text(
                 '${formatTrendLongDate(fromDate)} – '

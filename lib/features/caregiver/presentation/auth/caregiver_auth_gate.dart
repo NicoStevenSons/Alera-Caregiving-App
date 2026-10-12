@@ -558,9 +558,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
             decoration: BoxDecoration(
-              color: selected
-                  ? AleraColors.todayTint
-                  : AleraColors.fieldFill,
+              color: selected ? AleraColors.todayTint : AleraColors.fieldFill,
               borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
             ),
             child: Column(

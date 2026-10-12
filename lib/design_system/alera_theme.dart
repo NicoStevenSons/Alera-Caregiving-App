@@ -32,7 +32,9 @@ abstract final class AleraTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: AleraColors.surface,
         elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.cardRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+        ),
         contentTextStyle: AleraTypography.bodyStrong,
         actionTextColor: AleraColors.primary,
       ),

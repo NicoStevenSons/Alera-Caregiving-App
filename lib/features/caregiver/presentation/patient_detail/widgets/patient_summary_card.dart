@@ -72,7 +72,9 @@ class PatientDetailSummaryCard extends StatelessWidget {
                           key: const Key('patient-relationship-pill'),
                           decoration: BoxDecoration(
                             color: AleraColors.primarySoft,
-                            borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
+                            borderRadius: BorderRadius.circular(
+                              AleraSpacing.radiusSmall,
+                            ),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(

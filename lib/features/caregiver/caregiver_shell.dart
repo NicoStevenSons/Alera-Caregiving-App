@@ -1089,7 +1089,9 @@ class _CaregiverShellState extends State<CaregiverShell>
       isScrollControlled: true,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AleraSpacing.radiusLarge)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AleraSpacing.radiusLarge),
+        ),
       ),
       builder: (sheetContext) => SafeArea(
         child: ConstrainedBox(

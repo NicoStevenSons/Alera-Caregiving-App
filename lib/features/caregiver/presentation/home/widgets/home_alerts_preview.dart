@@ -70,7 +70,10 @@ class _HomeAlertsPreviewState extends State<HomeAlertsPreview> {
                     SizedBox(height: 4),
                     Text(
                       'We’ll let you know if anything needs attention.',
-                      style: TextStyle(color: AleraColors.fieldHint, fontSize: 12),
+                      style: TextStyle(
+                        color: AleraColors.fieldHint,
+                        fontSize: 12,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],

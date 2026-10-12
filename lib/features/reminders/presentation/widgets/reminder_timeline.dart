@@ -240,7 +240,9 @@ class _NowRow extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AleraColors.selected,
-                      borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
+                      borderRadius: BorderRadius.circular(
+                        AleraSpacing.radiusLarge,
+                      ),
                     ),
                     child: Text(
                       'NOW · ${reminderClock(time)}',
@@ -671,10 +673,7 @@ class _Meta extends StatelessWidget {
     children: [
       Icon(icon, size: 14, color: AleraColors.mutedIcon),
       const SizedBox(width: 4),
-      Text(
-        text,
-        style: AleraTypography.caption,
-      ),
+      Text(text, style: AleraTypography.caption),
     ],
   );
 }

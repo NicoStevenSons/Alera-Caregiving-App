@@ -61,7 +61,9 @@ class _SignOutConfirmDialog extends StatelessWidget {
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         child: Column(
@@ -141,7 +143,9 @@ class _SignOutProgressDialog extends StatelessWidget {
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       constraints: BoxConstraints(minWidth: 0, maxWidth: large ? 260 : 220),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
         child: Row(

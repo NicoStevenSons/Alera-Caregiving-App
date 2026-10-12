@@ -258,10 +258,7 @@ class _SleepChartLegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: AleraTypography.micro,
-        ),
+        Text(label, style: AleraTypography.micro),
       ],
     );
   }

@@ -141,7 +141,10 @@ class _StartupErrorScreen extends StatelessWidget {
                 Text(
                   'Please close the app and try again.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AleraColors.textSecondary, fontSize: 15),
+                  style: TextStyle(
+                    color: AleraColors.textSecondary,
+                    fontSize: 15,
+                  ),
                 ),
               ],
             ),

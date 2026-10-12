@@ -112,7 +112,9 @@ class _ReminderOccurrenceDetailPageState
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: reminderCategoryTile(occurrence.category),
-                      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
+                      borderRadius: BorderRadius.circular(
+                        AleraSpacing.cardRadius,
+                      ),
                     ),
                     child: AleraSvgIcon(
                       assetPath: reminderCategoryAsset(occurrence.category),
