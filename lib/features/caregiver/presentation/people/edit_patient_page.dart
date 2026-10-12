@@ -244,9 +244,7 @@ class _EditPatientPageState extends State<EditPatientPage> {
               error = null;
             });
             try {
-              await widget.archiveDataSource.archivePatient(
-                _patient.patientId,
-              );
+              await widget.archiveDataSource.archivePatient(_patient.patientId);
               if (dialogContext.mounted) Navigator.pop(dialogContext, true);
             } on CaregiverPatientApiFailure catch (failure) {
               if (dialogContext.mounted) {
@@ -289,174 +287,174 @@ class _EditPatientPageState extends State<EditPatientPage> {
         }
       },
       child: Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 44,
-        leadingWidth: 56,
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.chevron_left, size: 28),
-          color: AleraColors.mutedIcon,
-          onPressed: saving ? null : () => Navigator.maybePop(context),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          toolbarHeight: 44,
+          leadingWidth: 56,
+          leading: IconButton(
+            tooltip: 'Back',
+            icon: const Icon(Icons.chevron_left, size: 28),
+            color: AleraColors.mutedIcon,
+            onPressed: saving ? null : () => Navigator.maybePop(context),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  key: const Key('edit-patient-form'),
-                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    key: const Key('edit-patient-form'),
+                    padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                    children: [
+                      const SetupHeader(
+                        title: 'Edit patient',
+                        subtitle:
+                            'Update this person’s details and monitoring '
+                            'ranges.',
+                      ),
+                      _photoSection(saving),
+                      const SizedBox(height: 20),
+                      AleraTextField(
+                        controller: _name,
+                        label: 'Full name',
+                        hint: 'Enter patient’s full name',
+                        fieldKey: const Key('edit-name-field'),
+                        required: true,
+                        enabled: !saving,
+                        validator: (x) => x == null || x.trim().isEmpty
+                            ? 'Enter the patient’s full name.'
+                            : x.trim().length > 150
+                            ? 'Use 150 characters or fewer.'
+                            : null,
+                      ),
+                      RelationshipField(
+                        controller: _relationship,
+                        enabled: !saving,
+                      ),
+                      AleraTextField(
+                        controller: _phone,
+                        label: 'Phone number',
+                        hint: 'Enter patient’s phone number',
+                        fieldKey: const Key('edit-phone-field'),
+                        enabled: !saving,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [LengthLimitingTextInputFormatter(11)],
+                      ),
+                      AleraTextField(
+                        controller: _address,
+                        label: 'Address or room',
+                        hint: 'Enter patient’s address or room',
+                        fieldKey: const Key('edit-address-field'),
+                        enabled: !saving,
+                      ),
+                      _birthdateField(saving),
+                      _sexField(saving),
+                      AleraTextField(
+                        controller: _emergencyName,
+                        label: 'Emergency contact name',
+                        hint: 'Enter emergency contact’s full name',
+                        fieldKey: const Key('edit-emergency-name-field'),
+                        enabled: !saving,
+                        validator: (x) => (x?.length ?? 0) > 150
+                            ? 'Use 150 characters or fewer.'
+                            : null,
+                      ),
+                      AleraTextField(
+                        controller: _emergencyPhone,
+                        label: 'Emergency contact phone',
+                        hint: 'Enter emergency contact’s phone number',
+                        fieldKey: const Key('edit-emergency-phone-field'),
+                        enabled: !saving,
+                        keyboardType: TextInputType.phone,
+                        validator: (x) => (x?.length ?? 0) > 30
+                            ? 'Use 30 characters or fewer.'
+                            : null,
+                      ),
+                      AleraTextField(
+                        controller: _conditions,
+                        label: 'Known conditions (Separate with comma)',
+                        hint: 'e.g. Hypertension, Diabetes',
+                        fieldKey: const Key('edit-conditions-field'),
+                        enabled: !saving,
+                      ),
+                      AleraTextField(
+                        controller: _medications,
+                        label: 'Medications',
+                        hint: 'Enter patient’s medications',
+                        fieldKey: const Key('edit-medications-field'),
+                        enabled: !saving,
+                      ),
+                      AleraTextField(
+                        controller: _notes,
+                        label: 'Monitoring notes',
+                        hint: 'Add any notes for monitoring',
+                        fieldKey: const Key('edit-notes-field'),
+                        enabled: !saving,
+                        maxLines: 3,
+                      ),
+                      _monitoringRow(saving),
+                      _archiveRow(saving),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SetupHeader(
-                      title: 'Edit patient',
-                      subtitle:
-                          'Update this person’s details and monitoring '
-                          'ranges.',
+                    if (error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          error,
+                          key: const Key('edit-patient-error'),
+                          style: AleraTypography.errorText,
+                        ),
+                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AleraButton(
+                            label: 'Cancel',
+                            variant: AleraButtonVariant.lightPill,
+                            height: 44,
+                            onPressed: saving
+                                ? null
+                                : () => Navigator.maybePop(context),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: AleraButton(
+                            key: const Key('edit-patient-save'),
+                            label: saving
+                                ? 'Saving…'
+                                : error != null
+                                ? 'Try again'
+                                : 'Save changes',
+                            variant: AleraButtonVariant.pill,
+                            height: 44,
+                            onPressed: saving ? null : _save,
+                          ),
+                        ),
+                      ],
                     ),
-                    _photoSection(saving),
-                    const SizedBox(height: 20),
-                    AleraTextField(
-                      controller: _name,
-                      label: 'Full name',
-                      hint: 'Enter patient’s full name',
-                      fieldKey: const Key('edit-name-field'),
-                      required: true,
-                      enabled: !saving,
-                      validator: (x) => x == null || x.trim().isEmpty
-                          ? 'Enter the patient’s full name.'
-                          : x.trim().length > 150
-                          ? 'Use 150 characters or fewer.'
-                          : null,
-                    ),
-                    RelationshipField(
-                      controller: _relationship,
-                      enabled: !saving,
-                    ),
-                    AleraTextField(
-                      controller: _phone,
-                      label: 'Phone number',
-                      hint: 'Enter patient’s phone number',
-                      fieldKey: const Key('edit-phone-field'),
-                      enabled: !saving,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [LengthLimitingTextInputFormatter(11)],
-                    ),
-                    AleraTextField(
-                      controller: _address,
-                      label: 'Address or room',
-                      hint: 'Enter patient’s address or room',
-                      fieldKey: const Key('edit-address-field'),
-                      enabled: !saving,
-                    ),
-                    _birthdateField(saving),
-                    _sexField(saving),
-                    AleraTextField(
-                      controller: _emergencyName,
-                      label: 'Emergency contact name',
-                      hint: 'Enter emergency contact’s full name',
-                      fieldKey: const Key('edit-emergency-name-field'),
-                      enabled: !saving,
-                      validator: (x) => (x?.length ?? 0) > 150
-                          ? 'Use 150 characters or fewer.'
-                          : null,
-                    ),
-                    AleraTextField(
-                      controller: _emergencyPhone,
-                      label: 'Emergency contact phone',
-                      hint: 'Enter emergency contact’s phone number',
-                      fieldKey: const Key('edit-emergency-phone-field'),
-                      enabled: !saving,
-                      keyboardType: TextInputType.phone,
-                      validator: (x) => (x?.length ?? 0) > 30
-                          ? 'Use 30 characters or fewer.'
-                          : null,
-                    ),
-                    AleraTextField(
-                      controller: _conditions,
-                      label: 'Known conditions (Separate with comma)',
-                      hint: 'e.g. Hypertension, Diabetes',
-                      fieldKey: const Key('edit-conditions-field'),
-                      enabled: !saving,
-                    ),
-                    AleraTextField(
-                      controller: _medications,
-                      label: 'Medications',
-                      hint: 'Enter patient’s medications',
-                      fieldKey: const Key('edit-medications-field'),
-                      enabled: !saving,
-                    ),
-                    AleraTextField(
-                      controller: _notes,
-                      label: 'Monitoring notes',
-                      hint: 'Add any notes for monitoring',
-                      fieldKey: const Key('edit-notes-field'),
-                      enabled: !saving,
-                      maxLines: 3,
-                    ),
-                    _monitoringRow(saving),
-                    _archiveRow(saving),
                   ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        error,
-                        key: const Key('edit-patient-error'),
-                        style: AleraTypography.errorText,
-                      ),
-                    ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AleraButton(
-                          label: 'Cancel',
-                          variant: AleraButtonVariant.lightPill,
-                          height: 44,
-                          onPressed: saving
-                              ? null
-                              : () => Navigator.maybePop(context),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: AleraButton(
-                          key: const Key('edit-patient-save'),
-                          label: saving
-                              ? 'Saving…'
-                              : error != null
-                              ? 'Try again'
-                              : 'Save changes',
-                          variant: AleraButtonVariant.pill,
-                          height: 44,
-                          onPressed: saving ? null : _save,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

@@ -468,10 +468,7 @@ void main() {
 
   group('archive patient through the real API data source', () {
     CaregiverPatientApiDataSource api(MockClient client) =>
-        CaregiverPatientApiDataSource(
-          session: _TokenSession(),
-          client: client,
-        );
+        CaregiverPatientApiDataSource(session: _TokenSession(), client: client);
 
     Future<void> confirm(WidgetTester tester) async {
       final button = find.byKey(const Key('edit-archive-patient'));

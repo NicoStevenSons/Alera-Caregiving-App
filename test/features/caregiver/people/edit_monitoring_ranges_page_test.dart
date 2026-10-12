@@ -126,7 +126,10 @@ void main() {
     tester,
   ) async {
     await pumpPage(tester, customRanges: true);
-    await tester.enterText(find.byKey(const Key('monitoring-hr-min-field')), '');
+    await tester.enterText(
+      find.byKey(const Key('monitoring-hr-min-field')),
+      '',
+    );
     await tester.enterText(
       find.byKey(const Key('monitoring-spo2-min-field')),
       '101',
