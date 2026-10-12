@@ -7,6 +7,7 @@ import '../../../data/api/dto/vital_trend_dto.dart';
 import '../caregiver_activity_trend_page.dart';
 import '../caregiver_sleep_trend_page.dart';
 import '../caregiver_vital_trend_page.dart';
+import '../../../../../design_system/widgets/alera_snackbar.dart';
 
 /// Builds the trend page for [metric] so the metric pill row can switch
 /// between Heart Rate/SpO2/Activity/Sleep in place (via
@@ -73,9 +74,5 @@ void switchVitalTrendPage(
 /// tapped - mirrors the message the patient-card tap already shows via
 /// `CaregiverShell._openVitalTrend`.
 void showVitalTrendUnavailable(BuildContext context, String metric) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(content: Text('$metric history is not available yet.')),
-    );
+  showAleraSnackBar(context, '$metric history is not available yet.');
 }

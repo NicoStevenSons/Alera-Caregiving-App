@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../Services/upload_queue_service.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/widgets/alera_confirmation_dialog.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class ClearPendingQueueButton extends StatelessWidget {
   final UploadQueueService uploadQueueService;
@@ -57,13 +58,10 @@ class ClearPendingQueueButton extends StatelessWidget {
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Cleared $deletedCount '
-              'pending readings.',
-            ),
-          ),
+        showAleraSnackBar(
+          context,
+          'Cleared $deletedCount pending readings.',
+          type: AleraSnackBarType.success,
         );
       },
       icon: const Icon(Icons.delete),

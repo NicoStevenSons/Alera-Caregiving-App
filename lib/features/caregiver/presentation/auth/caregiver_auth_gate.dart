@@ -25,6 +25,7 @@ import '../../data/auth/caregiver_session_controller.dart';
 import '../../data/auth/caregiver_token_store.dart';
 import '../../domain/repositories/caregiver_repository.dart';
 import '../../../startup/presentation/alera_startup_screen.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class HouseholdCodeInput extends StatefulWidget {
   final TextEditingController controller;
@@ -253,13 +254,12 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
       signOut: _session.logout,
       onError: (_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            action: SnackBarAction(label: 'Retry', onPressed: _signOut),
-            content: const Text(
-              'Unable to clear saved sign-in. Please try signing out again.',
-            ),
-          ),
+        showAleraSnackBar(
+          context,
+          'Unable to clear saved sign-in. Please try signing out again.',
+          type: AleraSnackBarType.error,
+          actionLabel: 'Retry',
+          onAction: _signOut,
         );
       },
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/widgets/alera_pill.dart';
 import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../reminders/presentation/reminder_category_style.dart';
 import '../../../reminders/presentation/reminder_formatters.dart';
@@ -27,11 +28,6 @@ class CaregiverReminderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool missed = reminder.status == CaregiverReminderStatus.missed;
     final bool done = reminder.status == CaregiverReminderStatus.completed;
-    final Color accent = missed
-        ? AleraColors.critical
-        : done
-        ? AleraColors.successStrong
-        : AleraColors.information;
     final String label =
         reminder.statusLabel ??
         (missed
@@ -83,13 +79,29 @@ class CaregiverReminderRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '$label · ${_time(reminder.scheduledAt)}',
-                      style: TextStyle(
-                        color: accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.schedule,
+                          size: 14,
+                          color: AleraColors.mutedIcon,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _time(reminder.scheduledAt),
+                          style: AleraTypography.body.copyWith(
+                            fontSize: 12,
+                            color: AleraColors.textSecondary,
+                          ),
+                        ),
+                        if (missed || done) ...[
+                          const SizedBox(width: 8),
+                          AleraPill(
+                            label: label,
+                            variant: AleraPillVariant.label,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

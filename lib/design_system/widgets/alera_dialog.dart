@@ -18,6 +18,7 @@ class AleraDialog extends StatelessWidget {
     required this.confirmLabel,
     required this.onConfirm,
     this.cancelLabel = 'Back',
+    this.showCancel = true,
     this.onCancel,
     this.destructive = false,
     this.busy = false,
@@ -36,6 +37,9 @@ class AleraDialog extends StatelessWidget {
   final String confirmLabel;
   final VoidCallback? onConfirm;
   final String cancelLabel;
+
+  /// Hides the cancel button for single-action (acknowledge) dialogs.
+  final bool showCancel;
 
   /// Defaults to closing the dialog with no result.
   final VoidCallback? onCancel;
@@ -114,6 +118,7 @@ class AleraDialog extends StatelessWidget {
             const SizedBox(height: 20),
             Row(
               children: [
+                if (showCancel) ...[
                 Expanded(
                   child: AleraButton(
                     label: cancelLabel,
@@ -125,6 +130,7 @@ class AleraDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: AleraButton(
                     label: confirmLabel,

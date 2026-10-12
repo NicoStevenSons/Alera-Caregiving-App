@@ -338,17 +338,15 @@ class _CaregiverPatientDetailLoaderPageState
       );
     });
     widget.controller.applyPatientUpdate(result.patient);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            result.photoFailed
-                ? 'Changes saved, but the new photo could not be uploaded.'
-                : 'Patient updated.',
-          ),
-        ),
-      );
+    showAleraSnackBar(
+      context,
+      result.photoFailed
+          ? 'Changes saved, but the new photo could not be uploaded.'
+          : 'Patient updated.',
+      type: result.photoFailed
+          ? AleraSnackBarType.info
+          : AleraSnackBarType.success,
+    );
   }
 
   @override

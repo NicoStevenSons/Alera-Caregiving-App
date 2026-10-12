@@ -36,6 +36,7 @@ import '../services/patient_nudge_notification.dart';
 import '../services/reminder_due_notification.dart';
 import '../Services/health_connect_refresh_service.dart';
 import '../features/elderly/data/api/activity_data_api_service.dart';
+import '../design_system/widgets/alera_snackbar.dart';
 
 class ElderlyInterface extends StatefulWidget {
   final String patientId;
@@ -346,11 +347,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   void _openNudge(PatientNudgeNotification event) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('${event.type.label} reminder received.')),
-      );
+    showAleraSnackBar(context, '${event.type.label} reminder received.');
   }
 
   void _startStepsRefreshTimer() {
@@ -492,9 +489,7 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showAleraSnackBar(context, message);
   }
 
   @override

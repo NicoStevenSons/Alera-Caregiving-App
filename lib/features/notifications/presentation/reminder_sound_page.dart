@@ -9,6 +9,7 @@ import '../../../design_system/widgets/alera_chevron_app_bar.dart';
 import '../../../services/notification_sounds/notification_sound_catalog.dart';
 import '../../../services/notification_sounds/notification_sound_preview.dart';
 import '../../../services/notification_sounds/reminder_sound_store.dart';
+import '../../../design_system/widgets/alera_snackbar.dart';
 
 /// Lets the user choose how ordinary reminders sound on this phone.
 ///
@@ -69,13 +70,11 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
     if (mounted) setState(() => _playing = key);
     final bool played = await _preview.playResource(resource);
     if (!played && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Couldn't play the preview. Fully restart the app (not hot "
-            'reload) and check your phone volume.',
-          ),
-        ),
+      showAleraSnackBar(
+        context,
+        "Couldn't play the preview. Fully restart the app (not hot "
+        'reload) and check your phone volume.',
+        type: AleraSnackBarType.error,
       );
     }
     // Previews are short; clear the "playing" state shortly after.
@@ -86,12 +85,9 @@ class _ReminderSoundPageState extends State<ReminderSoundPage> {
   Future<void> _openDndSettings(AlertSoundCategory category) async {
     final bool opened = await _preview.openChannelSettings(category.channelId);
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Open Settings > Apps > Alera > Notifications to change this.',
-          ),
-        ),
+      showAleraSnackBar(
+        context,
+        'Open Settings > Apps > Alera > Notifications to change this.',
       );
     }
   }

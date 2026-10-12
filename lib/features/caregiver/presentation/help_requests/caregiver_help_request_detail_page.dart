@@ -6,6 +6,7 @@ import '../../data/api/caregiver_help_request_api_data_source.dart';
 import '../../data/help_requests/caregiver_help_request_detail_controller.dart';
 import '../../data/help_requests/caregiver_help_request_note.dart';
 import '../widgets/caregiver_page_app_bar.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverHelpRequestDetailPage extends StatefulWidget {
   const CaregiverHelpRequestDetailPage({
@@ -55,9 +56,11 @@ class _CaregiverHelpRequestDetailPageState
 
     if (added) {
       _noteController.clear();
-      ScaffoldMessenger.of(
+      showAleraSnackBar(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Caregiver note added.')));
+        'Caregiver note added.',
+        type: AleraSnackBarType.success,
+      );
     }
   }
 

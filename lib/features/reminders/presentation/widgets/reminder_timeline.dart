@@ -555,7 +555,6 @@ class _ReminderCard extends StatelessWidget {
         occurrence.status == ReminderOccurrenceStatus.completed ||
         occurrence.status == ReminderOccurrenceStatus.completedLate;
     final missed = occurrence.status == ReminderOccurrenceStatus.missed;
-    final accent = reminderCategoryColor(occurrence.category);
     final background = muted
         ? Colors.white
         : missed
@@ -640,10 +639,9 @@ class _ReminderCard extends StatelessWidget {
             _Meta(
               icon: Icons.schedule,
               text: reminderClock(occurrence.scheduledAt),
-              color: accent,
             ),
             if (repeatLabel != null)
-              _Meta(icon: Icons.repeat, text: repeatLabel!, color: accent),
+              _Meta(icon: Icons.repeat, text: repeatLabel!),
             if (status != null)
               AleraPill(label: status, variant: AleraPillVariant.label),
           ],
@@ -671,16 +669,15 @@ class _ReminderCard extends StatelessWidget {
 }
 
 class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.text, required this.color});
+  const _Meta({required this.icon, required this.text});
   final IconData icon;
   final String text;
-  final Color color;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14, color: color),
+      Icon(icon, size: 14, color: AleraColors.mutedIcon),
       const SizedBox(width: 4),
       Text(
         text,
