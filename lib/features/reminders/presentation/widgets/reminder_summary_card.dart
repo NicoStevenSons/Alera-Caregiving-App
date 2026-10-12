@@ -8,6 +8,7 @@ import '../../domain/reminder_models.dart';
 import '../reminder_category_style.dart';
 import '../reminder_formatters.dart';
 import 'reminder_timeline.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 /// Soft gradient summary above the timeline: how many are left and what is
 /// next ("3 left today · next at 2:00 PM").
@@ -104,7 +105,7 @@ class _NextChip extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(6, 5, 10, 5),
       decoration: BoxDecoration(
         color: AleraColors.fieldFill,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -114,7 +115,7 @@ class _NextChip extends StatelessWidget {
             height: 26,
             decoration: BoxDecoration(
               color: reminderCategoryTile(next.category),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
             ),
             child: Center(
               child: AleraSvgIcon(

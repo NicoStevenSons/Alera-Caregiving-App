@@ -72,7 +72,7 @@ class PatientDetailSummaryCard extends StatelessWidget {
                           key: const Key('patient-relationship-pill'),
                           decoration: BoxDecoration(
                             color: AleraColors.primarySoft,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -193,7 +193,7 @@ class PatientConnectionPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -232,7 +232,7 @@ class PatientStatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

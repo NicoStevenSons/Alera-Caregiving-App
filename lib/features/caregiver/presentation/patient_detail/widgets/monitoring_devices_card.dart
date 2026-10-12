@@ -5,6 +5,7 @@ import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 /// Watch and phone on two compact rows: connection chip and battery.
 class PatientMonitoringDevicesCard extends StatelessWidget {
@@ -113,7 +114,7 @@ class _DeviceRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: status.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
             ),
             child: Text(
               _statusLabel,

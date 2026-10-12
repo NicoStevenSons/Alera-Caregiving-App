@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../reminder_formatters.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 /// Horizontally scrolling strip of days; the selected day is solid primary.
 class ReminderDateStrip extends StatefulWidget {
@@ -159,10 +160,10 @@ class _DayChip extends StatelessWidget {
             ? AleraColors.todayTint
             : Colors.white,
         elevation: 0,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           child: SizedBox(
             width: ReminderDateStrip._itemWidth,
             child: Column(

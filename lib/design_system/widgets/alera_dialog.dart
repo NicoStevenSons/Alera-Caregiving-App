@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../alera_colors.dart';
 import 'alera_button.dart';
+import '../alera_spacing.dart';
 
 /// The one Alera dialog: white rounded surface, round icon, centred title and
 /// message, optional [content] (form fields), inline [errorText], and the
@@ -59,7 +60,7 @@ class AleraDialog extends StatelessWidget {
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge)),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         child: Column(

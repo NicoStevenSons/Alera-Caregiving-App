@@ -232,7 +232,7 @@ class _MoreRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AleraColors.primarySoft,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 ),
                 child: const Text(
                   'Soon',

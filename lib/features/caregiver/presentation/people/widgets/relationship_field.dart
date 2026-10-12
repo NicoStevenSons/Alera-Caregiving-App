@@ -5,6 +5,7 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../../../design_system/widgets/alera_text_field.dart';
 import '../../../domain/relationship_label.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 const String _iconDir = 'alera-figma-assets/assets/icons/relationships';
 
@@ -170,7 +171,7 @@ class RelationshipTile extends StatelessWidget {
             ? AleraColors.selected.withValues(alpha: 0.14)
             : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           side: BorderSide(
             color: selected ? AleraColors.selected : AleraColors.divider,
             width: selected ? 1.5 : 1,

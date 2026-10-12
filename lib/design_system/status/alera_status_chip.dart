@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'alera_status_descriptor.dart';
 import 'alera_status_icon.dart';
 import 'alera_status_tone.dart';
+import '../alera_spacing.dart';
 
 /// Size variant for [AleraStatusChip].
 enum AleraStatusChipSize { small, medium }
@@ -78,7 +79,7 @@ class AleraStatusChip extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: palette.fill,
-          borderRadius: BorderRadius.circular(100),
+          borderRadius: BorderRadius.circular(AleraSpacing.radiusPill),
           border: Border.all(color: palette.border, width: 1),
         ),
         child: Padding(

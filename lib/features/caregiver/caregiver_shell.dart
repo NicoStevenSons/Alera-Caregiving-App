@@ -56,6 +56,7 @@ import '../startup/presentation/alera_startup_screen.dart';
 import '../../design_system/widgets/alera_snackbar.dart';
 import '../../design_system/widgets/alera_empty_state.dart';
 import '../../design_system/alera_sheet_animation.dart';
+import '../../design_system/alera_spacing.dart';
 
 class CaregiverShell extends StatefulWidget {
   final CaregiverRepository repository;
@@ -1088,7 +1089,7 @@ class _CaregiverShellState extends State<CaregiverShell>
       isScrollControlled: true,
       backgroundColor: AleraColors.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AleraSpacing.radiusLarge)),
       ),
       builder: (sheetContext) => SafeArea(
         child: ConstrainedBox(

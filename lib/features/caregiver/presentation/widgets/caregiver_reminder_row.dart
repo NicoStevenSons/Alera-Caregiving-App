@@ -53,7 +53,7 @@ class CaregiverReminderRow extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: reminderCategoryTile(reminder.category),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 ),
                 child: Center(
                   child: AleraSvgIcon(

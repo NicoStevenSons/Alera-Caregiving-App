@@ -161,7 +161,7 @@ class _DemoBanner extends StatelessWidget {
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: AleraColors.warning.withValues(alpha: .14),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
     ),
     child: const Text('Demo data — the patient service is currently offline.'),
   );

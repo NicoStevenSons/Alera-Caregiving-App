@@ -15,6 +15,7 @@ import '../../data/api/caregiver_alert_api_data_source.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 class CaregiverAlertDetailPage extends StatefulWidget {
   final CaregiverAlert alert;
@@ -208,7 +209,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                 isExpanded: true,
                 decoration: aleraInputDecoration(hint: 'Choose one'),
                 dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 items: CaregiverInterventionType.values
                     .map(
                       (value) => DropdownMenuItem(
@@ -576,7 +577,7 @@ class _SummaryCard extends StatelessWidget {
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: statusColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -740,7 +741,7 @@ class _AlertImpact extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1155,7 +1156,7 @@ class _NotesCard extends StatelessWidget {
                 borderSide: const BorderSide(color: AleraColors.fieldBorder),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
                 borderSide: const BorderSide(
                   color: AleraColors.selected,
                   width: 1.5,

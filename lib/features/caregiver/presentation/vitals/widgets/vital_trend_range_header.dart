@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/alera_typography.dart';
 import 'trend_date_format.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 /// The chart card's own header: a title ("Heart Rate Trend"), the date
 /// range it's showing, and a dropdown to change that range - replacing the
@@ -98,7 +99,7 @@ class _RangeDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: AleraColors.primarySoft,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

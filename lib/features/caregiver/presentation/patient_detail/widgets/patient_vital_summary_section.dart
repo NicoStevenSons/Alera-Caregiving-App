@@ -5,6 +5,7 @@ import '../../../../../design_system/alera_typography.dart';
 import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../../domain/models/health_snapshot.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 class PatientVitalSummarySection extends StatelessWidget {
   final HealthSnapshot snapshot;
@@ -176,7 +177,7 @@ class _VitalCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

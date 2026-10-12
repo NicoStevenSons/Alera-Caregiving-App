@@ -8,6 +8,7 @@ import '../../caregiver/data/auth/caregiver_session_controller.dart';
 import '../data/auth/patient_auth_api.dart';
 import 'patient_access.dart';
 import '../../../design_system/widgets/alera_loader.dart';
+import '../../../design_system/alera_spacing.dart';
 
 class PatientQrScannerPage extends StatefulWidget {
   final CaregiverSessionController sessionController;
@@ -167,7 +168,7 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
               const SizedBox(height: 20), // Reduced from 28 to 20
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -262,7 +263,7 @@ class _ScannerFrameOverlay extends StatelessWidget {
             key: const Key('patient-qr-scan-frame'),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.white, width: 3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
             ),
           ),
         ),

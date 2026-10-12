@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/alera_colors.dart';
+import '../../../design_system/alera_spacing.dart';
 
 /// Scrolling-wheel time picker (hour / minute / AM-PM), modelled on the
 /// phone's clock app rather than Material's dial. Lives inline on the page;
@@ -64,7 +65,7 @@ class _ReminderTimeWheelState extends State<ReminderTimeWheel> {
       height: _itemExtent * _visibleItems,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         boxShadow: [
           BoxShadow(
             color: AleraColors.primary.withValues(alpha: 0.10),
@@ -83,7 +84,7 @@ class _ReminderTimeWheelState extends State<ReminderTimeWheel> {
               margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: AleraColors.primarySoft,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
               ),
             ),
           ),

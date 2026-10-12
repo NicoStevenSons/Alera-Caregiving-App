@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../alera_colors.dart';
 import '../alera_typography.dart';
+import '../alera_spacing.dart';
 
 /// Filled lavender input: the one shared text-field look for the whole app
 /// (form-field counterpart to [AleraButton] and [AleraCard]). This is the
@@ -138,7 +139,7 @@ InputDecoration aleraInputDecoration({
 }) {
   OutlineInputBorder border(Color color, [double width = 1]) =>
       OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
         borderSide: BorderSide(color: color, width: width),
       );
 

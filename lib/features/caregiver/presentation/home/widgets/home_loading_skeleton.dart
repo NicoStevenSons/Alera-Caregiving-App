@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/widgets/alera_skeleton.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 /// Placeholder for dashboard data; patient identity stays visible above it.
 class HomeLoadingSkeleton extends StatelessWidget {
@@ -17,7 +18,7 @@ class HomeLoadingSkeleton extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

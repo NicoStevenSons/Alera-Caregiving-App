@@ -240,7 +240,7 @@ class _NowRow extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AleraColors.selected,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
                     ),
                     child: Text(
                       'NOW · ${reminderClock(time)}',
@@ -581,7 +581,7 @@ class _ReminderCard extends StatelessWidget {
                   color: muted
                       ? AleraColors.primarySoft.withValues(alpha: 0.6)
                       : reminderCategoryTile(occurrence.category),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 ),
                 child: Center(
                   child: Opacity(

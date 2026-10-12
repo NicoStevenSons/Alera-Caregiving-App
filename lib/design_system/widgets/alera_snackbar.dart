@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../alera_colors.dart';
+import '../alera_spacing.dart';
 
 enum AleraSnackBarType { success, error, info }
 
@@ -56,7 +57,7 @@ void showAleraSnackBarOn(
           padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
           decoration: BoxDecoration(
             color: AleraColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
             border: Border.all(
               color: AleraColors.primary.withValues(alpha: 0.10),
             ),
@@ -81,7 +82,7 @@ void showAleraSnackBarOn(
                 height: 36,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
                 ),
                 child: Icon(icon, size: 20, color: color),
               ),

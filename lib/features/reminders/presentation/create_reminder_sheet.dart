@@ -12,6 +12,7 @@ import 'reminder_formatters.dart';
 import 'reminder_repeat.dart';
 import 'reminder_time_picker.dart';
 import '../../../design_system/alera_sheet_animation.dart';
+import '../../../design_system/alera_spacing.dart';
 
 /// Pull-up "New reminder" drawer, laid out like the phone's New alarm
 /// screen: a live "Reminds in…" line, the time wheel, a repeat selector,
@@ -30,7 +31,7 @@ Future<ReminderTemplateDraft?> showCreateReminderSheet(
   useSafeArea: true,
   backgroundColor: AleraColors.background,
   shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    borderRadius: BorderRadius.vertical(top: Radius.circular(AleraSpacing.radiusLarge)),
   ),
   builder: (context) => FractionallySizedBox(
     heightFactor: 0.94,
@@ -386,7 +387,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
           color: AleraColors.fieldHint,
         ),
         dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         style: _valueStyle,
         selectedItemBuilder: leading == null
             ? null
@@ -575,7 +576,7 @@ class _CategoryTile extends StatelessWidget {
             ? AleraColors.selected.withValues(alpha: 0.14)
             : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           side: BorderSide(
             color: selected ? AleraColors.selected : AleraColors.divider,
             width: selected ? 1.5 : 1,

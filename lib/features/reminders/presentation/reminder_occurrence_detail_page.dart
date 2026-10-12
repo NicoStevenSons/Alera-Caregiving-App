@@ -13,6 +13,7 @@ import 'reminder_category_style.dart';
 import 'reminder_formatters.dart';
 import 'widgets/reminder_history_section.dart';
 import 'widgets/reminder_timeline.dart' show reminderIsActionable;
+import '../../../design_system/alera_spacing.dart';
 
 typedef ReminderOccurrenceAction =
     Future<void> Function(ReminderOccurrence occurrence);
@@ -111,7 +112,7 @@ class _ReminderOccurrenceDetailPageState
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: reminderCategoryTile(occurrence.category),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                     ),
                     child: AleraSvgIcon(
                       assetPath: reminderCategoryAsset(occurrence.category),
@@ -342,7 +343,7 @@ class _StatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

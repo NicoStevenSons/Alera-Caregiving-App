@@ -4,6 +4,7 @@ import '../../../../../design_system/alera_colors.dart';
 import '../../../../../design_system/widgets/alera_button.dart';
 import '../../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../domain/models/care_recipient.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 class HomePatientHeader extends StatelessWidget {
   final CareRecipient careRecipient;
@@ -31,7 +32,7 @@ class HomePatientHeader extends StatelessWidget {
             Color(0xFFE8E0FF), // Bottom: Light Pale Lavender
           ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(AleraSpacing.radiusLarge)),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
@@ -43,7 +44,7 @@ class HomePatientHeader extends StatelessWidget {
               child: InkWell(
                 key: const Key('home-patient-selector'),
                 onTap: onSelectPatient,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(

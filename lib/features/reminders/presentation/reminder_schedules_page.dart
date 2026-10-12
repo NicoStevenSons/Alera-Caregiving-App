@@ -11,6 +11,7 @@ import '../domain/reminder_models.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
 import '../../../design_system/widgets/alera_loader.dart';
+import '../../../design_system/alera_spacing.dart';
 
 /// Recurring reminder templates (and archived ones) for the patient whose
 /// reminders are on the main page. Kept off the main timeline.
@@ -153,7 +154,7 @@ class _ScheduleCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AleraColors.primarySoft.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
             ),
             child: Center(
               child: Opacity(

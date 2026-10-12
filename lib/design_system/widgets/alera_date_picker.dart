@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../alera_colors.dart';
+import '../alera_spacing.dart';
 
 /// Alera-styled calendar date picker: a clean white sheet with a soft purple
 /// header, rounded day selection and purple actions. Calendar-only (no
@@ -34,7 +35,7 @@ Future<DateTime?> showAleraDatePicker(
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
             ),
             headerBackgroundColor: AleraColors.primarySoft,
             headerForegroundColor: AleraColors.primary,

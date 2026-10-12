@@ -497,7 +497,7 @@ class _PatientAccessStatusCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: AleraColors.primarySoft.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
                 ),
                 child: const Icon(
                   Icons.smartphone,

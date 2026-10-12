@@ -26,6 +26,7 @@ import '../../data/auth/caregiver_token_store.dart';
 import '../../domain/repositories/caregiver_repository.dart';
 import '../../../startup/presentation/alera_startup_screen.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 class HouseholdCodeInput extends StatefulWidget {
   final TextEditingController controller;
@@ -555,7 +556,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
           onTap: _submitting
               ? null
               : () => setState(() => _selectedRole = role),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
@@ -565,7 +566,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
               color: selected
                   ? const Color(0xFFE4D9FB)
                   : const Color(0xFFF6F1FF),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
             ),
             child: Column(
               children: [
@@ -880,7 +881,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
             minimumSize: const Size(46, 32),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AleraSpacing.radiusSmall),
             ),
           ),
           child: const Text('Edit'),

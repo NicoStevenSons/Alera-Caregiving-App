@@ -10,6 +10,7 @@ import '../../../../../design_system/widgets/alera_card.dart';
 import '../../../../../design_system/widgets/alera_svg_icon.dart';
 import 'patient_setup_widgets.dart';
 import '../../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../../design_system/alera_spacing.dart';
 
 /// Payload encoded in the patient access QR code. The patient app decodes
 /// this (see patient_access.dart), so the shape must stay `version: 2`.
@@ -134,7 +135,7 @@ class PatientAccessCodeContent extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AleraColors.surfaceTint,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
             ),
             child: QrImageView(
               key: const Key('access-code-qr'),
@@ -327,9 +328,9 @@ class _CopyChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AleraColors.primarySoft,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
         onTap: onTap,
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -368,7 +369,7 @@ class _ValidityStrip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: AleraColors.surfaceTint,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       ),
       child: IntrinsicHeight(
         child: Row(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../alera_colors.dart';
 import 'alera_button.dart';
+import '../alera_spacing.dart';
 
 /// Icon-circle, centered-copy confirmation dialog (Figma: the "Create
 /// patient?" / "Finish setup?" prompts).
@@ -33,7 +34,7 @@ Future<bool?> showAleraConfirmationDialog(
       backgroundColor: AleraColors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         child: Column(

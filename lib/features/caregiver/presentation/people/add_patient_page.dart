@@ -22,6 +22,7 @@ import 'patient_access_setup_page.dart';
 import 'widgets/patient_access_views.dart';
 import 'widgets/patient_setup_widgets.dart';
 import 'widgets/relationship_field.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
@@ -999,7 +1000,7 @@ class _AddPatientPageState extends State<AddPatientPage>
             color: AleraColors.fieldHint,
           ),
           dropdownColor: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           style: const TextStyle(fontSize: 13, color: AleraColors.textPrimary),
           decoration: aleraInputDecoration(hint: 'Select patient’s sex'),
           items: const [

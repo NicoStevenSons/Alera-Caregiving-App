@@ -20,6 +20,7 @@ import '../widgets/caregiver_alert_card.dart';
 import '../widgets/caregiver_alert_presentation.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/alera_spacing.dart';
 
 enum AlertFilter {
   warning,
@@ -948,7 +949,7 @@ class _SkeletonSection extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D5E477C),
@@ -981,7 +982,7 @@ class _AlertCardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A5E477C),
@@ -1053,7 +1054,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1295,15 +1296,15 @@ class AlertListCard extends StatelessWidget {
     final String identity = recipient?.name ?? 'Unknown patient';
     return Material(
       color: const Color(0xFFFCFBFF),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: stripe, width: 5)),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
           ),
           child: Row(
             children: [

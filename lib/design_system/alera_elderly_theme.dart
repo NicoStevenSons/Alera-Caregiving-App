@@ -129,7 +129,7 @@ abstract final class AleraElderlyTheme {
         backgroundColor: AleraColors.textPrimary,
         elevation: 4,
         insetPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AleraSpacing.cardRadius)),
         contentTextStyle: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
