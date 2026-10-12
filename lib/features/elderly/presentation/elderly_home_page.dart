@@ -13,6 +13,7 @@ import 'widgets/heart_rate_display.dart';
 import 'widgets/sleep_display.dart';
 import 'widgets/spo2_display.dart';
 import 'widgets/steps_display.dart';
+import '../../../design_system/widgets/alera_loader.dart';
 
 class ElderlyHomePage extends StatelessWidget {
   const ElderlyHomePage({
@@ -206,10 +207,7 @@ class _NextReminderCard extends StatelessWidget {
           padding: EdgeInsets.all(20),
           child: Row(
             children: [
-              SizedBox.square(
-                dimension: 28,
-                child: CircularProgressIndicator(strokeWidth: 3),
-              ),
+              AleraLoader(),
               SizedBox(width: 16),
               Expanded(
                 child: Text(

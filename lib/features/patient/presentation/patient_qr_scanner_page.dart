@@ -7,6 +7,7 @@ import '../../../design_system/widgets/alera_button.dart';
 import '../../caregiver/data/auth/caregiver_session_controller.dart';
 import '../data/auth/patient_auth_api.dart';
 import 'patient_access.dart';
+import '../../../design_system/widgets/alera_loader.dart';
 
 class PatientQrScannerPage extends StatefulWidget {
   final CaregiverSessionController sessionController;
@@ -196,7 +197,7 @@ class _PatientQrScannerPageState extends State<PatientQrScannerPage> {
               ),
               if (_connecting) ...[
                 const SizedBox(height: 16),
-                const Center(child: CircularProgressIndicator()),
+                const Center(child: AleraLoader.large()),
                 const SizedBox(height: 8),
                 Text(
                   'Connecting to your household...',

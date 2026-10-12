@@ -7,6 +7,7 @@ import '../../data/help_requests/caregiver_help_request_detail_controller.dart';
 import '../../data/help_requests/caregiver_help_request_note.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 class CaregiverHelpRequestDetailPage extends StatefulWidget {
   const CaregiverHelpRequestDetailPage({
@@ -73,7 +74,7 @@ class _CaregiverHelpRequestDetailPageState
         builder: (context, _) {
           return switch (_controller.state) {
             HelpRequestDetailState.initialLoading => const Center(
-              child: CircularProgressIndicator(),
+              child: AleraLoader.large(),
             ),
             HelpRequestDetailState.error => _DetailError(
               message:
@@ -188,10 +189,7 @@ class _CaregiverHelpRequestDetailPageState
             key: const Key('add-help-request-note'),
             onPressed: _controller.addingNote ? null : _submitNote,
             icon: _controller.addingNote
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const AleraLoader.small()
                 : const Icon(Icons.note_add_outlined),
             label: Text(_controller.addingNote ? 'Adding…' : 'Add note'),
           ),

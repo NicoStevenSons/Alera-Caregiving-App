@@ -7,6 +7,7 @@ import '../../data/reminder_timeline_controller.dart';
 import '../../domain/reminder_event.dart';
 import '../reminder_event_text.dart';
 import '../reminder_formatters.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 /// The chronological history of one reminder occurrence (oldest first), with
 /// loading, empty, retryable-error and "Load more" states. Used by the
@@ -73,7 +74,7 @@ class ReminderHistorySection extends StatelessWidget {
       return const Padding(
         key: Key('reminder-timeline-loading'),
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AleraLoader.large()),
       );
     }
     if (controller.isEmpty) {
@@ -107,10 +108,7 @@ class ReminderHistorySection extends StatelessWidget {
                 ? const Padding(
                     key: Key('reminder-timeline-loading-more'),
                     padding: EdgeInsets.all(12),
-                    child: SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+                    child: AleraLoader.small(),
                   )
                 : TextButton(
                     key: const Key('reminder-timeline-load-more'),

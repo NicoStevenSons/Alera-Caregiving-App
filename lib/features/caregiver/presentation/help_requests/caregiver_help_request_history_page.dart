@@ -6,6 +6,7 @@ import '../../data/api/caregiver_help_request_api_data_source.dart';
 import '../../data/help_requests/caregiver_help_request_history_controller.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 import 'caregiver_help_request_detail_page.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 class CaregiverHelpRequestHistoryPage extends StatefulWidget {
   const CaregiverHelpRequestHistoryPage({
@@ -112,7 +113,7 @@ class _CaregiverHelpRequestHistoryPageState
   Widget _buildContent() {
     return switch (_controller.state) {
       HelpRequestHistoryState.initialLoading => const Center(
-        child: CircularProgressIndicator(),
+        child: AleraLoader.large(),
       ),
       HelpRequestHistoryState.error => _HistoryMessage(
         icon: Icons.cloud_off_outlined,

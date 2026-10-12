@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../design_system/alera_colors.dart';
 import '../../../design_system/alera_typography.dart';
+import '../../../design_system/widgets/alera_loader.dart';
 
 class AleraStartupScreen extends StatelessWidget {
   const AleraStartupScreen({super.key});
@@ -61,10 +62,7 @@ class AleraStartupScreen extends StatelessWidget {
                         const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: AleraColors.primary,
-                          ),
+                          child: AleraLoader(),
                         ),
                         const SizedBox(height: 10),
                         Text(

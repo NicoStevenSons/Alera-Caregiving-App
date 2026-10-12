@@ -7,6 +7,7 @@ import '../../../design_system/widgets/alera_back_button.dart';
 import '../../../Services/upload_queue_service.dart';
 import '../../../features/elderly/presentation/widgets/clear_pending_queue_button.dart';
 import '../../../features/elderly/presentation/widgets/elderly_widgets.dart';
+import '../../../design_system/widgets/alera_loader.dart';
 
 class HeartRateHistoryPage extends StatefulWidget {
   final UploadQueueService uploadQueueService;
@@ -91,7 +92,7 @@ class _HeartRateHistoryPageState extends State<HeartRateHistoryPage> {
             if (isLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: AleraLoader.large()),
               )
             else if (readings.isEmpty)
               const ElderlyStateMessage(

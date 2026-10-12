@@ -10,6 +10,7 @@ import '../data/reminder_controller.dart';
 import '../domain/reminder_models.dart';
 import 'reminder_action_runner.dart';
 import 'reminder_formatters.dart';
+import '../../../design_system/widgets/alera_loader.dart';
 
 /// Recurring reminder templates (and archived ones) for the patient whose
 /// reminders are on the main page. Kept off the main timeline.
@@ -197,10 +198,7 @@ class _ScheduleCard extends StatelessWidget {
             ),
           ),
           if (busy)
-            const SizedBox.square(
-              dimension: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+            const AleraLoader.small()
           else if (onArchive != null)
             IconButton(
               key: ValueKey('reminder-archive-${template.id}'),

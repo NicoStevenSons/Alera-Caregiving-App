@@ -4,6 +4,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../domain/models/elderly_reminder.dart';
 import '../elderly_reminder_style.dart';
 import 'elderly_widgets.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 class ElderlyReminderCard extends StatelessWidget {
   final ElderlyReminder reminder;
@@ -98,10 +99,7 @@ class ElderlyReminderCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: busy ? null : onComplete,
                     child: busy
-                        ? const SizedBox.square(
-                            dimension: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const AleraLoader.small()
                         : const Text('Complete'),
                   ),
                 ),

@@ -4,6 +4,7 @@ import '../../domain/models/elderly_reminder.dart';
 import 'elderly_reminder_card.dart';
 import '../../../../design_system/alera_colors.dart';
 import 'elderly_widgets.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 class ElderlyRemindersList extends StatefulWidget {
   final bool isLoading;
@@ -53,7 +54,7 @@ class _ElderlyRemindersListState extends State<ElderlyRemindersList> {
       return const Padding(
         key: Key('elderly-reminders-loading'),
         padding: EdgeInsets.symmetric(vertical: 48),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AleraLoader.large()),
       );
     }
 

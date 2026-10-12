@@ -4,6 +4,7 @@ import '../../../../design_system/alera_colors.dart';
 import '../../data/elderly_help_request_controller.dart';
 import 'elderly_widgets.dart';
 import '../../../help_requests/domain/help_request.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 class ElderlyHelpRequestCard extends StatelessWidget {
   const ElderlyHelpRequestCard({
@@ -30,10 +31,7 @@ class ElderlyHelpRequestCard extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Row(
             children: [
-              SizedBox.square(
-                dimension: 28,
-                child: CircularProgressIndicator(strokeWidth: 3),
-              ),
+              AleraLoader(),
               SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -67,10 +65,7 @@ class ElderlyHelpRequestCard extends StatelessWidget {
         child: FilledButton.icon(
           key: Key('elderly-help-sending'),
           onPressed: null,
-          icon: SizedBox.square(
-            dimension: 20,
-            child: CircularProgressIndicator(strokeWidth: 3),
-          ),
+          icon: const AleraLoader.small(),
           label: Text('Sending request…'),
         ),
       ),

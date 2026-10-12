@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../alera_colors.dart';
 import 'alera_button.dart';
+import 'alera_loader.dart';
 
 /// Confirm → blocking "Signing out…" dialog → run [signOut].
 ///
@@ -147,10 +148,7 @@ class _SignOutProgressDialog extends StatelessWidget {
           children: [
             SizedBox.square(
               dimension: large ? 30 : 24,
-              child: const CircularProgressIndicator(
-                strokeWidth: 3.5,
-                color: AleraColors.primary,
-              ),
+              child: const AleraLoader(),
             ),
             const SizedBox(width: 16),
             Flexible(

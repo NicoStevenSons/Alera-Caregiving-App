@@ -10,6 +10,7 @@ import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import 'widgets/patient_access_views.dart';
 import 'widgets/patient_setup_widgets.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 export 'widgets/patient_access_views.dart' show buildPatientAccessQrPayload;
 
@@ -232,7 +233,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
       content = const [
         Padding(
           padding: EdgeInsets.only(top: 120),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: AleraLoader.large()),
         ),
       ];
     } else if (_connected) {

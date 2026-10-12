@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/help_requests/caregiver_help_request_controller.dart';
 import '../../../../help_requests/domain/help_request.dart';
+import '../../../../../design_system/widgets/alera_loader.dart';
 
 class HomeHelpRequestsPreview extends StatelessWidget {
   const HomeHelpRequestsPreview({
@@ -23,10 +24,7 @@ class HomeHelpRequestsPreview extends StatelessWidget {
             const Card(
               key: Key('home-help-requests-loading'),
               child: ListTile(
-                leading: SizedBox.square(
-                  dimension: 24,
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                ),
+                leading: AleraLoader.small(),
                 title: Text('Checking help requests…'),
               ),
             ),

@@ -8,6 +8,7 @@ import '../../../../design_system/widgets/alera_svg_icon.dart';
 import '../../domain/reminder_models.dart';
 import '../reminder_category_style.dart';
 import '../reminder_formatters.dart';
+import '../../../../design_system/widgets/alera_loader.dart';
 
 const _cardPadding = 12.0;
 const _iconTile = 44.0;
@@ -704,12 +705,9 @@ class _Trailing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (busy) {
-      return const SizedBox.square(
-        dimension: 30,
-        child: Padding(
-          padding: EdgeInsets.all(5),
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+      return const Padding(
+        padding: EdgeInsets.all(5),
+        child: AleraLoader.small(),
       );
     }
     final done =
