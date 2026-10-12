@@ -155,6 +155,26 @@ class PatientProfilePhotoResponse {
   }
 }
 
+/// Answer to `POST /api/v1/patients/{patient_id}/archive`. The backend
+/// archive is soft and retry-safe: repeating it returns the original
+/// [archivedAt], normalized to UTC.
+class PatientArchivedResponse {
+  final String patientId;
+  final DateTime archivedAt;
+
+  const PatientArchivedResponse({
+    required this.patientId,
+    required this.archivedAt,
+  });
+
+  factory PatientArchivedResponse.fromJson(Map<String, dynamic> json) {
+    return PatientArchivedResponse(
+      patientId: _requiredString(json['patient_id'], 'patient_id'),
+      archivedAt: _requiredUtc(json['archived_at'], 'archived_at'),
+    );
+  }
+}
+
 class PatientCreatedResponse {
   final String patientId;
   final String userId;

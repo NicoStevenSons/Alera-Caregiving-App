@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_patient_archive_data_source.dart';
+import 'package:alera/features/caregiver/data/auth/caregiver_session_controller.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/data/patients/edit_patient_controller.dart';
 import 'package:alera/features/caregiver/presentation/people/edit_patient_page.dart';
@@ -30,6 +34,7 @@ void main() {
     PatientPhotoPickerFn? pickPhoto,
     String? relationship,
     bool customRanges = false,
+    CaregiverPatientArchiveDataSource? archiveSource,
   }) async {
     tester.view.physicalSize = const Size(900, 2600);
     tester.view.devicePixelRatio = 1;
@@ -51,7 +56,7 @@ void main() {
                         ),
                         editDataSource: edit,
                         photoDataSource: photos,
-                        archiveDataSource: archive,
+                        archiveDataSource: archiveSource ?? archive,
                         pickPhoto: pickPhoto,
                       ),
                     ),
@@ -460,6 +465,103 @@ void main() {
       );
     });
   });
+
+  group('archive patient through the real API data source', () {
+    CaregiverPatientApiDataSource api(MockClient client) =>
+        CaregiverPatientApiDataSource(
+          session: _TokenSession(),
+          client: client,
+        );
+
+    Future<void> confirm(WidgetTester tester) async {
+      final button = find.byKey(const Key('edit-archive-patient'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Archive'));
+    }
+
+    testWidgets('HTTP 200 archives and closes the page', (tester) async {
+      final requests = <http.Request>[];
+      await pumpPage(
+        tester,
+        archiveSource: api(
+          MockClient((request) async {
+            requests.add(request);
+            return http.Response(
+              jsonEncode({
+                'patient_id': 'patient-1',
+                'archived_at': '2026-10-12T15:30:05Z',
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+      await confirm(tester);
+      await tester.pumpAndSettle();
+
+      expect(requests.single.url.path, '/api/v1/patients/patient-1/archive');
+      expect(requests.single.headers['authorization'], 'Bearer t');
+      expect(popped!.archived, isTrue);
+    });
+
+    testWidgets('a backend detail message appears in the open dialog', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        archiveSource: api(
+          MockClient(
+            (_) async => http.Response(
+              jsonEncode({'detail': 'Caregiver role required.'}),
+              403,
+            ),
+          ),
+        ),
+      );
+      await confirm(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('archive-patient-dialog')), findsOneWidget);
+      expect(find.text('Caregiver role required.'), findsOneWidget);
+      expect(popped, isNull);
+      expect(find.byKey(const Key('edit-patient-form')), findsOneWidget);
+    });
+
+    testWidgets('a second tap while the request runs sends nothing', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      var calls = 0;
+      await pumpPage(
+        tester,
+        archiveSource: api(
+          MockClient((_) async {
+            calls++;
+            await gate.future;
+            return http.Response(
+              jsonEncode({
+                'patient_id': 'patient-1',
+                'archived_at': '2026-10-12T15:30:05Z',
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+      await confirm(tester);
+      await tester.pump();
+      await tester.tap(find.text('Archiving…'), warnIfMissed: false);
+      await tester.pump();
+
+      expect(calls, 1);
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(calls, 1);
+      expect(popped!.archived, isTrue);
+    });
+  });
 }
 
 final Uint8List _tinyPng = Uint8List.fromList(const <int>[
@@ -533,3 +635,12 @@ final Uint8List _tinyPng = Uint8List.fromList(const <int>[
   0x60,
   0x82,
 ]);
+
+class _TokenSession implements CaregiverSession {
+  @override
+  String? get accessToken => 't';
+  @override
+  String? get householdCode => null;
+  @override
+  Future<void> clearInvalidSession() async {}
+}

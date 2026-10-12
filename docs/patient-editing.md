@@ -10,13 +10,22 @@
 ## Monitoring ranges (from Edit Patient)
 - The **Monitoring ranges** row on Edit Patient shows the current ranges ("Alera defaults" or "Heart rate 55–105 bpm · SpO₂ 92–99%") and opens `edit_monitoring_ranges_page.dart`.
 - That screen offers **Use Alera defaults** (60–100 bpm, SpO₂ minimum 95%) or **Set custom ranges** (heart rate min/max 1–999, SpO₂ min 0–100, optional SpO₂ max 0–100, min must not exceed max). It saves immediately through the existing `PATCH /api/v1/patients/{patient_id}/monitoring-settings` (`updateMonitoringSettings`); the profile `PATCH` never carries thresholds.
-- "Use Alera defaults" on a patient with custom ranges **saves the built-in values** (60, 100, 95, SpO₂ max `null`) rather than calling a separate reset endpoint. Confirm with the backend that these values return `threshold_mode: DEFAULT`; if it keeps reporting `CUSTOM`, the row will say "Heart rate 60–100 bpm · SpO₂ min 95%" until a reset is added.
+- **Use Alera defaults** restores DEFAULT mode by sending `{"normal_hr_min": 60, "normal_hr_max": 100, "usual_spo2_min": 95, "usual_spo2_max": null}` to the same endpoint. The explicit `null` clears any custom SpO₂ maximum, and the backend answers with `threshold_mode: "DEFAULT"` (confirmed). There is no separate reset endpoint.
 - Ranges save on their own screen. If the caregiver then cancels the profile form, the detail page still shows the saved ranges.
 
 ## Archive patient (from Edit Patient)
-- Edit Patient ends with a quiet red **Archive patient** action. It opens a confirmation dialog (red icon and red **Archive** button, **Cancel**) naming the patient. Nothing happens until the red button is pressed; failures show inside the dialog and keep the page.
-- On success the patient is removed from the People list, the detail page closes and the app shows "<name> archived."
-- **Not wired to the backend yet.** No patient-archive endpoint exists in the app's API client and none was invented. The UI goes through `CaregiverPatientArchiveDataSource`; the app currently uses `UnavailablePatientArchiveDataSource`, which fails with "Archiving patients isn’t available yet. Nothing was changed." Once the contract is confirmed, add an API implementation and pass it as `patientArchiveDataSource` to `CaregiverShell` in `caregiver_auth_gate.dart`. The backend already returns `archived_at` on patient detail, so the list endpoint should stop returning archived patients (confirm).
+- Edit Patient ends with a quiet red **Archive patient** action. It opens a confirmation dialog (red icon and red **Archive** button, **Cancel**) naming the patient. Nothing happens until the red button is pressed. While the request runs both buttons are disabled and the button reads "Archiving…", so it cannot be submitted twice.
+- On HTTP 200 the patient is removed from the People list (`CaregiverPatientController.removePatient`, only after the 200), the edit and detail pages close and the app shows "<name> archived."
+- On failure the dialog stays open, the patient stays in the list, and the dialog shows the backend's `detail` message when there is one (otherwise a plain fallback).
+- Implementation: `CaregiverPatientApiDataSource.archivePatient` (implements `CaregiverPatientArchiveDataSource`) uses the same HTTP client, base URL and caregiver session token as the other patient endpoints. `CaregiverAuthGate` passes it to `CaregiverShell` as `patientArchiveDataSource`. `UnavailablePatientArchiveDataSource` remains only as the fallback for screens built without one (previews and tests).
+
+### Archive endpoint
+`POST /api/v1/patients/{patient_id}/archive` with `Authorization: Bearer <caregiver token>` and no request body.
+
+- Success: `200` with `{ "patient_id": "<UUID>", "archived_at": "<UTC ISO-8601>" }` (`PatientArchivedResponse`).
+- Soft archive: the patient disappears from all caregiver patient lists and detail reads; historical records and caregiver assignments stay stored; unused patient access codes are revoked; existing patient authentication becomes unavailable.
+- Retry-safe: repeating the call returns the original `archived_at` (normalized to UTC).
+- Errors (FastAPI `detail`; the app shows it when present): `401` clears the session and asks to sign in again, `403` caregiver role required, `404` patient missing or outside the caregiver's scope, `422` invalid patient UUID, `5xx` "The server is temporarily unavailable.", timeouts and connection errors are retryable.
 
 ## How saving works
 Edit Patient saves through an injectable `CaregiverPatientEditDataSource`. In the app the implementation is `CaregiverPatientApiDataSource.updatePatient`, which calls the backend endpoint below. `CaregiverAuthGate` builds one `CaregiverPatientApiDataSource` for the signed-in caregiver session and passes it to `CaregiverShell` as both `patientDataSource` (read, create, photo, monitoring settings) and `patientEditDataSource`. The shell forwards it to the patient detail page, which opens Edit Patient.

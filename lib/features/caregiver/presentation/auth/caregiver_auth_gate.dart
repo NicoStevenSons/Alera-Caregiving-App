@@ -289,6 +289,7 @@ class _CaregiverAuthGateState extends State<CaregiverAuthGate> {
                 ).fetchAlert,
                 patientDataSource: patientApi,
                 patientEditDataSource: patientApi,
+                patientArchiveDataSource: patientApi,
                 nudgeDataSource: CaregiverNudgeApiDataSource(session: _session),
                 reminderDataSource: ReminderApiDataSource(session: _session),
                 helpRequestDataSource: CaregiverHelpRequestApiDataSource(

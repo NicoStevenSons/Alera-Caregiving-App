@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../../../config/app_config.dart';
 import '../auth/caregiver_session_controller.dart';
+import 'caregiver_patient_archive_data_source.dart';
 import 'caregiver_patient_edit_data_source.dart';
 import 'dto/patient_dto.dart';
 import 'dto/monitoring_device_dto.dart';
@@ -38,7 +39,8 @@ class CaregiverPatientApiDataSource
     implements
         CaregiverPatientDataSource,
         CaregiverPatientReadDataSource,
-        CaregiverPatientEditDataSource {
+        CaregiverPatientEditDataSource,
+        CaregiverPatientArchiveDataSource {
   final http.Client _client;
   final CaregiverSession _session;
   final Duration timeout;
@@ -241,6 +243,105 @@ class CaregiverPatientApiDataSource
       rethrow;
     }
     return _parse(() => PatientDetailDto.fromJson(_jsonObject(response)));
+  }
+
+  /// `POST /api/v1/patients/{patient_id}/archive` (no request body). A soft,
+  /// retry-safe archive: on HTTP 200 the patient is gone from caregiver lists
+  /// and detail reads. Failures prefer the backend's `detail` message.
+  @override
+  Future<PatientArchivedResponse> archivePatient(String patientId) async {
+    final token = _session.accessToken;
+    if (token == null || token.isEmpty) {
+      throw const CaregiverPatientApiFailure('Please sign in again.');
+    }
+    final http.Response response;
+    try {
+      response = await _client
+          .post(
+            Uri.parse(
+              '${AppConfig.backendBaseUrl}/api/v1/patients/'
+              '${Uri.encodeComponent(patientId)}/archive',
+            ),
+            headers: {'authorization': 'Bearer $token'},
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const CaregiverPatientApiFailure(
+        'The request timed out. Please try again.',
+        kind: CaregiverPatientFailureKind.connectivity,
+      );
+    } on http.ClientException {
+      throw const CaregiverPatientApiFailure(
+        'Unable to connect. Please try again.',
+        kind: CaregiverPatientFailureKind.connectivity,
+      );
+    }
+
+    switch (response.statusCode) {
+      case 200:
+        return _parse(
+          () => PatientArchivedResponse.fromJson(_jsonObject(response)),
+        );
+      case 401:
+        await _session.clearInvalidSession();
+        throw const CaregiverPatientApiFailure(
+          'Please sign in again.',
+          kind: CaregiverPatientFailureKind.unauthorized,
+          statusCode: 401,
+        );
+      case 403:
+        throw CaregiverPatientApiFailure(
+          _detailMessage(response) ??
+              'You do not have permission to archive this patient.',
+          kind: CaregiverPatientFailureKind.forbidden,
+          statusCode: 403,
+        );
+      case 404:
+        throw CaregiverPatientApiFailure(
+          _detailMessage(response) ?? 'Patient not found.',
+          kind: CaregiverPatientFailureKind.notFound,
+          statusCode: 404,
+        );
+      case 422:
+        throw CaregiverPatientApiFailure(
+          _detailMessage(response) ?? 'This patient could not be archived.',
+          statusCode: 422,
+        );
+      default:
+        if (response.statusCode >= 500) {
+          throw CaregiverPatientApiFailure(
+            'The server is temporarily unavailable.',
+            kind: CaregiverPatientFailureKind.server,
+            statusCode: response.statusCode,
+          );
+        }
+        throw CaregiverPatientApiFailure(
+          _detailMessage(response) ??
+              'Unable to archive this patient. Please try again.',
+          statusCode: response.statusCode,
+        );
+    }
+  }
+
+  /// The backend's FastAPI `detail`: a plain string, or a list of
+  /// `{msg: ...}` validation items. Null when absent or unreadable.
+  String? _detailMessage(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      final detail = decoded is Map<String, dynamic> ? decoded['detail'] : null;
+      if (detail is String && detail.trim().isNotEmpty) return detail.trim();
+      if (detail is List) {
+        final messages = detail
+            .whereType<Map<String, dynamic>>()
+            .map((item) => item['msg'])
+            .whereType<String>()
+            .toSet()
+            .take(3)
+            .join(' ');
+        if (messages.isNotEmpty) return messages;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<http.Response> _post(String path, Map<String, Object?> body) =>
