@@ -63,13 +63,13 @@ void showAleraSnackBarOn(
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2A1B5C).withValues(alpha: 0.22),
+                color: AleraColors.shadowTint.withValues(alpha: 0.22),
                 blurRadius: 24,
                 spreadRadius: 1,
                 offset: const Offset(0, 10),
               ),
               BoxShadow(
-                color: const Color(0xFF2A1B5C).withValues(alpha: 0.12),
+                color: AleraColors.shadowTint.withValues(alpha: 0.12),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),

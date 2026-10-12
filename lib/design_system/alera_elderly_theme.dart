@@ -10,8 +10,8 @@ import 'alera_theme.dart';
 /// [AleraTheme].
 abstract final class AleraElderlyTheme {
   /// The same purple the caregiver app's buttons use.
-  static const Color _buttonPurple = Color(0xFFAE8BEA);
-  static const Color _mutedIcon = Color(0xFFB4AEC2);
+  static const Color _buttonPurple = AleraColors.primary;
+  static const Color _mutedIcon = AleraColors.mutedIcon;
 
   /// Minimum height for any tappable control.
   static const double minTapHeight = 56;

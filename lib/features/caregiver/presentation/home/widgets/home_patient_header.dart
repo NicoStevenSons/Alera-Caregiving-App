@@ -28,8 +28,8 @@ class HomePatientHeader extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFC3A7F5), // Top: Medium Soft Lavender
-            Color(0xFFE8E0FF), // Bottom: Light Pale Lavender
+            AleraColors.primaryLight, // Top: Medium Soft Lavender
+            AleraColors.primarySoft, // Bottom: Light Pale Lavender
           ],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(AleraSpacing.radiusLarge)),

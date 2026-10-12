@@ -3,6 +3,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../data/patients/edit_patient_controller.dart';
+import '../../../../../design_system/alera_colors.dart';
 
 /// Thrown with a message that is safe to show the caregiver.
 class PatientPhotoException implements Exception {
@@ -32,11 +33,11 @@ Future<PatientPhotoUpload?> pickAndCropPatientPhoto() async {
     uiSettings: [
       AndroidUiSettings(
         toolbarTitle: 'Crop photo',
-        toolbarColor: const Color(0xFFF9F5FF),
-        toolbarWidgetColor: const Color(0xFF3F365C),
-        backgroundColor: const Color(0xFFF5F0FA),
+        toolbarColor: AleraColors.surfaceTint,
+        toolbarWidgetColor: AleraColors.textPrimary,
+        backgroundColor: AleraColors.background,
         dimmedLayerColor: const Color(0x99000000),
-        activeControlsWidgetColor: const Color(0xFFA884E8),
+        activeControlsWidgetColor: AleraColors.primary,
         lockAspectRatio: true,
         showCropGrid: true,
         hideBottomControls: false,

@@ -100,7 +100,7 @@ class _CaregiverVitalTrendPageState extends State<CaregiverVitalTrendPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FB),
+      backgroundColor: AleraColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,

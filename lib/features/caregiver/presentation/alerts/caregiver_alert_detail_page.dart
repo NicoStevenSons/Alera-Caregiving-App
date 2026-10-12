@@ -1133,7 +1133,7 @@ class _NotesCard extends StatelessWidget {
                   width: 28, // 4. Direct control over pen circle size
                   height: 28,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE9DFFF),
+                    color: AleraColors.primarySoft,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -1143,7 +1143,7 @@ class _NotesCard extends StatelessWidget {
                     onPressed: enabled ? onSave : null,
                     icon: const Icon(
                       Icons.edit_outlined,
-                      color: Color(0xFF9A79E8),
+                      color: AleraColors.primary,
                       size: 15,
                     ),
                   ),

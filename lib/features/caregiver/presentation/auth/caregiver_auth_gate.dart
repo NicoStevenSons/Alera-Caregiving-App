@@ -195,7 +195,7 @@ class _HouseholdCodeInputState extends State<HouseholdCodeInput> {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F0FF),
+          color: AleraColors.fieldFill,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
@@ -564,8 +564,8 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
             decoration: BoxDecoration(
               color: selected
-                  ? const Color(0xFFE4D9FB)
-                  : const Color(0xFFF6F1FF),
+                  ? AleraColors.todayTint
+                  : AleraColors.fieldFill,
               borderRadius: BorderRadius.circular(AleraSpacing.radiusLarge),
             ),
             child: Column(
@@ -673,7 +673,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                   child: Text(
                     'or',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFFB4AEC2)),
+                    style: TextStyle(color: AleraColors.mutedIcon),
                   ),
                 ),
                 Center(
@@ -876,7 +876,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
         TextButton(
           onPressed: _submitting ? null : () => _go(_AuthStep.household),
           style: TextButton.styleFrom(
-            backgroundColor: const Color(0xFFEDE7F8),
+            backgroundColor: AleraColors.divider,
             foregroundColor: AleraColors.textSecondary,
             minimumSize: const Size(46, 32),
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -943,7 +943,7 @@ class _HouseholdAuthFlowState extends State<HouseholdAuthFlow> {
                         _obscurePassword
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: const Color(0xFFA684E8),
+                        color: AleraColors.primary,
                       ),
                     ),
                   ),

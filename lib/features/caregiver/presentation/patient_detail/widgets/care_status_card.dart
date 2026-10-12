@@ -240,7 +240,7 @@ class _GaugePainter extends CustomPainter {
       ..shader = const SweepGradient(
         startAngle: 0,
         endAngle: sweep,
-        colors: [Color(0xFFC9B2F5), AleraColors.selected],
+        colors: [AleraColors.primaryLight, AleraColors.selected],
         transform: GradientRotation(start),
       ).createShader(rect);
     canvas.drawArc(rect.deflate(6), start, sweep * fraction, false, fill);

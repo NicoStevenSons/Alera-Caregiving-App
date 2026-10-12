@@ -62,4 +62,17 @@ abstract final class AleraColors {
 
   /// Empty-state title text (matches the faded 'No active alerts' motif).
   static const Color emptyTitle = Color(0xFFA69BD2);
+
+  /// Lighter lavender: the Home header gradient and status bar, and the
+  /// pressed/disabled tints of purple buttons.
+  static const Color primaryLight = Color(0xFFC3A7F5);
+
+  /// Pressed state of primary buttons.
+  static const Color primaryPressed = Color(0xFF7449C9);
+
+  /// Very faint grey-lavender for decorative empty-state glyphs.
+  static const Color faintIcon = Color(0xFFCFC7E8);
+
+  /// Deep indigo used only to tint soft shadows (snackbar, floating cards).
+  static const Color shadowTint = Color(0xFF2A1B5C);
 }

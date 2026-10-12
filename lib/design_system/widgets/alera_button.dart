@@ -69,7 +69,7 @@ class AleraButton extends StatelessWidget {
 
         if (states.contains(WidgetState.pressed)) {
           return primary
-              ? const Color(0xFF7449C9)
+              ? AleraColors.primaryPressed
               : white
               ? const Color(0xFFF4F1FA)
               : const Color(0xFFAFA6D6);
@@ -77,14 +77,14 @@ class AleraButton extends StatelessWidget {
 
         if (states.contains(WidgetState.hovered)) {
           return primary
-              ? const Color(0xFFC3A7F5)
+              ? AleraColors.primaryLight
               : white
               ? const Color(0xFFF8F6FC)
               : const Color(0xFFC9C2E0);
         }
 
         return primary
-            ? const Color(0xFFAE8BEA)
+            ? AleraColors.primary
             : white
             ? Colors.white
             : const Color(0xFFEDE9F7);

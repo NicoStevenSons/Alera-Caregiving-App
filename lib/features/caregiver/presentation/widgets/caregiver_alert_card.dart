@@ -57,7 +57,7 @@ class CaregiverAlertCard extends StatelessWidget {
     return AleraCard(
       padding: EdgeInsets.zero,
       child: Material(
-        color: unread ? const Color(0xFFFCFAFF) : Colors.white,
+        color: unread ? AleraColors.surfaceTint : Colors.white,
         borderRadius: BorderRadius.circular(2),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

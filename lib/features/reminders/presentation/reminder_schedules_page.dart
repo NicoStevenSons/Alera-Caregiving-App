@@ -76,7 +76,7 @@ class ReminderSchedulesPage extends StatelessWidget {
                         Icon(
                           Icons.event_repeat,
                           size: 48,
-                          color: Color(0xFFCFC7E8),
+                          color: AleraColors.faintIcon,
                         ),
                         SizedBox(height: 10),
                         Text(

@@ -760,7 +760,7 @@ class _CaregiverShellState extends State<CaregiverShell>
 
     final SystemUiOverlayStyle systemBarStyle = _selectedIndex == 0
         ? const SystemUiOverlayStyle(
-            statusBarColor: Color(0xFFC3A7F5),
+            statusBarColor: AleraColors.primaryLight,
             statusBarIconBrightness: Brightness.dark,
             statusBarBrightness: Brightness.light,
             systemStatusBarContrastEnforced: false,

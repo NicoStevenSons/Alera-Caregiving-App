@@ -1295,7 +1295,7 @@ class AlertListCard extends StatelessWidget {
     );
     final String identity = recipient?.name ?? 'Unknown patient';
     return Material(
-      color: const Color(0xFFFCFBFF),
+      color: AleraColors.surfaceTint,
       borderRadius: BorderRadius.circular(AleraSpacing.cardRadius),
       child: InkWell(
         onTap: onTap,

@@ -320,15 +320,15 @@ class _AddPatientPageState extends State<AddPatientPage>
           toolbarTitle: 'Crop photo',
 
           // Alera top bar
-          toolbarColor: const Color(0xFFF9F5FF),
-          toolbarWidgetColor: const Color(0xFF3F365C),
+          toolbarColor: AleraColors.surfaceTint,
+          toolbarWidgetColor: AleraColors.textPrimary,
 
           // Main crop area
-          backgroundColor: const Color(0xFFF5F0FA),
+          backgroundColor: AleraColors.background,
           dimmedLayerColor: const Color(0x99000000),
 
           // Alera purple instead of orange
-          activeControlsWidgetColor: const Color(0xFFA884E8),
+          activeControlsWidgetColor: AleraColors.primary,
 
           // Keep the square crop fixed
           lockAspectRatio: true,

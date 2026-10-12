@@ -9,6 +9,7 @@ import 'Services/background_sync_service.dart';
 import 'interfaces/interface_selection.dart';
 import 'features/elderly/services/reminder_notification_service.dart';
 import 'features/startup/presentation/alera_startup_screen.dart';
+import 'design_system/alera_colors.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +114,7 @@ class _StartupErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFFF7F4FF),
+      backgroundColor: AleraColors.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -124,14 +125,14 @@ class _StartupErrorScreen extends StatelessWidget {
                 Icon(
                   Icons.error_outline_rounded,
                   size: 42,
-                  color: Color(0xFFAE8BEA),
+                  color: AleraColors.primary,
                 ),
                 SizedBox(height: 20),
                 Text(
                   'Alera couldn\'t finish starting.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF3D3459),
+                    color: AleraColors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -140,7 +141,7 @@ class _StartupErrorScreen extends StatelessWidget {
                 Text(
                   'Please close the app and try again.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF71698D), fontSize: 15),
+                  style: TextStyle(color: AleraColors.textSecondary, fontSize: 15),
                 ),
               ],
             ),

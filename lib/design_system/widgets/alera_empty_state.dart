@@ -39,9 +39,9 @@ class AleraEmptyState extends StatelessWidget {
   static const String errorAsset =
       'alera-figma-assets/assets/icons/status/error.svg';
 
-  static const Color _iconColor = Color(0xFFCFC7E8);
+  static const Color _iconColor = AleraColors.faintIcon;
   static const Color _titleColor = AleraColors.emptyTitle;
-  static const Color _messageColor = Color(0xFFB5AADB);
+  static const Color _messageColor = AleraColors.fieldHint;
 
   @override
   Widget build(BuildContext context) => Padding(
