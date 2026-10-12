@@ -179,9 +179,7 @@ void main() {
 
   test('a null relationship_label in the response stays unset', () async {
     final source = sourceFor(
-      MockClient(
-        (_) async => http.Response(jsonEncode(_detailJson()), 200),
-      ),
+      MockClient((_) async => http.Response(jsonEncode(_detailJson()), 200)),
     );
 
     final saved = await source.updatePatient(
@@ -228,7 +226,11 @@ void main() {
       ),
       throwsA(
         isA<CaregiverPatientApiFailure>()
-            .having((e) => e.kind, 'kind', CaregiverPatientFailureKind.unauthorized)
+            .having(
+              (e) => e.kind,
+              'kind',
+              CaregiverPatientFailureKind.unauthorized,
+            )
             .having((e) => e.message, 'message', 'Please sign in again.'),
       ),
     );
@@ -256,9 +258,7 @@ void main() {
   });
 
   test('403 says the caregiver cannot edit this patient', () async {
-    final source = sourceFor(
-      MockClient((_) async => http.Response('', 403)),
-    );
+    final source = sourceFor(MockClient((_) async => http.Response('', 403)));
 
     await expectLater(
       source.updatePatient(
@@ -267,7 +267,11 @@ void main() {
       ),
       throwsA(
         isA<CaregiverPatientApiFailure>()
-            .having((e) => e.kind, 'kind', CaregiverPatientFailureKind.forbidden)
+            .having(
+              (e) => e.kind,
+              'kind',
+              CaregiverPatientFailureKind.forbidden,
+            )
             .having(
               (e) => e.message,
               'message',
@@ -278,9 +282,7 @@ void main() {
   });
 
   test('404 is a typed not-found failure', () async {
-    final source = sourceFor(
-      MockClient((_) async => http.Response('', 404)),
-    );
+    final source = sourceFor(MockClient((_) async => http.Response('', 404)));
 
     await expectLater(
       source.updatePatient(
