@@ -142,6 +142,120 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('archiving from Edit removes the patient and leaves detail', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final controller = CaregiverPatientController(dataSource: _ReadSource());
+    addTearDown(controller.dispose);
+    await controller.load();
+    final archive = FakeArchiveDataSource();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              key: const Key('open-detail'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CaregiverPatientDetailLoaderPage(
+                    patientId: 'patient-1',
+                    controller: controller,
+                    patientDataSource: FakePhotoDataSource(),
+                    patientEditDataSource: FakePatientEditDataSource(),
+                    patientArchiveDataSource: archive,
+                    alerts: const [],
+                    reminders: const [],
+                    onViewAllAlerts: () {},
+                    onViewAllReminders: () {},
+                    onAlertTap: (_) {},
+                  ),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('open-detail')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit-patient-button')));
+    await tester.pumpAndSettle();
+
+    final archiveButton = find.byKey(const Key('edit-archive-patient'));
+    await tester.ensureVisible(archiveButton);
+    await tester.tap(archiveButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Archive'));
+    await tester.pumpAndSettle();
+
+    expect(archive.archived, ['patient-1']);
+    expect(controller.patients, isEmpty);
+    // Back on the page that opened the detail, with a confirmation.
+    expect(find.byKey(const Key('open-detail')), findsOneWidget);
+    expect(find.byKey(const Key('edit-patient-button')), findsNothing);
+    expect(find.text('Maria Santos archived.'), findsOneWidget);
+  });
+
+  testWidgets('ranges saved then Edit cancelled still update the detail', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final read = _ReadSource();
+    final controller = CaregiverPatientController(dataSource: read);
+    addTearDown(controller.dispose);
+    await controller.load();
+    final photos = FakePhotoDataSource();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CaregiverPatientDetailLoaderPage(
+          patientId: 'patient-1',
+          controller: controller,
+          patientDataSource: photos,
+          patientEditDataSource: FakePatientEditDataSource(),
+          alerts: const [],
+          reminders: const [],
+          onViewAllAlerts: () {},
+          onViewAllReminders: () {},
+          onAlertTap: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit-patient-button')));
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(const Key('edit-monitoring-ranges'));
+    await tester.ensureVisible(row);
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('monitoring-custom-option')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('monitoring-hr-min-field')),
+      '50',
+    );
+    await tester.tap(find.byKey(const Key('edit-monitoring-save')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(photos.monitoringRequests.single.normalHrMin, 50);
+    expect(find.byKey(const Key('edit-patient-form')), findsNothing);
+    expect(find.text('Patient updated.'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('People card shows the relationship under the name', (
     tester,
   ) async {

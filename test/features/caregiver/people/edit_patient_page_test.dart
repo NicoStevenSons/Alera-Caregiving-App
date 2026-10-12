@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
+import 'package:alera/features/caregiver/data/api/caregiver_patient_archive_data_source.dart';
+import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 import 'package:alera/features/caregiver/data/patients/edit_patient_controller.dart';
 import 'package:alera/features/caregiver/presentation/people/edit_patient_page.dart';
 import 'package:alera/features/caregiver/presentation/people/widgets/patient_photo_picker.dart';
@@ -13,11 +15,13 @@ import 'edit_patient_test_support.dart';
 void main() {
   late FakePatientEditDataSource edit;
   late FakePhotoDataSource photos;
+  late FakeArchiveDataSource archive;
   EditPatientResult? popped;
 
   setUp(() {
     edit = FakePatientEditDataSource();
     photos = FakePhotoDataSource();
+    archive = FakeArchiveDataSource();
     popped = null;
   });
 
@@ -25,6 +29,7 @@ void main() {
     WidgetTester tester, {
     PatientPhotoPickerFn? pickPhoto,
     String? relationship,
+    bool customRanges = false,
   }) async {
     tester.view.physicalSize = const Size(900, 2600);
     tester.view.devicePixelRatio = 1;
@@ -40,9 +45,13 @@ void main() {
                   popped = await Navigator.of(context).push(
                     MaterialPageRoute<EditPatientResult>(
                       builder: (_) => EditPatientPage(
-                        patient: editPatient(relationship: relationship),
+                        patient: editPatient(
+                          relationship: relationship,
+                          customRanges: customRanges,
+                        ),
                         editDataSource: edit,
                         photoDataSource: photos,
+                        archiveDataSource: archive,
                         pickPhoto: pickPhoto,
                       ),
                     ),
@@ -286,6 +295,170 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('edit-photo-error')), findsOneWidget);
     expect(text(tester, 'edit-name-field'), 'Maria Santos');
+  });
+
+  group('monitoring ranges', () {
+    String summary(WidgetTester tester) => tester
+        .widget<Text>(find.byKey(const Key('edit-monitoring-summary')))
+        .data!;
+
+    testWidgets('row shows the current ranges summary', (tester) async {
+      await pumpPage(tester);
+      await tester.ensureVisible(
+        find.byKey(const Key('edit-monitoring-ranges')),
+      );
+      expect(summary(tester), 'Alera defaults');
+    });
+
+    testWidgets('saving ranges updates the row without saving the profile', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      final row = find.byKey(const Key('edit-monitoring-ranges'));
+      await tester.ensureVisible(row);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('monitoring-custom-option')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('monitoring-hr-min-field')),
+        '50',
+      );
+      await tester.tap(find.byKey(const Key('edit-monitoring-save')));
+      await tester.pumpAndSettle();
+
+      expect(photos.monitoringRequests.single.normalHrMin, 50);
+      expect(edit.requests, isEmpty);
+      expect(summary(tester), startsWith('Heart rate 50–100 bpm'));
+    });
+
+    testWidgets('cancelling the profile form keeps saved ranges', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      final row = find.byKey(const Key('edit-monitoring-ranges'));
+      await tester.ensureVisible(row);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('monitoring-custom-option')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('monitoring-hr-min-field')),
+        '50',
+      );
+      await tester.tap(find.byKey(const Key('edit-monitoring-save')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('edit-patient-form')), findsNothing);
+      expect(popped, isNotNull);
+      expect(popped!.archived, isFalse);
+      expect(popped!.patient.thresholdMode, PatientThresholdMode.custom);
+    });
+
+    testWidgets('cancelling without a change returns nothing', (tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(popped, isNull);
+    });
+  });
+
+  group('archive patient', () {
+    Future<void> openDialog(WidgetTester tester) async {
+      final button = find.byKey(const Key('edit-archive-patient'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('asks for confirmation before doing anything', (tester) async {
+      await pumpPage(tester);
+      await openDialog(tester);
+
+      expect(find.byKey(const Key('archive-patient-dialog')), findsOneWidget);
+      expect(find.text('Archive Maria Santos?'), findsOneWidget);
+      expect(archive.archived, isEmpty);
+    });
+
+    testWidgets('cancel closes the dialog and archives nothing', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      await openDialog(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('archive-patient-dialog')),
+          matching: find.text('Cancel'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('archive-patient-dialog')), findsNothing);
+      expect(find.byKey(const Key('edit-patient-form')), findsOneWidget);
+      expect(archive.archived, isEmpty);
+      expect(popped, isNull);
+    });
+
+    testWidgets('confirming archives the patient and closes the page', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      await openDialog(tester);
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+
+      expect(archive.archived, ['patient-1']);
+      expect(popped!.archived, isTrue);
+      expect(popped!.patient.patientId, 'patient-1');
+      expect(find.byKey(const Key('edit-patient-form')), findsNothing);
+    });
+
+    testWidgets('shows busy state while archiving', (tester) async {
+      archive.gate = Completer<void>();
+      await pumpPage(tester);
+      await openDialog(tester);
+      await tester.tap(find.text('Archive'));
+      await tester.pump();
+
+      expect(find.text('Archiving…'), findsOneWidget);
+      expect(archive.archived, isEmpty);
+
+      archive.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(archive.archived, ['patient-1']);
+    });
+
+    testWidgets('a failure stays in the dialog and keeps the page', (
+      tester,
+    ) async {
+      archive.failure = const CaregiverPatientApiFailure('Cannot archive.');
+      await pumpPage(tester);
+      await openDialog(tester);
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('archive-patient-dialog')), findsOneWidget);
+      expect(find.text('Cannot archive.'), findsOneWidget);
+      expect(popped, isNull);
+
+      archive.failure = null;
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(archive.archived, ['patient-1']);
+      expect(popped!.archived, isTrue);
+    });
+
+    testWidgets('the default data source reports archiving is unavailable', (
+      tester,
+    ) async {
+      await expectLater(
+        const UnavailablePatientArchiveDataSource().archivePatient('p'),
+        throwsA(isA<CaregiverPatientApiFailure>()),
+      );
+    });
   });
 }
 

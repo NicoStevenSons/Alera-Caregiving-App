@@ -32,8 +32,9 @@ void main() {
     expect(find.text('2 Alerts'), findsOneWidget);
     expect(find.text('No Alerts'), findsOneWidget);
     expect(find.text('Add Patient'), findsOneWidget);
-    expect(find.byTooltip('Filter people'), findsOneWidget);
-    expect(find.byTooltip('Edit people'), findsOneWidget);
+    // The old placeholder header buttons are gone.
+    expect(find.byTooltip('Filter people'), findsNothing);
+    expect(find.byTooltip('Edit people'), findsNothing);
 
     final Size cardSize = tester.getSize(find.byType(CareRecipientCard).first);
     expect(cardSize.width, 768);
@@ -44,7 +45,7 @@ void main() {
     expect(cardSize.height, inInclusiveRange(112, 132));
   });
 
-  testWidgets('header and Add Patient actions show mock-only feedback', (
+  testWidgets('Add Patient shows mock-only feedback without a handler', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -57,10 +58,6 @@ void main() {
         ),
       ),
     );
-
-    await tester.tap(find.byTooltip('Filter people'));
-    await tester.pump();
-    expect(find.textContaining('not available in the mock'), findsOneWidget);
 
     await tester.tap(find.text('Add Patient'));
     await tester.pump();

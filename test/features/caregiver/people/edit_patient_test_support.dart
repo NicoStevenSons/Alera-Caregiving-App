@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:alera/features/caregiver/presentation/people/widgets/relationship_field.dart';
 
 import 'package:alera/features/caregiver/data/api/caregiver_patient_api_data_source.dart';
+import 'package:alera/features/caregiver/data/api/caregiver_patient_archive_data_source.dart';
 import 'package:alera/features/caregiver/data/api/caregiver_patient_edit_data_source.dart';
 import 'package:alera/features/caregiver/data/api/dto/patient_dto.dart';
 
@@ -12,6 +13,7 @@ Map<String, dynamic> editPatientJson({
   String name = 'Maria Santos',
   String? relationship,
   String? photoUrl,
+  bool customRanges = false,
 }) => {
   'patient_id': 'patient-1',
   'user_id': 'user-1',
@@ -44,11 +46,11 @@ Map<String, dynamic> editPatientJson({
   'monitoring_notes': 'Morning checks',
   'archived_at': null,
   'assignment': null,
-  'normal_hr_min': 60,
-  'normal_hr_max': 100,
-  'usual_spo2_min': 95,
-  'usual_spo2_max': null,
-  'threshold_mode': 'DEFAULT',
+  'normal_hr_min': customRanges ? 55 : 60,
+  'normal_hr_max': customRanges ? 105 : 100,
+  'usual_spo2_min': customRanges ? 92 : 95,
+  'usual_spo2_max': customRanges ? 99 : null,
+  'threshold_mode': customRanges ? 'CUSTOM' : 'DEFAULT',
   'patient_access': {
     'status': 'NOT_CONNECTED',
     'pending_access_code_id': null,
@@ -57,8 +59,12 @@ Map<String, dynamic> editPatientJson({
   },
 };
 
-PatientDetailDto editPatient({String? relationship}) =>
-    PatientDetailDto.fromJson(editPatientJson(relationship: relationship));
+PatientDetailDto editPatient({
+  String? relationship,
+  bool customRanges = false,
+}) => PatientDetailDto.fromJson(
+  editPatientJson(relationship: relationship, customRanges: customRanges),
+);
 
 /// Echoes the request back as the saved patient, or fails when told to.
 class FakePatientEditDataSource implements CaregiverPatientEditDataSource {
@@ -86,7 +92,9 @@ class FakePatientEditDataSource implements CaregiverPatientEditDataSource {
 
 class FakePhotoDataSource implements CaregiverPatientDataSource {
   final List<String> uploads = [];
+  final List<UpdateMonitoringSettingsRequest> monitoringRequests = [];
   bool failUpload = false;
+  Object? monitoringFailure;
 
   @override
   Future<PatientProfilePhotoResponse> uploadProfilePhoto(
@@ -115,7 +123,39 @@ class FakePhotoDataSource implements CaregiverPatientDataSource {
   Future<MonitoringSettingsResponse> updateMonitoringSettings(
     String patientId,
     UpdateMonitoringSettingsRequest request,
-  ) => throw UnimplementedError();
+  ) async {
+    monitoringRequests.add(request);
+    final error = monitoringFailure;
+    if (error != null) throw error;
+    final defaults =
+        request.normalHrMin == 60 &&
+        request.normalHrMax == 100 &&
+        request.usualSpo2Min == 95 &&
+        request.usualSpo2Max == null;
+    return MonitoringSettingsResponse.fromJson({
+      'patient_id': patientId,
+      'threshold_mode': defaults ? 'DEFAULT' : 'CUSTOM',
+      'normal_hr_min': request.normalHrMin,
+      'normal_hr_max': request.normalHrMax,
+      'usual_spo2_min': request.usualSpo2Min,
+      'usual_spo2_max': request.usualSpo2Max,
+      'updated_at': '2026-09-11T09:41:55Z',
+    });
+  }
+}
+
+class FakeArchiveDataSource implements CaregiverPatientArchiveDataSource {
+  final List<String> archived = [];
+  Object? failure;
+  Completer<void>? gate;
+
+  @override
+  Future<void> archivePatient(String patientId) async {
+    await gate?.future;
+    final error = failure;
+    if (error != null) throw error;
+    archived.add(patientId);
+  }
 }
 
 /// Taps the relationship tile for [label] ("Mother", "Other", ...). Tapping

@@ -559,7 +559,33 @@ class PatientDetailDto extends PatientListItemDto {
   }
 
   /// This patient with a new profile photo URL, everything else unchanged.
-  PatientDetailDto withProfilePhotoUrl(String url) => PatientDetailDto(
+  PatientDetailDto withProfilePhotoUrl(String url) =>
+      _copy(profilePhotoUrl: url);
+
+  /// This patient with freshly saved monitoring ranges, everything else
+  /// unchanged. [MonitoringSettingsResponse] is the server's answer, so the
+  /// threshold mode comes from the backend rather than being guessed.
+  PatientDetailDto withMonitoringSettings(MonitoringSettingsResponse s) =>
+      _copy(
+        normalHrMin: s.normalHrMin,
+        normalHrMax: s.normalHrMax,
+        usualSpo2Min: s.usualSpo2Min,
+        usualSpo2Max: s.usualSpo2Max,
+        replaceSpo2Max: true,
+        thresholdMode: s.thresholdMode,
+        thresholdModeValue: s.thresholdModeValue,
+      );
+
+  PatientDetailDto _copy({
+    String? profilePhotoUrl,
+    int? normalHrMin,
+    int? normalHrMax,
+    int? usualSpo2Min,
+    int? usualSpo2Max,
+    bool replaceSpo2Max = false,
+    PatientThresholdMode? thresholdMode,
+    String? thresholdModeValue,
+  }) => PatientDetailDto(
     patientId: patientId,
     userId: userId,
     householdId: householdId,
@@ -568,7 +594,7 @@ class PatientDetailDto extends PatientListItemDto {
     sex: sex,
     phoneNumber: phoneNumber,
     addressOrRoom: addressOrRoom,
-    profilePhotoUrl: url,
+    profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
     accountStatus: accountStatus,
     createdAt: createdAt,
     currentSummary: currentSummary,
@@ -583,12 +609,12 @@ class PatientDetailDto extends PatientListItemDto {
     monitoringNotes: monitoringNotes,
     archivedAt: archivedAt,
     assignment: assignment,
-    normalHrMin: normalHrMin,
-    normalHrMax: normalHrMax,
-    usualSpo2Min: usualSpo2Min,
-    usualSpo2Max: usualSpo2Max,
-    thresholdMode: thresholdMode,
-    thresholdModeValue: thresholdModeValue,
+    normalHrMin: normalHrMin ?? this.normalHrMin,
+    normalHrMax: normalHrMax ?? this.normalHrMax,
+    usualSpo2Min: usualSpo2Min ?? this.usualSpo2Min,
+    usualSpo2Max: replaceSpo2Max ? usualSpo2Max : this.usualSpo2Max,
+    thresholdMode: thresholdMode ?? this.thresholdMode,
+    thresholdModeValue: thresholdModeValue ?? this.thresholdModeValue,
   );
 }
 

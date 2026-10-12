@@ -26,7 +26,15 @@ class EditPatientResult {
   /// True when the profile saved but the new photo could not be uploaded.
   final bool photoFailed;
 
-  const EditPatientResult({required this.patient, this.photoFailed = false});
+  /// True when the caregiver archived the patient from the edit screen. The
+  /// caller should drop the patient from its lists and leave their page.
+  final bool archived;
+
+  const EditPatientResult({
+    required this.patient,
+    this.photoFailed = false,
+    this.archived = false,
+  });
 }
 
 /// Saves an edited patient profile (and optional photo) and exposes the

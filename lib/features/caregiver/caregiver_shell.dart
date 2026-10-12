@@ -19,6 +19,7 @@ import 'data/api/caregiver_help_request_api_data_source.dart';
 import 'data/help_requests/caregiver_help_request_controller.dart';
 import 'data/alerts/caregiver_alert_controller.dart';
 import 'data/api/caregiver_patient_api_data_source.dart';
+import 'data/api/caregiver_patient_archive_data_source.dart';
 import 'data/api/caregiver_patient_edit_data_source.dart';
 import 'data/api/caregiver_nudge_api_data_source.dart';
 import 'data/api/dto/patient_dto.dart';
@@ -64,6 +65,7 @@ class CaregiverShell extends StatefulWidget {
   final CaregiverPatientDataSource? patientDataSource;
   final CaregiverPatientController? patientController;
   final CaregiverPatientEditDataSource? patientEditDataSource;
+  final CaregiverPatientArchiveDataSource? patientArchiveDataSource;
   final String? householdCode;
   final String? caregiverId;
   final CaregiverPatientSelectionStore? patientSelectionStore;
@@ -84,6 +86,7 @@ class CaregiverShell extends StatefulWidget {
     this.patientDataSource,
     this.patientController,
     this.patientEditDataSource,
+    this.patientArchiveDataSource,
     this.householdCode,
     this.caregiverId,
     this.patientSelectionStore,
@@ -561,6 +564,7 @@ class _CaregiverShellState extends State<CaregiverShell>
                       ? widget.patientDataSource as CaregiverPatientDataSource
                       : null,
                   patientEditDataSource: widget.patientEditDataSource,
+                  patientArchiveDataSource: widget.patientArchiveDataSource,
                   alerts: _alertController.alerts
                       .where(
                         (alert) => alert.careRecipientId == careRecipient.id,

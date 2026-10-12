@@ -17,6 +17,7 @@ import '../../data/api/caregiver_patient_edit_data_source.dart';
 import '../../data/patients/edit_patient_controller.dart';
 import '../people/edit_patient_page.dart';
 import '../../data/patients/caregiver_patient_controller.dart';
+import '../../data/api/caregiver_patient_archive_data_source.dart';
 import '../../data/api/dto/monitoring_device_dto.dart';
 import '../../data/api/dto/patient_dto.dart';
 import '../people/patient_access_setup_page.dart';
@@ -228,6 +229,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
   final ValueChanged<CaregiverAlert>? onMarkAsSeen;
   final CaregiverPatientDataSource? patientDataSource;
   final CaregiverPatientEditDataSource? patientEditDataSource;
+  final CaregiverPatientArchiveDataSource? patientArchiveDataSource;
   final ValueChanged<String>? onVitalTap;
   final VoidCallback? onNewReminder;
   final ValueChanged<CaregiverReminder>? onCompleteReminder;
@@ -244,6 +246,7 @@ class CaregiverPatientDetailLoaderPage extends StatefulWidget {
     this.onMarkAsSeen,
     this.patientDataSource,
     this.patientEditDataSource,
+    this.patientArchiveDataSource,
     this.onVitalTap,
     this.onNewReminder,
     this.onCompleteReminder,
@@ -325,10 +328,25 @@ class _CaregiverPatientDetailLoaderPageState
               widget.patientEditDataSource ??
               const UnavailablePatientEditDataSource(),
           photoDataSource: photoSource,
+          archiveDataSource:
+              widget.patientArchiveDataSource ??
+              const UnavailablePatientArchiveDataSource(),
         ),
       ),
     );
     if (result == null || !mounted) return;
+    if (result.archived) {
+      // Capture before popping: this page's context is gone afterwards.
+      final messenger = ScaffoldMessenger.of(context);
+      widget.controller.removePatient(result.patient.patientId);
+      Navigator.of(context).pop();
+      showAleraSnackBarOn(
+        messenger,
+        '${result.patient.fullName} archived.',
+        type: AleraSnackBarType.success,
+      );
+      return;
+    }
     // Show the saved values straight away, then let the People list follow.
     setState(() {
       _detail = result.patient;

@@ -160,6 +160,58 @@ void main() {
     expect(list.visiblePatients.single.relationship, 'Mother');
   });
 
+  test('removePatient drops an archived patient from the list', () {
+    final list = CaregiverPatientController(dataSource: _NoopRead());
+    addTearDown(list.dispose);
+    list.patients = [PatientListItemDto.fromJson(editPatientJson())];
+    list.state = CaregiverPatientListState.success;
+    var notified = 0;
+    list.addListener(() => notified++);
+
+    list.removePatient('patient-1');
+
+    expect(notified, 1);
+    expect(list.patients, isEmpty);
+    expect(list.state, CaregiverPatientListState.empty);
+  });
+
+  test('removing an unknown patient is a no-op', () {
+    final list = CaregiverPatientController(dataSource: _NoopRead());
+    addTearDown(list.dispose);
+    list.patients = [PatientListItemDto.fromJson(editPatientJson())];
+    var notified = 0;
+    list.addListener(() => notified++);
+
+    list.removePatient('someone-else');
+
+    expect(notified, 0);
+    expect(list.patients, hasLength(1));
+  });
+
+  test('withMonitoringSettings swaps only the ranges', () {
+    final before = editPatient(relationship: 'Mother');
+    final after = before.withMonitoringSettings(
+      MonitoringSettingsResponse.fromJson({
+        'patient_id': 'patient-1',
+        'threshold_mode': 'CUSTOM',
+        'normal_hr_min': 50,
+        'normal_hr_max': 110,
+        'usual_spo2_min': 93,
+        'usual_spo2_max': null,
+        'updated_at': '2026-09-11T09:41:55Z',
+      }),
+    );
+
+    expect(after.normalHrMin, 50);
+    expect(after.normalHrMax, 110);
+    expect(after.usualSpo2Min, 93);
+    expect(after.usualSpo2Max, isNull);
+    expect(after.thresholdMode, PatientThresholdMode.custom);
+    expect(after.fullName, before.fullName);
+    expect(after.relationshipLabel, 'Mother');
+    expect(after.emergencyContactName, before.emergencyContactName);
+  });
+
   test('applying an update for an unknown patient is a no-op', () {
     final list = CaregiverPatientController(dataSource: _NoopRead());
     addTearDown(list.dispose);

@@ -158,6 +158,20 @@ class CaregiverPatientController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Drops an archived patient from the People list right away, without
+  /// waiting for the next refresh.
+  void removePatient(String patientId) {
+    if (!patients.any((p) => p.patientId == patientId)) return;
+    patients = List.unmodifiable(
+      patients.where((p) => p.patientId != patientId),
+    );
+    _monitoringDevicesByPatient.remove(patientId);
+    if (patients.isEmpty && state == CaregiverPatientListState.success) {
+      state = CaregiverPatientListState.empty;
+    }
+    notifyListeners();
+  }
+
   Future<PatientDetailDto> loadDetail(String patientId) =>
       dataSource.fetchPatient(patientId);
 

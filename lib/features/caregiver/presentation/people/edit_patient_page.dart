@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 
 import '../../../../design_system/alera_colors.dart';
 import '../../../../design_system/widgets/alera_button.dart';
+import '../../../../design_system/widgets/alera_card.dart';
+import '../../../../design_system/widgets/alera_dialog.dart';
 import '../../../../design_system/widgets/alera_patient_avatar.dart';
 import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
+import '../../data/api/caregiver_patient_archive_data_source.dart';
 import '../../data/api/caregiver_patient_edit_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import '../../data/patients/edit_patient_controller.dart';
+import 'edit_monitoring_ranges_page.dart';
 import 'widgets/patient_photo_picker.dart';
 import 'widgets/patient_setup_widgets.dart';
 import 'widgets/relationship_field.dart';
@@ -16,14 +20,18 @@ import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/alera_typography.dart';
 
 /// Edits an existing patient's profile and the signed-in caregiver's
-/// relationship label. Monitoring thresholds are intentionally not here; they
-/// stay in Monitoring Settings.
+/// relationship label. Monitoring ranges are not part of the profile save;
+/// they open their own screen from the "Monitoring ranges" row and save
+/// through the monitoring-settings endpoint. The same screen holds the
+/// confirmed "Archive patient" action.
 ///
-/// Pops with an [EditPatientResult] after a successful save.
+/// Pops with an [EditPatientResult] after a successful save, after archiving,
+/// or when the caregiver changed the monitoring ranges and then went back.
 class EditPatientPage extends StatefulWidget {
   final PatientDetailDto patient;
   final CaregiverPatientEditDataSource editDataSource;
   final CaregiverPatientDataSource photoDataSource;
+  final CaregiverPatientArchiveDataSource archiveDataSource;
   final PatientPhotoPickerFn? pickPhoto;
 
   const EditPatientPage({
@@ -31,6 +39,7 @@ class EditPatientPage extends StatefulWidget {
     required this.patient,
     required this.editDataSource,
     required this.photoDataSource,
+    this.archiveDataSource = const UnavailablePatientArchiveDataSource(),
     this.pickPhoto,
   });
 
@@ -60,10 +69,16 @@ class _EditPatientPageState extends State<EditPatientPage> {
   String? _photoError;
   bool _birthdateTouched = false;
 
+  /// The patient as last known on this screen: the one passed in, updated
+  /// when the monitoring ranges are saved.
+  late PatientDetailDto _patient;
+  bool _rangesChanged = false;
+
   @override
   void initState() {
     super.initState();
     final p = widget.patient;
+    _patient = p;
     _controller = EditPatientController(
       patientId: p.patientId,
       editDataSource: widget.editDataSource,
@@ -181,14 +196,99 @@ class _EditPatientPageState extends State<EditPatientPage> {
     setState(() => _birthdateTouched = true);
     if (!_formKey.currentState!.validate()) return;
     final ok = await _controller.save(_request, photo: _newPhoto);
-    if (ok && mounted) Navigator.of(context).pop(_controller.result);
+    if (ok && mounted) {
+      _rangesChanged = false;
+      Navigator.of(context).pop(_controller.result);
+    }
+  }
+
+  Future<void> _openRanges() async {
+    final saved = await Navigator.of(context).push<MonitoringSettingsResponse>(
+      MaterialPageRoute<MonitoringSettingsResponse>(
+        builder: (_) => EditMonitoringRangesPage(
+          patient: _patient,
+          dataSource: widget.photoDataSource,
+        ),
+      ),
+    );
+    if (saved == null || !mounted) return;
+    setState(() {
+      _patient = _patient.withMonitoringSettings(saved);
+      _rangesChanged = true;
+    });
+  }
+
+  Future<void> _confirmArchive() async {
+    var busy = false;
+    String? error;
+    final archived = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AleraDialog(
+          key: const Key('archive-patient-dialog'),
+          icon: Icons.archive,
+          destructive: true,
+          title: 'Archive ${_patient.fullName}?',
+          message:
+              'This patient will be archived and removed from your People '
+              'list.',
+          busy: busy,
+          errorText: error,
+          cancelLabel: 'Cancel',
+          confirmLabel: busy ? 'Archiving…' : 'Archive',
+          onCancel: () => Navigator.pop(dialogContext, false),
+          onConfirm: () async {
+            setDialogState(() {
+              busy = true;
+              error = null;
+            });
+            try {
+              await widget.archiveDataSource.archivePatient(
+                _patient.patientId,
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+            } on CaregiverPatientApiFailure catch (failure) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  busy = false;
+                  error = failure.message;
+                });
+              }
+            } catch (_) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  busy = false;
+                  error = 'Unable to archive this patient. Please try again.';
+                });
+              }
+            }
+          },
+        ),
+      ),
+    );
+    if (archived == true && mounted) {
+      _rangesChanged = false;
+      Navigator.of(
+        context,
+      ).pop(EditPatientResult(patient: _patient, archived: true));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final saving = _controller.isSaving;
     final error = _controller.errorMessage;
-    return Scaffold(
+    return PopScope<Object?>(
+      canPop: !_rangesChanged,
+      onPopInvokedWithResult: (didPop, _) {
+        // Ranges are saved on their own screen; hand them back so the detail
+        // page does not show stale values if the profile form is abandoned.
+        if (!didPop) {
+          Navigator.of(context).pop(EditPatientResult(patient: _patient));
+        }
+      },
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -219,8 +319,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
                     const SetupHeader(
                       title: 'Edit patient',
                       subtitle:
-                          'Update this person’s details. Monitoring ranges '
-                          'are changed in Monitoring Settings.',
+                          'Update this person’s details and monitoring '
+                          'ranges.',
                     ),
                     _photoSection(saving),
                     const SizedBox(height: 20),
@@ -302,6 +402,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
                       enabled: !saving,
                       maxLines: 3,
                     ),
+                    _monitoringRow(saving),
+                    _archiveRow(saving),
                   ],
                 ),
               ),
@@ -355,8 +457,62 @@ class _EditPatientPageState extends State<EditPatientPage> {
           ],
         ),
       ),
+      ),
     );
   }
+
+  Widget _monitoringRow(bool saving) => Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: AleraCard(
+      key: const Key('edit-monitoring-ranges'),
+      onTap: saving ? null : _openRanges,
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      child: Row(
+        children: [
+          const Icon(Icons.monitor_heart, size: 22, color: AleraColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Monitoring ranges',
+                  style: AleraTypography.bodyStrong,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  monitoringRangesSummary(_patient),
+                  key: const Key('edit-monitoring-summary'),
+                  style: AleraTypography.caption,
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            size: 22,
+            color: AleraColors.mutedChevron,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _archiveRow(bool saving) => Padding(
+    padding: const EdgeInsets.only(top: 12),
+    child: Center(
+      child: TextButton.icon(
+        key: const Key('edit-archive-patient'),
+        onPressed: saving ? null : _confirmArchive,
+        style: TextButton.styleFrom(foregroundColor: AleraColors.critical),
+        icon: const Icon(Icons.archive, size: 20),
+        label: const Text(
+          'Archive patient',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+      ),
+    ),
+  );
 
   Widget _photoSection(bool saving) {
     final photo = _newPhoto;

@@ -48,27 +48,7 @@ class CaregiverPeoplePage extends StatelessWidget {
 
   Widget _buildPage(BuildContext context, List<CareRecipient> recipients) {
     return Scaffold(
-      appBar: CaregiverPageAppBar(
-        title: 'People',
-        actions: [
-          caregiverPageAction(
-            tooltip: 'Filter people',
-            onPressed: () => _showMockFeedback(
-              context,
-              'People filters are not available in the mock yet.',
-            ),
-            icon: Icons.filter_list,
-          ),
-          caregiverPageAction(
-            tooltip: 'Edit people',
-            onPressed: () => _showMockFeedback(
-              context,
-              'Editing people is not available in the mock yet.',
-            ),
-            icon: Icons.edit,
-          ),
-        ],
-      ),
+      appBar: const CaregiverPageAppBar(title: 'People'),
       body: _buildBody(context, recipients),
     );
   }
