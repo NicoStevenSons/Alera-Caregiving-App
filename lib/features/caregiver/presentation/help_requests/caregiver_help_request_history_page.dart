@@ -7,6 +7,7 @@ import '../../data/help_requests/caregiver_help_request_history_controller.dart'
 import '../widgets/caregiver_page_app_bar.dart';
 import 'caregiver_help_request_detail_page.dart';
 import '../../../../design_system/widgets/alera_loader.dart';
+import '../../../../design_system/widgets/alera_pill.dart';
 
 class CaregiverHelpRequestHistoryPage extends StatefulWidget {
   const CaregiverHelpRequestHistoryPage({
@@ -75,26 +76,30 @@ class _CaregiverHelpRequestHistoryPageState
                 child: Row(
                   children: [
                     Expanded(
-                      child: ChoiceChip(
+                      child: AleraPill(
                         key: const Key('help-history-active-filter'),
-                        label: const Text('Active'),
+                        label: 'Active',
+                        variant: AleraPillVariant.filter,
+                        expand: true,
                         selected:
                             _controller.filter ==
                             HelpRequestHistoryFilter.active,
-                        onSelected: (_) => _controller.selectFilter(
+                        onTap: () => _controller.selectFilter(
                           HelpRequestHistoryFilter.active,
                         ),
                       ),
                     ),
                     const SizedBox(width: AleraSpacing.small),
                     Expanded(
-                      child: ChoiceChip(
+                      child: AleraPill(
                         key: const Key('help-history-resolved-filter'),
-                        label: const Text('Resolved'),
+                        label: 'Resolved',
+                        variant: AleraPillVariant.filter,
+                        expand: true,
                         selected:
                             _controller.filter ==
                             HelpRequestHistoryFilter.resolved,
-                        onSelected: (_) => _controller.selectFilter(
+                        onTap: () => _controller.selectFilter(
                           HelpRequestHistoryFilter.resolved,
                         ),
                       ),

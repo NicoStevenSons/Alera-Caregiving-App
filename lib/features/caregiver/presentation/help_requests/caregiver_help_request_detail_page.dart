@@ -8,6 +8,9 @@ import '../../data/help_requests/caregiver_help_request_note.dart';
 import '../widgets/caregiver_page_app_bar.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
 import '../../../../design_system/widgets/alera_loader.dart';
+import '../../../../design_system/widgets/alera_pill.dart';
+import '../../../../design_system/alera_typography.dart';
+import '../../../../design_system/alera_colors.dart';
 
 class CaregiverHelpRequestDetailPage extends StatefulWidget {
   const CaregiverHelpRequestDetailPage({
@@ -107,15 +110,20 @@ class _CaregiverHelpRequestDetailPageState
                 children: [
                   Text(
                     request.patientDisplayName ?? 'Patient',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: AleraTypography.heading,
                   ),
                   const SizedBox(height: AleraSpacing.small),
-                  Chip(label: Text(_statusLabel(request.status))),
+                  AleraPill(
+                    label: _statusLabel(request.status),
+                    variant: AleraPillVariant.label,
+                  ),
                   if (request.message != null) ...[
                     const SizedBox(height: AleraSpacing.medium),
                     Text(
                       request.message!,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: AleraTypography.body.copyWith(
+                        color: AleraColors.textPrimary,
+                      ),
                     ),
                   ],
                 ],
@@ -123,7 +131,7 @@ class _CaregiverHelpRequestDetailPageState
             ),
           ),
           const SizedBox(height: AleraSpacing.large),
-          Text('Lifecycle', style: Theme.of(context).textTheme.titleLarge),
+          Text('Lifecycle', style: AleraTypography.sectionTitle),
           const SizedBox(height: AleraSpacing.small),
           Card(
             child: Column(
@@ -151,12 +159,12 @@ class _CaregiverHelpRequestDetailPageState
           const SizedBox(height: AleraSpacing.large),
           Text(
             'Caregiver notes',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: AleraTypography.sectionTitle,
           ),
           const SizedBox(height: AleraSpacing.small),
           Text(
             'Private to assigned caregivers.',
-            style: Theme.of(context).textTheme.bodySmall,
+            style: AleraTypography.bodySmall,
           ),
           const SizedBox(height: AleraSpacing.small),
           if (_controller.notes.isEmpty)
