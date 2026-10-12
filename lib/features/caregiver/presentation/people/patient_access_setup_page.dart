@@ -267,7 +267,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     } else if (_expired) {
       content = const [
         PatientAccessNoticeContent(
-          icon: Icons.timer_off_outlined,
+          icon: Icons.timer_off,
           title: 'The invitation expired.',
           message: 'Generate a new code so the patient can connect.',
         ),
@@ -288,7 +288,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     } else if (_status.status == PatientAccessState.invitePending) {
       content = [
         PatientAccessNoticeContent(
-          icon: Icons.schedule_outlined,
+          icon: Icons.schedule,
           title: 'Invitation pending',
           message: 'Waiting for the patient to use their access code.',
           detail: _status.pendingExpiresAt == null
@@ -309,7 +309,7 @@ class _PatientAccessSetupPageState extends State<PatientAccessSetupPage>
     } else {
       content = const [
         PatientAccessNoticeContent(
-          icon: Icons.help_outline,
+          icon: Icons.help,
           title: 'Patient access status is unavailable.',
           message: 'Try again in a moment.',
         ),

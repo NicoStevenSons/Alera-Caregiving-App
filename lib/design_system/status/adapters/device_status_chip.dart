@@ -88,7 +88,7 @@ class DeviceStatusChip extends StatelessWidget {
       ),
       PatientDeviceConnectionStatus.unknown => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.help_outline),
+        glyph: const AleraStatusGlyph.material(Icons.help),
         label: labels.deviceUnknown,
       ),
     };

@@ -830,12 +830,12 @@ class _CaregiverShellState extends State<CaregiverShell>
                   onDestinationSelected: _selectDestination,
                   destinations: const [
                     NavigationDestination(
-                      icon: Icon(Icons.grid_view_outlined),
+                      icon: Icon(Icons.grid_view),
                       selectedIcon: Icon(Icons.grid_view_rounded),
                       label: 'Home',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.people_outline),
+                      icon: Icon(Icons.people),
                       selectedIcon: Icon(Icons.people),
                       label: 'People',
                     ),

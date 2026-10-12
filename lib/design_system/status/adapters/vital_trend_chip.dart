@@ -92,7 +92,7 @@ class VitalTrendChip extends StatelessWidget {
       },
       VitalTrendSeverity.unknown => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.help_outline),
+        glyph: const AleraStatusGlyph.material(Icons.help),
         label: labels.vitalUnknown,
       ),
     };

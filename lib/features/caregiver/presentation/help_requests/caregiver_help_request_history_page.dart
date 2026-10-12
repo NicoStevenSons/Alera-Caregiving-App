@@ -121,7 +121,7 @@ class _CaregiverHelpRequestHistoryPageState
         child: AleraLoader.large(),
       ),
       HelpRequestHistoryState.error => _HistoryMessage(
-        icon: Icons.cloud_off_outlined,
+        icon: Icons.cloud_off,
         message:
             _controller.errorMessage ?? 'Unable to load help-request history.',
         actionLabel: 'Retry',
@@ -130,7 +130,7 @@ class _CaregiverHelpRequestHistoryPageState
       HelpRequestHistoryState.success when _controller.requests.isEmpty =>
         _HistoryMessage(
           icon: _controller.filter == HelpRequestHistoryFilter.active
-              ? Icons.check_circle_outline
+              ? Icons.check_circle
               : Icons.history,
           message: _controller.filter == HelpRequestHistoryFilter.active
               ? 'No active help requests.'
@@ -215,9 +215,9 @@ String _statusLabel(HelpRequestStatus status) => switch (status) {
 };
 
 IconData _statusIcon(HelpRequestStatus status) => switch (status) {
-  HelpRequestStatus.pending => Icons.notifications_active_outlined,
-  HelpRequestStatus.acknowledged => Icons.visibility_outlined,
-  HelpRequestStatus.resolved => Icons.check_circle_outline,
+  HelpRequestStatus.pending => Icons.notifications_active,
+  HelpRequestStatus.acknowledged => Icons.visibility,
+  HelpRequestStatus.resolved => Icons.check_circle,
 };
 
 String _formatDateTime(DateTime value) {

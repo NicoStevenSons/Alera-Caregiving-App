@@ -43,7 +43,7 @@ class ReminderStatusChip extends StatelessWidget {
       ),
       CaregiverReminderStatus.upcoming => AleraStatusDescriptor(
         tone: AleraStatusTone.info,
-        glyph: const AleraStatusGlyph.material(Icons.event_outlined),
+        glyph: const AleraStatusGlyph.material(Icons.event),
         label: labels.reminderScheduled,
       ),
       CaregiverReminderStatus.completed => AleraStatusDescriptor(

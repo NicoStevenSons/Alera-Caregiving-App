@@ -137,19 +137,19 @@ class _CaregiverHelpRequestDetailPageState
             child: Column(
               children: [
                 _LifecycleTile(
-                  icon: Icons.notifications_active_outlined,
+                  icon: Icons.notifications_active,
                   title: 'Requested',
                   time: request.requestedAt,
                 ),
                 if (request.acknowledgedAt != null)
                   _LifecycleTile(
-                    icon: Icons.visibility_outlined,
+                    icon: Icons.visibility,
                     title: 'Acknowledged',
                     time: request.acknowledgedAt!,
                   ),
                 if (request.resolvedAt != null)
                   _LifecycleTile(
-                    icon: Icons.check_circle_outline,
+                    icon: Icons.check_circle,
                     title: 'Resolved',
                     time: request.resolvedAt!,
                   ),
@@ -198,7 +198,7 @@ class _CaregiverHelpRequestDetailPageState
             onPressed: _controller.addingNote ? null : _submitNote,
             icon: _controller.addingNote
                 ? const AleraLoader.small()
-                : const Icon(Icons.note_add_outlined),
+                : const Icon(Icons.note_add),
             label: Text(_controller.addingNote ? 'Adding…' : 'Add note'),
           ),
           if (_controller.canRetryNote) ...[
@@ -219,7 +219,7 @@ class _CaregiverHelpRequestDetailPageState
     return Card(
       key: ValueKey<String>('help-request-note-${note.id}'),
       child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+        leading: const CircleAvatar(child: Icon(Icons.person)),
         title: Text(note.note),
         subtitle: Text(
           '${note.authorDisplayName ?? 'Caregiver'} • '
@@ -265,7 +265,7 @@ class _DetailError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined, size: 48),
+            const Icon(Icons.cloud_off, size: 48),
             const SizedBox(height: AleraSpacing.medium),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AleraSpacing.medium),

@@ -38,7 +38,7 @@ class PatientAccessStatusChip extends StatelessWidget {
     return switch (status) {
       PatientAccessState.connected => AleraStatusDescriptor(
         tone: AleraStatusTone.success,
-        glyph: const AleraStatusGlyph.material(Icons.check_circle_outline),
+        glyph: const AleraStatusGlyph.material(Icons.check_circle),
         label: labels.patientActive,
       ),
       PatientAccessState.invitePending => AleraStatusDescriptor(
@@ -53,7 +53,7 @@ class PatientAccessStatusChip extends StatelessWidget {
       ),
       PatientAccessState.unknown => AleraStatusDescriptor(
         tone: AleraStatusTone.neutral,
-        glyph: const AleraStatusGlyph.material(Icons.help_outline),
+        glyph: const AleraStatusGlyph.material(Icons.help),
         label: labels.patientInactive,
       ),
     };

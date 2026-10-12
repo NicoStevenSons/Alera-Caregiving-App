@@ -40,19 +40,19 @@ class PatientAccessIntroContent extends StatelessWidget {
         const Column(
           children: [
             _InfoRow(
-              icon: Icons.schedule_outlined,
+              icon: Icons.schedule,
               title: 'Valid for 24 hours',
               subtitle: 'The code will expire after 24 hours.',
             ),
             SizedBox(height: 20),
             _InfoRow(
-              icon: Icons.verified_user_outlined,
+              icon: Icons.verified_user,
               title: 'One-time use only',
               subtitle: 'This code can only be used once.',
             ),
             SizedBox(height: 20),
             _InfoRow(
-              icon: Icons.people_outline,
+              icon: Icons.people,
               title: 'For the patient',
               subtitle:
                   'Have the patient scan the QR code or enter the code on their device.',
@@ -161,7 +161,7 @@ class PatientAccessCodeContent extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionTile(
-                icon: Icons.content_copy_outlined,
+                icon: Icons.content_copy,
                 label: 'Copy code',
                 onTap: () => _copy(context),
               ),
@@ -169,7 +169,7 @@ class PatientAccessCodeContent extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _ActionTile(
-                icon: Icons.share_outlined,
+                icon: Icons.share,
                 label: 'Share',
                 onTap: onShare,
               ),
@@ -334,7 +334,7 @@ class _CopyChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.content_copy_outlined,
+                Icons.content_copy,
                 size: 16,
                 color: AleraColors.textPrimary,
               ),
@@ -372,7 +372,7 @@ class _ValidityStrip extends StatelessWidget {
           children: [
             Expanded(
               child: _StripItem(
-                icon: Icons.schedule_outlined,
+                icon: Icons.schedule,
                 title: 'Valid for 24 hours',
                 subtitle: 'Expires $expiry',
               ),
@@ -384,7 +384,7 @@ class _ValidityStrip extends StatelessWidget {
             ),
             const Expanded(
               child: _StripItem(
-                icon: Icons.verified_user_outlined,
+                icon: Icons.verified_user,
                 title: 'One-time use only',
                 subtitle: 'This code can only be used once.',
               ),

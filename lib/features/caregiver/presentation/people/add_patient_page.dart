@@ -605,7 +605,7 @@ class _AddPatientPageState extends State<AddPatientPage>
   Future<void> finish() async {
     final ok = await showAleraConfirmationDialog(
       context,
-      icon: Icons.watch_later_outlined,
+      icon: Icons.watch_later,
       title: 'Finish setup for now?',
       message:
           'The patient remains saved but cannot send readings until connected.',
@@ -618,7 +618,7 @@ class _AddPatientPageState extends State<AddPatientPage>
   Future<void> confirm() async {
     final ok = await showAleraConfirmationDialog(
       context,
-      icon: Icons.person_add_alt_outlined,
+      icon: Icons.person_add_alt,
       title: 'Create ${name.text.trim()}’s profile?',
       message:
           'The patient will be added using the reviewed information and connection can happen afterward.',
@@ -739,25 +739,25 @@ class _AddPatientPageState extends State<AddPatientPage>
       const Column(
         children: [
           _IntroRow(
-            icon: Icons.person_outline,
+            icon: Icons.person,
             title: 'Personal information',
             subtitle: 'Name, phone number, address and birthdate.',
           ),
           SizedBox(height: 20),
           _IntroRow(
-            icon: Icons.description_outlined,
+            icon: Icons.description,
             title: 'Care information',
             subtitle: 'Emergency contact, conditions and medications.',
           ),
           SizedBox(height: 20),
           _IntroRow(
-            icon: Icons.monitor_heart_outlined,
+            icon: Icons.monitor_heart,
             title: 'Monitoring settings',
             subtitle: 'Use Alera defaults or set custom ranges.',
           ),
           SizedBox(height: 20),
           _IntroRow(
-            icon: Icons.people_outline,
+            icon: Icons.people,
             title: 'Patient access',
             subtitle: 'Connect the patient after their profile is created.',
           ),
@@ -794,7 +794,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                         : MemoryImage(_profilePhotoBytes!),
                     child: _profilePhotoBytes == null
                         ? const Icon(
-                            Icons.person_outline,
+                            Icons.person,
                             size: 42,
                             color: AleraColors.primary,
                           )
@@ -812,7 +812,7 @@ class _AddPatientPageState extends State<AddPatientPage>
                           foregroundColor: AleraColors.primary,
                         ),
                         icon: const Icon(
-                          Icons.photo_library_outlined,
+                          Icons.photo_library,
                           size: 18,
                         ),
                         label: Text(
@@ -1194,7 +1194,7 @@ class _AddPatientPageState extends State<AddPatientPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(
-                  Icons.info_outline,
+                  Icons.info,
                   size: 22,
                   color: AleraColors.primary,
                 ),
@@ -1588,7 +1588,7 @@ class _AddPatientPageState extends State<AddPatientPage>
       Column(
         children: [
           _CreatedRow(
-            icon: Icons.description_outlined,
+            icon: Icons.description,
             title: 'Profile',
             trailing: const Text(
               'Created',
@@ -1597,7 +1597,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           ),
           const SizedBox(height: 18),
           _CreatedRow(
-            icon: Icons.monitor_heart_outlined,
+            icon: Icons.monitor_heart,
             title: 'Monitoring',
             subtitle: monitoringRangeSummary.replaceAll('  ·  ', ' • '),
             trailing: settingsFailed
@@ -1615,7 +1615,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           ),
           const SizedBox(height: 18),
           const _CreatedRow(
-            icon: Icons.people_outline,
+            icon: Icons.people,
             title: 'Patient access',
             trailing: PatientAccessStatusChip(
               PatientAccessState.notConnected,
@@ -1675,7 +1675,7 @@ class _AddPatientPageState extends State<AddPatientPage>
           )
         : expired
         ? const PatientAccessNoticeContent(
-            icon: Icons.timer_off_outlined,
+            icon: Icons.timer_off,
             title: 'The invitation expired.',
             message:
                 'You can generate a new code later from the patient’s profile.',

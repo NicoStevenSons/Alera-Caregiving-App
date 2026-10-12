@@ -398,8 +398,8 @@ class _CaregiverPatientDetailLoaderPageState
                 children: [
                   Icon(
                     failure.kind == CaregiverPatientFailureKind.notFound
-                        ? Icons.person_off_outlined
-                        : Icons.error_outline,
+                        ? Icons.person_off
+                        : Icons.error,
                     size: 48,
                   ),
                   const SizedBox(height: 12),

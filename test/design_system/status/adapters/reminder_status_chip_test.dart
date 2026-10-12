@@ -29,7 +29,7 @@ void main() {
 
       expect(find.text('Scheduled'), findsOneWidget);
       final Icon icon = tester.widget<Icon>(find.byType(Icon));
-      expect(icon.icon, Icons.event_outlined);
+      expect(icon.icon, Icons.event);
     });
 
     testWidgets('completed renders as success with a check glyph', (

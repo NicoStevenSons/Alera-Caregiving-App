@@ -410,7 +410,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: AleraButton(
-                          icon: Icons.check_circle_outline,
+                          icon: Icons.check_circle,
                           label: 'Resolve',
                           onPressed:
                               actions != null &&
@@ -436,7 +436,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                   const SizedBox(height: 12),
                   AleraButton(
                     label: 'False Alarm',
-                    icon: Icons.report_off_outlined,
+                    icon: Icons.report_off,
                     variant: AleraButtonVariant.white,
                     onPressed:
                         actions != null &&
@@ -456,7 +456,7 @@ class _CaregiverAlertDetailPageState extends State<CaregiverAlertDetailPage> {
                   const SizedBox(height: 12),
                   AleraButton(
                     label: 'Log Intervention',
-                    icon: Icons.medical_services_outlined,
+                    icon: Icons.medical_services,
                     variant: AleraButtonVariant.white,
                     onPressed: actions != null && !busy
                         ? _showIntervention
@@ -746,7 +746,7 @@ class _AlertImpact extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: accentColor, size: 20),
+          Icon(Icons.info, color: accentColor, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -810,7 +810,7 @@ List<_AlertDetailFactData> _detailFacts(
               ? 'Immediate'
               : _formatDuration(alert.triggerDuration!),
           color: AleraColors.selected,
-          icon: Icons.timer_outlined,
+          icon: Icons.timer,
         ),
         _AlertDetailFactData(
           label: 'Detected at',
@@ -826,7 +826,7 @@ List<_AlertDetailFactData> _detailFacts(
           label: 'Device',
           value: _deviceLabel(alert),
           color: accentColor,
-          icon: Icons.devices_outlined,
+          icon: Icons.devices,
         ),
         _AlertDetailFactData(
           label: alert.hasReading ? 'Battery level' : 'Battery status',
@@ -845,7 +845,7 @@ List<_AlertDetailFactData> _detailFacts(
             label: 'Resolved at',
             value: resolved,
             color: AleraColors.success,
-            icon: Icons.check_circle_outline,
+            icon: Icons.check_circle,
           ),
       ];
 
@@ -856,7 +856,7 @@ List<_AlertDetailFactData> _detailFacts(
             label: 'Device',
             value: _deviceLabel(alert),
             color: accentColor,
-            icon: Icons.devices_outlined,
+            icon: Icons.devices,
           ),
           _AlertDetailFactData(
             label: 'Connection',
@@ -875,7 +875,7 @@ List<_AlertDetailFactData> _detailFacts(
               label: 'Resolved at',
               value: resolved,
               color: AleraColors.success,
-              icon: Icons.check_circle_outline,
+              icon: Icons.check_circle,
             ),
         ];
       }
@@ -884,7 +884,7 @@ List<_AlertDetailFactData> _detailFacts(
           label: 'System event',
           value: alert.title,
           color: accentColor,
-          icon: Icons.info_outline,
+          icon: Icons.info,
         ),
         _AlertDetailFactData(
           label: 'Detected at',
@@ -897,7 +897,7 @@ List<_AlertDetailFactData> _detailFacts(
             label: 'Resolved at',
             value: resolved,
             color: AleraColors.success,
-            icon: Icons.check_circle_outline,
+            icon: Icons.check_circle,
           ),
       ];
 
@@ -922,14 +922,14 @@ List<_AlertDetailFactData> _detailFacts(
             label: 'Duration',
             value: _formatDuration(alert.triggerDuration!),
             color: AleraColors.selected,
-            icon: Icons.timer_outlined,
+            icon: Icons.timer,
           ),
         if (resolved != null)
           _AlertDetailFactData(
             label: 'Resolved at',
             value: resolved,
             color: AleraColors.success,
-            icon: Icons.check_circle_outline,
+            icon: Icons.check_circle,
           ),
       ];
 
@@ -952,7 +952,7 @@ List<_AlertDetailFactData> _detailFacts(
             label: 'Resolved at',
             value: resolved,
             color: AleraColors.success,
-            icon: Icons.check_circle_outline,
+            icon: Icons.check_circle,
           ),
       ];
   }
@@ -1142,7 +1142,7 @@ class _NotesCard extends StatelessWidget {
                     tooltip: 'Save note',
                     onPressed: enabled ? onSave : null,
                     icon: const Icon(
-                      Icons.edit_outlined,
+                      Icons.edit,
                       color: AleraColors.primary,
                       size: 15,
                     ),

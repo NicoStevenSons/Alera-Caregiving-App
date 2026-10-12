@@ -516,7 +516,7 @@ class _PatientFilterChip extends StatelessWidget {
         label: label,
         leading: selected
             ? AleraPatientAvatar(name: label, photoUrl: photoUrl, radius: 10)
-            : const Icon(Icons.people_outline, size: 20),
+            : const Icon(Icons.people, size: 20),
         selected: selected,
         variant: AleraPillVariant.filter,
         onTap: onTap,

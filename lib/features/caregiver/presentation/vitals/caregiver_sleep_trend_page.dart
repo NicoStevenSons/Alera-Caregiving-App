@@ -343,7 +343,7 @@ class _SleepTrendError extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_outlined, size: 36),
+          const Icon(Icons.cloud_off, size: 36),
           const SizedBox(height: 10),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
