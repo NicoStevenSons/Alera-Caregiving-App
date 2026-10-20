@@ -73,8 +73,7 @@ class CreatePatientRequest {
     'monitoring_notes': _trimmedOrNull(monitoringNotes),
     // Only sent when set, so creating a patient without a backup contact
     // keeps the exact payload older backends already accept.
-    if (_backupContact(backupCaregiverName, backupCaregiverPhone)
-        case final contact?) ...contact,
+    ...?_backupContact(backupCaregiverName, backupCaregiverPhone),
     // Only sent when set, so creating a patient without a label keeps the
     // exact payload older backends already accept.
     if (normalizeRelationshipLabel(relationshipLabel) != null)
