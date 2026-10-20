@@ -14,6 +14,8 @@ Map<String, dynamic> editPatientJson({
   String? relationship,
   String? photoUrl,
   bool customRanges = false,
+  String? backupName,
+  String? backupPhone,
 }) => {
   'patient_id': 'patient-1',
   'user_id': 'user-1',
@@ -44,6 +46,8 @@ Map<String, dynamic> editPatientJson({
   'baseline_heart_rate': null,
   'baseline_spo2': null,
   'monitoring_notes': 'Morning checks',
+  'backup_caregiver_name': backupName,
+  'backup_caregiver_phone': backupPhone,
   'archived_at': null,
   'assignment': null,
   'normal_hr_min': customRanges ? 55 : 60,
@@ -62,8 +66,15 @@ Map<String, dynamic> editPatientJson({
 PatientDetailDto editPatient({
   String? relationship,
   bool customRanges = false,
+  String? backupName,
+  String? backupPhone,
 }) => PatientDetailDto.fromJson(
-  editPatientJson(relationship: relationship, customRanges: customRanges),
+  editPatientJson(
+    relationship: relationship,
+    customRanges: customRanges,
+    backupName: backupName,
+    backupPhone: backupPhone,
+  ),
 );
 
 /// Echoes the request back as the saved patient, or fails when told to.

@@ -98,6 +98,51 @@ void main() {
     },
   );
 
+  testWidgets('backup caregiver is sent with a normalised phone', (t) async {
+    final s = _Source();
+    await _pump(t, s);
+    await reachCareInformation(t);
+
+    await t.enterText(find.byKey(const Key('backup-name-field')), 'Ana Cruz');
+    await t.enterText(
+      find.byKey(const Key('backup-phone-field')),
+      '0917 123 4567',
+    );
+    await continueCareToMonitoring(t);
+    await t.tap(find.text('Continue'));
+    await t.pumpAndSettle();
+    expect(find.text('Backup caregiver'), findsOneWidget);
+    await confirmPatientCreation(t);
+
+    final json = s.lastRequest!.toJson();
+    expect(json['backup_caregiver_name'], 'Ana Cruz');
+    expect(json['backup_caregiver_phone'], '+639171234567');
+  });
+
+  testWidgets('an invalid backup phone blocks leaving the care step', (
+    t,
+  ) async {
+    final s = _Source();
+    await _pump(t, s);
+    await reachCareInformation(t);
+
+    await t.enterText(find.byKey(const Key('backup-name-field')), 'Ana');
+    await t.enterText(find.byKey(const Key('backup-phone-field')), '12345');
+    await t.scrollUntilVisible(
+      find.text('Skip for now'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await t.tap(find.text('Skip for now'));
+    await t.pumpAndSettle();
+
+    expect(
+      find.text('Enter a Philippine mobile number, e.g. 09171234567.'),
+      findsOneWidget,
+    );
+    expect(s.createCalls, 0);
+  });
+
   testWidgets(
     'custom monitoring posts then patches and retry never posts again',
     (t) async {
@@ -348,6 +393,7 @@ class _Source implements CaregiverPatientDataSource {
   final bool photoUploadFailsOnce;
 
   int createCalls = 0;
+  CreatePatientRequest? lastRequest;
   int patchCalls = 0;
   int issueCalls = 0;
   int photoCalls = 0;
@@ -358,6 +404,7 @@ class _Source implements CaregiverPatientDataSource {
   @override
   Future<PatientCreatedResponse> createPatient(CreatePatientRequest r) async {
     createCalls++;
+    lastRequest = r;
     return _created();
   }
 

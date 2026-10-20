@@ -19,6 +19,7 @@ import '../../../../design_system/widgets/alera_text_field.dart';
 import '../../data/api/caregiver_patient_api_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import 'patient_access_setup_page.dart';
+import 'widgets/backup_caregiver_fields.dart';
 import 'widgets/patient_access_views.dart';
 import 'widgets/patient_setup_widgets.dart';
 import 'widgets/relationship_field.dart';
@@ -73,6 +74,8 @@ class _AddPatientPageState extends State<AddPatientPage>
       birthYear = TextEditingController(),
       emergencyName = TextEditingController(),
       emergencyPhone = TextEditingController(),
+      backupName = TextEditingController(),
+      backupPhone = TextEditingController(),
       conditions = TextEditingController(),
       medications = TextEditingController(),
       hr = TextEditingController(),
@@ -149,6 +152,8 @@ class _AddPatientPageState extends State<AddPatientPage>
       birthYear,
       emergencyName,
       emergencyPhone,
+      backupName,
+      backupPhone,
       conditions,
       medications,
       hr,
@@ -272,6 +277,8 @@ class _AddPatientPageState extends State<AddPatientPage>
     addressOrRoom: address.text,
     emergencyContactName: emergencyName.text,
     emergencyContactPhone: emergencyPhone.text,
+    backupCaregiverName: backupName.text,
+    backupCaregiverPhone: backupPhone.text,
     knownConditions: conditions.text,
     medications: medications.text,
     baselineHeartRate: num.tryParse(hr.text),
@@ -454,6 +461,8 @@ class _AddPatientPageState extends State<AddPatientPage>
       profilePhotoUrl: result.profilePhotoUrl,
       emergencyContactName: patient.emergencyContactName,
       emergencyContactPhone: patient.emergencyContactPhone,
+      backupCaregiverName: patient.backupCaregiverName,
+      backupCaregiverPhone: patient.backupCaregiverPhone,
       knownConditions: patient.knownConditions,
       medications: patient.medications,
       baselineHeartRate: patient.baselineHeartRate,
@@ -1037,6 +1046,10 @@ class _AddPatientPageState extends State<AddPatientPage>
               v: (x) =>
                   (x?.length ?? 0) > 30 ? 'Use 30 characters or fewer.' : null,
             ),
+            BackupCaregiverFields(
+              nameController: backupName,
+              phoneController: backupPhone,
+            ),
             field(
               conditions,
               'Known conditions (Separate with comma)',
@@ -1272,6 +1285,8 @@ class _AddPatientPageState extends State<AddPatientPage>
   bool get hasCareInformation => [
     emergencyName,
     emergencyPhone,
+    backupName,
+    backupPhone,
     conditions,
     medications,
     hr,
@@ -1414,6 +1429,15 @@ class _AddPatientPageState extends State<AddPatientPage>
                       [
                         emergencyName.text.trim(),
                         emergencyPhone.text.trim(),
+                      ].where((e) => e.isNotEmpty).join(' · '),
+                    ),
+                  if (backupName.text.trim().isNotEmpty ||
+                      backupPhone.text.trim().isNotEmpty)
+                    careLine(
+                      'Backup caregiver',
+                      [
+                        backupName.text.trim(),
+                        backupPhone.text.trim(),
                       ].where((e) => e.isNotEmpty).join(' · '),
                     ),
                   if (conditions.text.trim().isNotEmpty)

@@ -13,6 +13,7 @@ import '../../data/api/caregiver_patient_edit_data_source.dart';
 import '../../data/api/dto/patient_dto.dart';
 import '../../data/patients/edit_patient_controller.dart';
 import 'edit_monitoring_ranges_page.dart';
+import 'widgets/backup_caregiver_fields.dart';
 import 'widgets/patient_photo_picker.dart';
 import 'widgets/patient_setup_widgets.dart';
 import 'widgets/relationship_field.dart';
@@ -59,6 +60,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
   late final TextEditingController _birthYear;
   late final TextEditingController _emergencyName;
   late final TextEditingController _emergencyPhone;
+  late final TextEditingController _backupName;
+  late final TextEditingController _backupPhone;
   late final TextEditingController _conditions;
   late final TextEditingController _medications;
   late final TextEditingController _notes;
@@ -101,6 +104,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
     _emergencyPhone = TextEditingController(
       text: p.emergencyContactPhone ?? '',
     );
+    _backupName = TextEditingController(text: p.backupCaregiverName ?? '');
+    _backupPhone = TextEditingController(text: p.backupCaregiverPhone ?? '');
     _conditions = TextEditingController(text: p.knownConditions ?? '');
     _medications = TextEditingController(text: p.medications ?? '');
     _notes = TextEditingController(text: p.monitoringNotes ?? '');
@@ -122,6 +127,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
       _birthYear,
       _emergencyName,
       _emergencyPhone,
+      _backupName,
+      _backupPhone,
       _conditions,
       _medications,
       _notes,
@@ -171,6 +178,8 @@ class _EditPatientPageState extends State<EditPatientPage> {
     knownConditions: _conditions.text,
     medications: _medications.text,
     monitoringNotes: _notes.text,
+    backupCaregiverName: _backupName.text,
+    backupCaregiverPhone: _backupPhone.text,
     relationshipLabel: _relationship.text,
   );
 
@@ -191,14 +200,45 @@ class _EditPatientPageState extends State<EditPatientPage> {
     }
   }
 
-  Future<void> _save() async {
-    if (_controller.isSaving) return;
+  Future<bool> _save() async {
+    if (_controller.isSaving) return false;
     setState(() => _birthdateTouched = true);
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return false;
     final ok = await _controller.save(_request, photo: _newPhoto);
     if (ok && mounted) {
       _rangesChanged = false;
       Navigator.of(context).pop(_controller.result);
+    }
+    return ok;
+  }
+
+  /// Confirms, then saves the patient with no backup contact (both fields
+  /// sent as null). If the save fails the previous contact is put back.
+  Future<void> _removeBackup() async {
+    if (_controller.isSaving) return;
+    final confirmed = await showAleraConfirmDialog(
+      context,
+      icon: Icons.person_remove,
+      title: 'Remove backup caregiver?',
+      message:
+          '${_backupName.text.trim()} will no longer get text messages when '
+          '${_patient.fullName} has a critical alert.',
+      confirmLabel: 'Remove',
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    final oldName = _backupName.text;
+    final oldPhone = _backupPhone.text;
+    setState(() {
+      _backupName.clear();
+      _backupPhone.clear();
+    });
+    final ok = await _save();
+    if (!ok && mounted) {
+      setState(() {
+        _backupName.text = oldName;
+        _backupPhone.text = oldPhone;
+      });
     }
   }
 
@@ -377,6 +417,12 @@ class _EditPatientPageState extends State<EditPatientPage> {
                         validator: (x) => (x?.length ?? 0) > 30
                             ? 'Use 30 characters or fewer.'
                             : null,
+                      ),
+                      BackupCaregiverFields(
+                        nameController: _backupName,
+                        phoneController: _backupPhone,
+                        enabled: !saving,
+                        onRemove: _removeBackup,
                       ),
                       AleraTextField(
                         controller: _conditions,

@@ -7,6 +7,29 @@
 - **Relationship label:** optional field in Add Patient (personal step) and Edit Patient. Picked from an icon grid (3 columns, like the reminder categories): Mother, Father, Grandmother, Grandfather, Spouse, Relative, Client, Friend, plus Other, which reveals a text box for custom text. Tapping the selected tile clears it. Icons are placeholders (`assets/icons/relationships/*.svg`, copies of `status/error.svg`); see `alera-figma-assets/PLACEHOLDER_ICONS.md`. Whitespace is collapsed, blank means "not set", maximum 50 characters. It shows under the patient's name on the People list and as the chip on patient detail; with no label the detail chip keeps showing "Under your care".
 - **Per-caregiver, not per-patient:** the label belongs to the assignment between the signed-in caregiver and the patient. It is carried as `relationshipLabel` on the current-caregiver patient DTOs only, never on a shared patient profile.
 
+## Backup caregiver (SMS-only contact)
+A patient can have one backup caregiver: just a **name and a Philippine mobile
+number** stored on the patient (`backup_caregiver_name`,
+`backup_caregiver_phone`; backend commit `7cc56d5`). They have no Alera account,
+login or assignment. On a confirmed critical alert the **backend** sends them an
+SMS (when its SMS provider is configured); the app never sends SMS and holds no
+SMS credentials.
+
+- Entered in **Add patient** (care step) and **Edit patient**, with the line
+  "This contact receives SMS escalation for critical alerts." Both fields are
+  optional; fill in one and the other is required.
+- Accepted numbers: `09XXXXXXXXX`, `639XXXXXXXXX`, `+639XXXXXXXXX` (spaces and
+  dashes ignored). They are sent as `+639XXXXXXXXX`
+  (`lib/features/caregiver/domain/philippine_mobile.dart`).
+- Edit patient always sends both fields (PATCH full replacement). **Remove
+  backup caregiver** asks for confirmation, then saves with both set to `null`;
+  if that save fails the contact is restored in the form.
+- Create sends the fields only when set, so older backends keep working.
+- Permission, network and validation errors come from the normal save path
+  (403 shows the backend message). There is no client-side role check.
+- The backend adds a migration: confirm the deployed API has the fields before
+  testing against Render.
+
 ## Monitoring ranges (from Edit Patient)
 - The **Monitoring ranges** row on Edit Patient shows the current ranges ("Alera defaults" or "Heart rate 55–105 bpm · SpO₂ 92–99%") and opens `edit_monitoring_ranges_page.dart`.
 - That screen offers **Use Alera defaults** (60–100 bpm, SpO₂ minimum 95%) or **Set custom ranges** (heart rate min/max 1–999, SpO₂ min 0–100, optional SpO₂ max 0–100, min must not exceed max). It saves immediately through the existing `PATCH /api/v1/patients/{patient_id}/monitoring-settings` (`updateMonitoringSettings`); the profile `PATCH` never carries thresholds.
@@ -56,6 +79,8 @@ Request body (full replacement of these fields; an explicit `null` clears the va
   "known_conditions": "Hypertension",
   "medications": "Medication A",
   "monitoring_notes": "Morning checks",
+  "backup_caregiver_name": "Ana Cruz",
+  "backup_caregiver_phone": "+639171234567",
   "relationship_label": "Mother"
 }
 ```

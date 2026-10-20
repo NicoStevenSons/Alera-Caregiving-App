@@ -65,6 +65,8 @@ void main() {
       'known_conditions': 'Hypertension',
       'medications': 'Medication A',
       'monitoring_notes': 'Morning checks',
+      'backup_caregiver_name': null,
+      'backup_caregiver_phone': null,
       'relationship_label': 'Mother',
     });
     expect(saved.patientId, 'patient-1');
@@ -127,6 +129,8 @@ void main() {
       'known_conditions',
       'medications',
       'monitoring_notes',
+      'backup_caregiver_name',
+      'backup_caregiver_phone',
       'relationship_label',
     ]) {
       expect(body.containsKey(key), isTrue, reason: '$key must be present');

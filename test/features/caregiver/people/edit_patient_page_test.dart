@@ -35,6 +35,8 @@ void main() {
     String? relationship,
     bool customRanges = false,
     CaregiverPatientArchiveDataSource? archiveSource,
+    String? backupName,
+    String? backupPhone,
   }) async {
     tester.view.physicalSize = const Size(900, 2600);
     tester.view.devicePixelRatio = 1;
@@ -53,6 +55,8 @@ void main() {
                         patient: editPatient(
                           relationship: relationship,
                           customRanges: customRanges,
+                          backupName: backupName,
+                          backupPhone: backupPhone,
                         ),
                         editDataSource: edit,
                         photoDataSource: photos,
@@ -640,4 +644,139 @@ class _TokenSession implements CaregiverSession {
   String? get householdCode => null;
   @override
   Future<void> clearInvalidSession() async {}
+
+  group('backup caregiver', () {
+    const nameKey = Key('backup-name-field');
+    const phoneKey = Key('backup-phone-field');
+    const save = Key('edit-patient-save');
+
+    testWidgets('shows the explanation and empty optional fields', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      expect(
+        find.text('This contact receives SMS escalation for critical alerts.'),
+        findsOneWidget,
+      );
+      expect(text(tester, 'backup-name-field'), isEmpty);
+      expect(find.byKey(const Key('backup-remove')), findsNothing);
+    });
+
+    testWidgets('saving with both empty is allowed and sends nulls', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+      await tester.tap(find.byKey(save));
+      await tester.pumpAndSettle();
+      final json = edit.requests.single.toJson();
+      expect(json['backup_caregiver_name'], isNull);
+      expect(json['backup_caregiver_phone'], isNull);
+    });
+
+    testWidgets('loads the saved contact', (tester) async {
+      await pumpPage(
+        tester,
+        backupName: 'Ana Cruz',
+        backupPhone: '+639171234567',
+      );
+      expect(text(tester, 'backup-name-field'), 'Ana Cruz');
+      expect(text(tester, 'backup-phone-field'), '+639171234567');
+      expect(find.byKey(const Key('backup-remove')), findsOneWidget);
+    });
+
+    testWidgets('saves the name and a normalised phone', (tester) async {
+      await pumpPage(tester);
+      await tester.enterText(find.byKey(nameKey), ' Ana Cruz ');
+      await tester.enterText(find.byKey(phoneKey), '09171234567');
+      await tester.tap(find.byKey(save));
+      await tester.pumpAndSettle();
+      final json = edit.requests.single.toJson();
+      expect(json['backup_caregiver_name'], 'Ana Cruz');
+      expect(json['backup_caregiver_phone'], '+639171234567');
+    });
+
+    testWidgets('a phone without a name is rejected', (tester) async {
+      await pumpPage(tester);
+      await tester.enterText(find.byKey(phoneKey), '09171234567');
+      await tester.tap(find.byKey(save));
+      await tester.pump();
+      expect(find.text('Enter the backup caregiver’s name.'), findsOneWidget);
+      expect(edit.requests, isEmpty);
+    });
+
+    testWidgets('a name without a phone is rejected', (tester) async {
+      await pumpPage(tester);
+      await tester.enterText(find.byKey(nameKey), 'Ana');
+      await tester.tap(find.byKey(save));
+      await tester.pump();
+      expect(
+        find.text('Enter the backup caregiver’s mobile number.'),
+        findsOneWidget,
+      );
+      expect(edit.requests, isEmpty);
+    });
+
+    testWidgets('a non-Philippine number is rejected', (tester) async {
+      await pumpPage(tester);
+      await tester.enterText(find.byKey(nameKey), 'Ana');
+      await tester.enterText(find.byKey(phoneKey), '0817123456');
+      await tester.tap(find.byKey(save));
+      await tester.pump();
+      expect(
+        find.text('Enter a Philippine mobile number, e.g. 09171234567.'),
+        findsOneWidget,
+      );
+      expect(edit.requests, isEmpty);
+    });
+
+    testWidgets('remove asks first, then saves both fields as null', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        backupName: 'Ana Cruz',
+        backupPhone: '+639171234567',
+      );
+      await tester.tap(find.byKey(const Key('backup-remove')));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove backup caregiver?'), findsOneWidget);
+      expect(edit.requests, isEmpty);
+
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
+      expect(edit.requests, isEmpty);
+      expect(text(tester, 'backup-name-field'), 'Ana Cruz');
+
+      await tester.tap(find.byKey(const Key('backup-remove')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+      final json = edit.requests.single.toJson();
+      expect(json['backup_caregiver_name'], isNull);
+      expect(json['backup_caregiver_phone'], isNull);
+    });
+
+    testWidgets('a failed remove puts the contact back', (tester) async {
+      edit.failure = const CaregiverPatientApiFailure(
+        'You do not have permission to edit this patient.',
+        kind: CaregiverPatientFailureKind.forbidden,
+        statusCode: 403,
+      );
+      await pumpPage(
+        tester,
+        backupName: 'Ana Cruz',
+        backupPhone: '+639171234567',
+      );
+      await tester.tap(find.byKey(const Key('backup-remove')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('You do not have permission to edit this patient.'),
+        findsOneWidget,
+      );
+      expect(text(tester, 'backup-name-field'), 'Ana Cruz');
+      expect(text(tester, 'backup-phone-field'), '+639171234567');
+    });
+  });
 }

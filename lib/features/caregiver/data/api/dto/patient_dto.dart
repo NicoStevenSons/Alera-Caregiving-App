@@ -1,4 +1,19 @@
+import '../../../domain/philippine_mobile.dart';
 import '../../../domain/relationship_label.dart';
+
+/// The backup contact as request fields, or null when there is none. The
+/// phone is normalised to `+639XXXXXXXXX`; an unrecognised number is sent
+/// trimmed as typed so the backend, not the client, has the last word (the
+/// forms validate before this point).
+Map<String, Object?>? _backupContact(String? name, String? phone) {
+  final n = _trimmedOrNull(name);
+  final raw = _trimmedOrNull(phone);
+  if (n == null || raw == null) return null;
+  return {
+    'backup_caregiver_name': n,
+    'backup_caregiver_phone': normalizePhilippineMobile(raw) ?? raw,
+  };
+}
 
 class CreatePatientRequest {
   final String fullName;
@@ -13,6 +28,10 @@ class CreatePatientRequest {
   final num? baselineHeartRate;
   final num? baselineSpo2;
   final String? monitoringNotes;
+
+  /// SMS-only backup contact (no Alera account). Both or neither.
+  final String? backupCaregiverName;
+  final String? backupCaregiverPhone;
 
   /// Caregiver-specific label for this patient; see relationship_label.dart.
   final String? relationshipLabel;
@@ -30,6 +49,8 @@ class CreatePatientRequest {
     this.baselineHeartRate,
     this.baselineSpo2,
     this.monitoringNotes,
+    this.backupCaregiverName,
+    this.backupCaregiverPhone,
     this.relationshipLabel,
   });
 
@@ -50,6 +71,10 @@ class CreatePatientRequest {
     'baseline_heart_rate': baselineHeartRate,
     'baseline_spo2': baselineSpo2,
     'monitoring_notes': _trimmedOrNull(monitoringNotes),
+    // Only sent when set, so creating a patient without a backup contact
+    // keeps the exact payload older backends already accept.
+    if (_backupContact(backupCaregiverName, backupCaregiverPhone)
+        case final contact?) ...contact,
     // Only sent when set, so creating a patient without a label keeps the
     // exact payload older backends already accept.
     if (normalizeRelationshipLabel(relationshipLabel) != null)
@@ -72,6 +97,10 @@ class UpdatePatientRequest {
   final String? medications;
   final String? monitoringNotes;
 
+  /// SMS-only backup contact. Sent on every save: both null clears it.
+  final String? backupCaregiverName;
+  final String? backupCaregiverPhone;
+
   /// Belongs to the current caregiver's assignment to this patient.
   final String? relationshipLabel;
 
@@ -86,26 +115,33 @@ class UpdatePatientRequest {
     this.knownConditions,
     this.medications,
     this.monitoringNotes,
+    this.backupCaregiverName,
+    this.backupCaregiverPhone,
     this.relationshipLabel,
   });
 
-  Map<String, Object?> toJson() => {
-    'full_name': fullName.trim(),
-    'birthdate': birthdate == null
-        ? null
-        : '${birthdate!.year.toString().padLeft(4, '0')}-'
-              '${birthdate!.month.toString().padLeft(2, '0')}-'
-              '${birthdate!.day.toString().padLeft(2, '0')}',
-    'sex': sex,
-    'phone_number': _trimmedOrNull(phoneNumber),
-    'address_or_room': _trimmedOrNull(addressOrRoom),
-    'emergency_contact_name': _trimmedOrNull(emergencyContactName),
-    'emergency_contact_phone': _trimmedOrNull(emergencyContactPhone),
-    'known_conditions': _trimmedOrNull(knownConditions),
-    'medications': _trimmedOrNull(medications),
-    'monitoring_notes': _trimmedOrNull(monitoringNotes),
-    'relationship_label': normalizeRelationshipLabel(relationshipLabel),
-  };
+  Map<String, Object?> toJson() {
+    final backup = _backupContact(backupCaregiverName, backupCaregiverPhone);
+    return {
+      'full_name': fullName.trim(),
+      'birthdate': birthdate == null
+          ? null
+          : '${birthdate!.year.toString().padLeft(4, '0')}-'
+                '${birthdate!.month.toString().padLeft(2, '0')}-'
+                '${birthdate!.day.toString().padLeft(2, '0')}',
+      'sex': sex,
+      'phone_number': _trimmedOrNull(phoneNumber),
+      'address_or_room': _trimmedOrNull(addressOrRoom),
+      'emergency_contact_name': _trimmedOrNull(emergencyContactName),
+      'emergency_contact_phone': _trimmedOrNull(emergencyContactPhone),
+      'known_conditions': _trimmedOrNull(knownConditions),
+      'medications': _trimmedOrNull(medications),
+      'monitoring_notes': _trimmedOrNull(monitoringNotes),
+      'backup_caregiver_name': backup?['backup_caregiver_name'],
+      'backup_caregiver_phone': backup?['backup_caregiver_phone'],
+      'relationship_label': normalizeRelationshipLabel(relationshipLabel),
+    };
+  }
 }
 
 class UpdateMonitoringSettingsRequest {
@@ -194,6 +230,8 @@ class PatientCreatedResponse {
   final double? baselineHeartRate;
   final double? baselineSpo2;
   final String? monitoringNotes;
+  final String? backupCaregiverName;
+  final String? backupCaregiverPhone;
   final DateTime createdAt;
 
   const PatientCreatedResponse({
@@ -215,6 +253,8 @@ class PatientCreatedResponse {
     required this.baselineHeartRate,
     required this.baselineSpo2,
     required this.monitoringNotes,
+    this.backupCaregiverName,
+    this.backupCaregiverPhone,
     required this.createdAt,
   });
 
@@ -238,6 +278,8 @@ class PatientCreatedResponse {
       baselineHeartRate: _decimalOrNull(json['baseline_heart_rate']),
       baselineSpo2: _decimalOrNull(json['baseline_spo2']),
       monitoringNotes: json['monitoring_notes'] as String?,
+      backupCaregiverName: json['backup_caregiver_name'] as String?,
+      backupCaregiverPhone: json['backup_caregiver_phone'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -490,6 +532,10 @@ class PatientDetailDto extends PatientListItemDto {
   final double? baselineHeartRate;
   final double? baselineSpo2;
   final String? monitoringNotes;
+
+  /// SMS-only backup contact; both set or both null.
+  final String? backupCaregiverName;
+  final String? backupCaregiverPhone;
   final DateTime? archivedAt;
   final PatientAssignmentDto? assignment;
   final int normalHrMin;
@@ -521,6 +567,8 @@ class PatientDetailDto extends PatientListItemDto {
     required this.baselineHeartRate,
     required this.baselineSpo2,
     required this.monitoringNotes,
+    this.backupCaregiverName,
+    this.backupCaregiverPhone,
     required this.archivedAt,
     required this.assignment,
     required this.normalHrMin,
@@ -563,6 +611,14 @@ class PatientDetailDto extends PatientListItemDto {
       baselineHeartRate: _decimalOrNull(json['baseline_heart_rate']),
       baselineSpo2: _decimalOrNull(json['baseline_spo2']),
       monitoringNotes: json['monitoring_notes'] as String?,
+      backupCaregiverName: _nullableString(
+        json['backup_caregiver_name'],
+        'backup_caregiver_name',
+      ),
+      backupCaregiverPhone: _nullableString(
+        json['backup_caregiver_phone'],
+        'backup_caregiver_phone',
+      ),
       archivedAt: _utcOrNull(json['archived_at']),
       assignment: assignment == null
           ? null
@@ -627,6 +683,8 @@ class PatientDetailDto extends PatientListItemDto {
     baselineHeartRate: baselineHeartRate,
     baselineSpo2: baselineSpo2,
     monitoringNotes: monitoringNotes,
+    backupCaregiverName: backupCaregiverName,
+    backupCaregiverPhone: backupCaregiverPhone,
     archivedAt: archivedAt,
     assignment: assignment,
     normalHrMin: normalHrMin ?? this.normalHrMin,
