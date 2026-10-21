@@ -733,7 +733,7 @@ MethodChannel(
 
             } else {
 
-                if (pendingMonitoringResult != null) {
+                if (pendingMonitoringStart != null) {
                     result.error(
                         "MONITORING_PERMISSION_PENDING",
                         "Bluetooth permission request already in progress.",
