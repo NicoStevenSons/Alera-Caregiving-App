@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/alera_colors.dart';
+import '../../../../../design_system/alera_colors.dart';
 import '../../../../design_system/alera_typography.dart';
 import '../../../../design_system/widgets/alera_card.dart';
-import '../../data/api/caregiver_insight_api_data_source.dart';
+import '../../../data/api/caregiver_insight_api_data_source.dart';
 import '../../data/api/dto/caregiver_insight_dto.dart';
 
 class CaregiverInsightsSection extends StatefulWidget {
