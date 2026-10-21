@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/alera_colors.dart';
-
 import '../../../../design_system/alera_spacing.dart';
 import '../../../../design_system/widgets/alera_pill.dart';
+import '../../../../design_system/widgets/alera_snackbar.dart';
+import '../../../../services/patient_contact_actions.dart';
+import '../../data/help_requests/caregiver_help_request_controller.dart';
 import '../../domain/models/care_recipient.dart';
 import '../../domain/models/caregiver_alert.dart';
-import '../../domain/models/caregiver_reminder.dart';
 import '../../domain/models/caregiver_nudge.dart';
-import '../../data/help_requests/caregiver_help_request_controller.dart';
-import '../../../../services/patient_contact_actions.dart';
+import '../../domain/models/caregiver_reminder.dart';
+import '../patient_detail/widgets/caregiver_insights_section.dart';
 import 'widgets/home_alerts_preview.dart';
 import 'widgets/home_health_summary.dart';
 import 'widgets/home_help_requests_preview.dart';
 import 'widgets/home_loading_skeleton.dart';
-import 'widgets/home_insights_card.dart';
 import 'widgets/home_patient_header.dart';
 import 'widgets/home_reminders_preview.dart';
-import '../../../../design_system/widgets/alera_snackbar.dart';
+import 'widgets/home_today_overview_card.dart';
 
 class CaregiverHomePage extends StatelessWidget {
   final CareRecipient careRecipient;
@@ -154,9 +154,8 @@ class CaregiverHomePage extends StatelessWidget {
                   onMarkAsSeen: onMarkAsSeen,
                 ),
                 const SizedBox(height: 12),
-                HomeInsightsCard(
+                HomeTodayOverviewCard(
                   snapshot: careRecipient.healthSnapshot,
-                  backendBacked: careRecipient.backendBacked,
                 ),
                 const SizedBox(height: 12),
                 HomeRemindersPreview(
@@ -168,6 +167,10 @@ class CaregiverHomePage extends StatelessWidget {
                   onAction: (_) => onViewAllReminders(),
                   onComplete: onCompleteReminder,
                 ),
+                if (careRecipient.backendBacked) ...[
+                  const SizedBox(height: 12),
+                  CaregiverInsightsSection(patientId: careRecipient.id),
+                ],
               ],
             ),
           ),
