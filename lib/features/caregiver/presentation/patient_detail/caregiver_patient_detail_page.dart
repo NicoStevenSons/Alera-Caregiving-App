@@ -27,6 +27,7 @@ import 'widgets/patient_reminders_section.dart';
 import 'widgets/monitoring_devices_card.dart';
 import 'widgets/patient_summary_card.dart';
 import 'widgets/patient_vital_summary_section.dart';
+import 'widgets/caregiver_insights_section.dart';
 import '../../../../design_system/widgets/alera_snackbar.dart';
 
 class CaregiverPatientDetailPage extends StatelessWidget {
@@ -188,6 +189,10 @@ class CaregiverPatientDetailPage extends StatelessWidget {
                 _showFeedback(context, '$label history is coming soon.');
               },
             ),
+            if (careRecipient.backendBacked) ...[
+              const SizedBox(height: 20),
+              CaregiverInsightsSection(patientId: careRecipient.id),
+            ],
             const SizedBox(height: 20),
             PatientRemindersSection(
               reminders: reminders,
