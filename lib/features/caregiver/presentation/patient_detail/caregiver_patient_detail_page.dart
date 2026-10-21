@@ -171,6 +171,10 @@ class CaregiverPatientDetailPage extends StatelessWidget {
               careRiskLabel: careRecipient.healthSnapshot.careRiskLabel,
             ),
             const SizedBox(height: 12),
+            PatientMonitoringDevicesCard(
+              devices: careRecipient.healthSnapshot.devices,
+            ),
+            const SizedBox(height: 12),
             PatientNeedsAttention(
               alerts: alerts,
               onViewHistory: onViewAllAlerts,
@@ -205,10 +209,7 @@ class CaregiverPatientDetailPage extends StatelessWidget {
                     'Reminders are coming soon for this patient.',
                   ),
             ),
-            const SizedBox(height: 12),
-            PatientMonitoringDevicesCard(
-              devices: careRecipient.healthSnapshot.devices,
-            ),
+
             if (patientAccessStatus != null) ...[
               const SizedBox(height: 12),
               _PatientAccessStatusCard(
