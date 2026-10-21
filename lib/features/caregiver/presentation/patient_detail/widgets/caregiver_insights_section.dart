@@ -101,10 +101,7 @@ class _CaregiverInsightsSectionState extends State<CaregiverInsightsSection> {
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: _load,
-                      child: const Text('Retry'),
-                    ),
+                    TextButton(onPressed: _load, child: const Text('Retry')),
                   ],
                 );
               }
