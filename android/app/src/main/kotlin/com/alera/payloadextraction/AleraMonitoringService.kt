@@ -8,7 +8,11 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.Manifest
+import android.content.pm.PackageManager
+
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 
 class AleraMonitoringService : Service() {
 
@@ -28,6 +32,16 @@ class AleraMonitoringService : Service() {
 
         const val ACTION_STOP =
             "com.alera.payloadextraction.STOP_MONITORING"
+
+        const val EXTRA_ACCESS_TOKEN =
+            "com.alera.payloadextraction.ACCESS_TOKEN"
+
+        const val EXTRA_PATIENT_ID =
+            "com.alera.payloadextraction.PATIENT_ID"
+
+        const val EXTRA_BASE_URL =
+            "com.alera.payloadextraction.BASE_URL"
+
     }
 
     override fun onCreate() {
@@ -62,6 +76,19 @@ class AleraMonitoringService : Service() {
 
             ACTION_START,
             null -> {
+
+                if (!canStartConnectedDeviceForegroundService()) {
+                    Log.w(
+                        TAG,
+                        "Monitoring service stopped: " +
+                            "Bluetooth connect permission is not granted"
+                    )
+
+                    stopSelf()
+
+                    return START_NOT_STICKY
+                }
+
                 Log.d(
                     TAG,
                     "Starting monitoring service"
@@ -138,4 +165,19 @@ class AleraMonitoringService : Service() {
             )
             .build()
     }
+
+    private fun canStartConnectedDeviceForegroundService(): Boolean {
+        if (
+            Build.VERSION.SDK_INT <
+            Build.VERSION_CODES.S
+        ){
+            return true
+        }
+
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.BLUETOOTH_CONNECT
+        ) == PackageManager.PERMISSION_GRANTED
+    }   
+
 }

@@ -56,6 +56,7 @@ CaregiverSessionController controller(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SqflitePlugin.registerWith();
+  late List<String> monitoringCalls;
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
@@ -74,6 +75,80 @@ void main() {
         _ => null,
       },
     );
+
+    monitoringCalls = [];
+
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('com.alera.payloadextraction/monitoring'),
+      (call) async {
+        monitoringCalls.add(call.method);
+        return true;
+      },
+    );
+  });
+  test('restored patient session starts native monitoring', () async {
+    final store = SecureCaregiverTokenStore();
+
+    await store.writeSession(
+      const StoredSession(
+        'stored-token',
+        SessionType.elderlyPatient,
+        patientId: testPatientId,
+      ),
+    );
+
+    final session = controller(store);
+
+    await session.restoreSession();
+
+    expect(monitoringCalls, contains('startMonitoring'));
+  });
+
+  test('caregiver session never starts native monitoring', () async {
+    final session = controller(SecureCaregiverTokenStore());
+
+    await session.login(
+      householdCode: 'AAAA-BBBB',
+      email: 'care@example.test',
+      password: 'password',
+    );
+
+    expect(monitoringCalls, isNot(contains('startMonitoring')));
+  });
+
+  test('patient login starts native monitoring', () async {
+  final session = controller(SecureCaregiverTokenStore());
+
+  await session.accessPatient(accessCode: 'code');
+
+  expect(
+    monitoringCalls,
+    contains('startMonitoring'),
+  );
+});
+
+  test('patient logout stops native monitoring', () async {
+    final session = controller(SecureCaregiverTokenStore());
+
+    await session.accessPatient(accessCode: 'code');
+
+    monitoringCalls.clear();
+
+    await session.logout();
+
+    expect(monitoringCalls, contains('stopMonitoring'));
+  });
+
+  test('invalid patient session stops native monitoring', () async {
+    final session = controller(SecureCaregiverTokenStore());
+
+    await session.accessPatient(accessCode: 'code');
+
+    monitoringCalls.clear();
+
+    await session.clearInvalidSession();
+
+    expect(monitoringCalls, contains('stopMonitoring'));
   });
 
   test(

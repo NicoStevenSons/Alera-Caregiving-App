@@ -11,7 +11,10 @@ object MonitoringServiceBridge {
         "AleraMonitoringBridge"
 
     fun start(
-        context: Context
+        context: Context,
+        accessToken: String,
+        patientId: String,
+        baseUrl: String
     ) {
         Log.d(
             TAG,
@@ -25,6 +28,21 @@ object MonitoringServiceBridge {
             ).apply {
                 action =
                     AleraMonitoringService.ACTION_START
+
+            putExtra(
+                AleraMonitoringService.EXTRA_ACCESS_TOKEN,
+                accessToken
+                )
+
+            putExtra(
+                AleraMonitoringService.EXTRA_PATIENT_ID,
+                patientId
+                )
+                
+            putExtra(
+                AleraMonitoringService.EXTRA_BASE_URL,
+                baseUrl
+                )
             }
 
         if (

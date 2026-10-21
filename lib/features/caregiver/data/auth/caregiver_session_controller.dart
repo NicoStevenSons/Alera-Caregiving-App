@@ -4,6 +4,7 @@ import '../../../patient/data/auth/patient_auth_api.dart';
 import 'caregiver_auth_api.dart';
 import 'caregiver_token_store.dart';
 import '../../../../services/fcm_notification_service.dart';
+import '../../../../Services/monitoring_service.dart';
 
 enum CaregiverSessionStatus { restoring, unauthenticated, authenticated }
 
@@ -85,6 +86,8 @@ class CaregiverSessionController extends ChangeNotifier
       _status = stored == null
           ? CaregiverSessionStatus.unauthenticated
           : CaregiverSessionStatus.authenticated;
+      await _syncMonitoringForSession(stored);
+      if (revision != _revision) return;
       notifyListeners();
       if (stored != null) {
         FcmNotificationService.instance.register(this);
@@ -141,6 +144,8 @@ class CaregiverSessionController extends ChangeNotifier
           rethrow;
         }
         if (revision != _revision) return;
+        await _syncMonitoringForSession(session);
+        if (revision != _revision) return;
         _session = session;
         _status = CaregiverSessionStatus.authenticated;
         notifyListeners();
@@ -151,9 +156,10 @@ class CaregiverSessionController extends ChangeNotifier
     ++_revision;
     final unregister = FcmNotificationService.instance.unregister(this);
 
-    // Remove authenticated routes immediately, including while secure I/O runs.
+    //removes the authenticated routes immediately including while secure I/O runs.
     _session = null;
     _status = CaregiverSessionStatus.unauthenticated;
+    await _syncMonitoringForSession(null);
     notifyListeners();
 
     try {
@@ -162,15 +168,17 @@ class CaregiverSessionController extends ChangeNotifier
     await _serialize(_tokenStore.clearSession);
   }
 
-  /// Signs out while the current session stays visible, so a blocking
-  /// "signing out" dialog can sit over the user's own page. The app only
-  /// switches to the login screen once everything below has finished.
-  /// Cleanup that can be slow (push unregister, server logout) runs in
-  /// parallel with a short cap; local credentials are always cleared, and a
-  /// server-side logout failure is reported afterwards.
+  ///signs out while the current session stays visible so a blocking
+  ///"signing out" dialog can sit over the users own page The app only
+  ///switches to the login screen once everything below has finished
+  ///cleanup that can be slow (push unregister server logout) runs in
+  ///parallel with a short cap local credentials are always cleared and a
+  ///server-side logout failure is reported afterwards
   Future<void> logout() async {
     final session = _session;
     ++_revision;
+
+    await _syncMonitoringForSession(null);
 
     Object? serverFailure;
 
@@ -203,4 +211,23 @@ class CaregiverSessionController extends ChangeNotifier
 
   @override
   Future<void> clearInvalidSession() => _clearLocalSession();
+
+  Future<void> _syncMonitoringForSession(StoredSession? session) async {
+  try {
+    if (session?.type == SessionType.elderlyPatient &&
+        session?.patientId != null) {
+      await MonitoringService.start(
+        accessToken: session!.token,
+        patientId: session.patientId!,
+      );
+    } else {
+      await MonitoringService.stop();
+    }
+  } catch (error, stackTrace) {
+    debugPrint('Monitoring service sync failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+
 }

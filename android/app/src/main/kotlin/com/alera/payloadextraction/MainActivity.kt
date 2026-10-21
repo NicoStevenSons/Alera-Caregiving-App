@@ -2,13 +2,18 @@ package com.alera.payloadextraction
 
 import android.os.Bundle
 import android.util.Log
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.lifecycle.lifecycleScope
+import androidx.core.content.ContextCompat
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -40,7 +45,54 @@ class MainActivity : FlutterFragmentActivity() {
     private var healthConnectClient: HealthConnectClient? = null
     private var stepsDataReader: StepsDataReader? = null
     private var sleepDataReader: SleepDataReader? = null
+
+    private data class PendingMonitoringStart(val accessToken: String, val patientId: String, val baseUrl: String, val result: MethodChannel.Result)
+    private var pendingMonitoringStart: PendingMonitoringStart? = null
+
     private val healthPermissions = setOf(HealthPermission.getReadPermission(StepsRecord::class),HealthPermission.getReadPermission(SleepSessionRecord::class))
+
+    private val bluetoothConnectPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        
+         val pending = pendingMonitoringStart
+            pendingMonitoringStart = null
+
+             if (granted && pending != null) {
+                Log.d(
+                    "AleraMonitoringBridge",
+                    "Bluetooth connect permission granted"
+                )
+
+                try {
+                MonitoringServiceBridge.start(
+                        applicationContext,
+                        pending.accessToken,
+                        pending.patientId,
+                        pending.baseUrl
+                    )
+
+                pending.result.success(true)
+            } catch (exception: Exception) {
+                Log.e(
+                    "AleraMonitoringBridge",
+                    "Failed to start monitoring service",
+                    exception
+                )
+
+                 pending.result.error(
+                    "MONITORING_START_FAILED",
+                    exception.message,
+                    null
+                )
+            }
+        } else {
+            Log.w(
+                "AleraMonitoringBridge",
+                "Bluetooth connect permission denied"
+            )
+
+            pending?.result?.success(false)
+        }
+    }
 
     private val healthPermissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()
     ) { grantedPermissions: Set<String> ->
@@ -638,12 +690,77 @@ MethodChannel(
     when (call.method) {
 
         "startMonitoring" -> {
-            MonitoringServiceBridge.start(
-                applicationContext
-            )
 
-            result.success(true)
-        }
+            val accessToken =
+                call.argument<String>("accessToken")
+
+            val patientId =
+                call.argument<String>("patientId")
+
+            val baseUrl =
+                call.argument<String>("baseUrl")
+
+            if (accessToken.isNullOrBlank() ||patientId.isNullOrBlank() ||baseUrl.isNullOrBlank()) {
+                result.error(
+                    "INVALID_MONITORING_SESSION",
+                    "Patient monitoring requires authenticated session data.",
+                    null
+                )
+
+                return@setMethodCallHandler
+            }
+
+            val bluetoothPermissionRequired =
+                Build.VERSION.SDK_INT >=
+                    Build.VERSION_CODES.S
+
+            val bluetoothPermissionGranted =
+                !bluetoothPermissionRequired ||
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) == PackageManager.PERMISSION_GRANTED
+
+            if (bluetoothPermissionGranted) {
+                MonitoringServiceBridge.start(
+                applicationContext,
+                accessToken,
+                patientId,
+                baseUrl
+                )
+
+                result.success(true)
+
+            } else {
+
+                if (pendingMonitoringResult != null) {
+                    result.error(
+                        "MONITORING_PERMISSION_PENDING",
+                        "Bluetooth permission request already in progress.",
+                        null
+                         )
+
+                    return@setMethodCallHandler
+                        }
+
+                Log.d(
+                    "AleraMonitoringBridge",
+                    "Requesting Bluetooth connect permission"
+                     )
+
+                 pendingMonitoringStart =
+                    PendingMonitoringStart(
+                        accessToken = accessToken,
+                        patientId = patientId,
+                        baseUrl = baseUrl,
+                        result = result
+                    )
+
+                bluetoothConnectPermissionLauncher.launch(
+                    Manifest.permission.BLUETOOTH_CONNECT
+                    )
+         }
+}
 
         "stopMonitoring" -> {
             MonitoringServiceBridge.stop(
