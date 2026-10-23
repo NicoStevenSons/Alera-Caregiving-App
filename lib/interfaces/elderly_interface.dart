@@ -3,12 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../features/elderly/data/api/device_status_api_service.dart';
-import '../features/elderly/data/api/elderly_help_request_api_service.dart';
-import '../features/elderly/data/elderly_help_request_controller.dart';
 import '../Services/fifo_upload_service.dart';
-import '../features/elderly/data/api/health_event_api_service.dart';
-import '../Services/phone_heartbeat_service.dart';
 import '../Services/upload_queue_service.dart';
 import '../Services/watch_listener_controller.dart';
 import '../Services/watch_payload_service.dart';
@@ -16,6 +11,10 @@ import '../Services/watch_payload_service.dart';
 import '../config/app_config.dart';
 import '../design_system/alera_elderly_theme.dart';
 
+import '../features/elderly/data/api/device_status_api_service.dart';
+import '../features/elderly/data/api/elderly_help_request_api_service.dart';
+import '../features/elderly/data/elderly_help_request_controller.dart';
+import '../features/elderly/data/api/health_event_api_service.dart';
 import '../features/elderly/domain/elderly_home_view_state.dart';
 import '../features/elderly/domain/models/elderly_reminder.dart';
 import '../features/elderly/presentation/elderly_home_page.dart';
@@ -91,7 +90,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
 
   late final FifoUploadService fifoUploadService;
   late final WatchListenerController watchListenerController;
-  late final PhoneHeartbeatService phoneHeartbeatService;
   late final DeviceStatusApiService deviceStatusApiService;
 
   HeartRateData heartRateData = const HeartRateData(
@@ -147,10 +145,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     deviceStatusApiService = DeviceStatusApiService(
       baseUrl: AppConfig.backendBaseUrl,
       patientId: widget.patientId,
-    );
-
-    phoneHeartbeatService = PhoneHeartbeatService(
-      deviceStatusApiService: deviceStatusApiService,
     );
 
     fifoUploadService = FifoUploadService(
@@ -231,8 +225,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     watchListenerController.start();
 
     unawaited(watchPayloadService.requestWatchStatus());
-
-    phoneHeartbeatService.start();
 
     _startStepsRefreshTimer();
 
@@ -322,8 +314,6 @@ class _ElderlyInterfaceState extends State<ElderlyInterface>
     _unsubscribeNudges?.call();
     _unsubscribeDueReminders?.call();
     _unsubscribeHelpRequests?.call();
-
-    phoneHeartbeatService.stop();
 
     WidgetsBinding.instance.removeObserver(this);
 
